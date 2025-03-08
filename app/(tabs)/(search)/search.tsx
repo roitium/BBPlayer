@@ -40,7 +40,7 @@ export default function SearchPage() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [finalQuery, setFinalQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(20) // 每页显示20条结果
@@ -158,35 +158,9 @@ export default function SearchPage() {
     loadSearchHistory()
   }, [loadSearchHistory])
 
-  // 防抖处理
-  useEffect(() => {
-    // 清除之前的定时器
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
-    }
-
-    // 设置新的定时器
-    debounceTimeoutRef.current = setTimeout(() => {
-      setDebouncedQuery(searchQuery)
-
-      if (searchQuery.trim() !== '') {
-        setIsSearching(true)
-      } else {
-        setIsSearching(false)
-      }
-    }, 500) // 500毫秒的防抖延迟
-
-    // 清理函数
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
-      }
-    }
-  }, [searchQuery])
-
   // 使用API查询 - 使用防抖后的查询
   const { data: searchData, isLoading: isLoadingResults } = useSearchResults(
-    debouncedQuery,
+    finalQuery,
     currentPage,
     pageSize,
   )
@@ -207,7 +181,7 @@ export default function SearchPage() {
   // 处理搜索历史或热门搜索项点击
   const handleSearchItemClick = (query: string) => {
     setSearchQuery(query)
-    setDebouncedQuery(query) // 立即设置防抖查询，不等待延迟
+    setFinalQuery(query) // 立即设置防抖查询，不等待延迟
     setCurrentPage(1)
     setPageInputValue('1')
     setIsSearching(true)
@@ -218,7 +192,7 @@ export default function SearchPage() {
   // 清除搜索
   const clearSearch = () => {
     setSearchQuery('')
-    setDebouncedQuery('')
+    setFinalQuery('')
     setIsSearching(false)
     setCurrentPage(1)
     setPageInputValue('1')
@@ -228,7 +202,7 @@ export default function SearchPage() {
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       setIsSearching(true)
-      setDebouncedQuery(searchQuery)
+      setFinalQuery(searchQuery)
       // 添加到搜索历史
       addSearchHistory(searchQuery)
     }

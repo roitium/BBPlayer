@@ -27,6 +27,6 @@ export const useHotSearches = () => {
   return useQuery({
     queryKey: searchQueryKeys.hotSearches(),
     queryFn: () => bilibiliApi.getHotSearches(),
-    staleTime: 30 * 60 * 1000, // 30分钟
+    staleTime: 15 * 60 * 1000, // 15分钟
   })
 }
