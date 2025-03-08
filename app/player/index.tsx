@@ -1,4 +1,4 @@
-import { router } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import { useState } from 'react'
 import { View, Image, ScrollView, TouchableOpacity, Text } from 'react-native'
 import { IconButton, useTheme } from 'react-native-paper'
@@ -79,6 +79,7 @@ export default function PlayerPage() {
       className='flex-1'
       style={{ paddingTop: insets.top, backgroundColor: colors.primary }}
     >
+      <Stack.Screen options={{ animation: 'slide_from_bottom' }} />
       {/* Header */}
       <View className='flex-row items-center p-4'>
         <IconButton

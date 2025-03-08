@@ -1,105 +1,39 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { ScrollView, View, Image, TouchableOpacity } from 'react-native'
-import { Text, Appbar, useTheme } from 'react-native-paper'
+import { Text, Appbar, useTheme, ActivityIndicator } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import {
+  useRecentlyPlayed,
+  usePopularVideos,
+  useSyncedPlaylists,
+} from '@/hooks/api/useHomeData'
+import type { Track, Playlist } from '@/hooks/api/types'
 
 const MusicPlayerApp = () => {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
-  // 示例数据
-  const recentlyPlayed = [
-    {
-      id: 1,
-      title: 'Summer okokok Memories',
-      artist: 'Cloudscape',
-      cover: 'https://via.placeholder.com/60',
-      source: 'ytbmusic',
-      duration: '3:45',
-    },
-    {
-      id: 2,
-      title: 'Distant Dreams',
-      artist: 'Echo Valley',
-      cover: 'https://via.placeholder.com/60',
-      source: 'bilibili',
-      duration: '4:12',
-    },
-    {
-      id: 3,
-      title: 'Midnight Drive',
-      artist: 'Neon Pulse',
-      cover: 'https://via.placeholder.com/60',
-      source: 'ytbmusic',
-      duration: '3:28',
-    },
-  ]
+  let { data: recentlyPlayed = [], isLoading: isLoadingRecent } =
+    useRecentlyPlayed()
 
-  const recommendations = [
-    {
-      id: 4,
-      title: 'Urban Rhythm',
-      artist: 'City Lights',
-      cover:
-        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
-      source: 'bilibili',
-      duration: '5:02',
-    },
-    {
-      id: 5,
-      title: 'Ocean Waves',
-      artist: 'Coastal',
-      cover:
-        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
-      source: 'ytbmusic',
-      duration: '4:30',
-    },
-    {
-      id: 6,
-      title: 'Mountain Echo',
-      artist: 'Alpine',
-      cover:
-        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
-      source: 'bilibili',
-      duration: '3:56',
-    },
-    {
-      id: 7,
-      title: 'Starry Night',
-      artist: 'Cosmos',
-      cover:
-        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
-      source: 'ytbmusic',
-      duration: '4:18',
-    },
-  ]
+  let { data: popularVideos = [], isLoading: isLoadingPopularVideos } =
+    usePopularVideos()
 
-  const syncedPlaylists = [
-    {
-      id: 1,
-      title: 'YTB Favorites',
-      count: 42,
-      cover: 'https://via.placeholder.com/80',
-      source: 'ytbmusic',
-    },
-    {
-      id: 2,
-      title: 'Bilibili Collections',
-      count: 28,
-      cover: 'https://via.placeholder.com/80',
-      source: 'bilibili',
-    },
-    {
-      id: 3,
-      title: 'Summer Mix',
-      count: 15,
-      cover: 'https://via.placeholder.com/80',
-      source: 'mixed',
-    },
-  ]
+  const { data: syncedPlaylists = [], isLoading: isLoadingPlaylists } =
+    useSyncedPlaylists()
+
+  if (!isLoadingRecent) {
+    recentlyPlayed =
+      recentlyPlayed.length > 10 ? recentlyPlayed.slice(0, 10) : recentlyPlayed
+  }
+
+  if (!isLoadingPopularVideos) {
+    popularVideos =
+      popularVideos.length > 10 ? popularVideos.slice(0, 10) : popularVideos
+  }
 
   return (
-    <>
+    <View className='flex-1'>
       {/* App Bar */}
       <Appbar.Header
         style={{
@@ -130,78 +64,21 @@ const MusicPlayerApp = () => {
             Recently Played
           </Text>
 
-          {recentlyPlayed.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              className='mb-2 flex-row items-center rounded-lg p-2'
-              style={{ backgroundColor: colors.surface }}
-              activeOpacity={0.7}
-            >
-              <Image
-                source={{ uri: item.cover }}
-                className='h-12 w-12 rounded'
-              />
-              <View className='ml-3 flex-1'>
-                <Text
-                  className='font-medium'
-                  style={{ color: colors.onSurface }}
-                >
-                  {item.title}
-                </Text>
-                <View className='flex-row items-center'>
-                  <Text
-                    className='text-xs'
-                    style={{ color: colors.onSurfaceVariant }}
-                  >
-                    {item.artist}
-                  </Text>
-                  <Text
-                    className='mx-1 text-xs'
-                    style={{ color: colors.onSurfaceVariant }}
-                  >
-                    •
-                  </Text>
-                  <View className='rounded bg-gray-100 px-1.5 py-0.5'>
-                    <Text
-                      className='text-xs'
-                      style={{ color: colors.secondary }}
-                    >
-                      {item.source === 'ytbmusic' ? 'YTB' : 'BiliBili'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <Text
-                className='text-xs'
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                {item.duration}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Recommendations */}
-        <View className='mb-2 p-4'>
-          <Text
-            className='mb-3 font-bold text-lg'
-            style={{ color: colors.primary }}
-          >
-            For You
-          </Text>
-
-          <View className='flex-row flex-wrap justify-between'>
-            {recommendations.map((item) => (
+          {isLoadingRecent ? (
+            <ActivityIndicator />
+          ) : (
+            recentlyPlayed.map((item: Track) => (
               <TouchableOpacity
                 key={item.id}
-                className='mb-4 w-[48%] overflow-hidden rounded-lg'
+                className='mb-2 flex-row items-center rounded-lg p-2'
+                style={{ backgroundColor: colors.surface }}
                 activeOpacity={0.7}
               >
                 <Image
                   source={{ uri: item.cover }}
-                  className='h-32 w-full rounded-lg'
+                  className='h-12 w-12 rounded'
                 />
-                <View className='mt-1'>
+                <View className='ml-3 flex-1'>
                   <Text
                     className='font-medium'
                     style={{ color: colors.onSurface }}
@@ -215,7 +92,13 @@ const MusicPlayerApp = () => {
                     >
                       {item.artist}
                     </Text>
-                    <View className='ml-1 rounded bg-gray-100 px-1 py-0.5'>
+                    <Text
+                      className='mx-1 text-xs'
+                      style={{ color: colors.onSurfaceVariant }}
+                    >
+                      •
+                    </Text>
+                    <View className='rounded bg-gray-100 px-1.5 py-0.5'>
                       <Text
                         className='text-xs'
                         style={{ color: colors.secondary }}
@@ -225,9 +108,68 @@ const MusicPlayerApp = () => {
                     </View>
                   </View>
                 </View>
+                <Text
+                  className='text-xs'
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  {item.duration}
+                </Text>
               </TouchableOpacity>
-            ))}
-          </View>
+            ))
+          )}
+        </View>
+
+        {/* Recommendations */}
+        <View className='mb-2 p-4'>
+          <Text
+            className='mb-3 font-bold text-lg'
+            style={{ color: colors.primary }}
+          >
+            For You
+          </Text>
+
+          {isLoadingPopularVideos ? (
+            <ActivityIndicator />
+          ) : (
+            <View className='flex-row flex-wrap justify-between'>
+              {popularVideos.map((item: Track) => (
+                <TouchableOpacity
+                  key={item.id}
+                  className='mb-4 w-[48%] overflow-hidden rounded-lg'
+                  activeOpacity={0.7}
+                >
+                  <Image
+                    source={{ uri: item.cover }}
+                    className='h-32 w-full rounded-lg'
+                  />
+                  <View className='mt-1'>
+                    <Text
+                      className='font-medium'
+                      style={{ color: colors.onSurface }}
+                    >
+                      {item.title}
+                    </Text>
+                    <View className='flex-row items-center'>
+                      <Text
+                        className='text-xs'
+                        style={{ color: colors.onSurfaceVariant }}
+                      >
+                        {item.artist}
+                      </Text>
+                      <View className='ml-1 rounded bg-gray-100 px-1 py-0.5'>
+                        <Text
+                          className='text-xs'
+                          style={{ color: colors.secondary }}
+                        >
+                          {item.source === 'ytbmusic' ? 'YTB' : 'BiliBili'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Synced Playlists */}
@@ -239,53 +181,57 @@ const MusicPlayerApp = () => {
             Your Library
           </Text>
 
-          {syncedPlaylists.map((playlist) => (
-            <TouchableOpacity
-              key={playlist.id}
-              className='mb-2 flex-row items-center rounded-lg p-2'
-              style={{ backgroundColor: colors.surface }}
-              activeOpacity={0.7}
-            >
-              <Image
-                source={{ uri: playlist.cover }}
-                className='h-16 w-16 rounded'
-              />
-              <View className='ml-3'>
-                <Text
-                  className='font-medium'
-                  style={{ color: colors.onSurface }}
-                >
-                  {playlist.title}
-                </Text>
-                <View className='flex-row items-center'>
+          {isLoadingPlaylists ? (
+            <ActivityIndicator />
+          ) : (
+            syncedPlaylists.map((playlist: Playlist) => (
+              <TouchableOpacity
+                key={playlist.id}
+                className='mb-2 flex-row items-center rounded-lg p-2'
+                style={{ backgroundColor: colors.surface }}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={{ uri: playlist.cover }}
+                  className='h-16 w-16 rounded'
+                />
+                <View className='ml-3'>
                   <Text
-                    className='text-xs'
-                    style={{ color: colors.onSurfaceVariant }}
+                    className='font-medium'
+                    style={{ color: colors.onSurface }}
                   >
-                    {playlist.count} tracks •
+                    {playlist.title}
                   </Text>
-                  <View className='ml-1 rounded bg-gray-100 px-1 py-0.5'>
+                  <View className='flex-row items-center'>
                     <Text
                       className='text-xs'
-                      style={{ color: colors.secondary }}
+                      style={{ color: colors.onSurfaceVariant }}
                     >
-                      {playlist.source === 'ytbmusic'
-                        ? 'YTB'
-                        : playlist.source === 'bilibili'
-                          ? 'BiliBili'
-                          : 'Mixed'}
+                      {playlist.count} tracks •
                     </Text>
+                    <View className='ml-1 rounded bg-gray-100 px-1 py-0.5'>
+                      <Text
+                        className='text-xs'
+                        style={{ color: colors.secondary }}
+                      >
+                        {playlist.source === 'ytbmusic'
+                          ? 'YTB'
+                          : playlist.source === 'bilibili'
+                            ? 'BiliBili'
+                            : 'Mixed'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
 
       {/* Currently Playing Bar */}
       <NowPlayingBar />
-    </>
+    </View>
   )
 }
 

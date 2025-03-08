@@ -15,6 +15,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   magnifyingglass: 'search',
   'play.circle.fill': 'play-circle-filled',
+  'book.fill': 'book',
 } as Partial<
   Record<
     import('expo-symbols').SymbolViewProps['name'],
