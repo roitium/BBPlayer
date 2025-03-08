@@ -1,17 +1,15 @@
 import { IconSymbol } from '@/components/ui/IconSymbol'
-
-import { createMaterialBottomTabNavigator } from 'react-native-paper/react-navigation'
-import HomeScreen from './(home)'
-import SearchPage from './(search)'
-
-const Tab = createMaterialBottomTabNavigator()
+import { MaterialBottomTabs as Tab } from '@/components/MaterialBottomTabBar'
 
 export default function TabLayout() {
   return (
-    <Tab.Navigator>
+    <Tab
+      screenOptions={{
+        tabBarHideOnKeyboard: true,
+      }}
+    >
       <Tab.Screen
-        name='home'
-        component={HomeScreen}
+        name='(home)/index'
         options={{
           title: 'Home',
           tabBarIcon: ({ color }: { color: string }) => (
@@ -24,8 +22,7 @@ export default function TabLayout() {
         }}
       />
       <Tab.Screen
-        name='search'
-        component={SearchPage}
+        name='(search)/search'
         options={{
           title: 'Search',
           tabBarIcon: ({ color }: { color: string }) => (
@@ -37,6 +34,6 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tab.Navigator>
+    </Tab>
   )
 }

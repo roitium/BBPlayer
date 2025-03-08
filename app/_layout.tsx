@@ -6,7 +6,6 @@ import { useMemo } from 'react'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import { useColorScheme } from '@/hooks/useColorScheme'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -20,17 +19,21 @@ export default function RootLayout() {
   )
 
   return (
-    <SafeAreaProvider>
-      <PaperProvider theme={paperTheme}>
-        <Stack>
-          <Stack.Screen
-            name='(tabs)'
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name='+not-found' />
-        </Stack>
-        <StatusBar style='auto' />
-      </PaperProvider>
-    </SafeAreaProvider>
+    <PaperProvider theme={paperTheme}>
+      <Stack
+        screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}
+      >
+        <Stack.Screen
+          name='(tabs)'
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name='player'
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name='+not-found' />
+      </Stack>
+      <StatusBar style='auto' />
+    </PaperProvider>
   )
 }

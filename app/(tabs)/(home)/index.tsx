@@ -1,5 +1,6 @@
+import NowPlayingBar from '@/components/NowPlayingBar'
 import { ScrollView, View, Image, TouchableOpacity } from 'react-native'
-import { Text, Appbar, IconButton, useTheme } from 'react-native-paper'
+import { Text, Appbar, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const MusicPlayerApp = () => {
@@ -39,7 +40,8 @@ const MusicPlayerApp = () => {
       id: 4,
       title: 'Urban Rhythm',
       artist: 'City Lights',
-      cover: 'https://via.placeholder.com/120',
+      cover:
+        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
       source: 'bilibili',
       duration: '5:02',
     },
@@ -47,7 +49,8 @@ const MusicPlayerApp = () => {
       id: 5,
       title: 'Ocean Waves',
       artist: 'Coastal',
-      cover: 'https://via.placeholder.com/120',
+      cover:
+        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
       source: 'ytbmusic',
       duration: '4:30',
     },
@@ -55,7 +58,8 @@ const MusicPlayerApp = () => {
       id: 6,
       title: 'Mountain Echo',
       artist: 'Alpine',
-      cover: 'https://via.placeholder.com/120',
+      cover:
+        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
       source: 'bilibili',
       duration: '3:56',
     },
@@ -63,7 +67,8 @@ const MusicPlayerApp = () => {
       id: 7,
       title: 'Starry Night',
       artist: 'Cosmos',
-      cover: 'https://via.placeholder.com/120',
+      cover:
+        'http://i2.hdslb.com/bfs/archive/5478d3891195af7f580016838e1048516b9b723b.jpg',
       source: 'ytbmusic',
       duration: '4:18',
     },
@@ -279,35 +284,7 @@ const MusicPlayerApp = () => {
       </ScrollView>
 
       {/* Currently Playing Bar */}
-      <View
-        className='absolute right-0 bottom-0 left-0 flex-row items-center p-3 shadow-md'
-        style={{ backgroundColor: colors.primaryContainer }}
-      >
-        <Image
-          source={{ uri: 'https://via.placeholder.com/48' }}
-          className='mr-3 h-12 w-12 rounded'
-        />
-        <View className='flex-1'>
-          <Text
-            className='font-medium'
-            style={{ color: colors.onPrimaryContainer }}
-          >
-            Summer Memories
-          </Text>
-          <Text
-            className='text-xs'
-            style={{ color: colors.secondary }}
-          >
-            Cloudscape
-          </Text>
-        </View>
-        <IconButton
-          icon='play-circle'
-          iconColor={colors.primary}
-          size={36}
-          onPress={() => {}}
-        />
-      </View>
+      <NowPlayingBar />
     </>
   )
 }
