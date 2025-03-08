@@ -79,7 +79,7 @@ export default function RootLayout() {
             options={{ headerShown: false }}
           />
           <Stack.Screen
-            name='player'
+            name='player/index'
             options={{ headerShown: false }}
           />
           <Stack.Screen name='+not-found' />
