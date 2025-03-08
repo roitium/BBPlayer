@@ -2,8 +2,9 @@ import '../css/global.css'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
+  focusManager,
   onlineManager,
   QueryClient,
   QueryClientProvider,
@@ -14,6 +15,7 @@ import { useColorScheme } from '@/hooks/useColorScheme'
 import * as Network from 'expo-network'
 import * as Clipboard from 'expo-clipboard'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
+import { type AppStateStatus, Platform, AppState } from 'react-native'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,16 +26,15 @@ const queryClient = new QueryClient({
   },
 })
 
-onlineManager.setEventListener((setOnline) => {
-  const eventSubscription = Network.addNetworkStateListener((state) => {
-    setOnline(!!state.isConnected)
-  })
-  return eventSubscription.remove
-})
+function onAppStateChange(status: AppStateStatus) {
+  if (Platform.OS !== 'web') {
+    focusManager.setFocused(status === 'active')
+  }
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
-  const { theme } = useMaterial3Theme({ sourceColor: '#4a6546' })
+  const { theme } = useMaterial3Theme()
   const paperTheme = useMemo(
     () =>
       colorScheme === 'dark'
@@ -41,6 +42,21 @@ export default function RootLayout() {
         : { ...MD3LightTheme, colors: theme.light },
     [colorScheme, theme],
   )
+
+  useEffect(() => {
+    onlineManager.setEventListener((setOnline) => {
+      const eventSubscription = Network.addNetworkStateListener((state) => {
+        setOnline(!!state.isConnected)
+      })
+      return eventSubscription.remove
+    })
+  }, [])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', onAppStateChange)
+
+    return () => subscription.remove()
+  }, [])
 
   const onCopy = async (text: string) => {
     try {

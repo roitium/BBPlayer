@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { bilibiliApi } from '@/lib/api/bilibili'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili'
 
 export const homeQueryKeys = {
   all: ['home'] as const,
@@ -29,7 +29,10 @@ export const useRecentlyPlayed = () => {
 export const useSyncedPlaylists = () => {
   return useQuery({
     queryKey: homeQueryKeys.playlists(),
-    queryFn: () => bilibiliApi.getFavoritePlaylists(),
+    queryFn: () =>
+      bilibiliApi.getFavoritePlaylists(
+        Number(process.env.EXPO_PUBLIC_USER_MID),
+      ),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

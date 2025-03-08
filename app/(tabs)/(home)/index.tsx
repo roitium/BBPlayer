@@ -1,238 +1,338 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { ScrollView, View, Image, TouchableOpacity } from 'react-native'
-import { Text, Appbar, useTheme, ActivityIndicator } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
-  useRecentlyPlayed,
+  ScrollView,
+  View,
+  Image,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native'
+import {
+  Text,
+  useTheme,
+  Chip,
+  Avatar,
+  Surface,
+  IconButton,
+} from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useState } from 'react'
+import { router } from 'expo-router'
+import {
   usePopularVideos,
+  useRecentlyPlayed,
   useSyncedPlaylists,
 } from '@/hooks/api/useHomeData'
 import type { Track, Playlist } from '@/hooks/api/types'
 
-const MusicPlayerApp = () => {
+const mockCategories = [
+  { id: '1', name: '华语', icon: 'music-note' },
+  { id: '2', name: '流行', icon: 'music-note' },
+  { id: '3', name: '摇滚', icon: 'music-note' },
+  { id: '4', name: '民谣', icon: 'music-note' },
+  { id: '5', name: '电子', icon: 'music-note' },
+  { id: '6', name: '说唱', icon: 'music-note' },
+]
+
+const HomePage = () => {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
+  const [refreshing, setRefreshing] = useState(false)
 
-  let { data: recentlyPlayed = [], isLoading: isLoadingRecent } =
-    useRecentlyPlayed()
+  // 使用 hook 获取真实数据
+  let {
+    data: recentlyPlayed,
+    isLoading: recentlyPlayedLoading,
+    refetch: recentlyPlayedRefetch,
+  } = useRecentlyPlayed()
 
-  let { data: popularVideos = [], isLoading: isLoadingPopularVideos } =
-    usePopularVideos()
+  const {
+    data: playlists,
+    isLoading: playlistsLoading,
+    refetch: playlistsRefetch,
+  } = useSyncedPlaylists()
+  let {
+    data: popularVideos,
+    isLoading: popularVideosLoading,
+    refetch: popularVideosRefetch,
+  } = usePopularVideos()
 
-  const { data: syncedPlaylists = [], isLoading: isLoadingPlaylists } =
-    useSyncedPlaylists()
+  if (!recentlyPlayedLoading) recentlyPlayed = recentlyPlayed?.slice(0, 10)
+  if (!popularVideosLoading) popularVideos = popularVideos?.slice(0, 10)
 
-  if (!isLoadingRecent) {
-    recentlyPlayed =
-      recentlyPlayed.length > 10 ? recentlyPlayed.slice(0, 10) : recentlyPlayed
+  const onRefresh = () => {
+    setRefreshing(true)
+    recentlyPlayedRefetch()
+    popularVideosRefetch()
+    playlistsRefetch()
+    setRefreshing(false)
   }
 
-  if (!isLoadingPopularVideos) {
-    popularVideos =
-      popularVideos.length > 10 ? popularVideos.slice(0, 10) : popularVideos
-  }
+  // 渲染最近播放项
+  const renderRecentItem = (item: Track) => (
+    <TouchableOpacity
+      key={item.id}
+      className='mb-2'
+      activeOpacity={0.7}
+      onPress={() => router.push('/player')}
+    >
+      <Surface
+        className='overflow-hidden rounded-lg'
+        elevation={0}
+      >
+        <View className='flex-row items-center p-2'>
+          <Image
+            source={{ uri: item.cover }}
+            className='h-12 w-12 rounded'
+          />
+          <View className='ml-3 flex-1'>
+            <Text
+              variant='titleMedium'
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
+            <View className='flex-row items-center'>
+              <Text
+                variant='bodySmall'
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {item.artist}
+              </Text>
+              <Text
+                className='mx-1'
+                variant='bodySmall'
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                •
+              </Text>
+              <Text
+                variant='bodySmall'
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {item.duration}
+              </Text>
+            </View>
+          </View>
+          <IconButton
+            icon='play-circle-outline'
+            iconColor={colors.primary}
+            size={24}
+            onPress={() => router.push('/player')}
+          />
+        </View>
+      </Surface>
+    </TouchableOpacity>
+  )
+
+  // 渲染推荐项
+  const renderForYouItem = (item: Track) => (
+    <TouchableOpacity
+      key={item.id}
+      className='mr-4 w-32'
+      activeOpacity={0.7}
+      onPress={() => router.push('/player')}
+    >
+      <Image
+        source={{ uri: item.cover }}
+        className='h-32 w-32 rounded-lg'
+      />
+      <View className='mt-2'>
+        <Text
+          variant='titleSmall'
+          numberOfLines={1}
+        >
+          {item.title}
+        </Text>
+        <Text
+          variant='bodySmall'
+          style={{ color: colors.onSurfaceVariant }}
+          numberOfLines={1}
+        >
+          {item.artist}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  )
+
+  // 渲染播放列表项
+  const renderPlaylistItem = (item: Playlist) => (
+    <TouchableOpacity
+      key={item.id}
+      className='mr-4 w-40'
+      activeOpacity={0.7}
+      onPress={() => {}}
+    >
+      <Surface
+        className='overflow-hidden rounded-lg'
+        elevation={1}
+      >
+        <Image
+          source={{ uri: item.cover }}
+          className='h-40 w-40 rounded-lg'
+        />
+        <View className='p-2'>
+          <Text
+            variant='titleSmall'
+            numberOfLines={1}
+          >
+            {item.title}
+          </Text>
+          <Text
+            variant='bodySmall'
+            style={{ color: colors.onSurfaceVariant }}
+          >
+            {item.count} 首歌曲
+          </Text>
+        </View>
+      </Surface>
+    </TouchableOpacity>
+  )
 
   return (
-    <View className='flex-1'>
-      {/* App Bar */}
-      <Appbar.Header
-        style={{
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
-          backgroundColor: colors.primary,
-        }}
+    <View
+      className='flex-1'
+      style={{ backgroundColor: colors.background }}
+    >
+      <ScrollView
+        className='flex-1'
+        contentContainerStyle={{ paddingBottom: 80 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
       >
-        {/* <View className='ml-2'>
-          <Text className='font-bold text-lg text-white'>SoundBridge</Text>
-          <Text className='text-white text-xs opacity-80'>
-            Connect · Sync · Play
-          </Text>
-        </View> */}
-        <Appbar.Content
-          title='SoundBridge'
-          color={colors.onPrimary}
-        />
-      </Appbar.Header>
-      {/* Main Content */}
-      <ScrollView className='flex-1'>
-        {/* Recently Played Section */}
-        <View className='mb-2 p-4'>
-          <Text
-            className='mb-3 font-bold text-lg'
-            style={{ color: colors.primary }}
-          >
-            Recently Played
-          </Text>
-
-          {isLoadingRecent ? (
-            <ActivityIndicator />
-          ) : (
-            recentlyPlayed.map((item: Track) => (
-              <TouchableOpacity
-                key={item.id}
-                className='mb-2 flex-row items-center rounded-lg p-2'
-                style={{ backgroundColor: colors.surface }}
-                activeOpacity={0.7}
+        {/* 顶部欢迎区域 */}
+        <View
+          className='px-4 pt-2 pb-4'
+          style={{ paddingTop: insets.top + 8 }}
+        >
+          <View className='flex-row items-center justify-between'>
+            <View>
+              <Text
+                variant='headlineSmall'
+                style={{ fontWeight: 'bold' }}
               >
-                <Image
-                  source={{ uri: item.cover }}
-                  className='h-12 w-12 rounded'
-                />
-                <View className='ml-3 flex-1'>
-                  <Text
-                    className='font-medium'
-                    style={{ color: colors.onSurface }}
-                  >
-                    {item.title}
-                  </Text>
-                  <View className='flex-row items-center'>
-                    <Text
-                      className='text-xs'
-                      style={{ color: colors.onSurfaceVariant }}
-                    >
-                      {item.artist}
-                    </Text>
-                    <Text
-                      className='mx-1 text-xs'
-                      style={{ color: colors.onSurfaceVariant }}
-                    >
-                      •
-                    </Text>
-                    <View className='rounded bg-gray-100 px-1.5 py-0.5'>
-                      <Text
-                        className='text-xs'
-                        style={{ color: colors.secondary }}
-                      >
-                        {item.source === 'ytbmusic' ? 'YTB' : 'BiliBili'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                <Text
-                  className='text-xs'
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {item.duration}
-                </Text>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-
-        {/* Recommendations */}
-        <View className='mb-2 p-4'>
-          <Text
-            className='mb-3 font-bold text-lg'
-            style={{ color: colors.primary }}
-          >
-            For You
-          </Text>
-
-          {isLoadingPopularVideos ? (
-            <ActivityIndicator />
-          ) : (
-            <View className='flex-row flex-wrap justify-between'>
-              {popularVideos.map((item: Track) => (
-                <TouchableOpacity
-                  key={item.id}
-                  className='mb-4 w-[48%] overflow-hidden rounded-lg'
-                  activeOpacity={0.7}
-                >
-                  <Image
-                    source={{ uri: item.cover }}
-                    className='h-32 w-full rounded-lg'
-                  />
-                  <View className='mt-1'>
-                    <Text
-                      className='font-medium'
-                      style={{ color: colors.onSurface }}
-                    >
-                      {item.title}
-                    </Text>
-                    <View className='flex-row items-center'>
-                      <Text
-                        className='text-xs'
-                        style={{ color: colors.onSurfaceVariant }}
-                      >
-                        {item.artist}
-                      </Text>
-                      <View className='ml-1 rounded bg-gray-100 px-1 py-0.5'>
-                        <Text
-                          className='text-xs'
-                          style={{ color: colors.secondary }}
-                        >
-                          {item.source === 'ytbmusic' ? 'YTB' : 'BiliBili'}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                你好，音乐爱好者
+              </Text>
+              <Text
+                variant='bodyMedium'
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                发现新音乐，享受好心情
+              </Text>
             </View>
-          )}
+            <Avatar.Image
+              size={40}
+              source={{ uri: 'https://i.pravatar.cc/300' }}
+            />
+          </View>
         </View>
 
-        {/* Synced Playlists */}
-        <View className='mb-16 p-4'>
-          <Text
-            className='mb-3 font-bold text-lg'
-            style={{ color: colors.primary }}
+        {/* 分类选择区 */}
+        <View className='mb-4 px-4'>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 16 }}
           >
-            Your Library
-          </Text>
-
-          {isLoadingPlaylists ? (
-            <ActivityIndicator />
-          ) : (
-            syncedPlaylists.map((playlist: Playlist) => (
-              <TouchableOpacity
-                key={playlist.id}
-                className='mb-2 flex-row items-center rounded-lg p-2'
-                style={{ backgroundColor: colors.surface }}
-                activeOpacity={0.7}
+            {mockCategories.map((category) => (
+              <Chip
+                key={category.id}
+                icon={category.icon}
+                onPress={() => {}}
+                style={{ marginRight: 8 }}
+                mode='outlined'
               >
-                <Image
-                  source={{ uri: playlist.cover }}
-                  className='h-16 w-16 rounded'
-                />
-                <View className='ml-3'>
-                  <Text
-                    className='font-medium'
-                    style={{ color: colors.onSurface }}
-                  >
-                    {playlist.title}
-                  </Text>
-                  <View className='flex-row items-center'>
-                    <Text
-                      className='text-xs'
-                      style={{ color: colors.onSurfaceVariant }}
-                    >
-                      {playlist.count} tracks •
-                    </Text>
-                    <View className='ml-1 rounded bg-gray-100 px-1 py-0.5'>
-                      <Text
-                        className='text-xs'
-                        style={{ color: colors.secondary }}
-                      >
-                        {playlist.source === 'ytbmusic'
-                          ? 'YTB'
-                          : playlist.source === 'bilibili'
-                            ? 'BiliBili'
-                            : 'Mixed'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
+                {category.name}
+              </Chip>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* 最近播放 */}
+        <View className='mb-6 px-4'>
+          <View className='mb-2 flex-row items-center justify-between'>
+            <Text
+              variant='titleLarge'
+              style={{ fontWeight: 'bold' }}
+            >
+              最近播放
+            </Text>
+            <TouchableOpacity>
+              <Text
+                variant='labelLarge'
+                style={{ color: colors.primary }}
+              >
+                查看全部
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {recentlyPlayed?.map(renderRecentItem)}
+        </View>
+
+        {/* 为你推荐 */}
+        <View className='mb-6'>
+          <View className='mb-2 flex-row items-center justify-between px-4'>
+            <Text
+              variant='titleLarge'
+              style={{ fontWeight: 'bold' }}
+            >
+              为你推荐
+            </Text>
+            <TouchableOpacity>
+              <Text
+                variant='labelLarge'
+                style={{ color: colors.primary }}
+              >
+                更多
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
+          >
+            {popularVideos?.map(renderForYouItem)}
+          </ScrollView>
+        </View>
+
+        {/* 你的播放列表 */}
+        <View className='mb-6'>
+          <View className='mb-2 flex-row items-center justify-between px-4'>
+            <Text
+              variant='titleLarge'
+              style={{ fontWeight: 'bold' }}
+            >
+              你的播放列表
+            </Text>
+            <TouchableOpacity>
+              <Text
+                variant='labelLarge'
+                style={{ color: colors.primary }}
+              >
+                查看全部
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
+          >
+            {playlists?.map(renderPlaylistItem)}
+          </ScrollView>
         </View>
       </ScrollView>
 
-      {/* Currently Playing Bar */}
-      <NowPlayingBar />
+      {/* 当前播放栏 */}
+      <View className='absolute right-0 bottom-0 left-0'>
+        <NowPlayingBar />
+      </View>
     </View>
   )
 }
 
-export default MusicPlayerApp
+export default HomePage
