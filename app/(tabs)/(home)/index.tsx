@@ -214,13 +214,13 @@ const HomePage = () => {
                 variant='headlineSmall'
                 style={{ fontWeight: 'bold' }}
               >
-                你好，音乐爱好者
+                BiliMusic
               </Text>
               <Text
                 variant='bodyMedium'
                 style={{ color: colors.onSurfaceVariant }}
               >
-                发现新音乐，享受好心情
+                我只想听点音乐，拜托让一切简单点
               </Text>
             </View>
             <Avatar.Image

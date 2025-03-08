@@ -293,15 +293,17 @@ export default function LibraryScreen() {
         </View>
 
         {/* 搜索栏 */}
-        <Searchbar
-          placeholder='搜索我的音乐库'
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          elevation={0}
-          mode='bar'
-          className='mb-4 rounded-full'
-          style={{ backgroundColor: colors.surfaceVariant }}
-        />
+        <View className='mb-4'>
+          <Searchbar
+            placeholder='搜索我的音乐库'
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            elevation={0}
+            mode='bar'
+            className='rounded-full'
+            style={{ backgroundColor: colors.surfaceVariant }}
+          />
+        </View>
 
         {/* 分段按钮 */}
         <SegmentedButtons
