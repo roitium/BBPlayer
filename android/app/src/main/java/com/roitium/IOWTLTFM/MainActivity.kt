@@ -1,4 +1,4 @@
-package com.roitium.IOWTLTFM
+package com.roitium.BBPlayer
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

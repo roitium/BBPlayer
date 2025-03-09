@@ -1,4 +1,4 @@
-package com.roitium.IOWTLTFM
+package com.roitium.BBPlayer
 
 import android.app.Application
 import android.content.res.Configuration

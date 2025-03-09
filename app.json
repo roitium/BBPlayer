@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "IOWTLTFM",
-    "slug": "IOWTLTFM",
+    "name": "BBPlayer",
+    "slug": "BBPlayer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,7 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.roitium.IOWTLTFM"
+      "package": "com.roitium.BBPlayer"
     },
     "web": {
       "bundler": "metro",
