@@ -1,5 +1,5 @@
 import { router, Stack } from 'expo-router'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   View,
   Image,
@@ -17,22 +17,50 @@ import {
   Divider,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import {
+  usePlayerStore,
+  usePlaybackProgress,
+  usePlaybackStateHook,
+} from '@/lib/store/usePlayerStore'
 
 export default function PlayerPage() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const { width: screenWidth } = Dimensions.get('window')
 
-  // 状态
-  const [isPlaying, setIsPlaying] = useState(true)
+  // 从播放器store获取状态和方法
+  const {
+    currentTrack,
+    isPlaying,
+    isBuffering,
+    repeatMode,
+    shuffleMode,
+    togglePlay,
+    skipToNext,
+    skipToPrevious,
+    seekTo,
+    toggleRepeatMode,
+    toggleShuffleMode,
+  } = usePlayerStore()
+
+  // 获取播放进度
+  const { position, duration } = usePlaybackProgress()
+
+  // 获取播放状态
+  const playbackState = usePlaybackStateHook()
+
+  // 本地状态
   const [isFavorite, setIsFavorite] = useState(false)
-  const [repeatMode, setRepeatMode] = useState('off') // 'off', 'all', 'one'
-  const [shuffleMode, setShuffleMode] = useState(false)
   const [viewMode, setViewMode] = useState('cover') // 'cover' or 'lyrics'
-  const [currentTime, setCurrentTime] = useState(85) // seconds
-  const [duration, setDuration] = useState(255) // seconds
   const [menuVisible, setMenuVisible] = useState(false)
-  const [sliderValue, setSliderValue] = useState(currentTime / duration)
+  const [sliderValue, setSliderValue] = useState(0)
+
+  // 更新滑块值
+  useEffect(() => {
+    if (duration > 0) {
+      setSliderValue(position / duration)
+    }
+  }, [position, duration])
 
   // 动画值
   const scrollY = useRef(new Animated.Value(0)).current
@@ -42,34 +70,6 @@ export default function PlayerPage() {
     extrapolate: 'clamp',
   })
 
-  // 模拟歌曲数据
-  const songData = {
-    id: '1',
-    title: '夏日漫步',
-    artist: '陈绮贞',
-    album: '华语经典',
-    cover:
-      'http://i1.hdslb.com/bfs/archive/c2c74deabe26d62c1fb50c36f1fed8d562ed3338.jpg',
-    source: 'bilibili',
-    lyrics: [
-      { id: 'lyric_1', time: 0, text: '[音乐前奏]' },
-      { id: 'lyric_2', time: 15, text: '漫步在夏日的街头' },
-      { id: 'lyric_3', time: 30, text: '感受微风拂过我的脸' },
-      { id: 'lyric_4', time: 45, text: '阳光洒在肩膀上' },
-      { id: 'lyric_5', time: 60, text: '这一刻如此美好' },
-      { id: 'lyric_6', time: 75, text: '海浪轻轻拍打' },
-      { id: 'lyric_7', time: 90, text: '金色的沙滩' },
-      { id: 'lyric_8', time: 105, text: '夏日的记忆' },
-      { id: 'lyric_9', time: 120, text: '永远留存' },
-      { id: 'lyric_10', time: 135, text: '[间奏]' },
-      { id: 'lyric_11', time: 165, text: '沙滩漫步与日落' },
-      { id: 'lyric_12', time: 180, text: '创造永恒的回忆' },
-      { id: 'lyric_13', time: 195, text: '在夏日的温暖中' },
-      { id: 'lyric_14', time: 210, text: '完美的一天' },
-      { id: 'lyric_15', time: 225, text: '完美的一天...' },
-    ],
-  }
-
   // 格式化时间
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -77,34 +77,36 @@ export default function PlayerPage() {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`
   }
 
-  // 查找当前歌词
-  const getCurrentLyric = () => {
-    for (let i = songData.lyrics.length - 1; i >= 0; i--) {
-      if (currentTime >= songData.lyrics[i].time) {
-        return i
-      }
-    }
-    return 0
+  // 切换视图模式 - 暂时只支持封面模式
+  const toggleViewMode = () => {
+    setViewMode('cover') // 暂时只支持封面模式
   }
 
-  const currentLyricIndex = getCurrentLyric()
+  // 如果没有当前曲目，显示空状态
+  if (!currentTrack) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>没有正在播放的曲目</Text>
+        <IconButton
+          icon='arrow-left'
+          onPress={() => router.back()}
+        />
+      </View>
+    )
+  }
+
+  // 当前歌词索引 - 暂不支持歌词功能
+  const currentLyricIndex = 0
 
   // 切换重复模式
   const cycleRepeatMode = () => {
-    if (repeatMode === 'off') setRepeatMode('all')
-    else if (repeatMode === 'all') setRepeatMode('one')
-    else setRepeatMode('off')
-  }
-
-  // 切换视图模式
-  const toggleViewMode = () => {
-    setViewMode(viewMode === 'cover' ? 'lyrics' : 'cover')
+    toggleRepeatMode()
   }
 
   // 处理滑块变化
   const handleSliderChange = (value: number) => {
     setSliderValue(value)
-    setCurrentTime(value * duration)
+    seekTo(value * duration)
   }
 
   // 使用自定义进度条替代Slider组件
@@ -119,7 +121,7 @@ export default function PlayerPage() {
             className='h-full rounded-full'
             style={{
               backgroundColor: colors.primary,
-              width: `${(currentTime / duration) * 100}%`,
+              width: `${(position / duration) * 100}%`,
             }}
           />
         </View>
@@ -128,7 +130,7 @@ export default function PlayerPage() {
             variant='bodySmall'
             style={{ color: colors.onSurfaceVariant }}
           >
-            {formatTime(currentTime)}
+            {formatTime(position)}
           </Text>
           <Text
             variant='bodySmall'
@@ -153,7 +155,7 @@ export default function PlayerPage() {
       {/* 背景图片（模糊效果） */}
       <View className='absolute h-full w-full'>
         <Image
-          source={{ uri: songData.cover }}
+          source={{ uri: currentTrack.cover }}
           className='h-full w-full'
           style={{ opacity: 0.3 }}
           blurRadius={25}
@@ -185,7 +187,7 @@ export default function PlayerPage() {
             numberOfLines={1}
             className='flex-1 text-center'
           >
-            {songData.title}
+            {currentTrack.title}
           </Text>
           <IconButton
             icon='dots-vertical'
@@ -239,7 +241,7 @@ export default function PlayerPage() {
               elevation={5}
             >
               <Image
-                source={{ uri: songData.cover }}
+                source={{ uri: currentTrack.cover }}
                 style={{ width: screenWidth - 80, height: screenWidth - 80 }}
                 className='rounded-2xl'
               />
@@ -256,14 +258,14 @@ export default function PlayerPage() {
                 style={{ fontWeight: 'bold' }}
                 numberOfLines={1}
               >
-                {songData.title}
+                {currentTrack.title}
               </Text>
               <Text
-                variant='titleSmall'
+                variant='bodyMedium'
                 style={{ color: colors.onSurfaceVariant }}
                 numberOfLines={1}
               >
-                {songData.artist} · {songData.album}
+                {currentTrack.artist}
               </Text>
             </View>
             <IconButton
@@ -283,29 +285,29 @@ export default function PlayerPage() {
               icon={shuffleMode ? 'shuffle-variant' : 'shuffle-disabled'}
               size={24}
               iconColor={shuffleMode ? colors.primary : colors.onSurfaceVariant}
-              onPress={() => setShuffleMode(!shuffleMode)}
+              onPress={toggleShuffleMode}
             />
             <IconButton
               icon='skip-previous'
               size={32}
-              onPress={() => {}}
+              onPress={skipToPrevious}
             />
             <TouchableOpacity
               className='items-center justify-center rounded-full p-2'
               style={{ backgroundColor: colors.primaryContainer }}
-              onPress={() => setIsPlaying(!isPlaying)}
+              onPress={togglePlay}
             >
               <IconButton
                 icon={isPlaying ? 'pause' : 'play'}
                 size={36}
                 iconColor={colors.primary}
-                onPress={() => setIsPlaying(!isPlaying)}
+                onPress={togglePlay}
               />
             </TouchableOpacity>
             <IconButton
               icon='skip-next'
               size={32}
-              onPress={() => {}}
+              onPress={skipToNext}
             />
             <IconButton
               icon={
@@ -323,45 +325,6 @@ export default function PlayerPage() {
             />
           </View>
         </View>
-
-        {/* 歌词区域 */}
-        {viewMode === 'lyrics' && (
-          <View className='mt-8 px-6'>
-            <Text
-              variant='titleMedium'
-              className='mb-4 text-center'
-              style={{ fontWeight: 'bold' }}
-            >
-              歌词
-            </Text>
-            <View className='mb-8'>
-              {songData.lyrics.map((line, index) => (
-                <View
-                  key={line.id}
-                  className='py-2'
-                >
-                  <Text
-                    className='text-center'
-                    variant={
-                      index === currentLyricIndex ? 'titleMedium' : 'bodyMedium'
-                    }
-                    style={{
-                      color:
-                        index === currentLyricIndex
-                          ? colors.primary
-                          : colors.onSurfaceVariant,
-                      fontWeight:
-                        index === currentLyricIndex ? 'bold' : 'normal',
-                      opacity: index === currentLyricIndex ? 1 : 0.7,
-                    }}
-                  >
-                    {line.text}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
       </ScrollView>
 
       {/* 菜单 */}

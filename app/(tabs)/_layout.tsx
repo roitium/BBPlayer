@@ -47,6 +47,19 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tab.Screen
+        name='test/index'
+        options={{
+          title: '测试',
+          tabBarIcon: ({ color }: { color: string }) => (
+            <IconSymbol
+              size={26}
+              name='wrench.fill'
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tab>
   )
 }

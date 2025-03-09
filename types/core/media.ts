@@ -1,5 +1,6 @@
 export interface Track {
   id: string // 对 b 站视频来说，是 bvid
+  cid?: number // b 站特有的属性
   title: string
   artist: string
   cover: string

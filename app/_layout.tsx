@@ -17,7 +17,7 @@ import * as Clipboard from 'expo-clipboard'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { type AppStateStatus, Platform, AppState, View } from 'react-native'
 import * as SplashScreen from 'expo-splash-screen'
-import TrackPlayer from 'react-native-track-player'
+import { setupPlayer } from '@/lib/services/setupPlayer'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -77,7 +77,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        await TrackPlayer.setupPlayer()
+        await setupPlayer()
       } catch (error) {
         console.error(error)
       } finally {

@@ -160,6 +160,7 @@ export const bilibiliApi = {
       {
         bvid,
         cid: String(cid),
+        fnval: '16', // 16 表示 dash 格式
       },
     )
     if (!response.dash.audio) {
@@ -192,5 +193,29 @@ export const bilibiliApi = {
       }
     }
     throw new Error('未找到音频流')
+  },
+
+  // 获取分 p 列表
+  async getPageList(bvid: string): Promise<
+    {
+      cid: number
+      page: number
+      part: string
+      duration: number
+      first_frame: string
+    }[]
+  > {
+    const response = await apiClient.get<
+      {
+        cid: number
+        page: number
+        part: string
+        duration: number
+        first_frame: string
+      }[]
+    >('/x/player/pagelist', {
+      bvid,
+    })
+    return response
   },
 }
