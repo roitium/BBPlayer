@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { router } from 'expo-router'
 import { useSearchResults, useHotSearches } from '@/hooks/api/useSearchData'
-import type { Track } from '@/hooks/api/types'
+import type { Track } from '@/types/core/media'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // 搜索历史的存储键

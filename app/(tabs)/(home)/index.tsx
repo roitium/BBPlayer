@@ -22,7 +22,7 @@ import {
   useRecentlyPlayed,
   useSyncedPlaylists,
 } from '@/hooks/api/useHomeData'
-import type { Track, Playlist } from '@/hooks/api/types'
+import type { Track, Playlist } from '@/types/core/media'
 
 const mockCategories = [
   { id: '1', name: '华语', icon: 'music-note' },
@@ -38,7 +38,12 @@ const HomePage = () => {
   const insets = useSafeAreaInsets()
   const [refreshing, setRefreshing] = useState(false)
 
-  // 使用 hook 获取真实数据
+  // useRefreshQueriesOnFocus([
+  //   homeQueryKeys.recentlyPlayed(),
+  //   homeQueryKeys.playlists(),
+  //   homeQueryKeys.popularVideos(),
+  // ])
+
   let {
     data: recentlyPlayed,
     isLoading: recentlyPlayedLoading,
