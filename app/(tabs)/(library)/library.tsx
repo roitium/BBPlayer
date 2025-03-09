@@ -174,6 +174,7 @@ export default function LibraryScreen() {
                 onPress={() => setMenuVisible(item.id)}
               />
             }
+            anchorPosition='bottom'
           >
             <Menu.Item
               onPress={() => {}}

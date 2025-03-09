@@ -13,16 +13,17 @@ import {
   Avatar,
   Surface,
   IconButton,
+  Menu,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
-import { router } from 'expo-router'
 import {
   usePopularVideos,
   useRecentlyPlayed,
   useSyncedPlaylists,
 } from '@/hooks/api/useHomeData'
 import type { Track, Playlist } from '@/types/core/media'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
 
 const mockCategories = [
   { id: '1', name: '华语', icon: 'music-note' },
@@ -37,6 +38,27 @@ const HomePage = () => {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const [refreshing, setRefreshing] = useState(false)
+  const { addToQueue, clearQueue } = usePlayerStore()
+  const [menuVisible, setMenuVisible] = useState<string | null>(null)
+
+  // 播放单曲（清空队列后播放）
+  const playSingleTrack = async (track: Track) => {
+    try {
+      await clearQueue()
+      await addToQueue([track])
+    } catch (error) {
+      console.error('播放单曲失败', error)
+    }
+  }
+
+  // 添加到队列
+  const addTrackToQueue = async (track: Track) => {
+    try {
+      await addToQueue([track])
+    } catch (error) {
+      console.error('添加到队列失败', error)
+    }
+  }
 
   // useRefreshQueriesOnFocus([
   //   homeQueryKeys.recentlyPlayed(),
@@ -78,7 +100,7 @@ const HomePage = () => {
       key={item.id}
       className='mb-2'
       activeOpacity={0.7}
-      onPress={() => router.push('/player')}
+      onPress={() => playSingleTrack(item)}
     >
       <Surface
         className='overflow-hidden rounded-lg'
@@ -118,12 +140,30 @@ const HomePage = () => {
               </Text>
             </View>
           </View>
-          <IconButton
-            icon='play-circle-outline'
-            iconColor={colors.primary}
-            size={24}
-            onPress={() => router.push('/player')}
-          />
+          <Menu
+            visible={menuVisible === item.id}
+            onDismiss={() => setMenuVisible(null)}
+            anchor={
+              <IconButton
+                icon='dots-vertical'
+                iconColor={colors.onSurfaceVariant}
+                size={24}
+                onPress={() => setMenuVisible(item.id)}
+              />
+            }
+            anchorPosition='bottom'
+          >
+            <Menu.Item
+              leadingIcon='play-circle'
+              onPress={() => playSingleTrack(item)}
+              title='立即播放'
+            />
+            <Menu.Item
+              leadingIcon='playlist-plus'
+              onPress={() => addTrackToQueue(item)}
+              title='添加到播放队列'
+            />
+          </Menu>
         </View>
       </Surface>
     </TouchableOpacity>
@@ -135,7 +175,8 @@ const HomePage = () => {
       key={item.id}
       className='mr-4 w-32'
       activeOpacity={0.7}
-      onPress={() => router.push('/player')}
+      onPress={() => playSingleTrack(item)}
+      onLongPress={() => setMenuVisible(item.id)}
     >
       <Image
         source={{ uri: item.cover }}
@@ -205,6 +246,7 @@ const HomePage = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
+            colors={[colors.primary]}
           />
         }
       >

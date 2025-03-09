@@ -1,3 +1,4 @@
+import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
 import { router } from 'expo-router'
 import { View, Image, TouchableOpacity } from 'react-native'
 import {
@@ -8,24 +9,20 @@ import {
   ProgressBar,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import TrackPlayer from 'react-native-track-player'
 
 export default function NowPlayingBar() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
-  const isPlaying = true // 模拟播放状态
+  const { currentTrack, isPlaying, skipToNext, skipToPrevious } =
+    usePlayerStore()
+  const progress = usePlaybackProgress()
 
-  // 模拟当前播放的歌曲数据
-  const currentSong = {
-    title: '夏日漫步',
-    artist: '陈绮贞',
-    cover:
-      'http://i2.hdslb.com/bfs/archive/1a6b02f1f4fce81ea063fd33a9793b84deaec765.jpg',
-    progress: 0.35, // 播放进度，0-1之间
-  }
+  if (!currentTrack) return null
 
   return (
     <Surface
-      className='mx-2 mb-2 overflow-hidden rounded-xl'
+      className='mx-2 mb-2 overflow-hidden rounded-xl shadow-lg'
       elevation={2}
     >
       <TouchableOpacity
@@ -37,7 +34,7 @@ export default function NowPlayingBar() {
       >
         {/* 进度条 */}
         <ProgressBar
-          progress={currentSong.progress}
+          animatedValue={progress.position / progress.duration}
           color={colors.primary}
           style={{ height: 2 }}
         />
@@ -45,7 +42,7 @@ export default function NowPlayingBar() {
         <View className='flex-row items-center p-2'>
           {/* 封面 */}
           <Image
-            source={{ uri: currentSong.cover }}
+            source={{ uri: currentTrack?.cover }}
             className='h-12 w-12 rounded-md'
           />
 
@@ -56,14 +53,14 @@ export default function NowPlayingBar() {
               numberOfLines={1}
               style={{ color: colors.onSurface }}
             >
-              {currentSong.title}
+              {currentTrack?.title}
             </Text>
             <Text
               variant='bodySmall'
               numberOfLines={1}
               style={{ color: colors.onSurfaceVariant }}
             >
-              {currentSong.artist}
+              {currentTrack?.artist}
             </Text>
           </View>
 
@@ -72,20 +69,26 @@ export default function NowPlayingBar() {
             <IconButton
               icon='skip-previous'
               size={24}
-              onPress={() => {}}
+              onPress={() => {
+                skipToPrevious()
+              }}
               iconColor={colors.onSurfaceVariant}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={24}
-              onPress={() => {}}
+              onPress={() => {
+                isPlaying ? TrackPlayer.pause() : TrackPlayer.play()
+              }}
               iconColor={colors.primary}
               style={{ margin: 0 }}
             />
             <IconButton
               icon='skip-next'
               size={24}
-              onPress={() => {}}
+              onPress={() => {
+                skipToNext()
+              }}
               iconColor={colors.onSurfaceVariant}
             />
           </View>

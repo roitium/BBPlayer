@@ -1,12 +1,17 @@
 import { IconSymbol } from '@/components/ui/IconSymbol'
 import { MaterialBottomTabs as Tab } from '@/components/MaterialBottomTabBar'
+import { useTheme } from 'react-native-paper'
 
 export default function TabLayout() {
+  const theme = useTheme()
   return (
     <Tab
       screenOptions={{
         tabBarHideOnKeyboard: true,
       }}
+      sceneAnimationEnabled
+      sceneAnimationType='opacity'
+      theme={theme}
     >
       <Tab.Screen
         name='(home)/index'
