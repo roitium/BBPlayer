@@ -313,7 +313,7 @@ export default function PlayerPage() {
               icon={
                 repeatMode === 'off'
                   ? 'repeat-off'
-                  : repeatMode === 'one'
+                  : repeatMode === 'track'
                     ? 'repeat-once'
                     : 'repeat'
               }

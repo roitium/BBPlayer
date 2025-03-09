@@ -36,20 +36,3 @@ export const useSyncedPlaylists = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
-
-// 额外的 hooks
-export const useWatchLater = () => {
-  return useQuery({
-    queryKey: ['watchLater'],
-    queryFn: () => bilibiliApi.getWatchLater(),
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-export const useFollowingVideos = () => {
-  return useQuery({
-    queryKey: ['following'],
-    queryFn: () => bilibiliApi.getFollowingVideos(),
-    staleTime: 5 * 60 * 1000,
-  })
-}

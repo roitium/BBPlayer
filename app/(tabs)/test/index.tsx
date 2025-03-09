@@ -6,7 +6,7 @@ import { useState } from 'react'
 import type { Track } from '@/types/core/media'
 
 export default function TestPage() {
-  const { playTrack, addToQueue, clearQueue, queue } = usePlayerStore()
+  const { addToQueue, clearQueue, queue } = usePlayerStore()
   const [loading, setLoading] = useState(false)
 
   // 测试曲目
@@ -37,7 +37,7 @@ export default function TestPage() {
   const handlePlayTrack = async (track: Track) => {
     try {
       setLoading(true)
-      await playTrack(track)
+      await addToQueue([track])
       router.push('/player')
     } catch (error) {
       console.error('播放失败:', error)
