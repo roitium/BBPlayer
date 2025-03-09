@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BBPlayer",
-    "slug": "BBPlayer",
+    "slug": "bbplayer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,8 +43,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "a14269bc-90aa-4f80-bef9-5909e98343ea"
+        "projectId": "1cbd8d50-e322-4ead-98b6-4ee8b6f2a707"
       }
-    }
+    },
+    "owner": "roitium"
   }
 }
