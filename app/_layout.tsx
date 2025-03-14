@@ -19,7 +19,7 @@ import { type AppStateStatus, Platform, AppState, View } from 'react-native'
 import * as SplashScreen from 'expo-splash-screen'
 import { setupPlayer } from '@/lib/services/setupPlayer'
 import useAppStore from '@/lib/store/useAppStore'
-
+import Toast from 'react-native-toast-message'
 const developement = process.env.NODE_ENV === 'development'
 
 // Keep the splash screen visible while we fetch resources
@@ -133,6 +133,7 @@ export default function RootLayout() {
         </PaperProvider>
         {developement && <DevToolsBubble onCopy={onCopy} />}
       </QueryClientProvider>
+      <Toast />
     </View>
   )
 }

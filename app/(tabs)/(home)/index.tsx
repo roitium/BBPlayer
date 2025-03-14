@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native'
 import {
   Text,
@@ -19,7 +20,7 @@ import {
   Button,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   usePopularVideos,
   useRecentlyPlayed,
@@ -29,6 +30,7 @@ import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
 import { formatDurationToHHMM } from '@/utils/times'
+import Toast from 'react-native-toast-message'
 
 const mockCategories = [
   { id: '1', name: '翻唱', icon: 'music-note' },
@@ -149,6 +151,20 @@ const HomePage = () => {
     setRefreshing(false)
   }
 
+  useEffect(() => {
+    if (recentlyPlayed?.[0]?.cover) {
+      console.log('测试图片：', recentlyPlayed?.[0]?.cover)
+      fetch(recentlyPlayed?.[0]?.cover).then((res) => {
+        console.log('测试图片：', res)
+        Toast.show({
+          text1: `测试图片：${recentlyPlayed?.[0]?.cover}`,
+          text2: `状态：${res.status}`,
+          type: 'success',
+        })
+      })
+    }
+  }, [recentlyPlayed])
+
   // 渲染最近播放项
   const renderRecentItem = (item: Track) => (
     <TouchableOpacity
@@ -166,6 +182,15 @@ const HomePage = () => {
             source={{ uri: item.cover }}
             className='rounded'
             style={{ width: 48, height: 48 }}
+            onError={(error) => {
+              // console.log('图片加载失败：', error)
+              // Toast.show({
+              //   text1: `图片加载失败：${item.cover}`,
+              //   text2: `错误：${error.nativeEvent.error}`,
+              //   type: 'error',
+              // })
+              Alert.alert('图片加载失败', error.nativeEvent.error)
+            }}
           />
           <View className='ml-3 flex-1'>
             <Text
