@@ -10,7 +10,7 @@ import type {
 } from '@/types/apis/bilibili'
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
-
+import { formatHHMMToSeconds } from '@/utils/times'
 // 转换工具函数
 const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
   return videos.map((video) => ({
@@ -28,20 +28,41 @@ const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
 const convertVideoDetailsToTracks = (
   videos: BilibiliVideoDetails[],
 ): Track[] => {
-  return videos.map((video) => ({
-    id: video.bvid,
-    title: video.title,
-    artist: video.owner.name,
-    cover: video.pic,
-    source: 'bilibili' as const,
-    duration: formatDurationToSeconds(video.duration),
-    createTime: video.pubtime,
-  }))
+  try {
+    const tracks: Track[] = []
+    for (const video of videos) {
+      tracks.push({
+        id: video.bvid,
+        title: video.title,
+        artist: video.owner.name,
+        cover: video.pic,
+        source: 'bilibili' as const,
+        duration: Number(video.duration),
+        createTime: video.pubdate,
+      })
+    }
+    return tracks
+  } catch (error) {
+    console.error(error)
+    return []
+  }
+  // return videos.map((video) => {
+  //   return {
+  //     id: video.bvid,
+  //     title: video.title,
+  //     artist: video.owner.name,
+  //     cover: video.pic,
+  //     source: 'bilibili' as const,
+  //     duration: formatHHMMToSeconds(video.duration),
+  //     createTime: video.pubdate,
+  //   }
+  // })
 }
 
 const convertFavoriteToPlaylists = (
   playlists: BilibiliPlaylist[],
 ): Playlist[] => {
+  console.log(playlists[2])
   return playlists.map((playlist) => ({
     id: playlist.id,
     title: playlist.title,
@@ -50,18 +71,6 @@ const convertFavoriteToPlaylists = (
     source: 'bilibili' as const,
     biliType: 'favorite' as const,
   }))
-}
-
-const formatDuration = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-}
-
-// HH:MM 转换为秒
-const formatDurationToSeconds = (duration: string): number => {
-  const [hours, minutes, seconds] = duration.split(':').map(Number)
-  return hours * 3600 + minutes * 60 + seconds
 }
 
 // 转换搜索结果为Track
@@ -74,7 +83,7 @@ const convertSearchVideosToTracks = (
     artist: video.author,
     cover: `https:${video.pic}`,
     source: 'bilibili' as const,
-    duration: formatDurationToSeconds(video.duration),
+    duration: formatHHMMToSeconds(video.duration),
     createTime: video.senddate,
   }))
 }
@@ -256,8 +265,5 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     return response
   },
 })
-
-// 为了向后兼容，导出一个默认的空 cookie 实例
-export const bilibiliApi = createBilibiliApi(() => '')
 
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>

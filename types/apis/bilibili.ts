@@ -56,7 +56,7 @@ interface BilibiliVideoDetails {
   bvid: string
   title: string
   pic: string
-  pubtime: number
+  pubdate: number
   duration: string
   owner: {
     name: string
