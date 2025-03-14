@@ -22,6 +22,7 @@ import {
   usePlaybackProgress,
   usePlaybackStateHook,
 } from '@/lib/store/usePlayerStore'
+import { RepeatMode } from 'react-native-track-player'
 
 export default function PlayerPage() {
   const { colors } = useTheme()
@@ -311,15 +312,17 @@ export default function PlayerPage() {
             />
             <IconButton
               icon={
-                repeatMode === 'off'
+                repeatMode === RepeatMode.Off
                   ? 'repeat-off'
-                  : repeatMode === 'track'
+                  : repeatMode === RepeatMode.Track
                     ? 'repeat-once'
                     : 'repeat'
               }
               size={24}
               iconColor={
-                repeatMode !== 'off' ? colors.primary : colors.onSurfaceVariant
+                repeatMode !== RepeatMode.Off
+                  ? colors.primary
+                  : colors.onSurfaceVariant
               }
               onPress={cycleRepeatMode}
             />

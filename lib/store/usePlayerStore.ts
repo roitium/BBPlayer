@@ -6,6 +6,7 @@ import TrackPlayer, {
   useProgress,
   Capability,
   Event,
+  RepeatMode,
 } from 'react-native-track-player'
 import useAppStore from './useAppStore'
 import type { Track } from '@/types/core/media'
@@ -15,10 +16,6 @@ import { middleware } from 'zustand-expo-devtools'
 const STREAM_EXPIRY_TIME = 120 * 60 * 1000 // 120分钟
 
 // ==================== 辅助函数 ====================
-
-const logDebug = (message: string, data?: unknown) => {
-  console.log(`[Player Debug] ${message}`, data ? data : '')
-}
 
 const logError = (message: string, error: unknown) => {
   console.error(`[Player Error] ${message}`, error)
@@ -84,7 +81,7 @@ interface PlayerState {
   // 播放状态
   isPlaying: boolean
   isBuffering: boolean
-  repeatMode: 'off' | 'track' | 'queue'
+  repeatMode: RepeatMode
   shuffleMode: boolean
 }
 
@@ -294,7 +291,7 @@ const PlayerLogic = {
       Event.PlaybackState,
       async (data: { state: TrackPlayerState }) => {
         const { state } = data
-        const store = getStore() // 获取最新的 store 状态
+        const store = getStore()
 
         // 获取状态名称用于日志
         const stateName =
@@ -359,33 +356,26 @@ const PlayerLogic = {
           currentTrack: store.currentTrack?.title,
           queueLength: queue.length,
         })
-
-        if (repeatMode === 'track') {
-          // 单曲循环
-          logDetailedDebug('单曲循环: 重新播放当前曲目', {
-            trackId: store.currentTrack?.id,
-            title: store.currentTrack?.title,
+      },
+    )
+    TrackPlayer.addEventListener(
+      Event.PlaybackError,
+      async (data: { code: string; message: string }) => {
+        logError('播放错误', data)
+        const nowTrack = getStore().currentTrack
+        if (nowTrack) {
+          logDetailedDebug('当前播放的曲目', {
+            trackId: nowTrack.id,
+            title: nowTrack.title,
           })
-          await TrackPlayer.seekTo(0)
-          await TrackPlayer.play()
-        } else if (
-          repeatMode === 'queue' &&
-          currentIndex === queue.length - 1
-        ) {
-          // 队列循环且是最后一首
-          logDetailedDebug('队列循环: 从头开始播放队列')
-          const firstTrack = queue[0]
-          if (firstTrack) {
-            logDetailedDebug('开始播放队列第一首', {
-              trackId: firstTrack.id,
-              title: firstTrack.title,
+          const track = await getStore().checkAndUpdateAudioStream(nowTrack)
+          if (track) {
+            logDetailedDebug('更新音频流成功', {
+              trackId: track.id,
+              title: track.title,
             })
-            await TrackPlayer.skip(0)
-          } else {
-            logDetailedDebug('队列为空，无法从头开始播放')
+            await TrackPlayer.load(convertToRNTPTrack(track))
           }
-        } else {
-          logDetailedDebug('播放结束，不循环')
         }
       },
     )
@@ -407,7 +397,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     currentTrack: null,
     isPlaying: false,
     isBuffering: false,
-    repeatMode: 'off',
+    repeatMode: RepeatMode.Off,
     shuffleMode: false,
   }
 
@@ -676,21 +666,21 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
 
     // 切换重复模式
-    toggleRepeatMode: () => {
+    toggleRepeatMode: async () => {
       const { repeatMode } = get()
       logDetailedDebug('调用 toggleRepeatMode()', {
         currentMode: repeatMode,
       })
 
-      let newMode: 'off' | 'track' | 'queue'
-      if (repeatMode === 'off') {
-        newMode = 'track'
-      } else if (repeatMode === 'track') {
-        newMode = 'queue'
+      let newMode: RepeatMode
+      if (repeatMode === RepeatMode.Off) {
+        newMode = RepeatMode.Track
+      } else if (repeatMode === RepeatMode.Track) {
+        newMode = RepeatMode.Queue
       } else {
-        newMode = 'off'
+        newMode = RepeatMode.Off
       }
-
+      await TrackPlayer.setRepeatMode(newMode)
       set({ repeatMode: newMode })
       logDetailedDebug('状态已更新：重复模式已更改', { newMode })
     },
