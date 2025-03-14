@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili'
+import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 
 export const homeQueryKeys = {
   all: ['home'] as const,
@@ -8,7 +8,7 @@ export const homeQueryKeys = {
   popularVideos: () => [...homeQueryKeys.all, 'popularVideos'] as const,
 } as const
 
-export const usePopularVideos = () => {
+export const usePopularVideos = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: homeQueryKeys.popularVideos(),
     // 这是音乐分区的id
@@ -18,7 +18,7 @@ export const usePopularVideos = () => {
 }
 
 // 单独的查询 hooks，以便可以独立刷新和缓存
-export const useRecentlyPlayed = () => {
+export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: homeQueryKeys.recentlyPlayed(),
     queryFn: () => bilibiliApi.getHistory(),
@@ -26,13 +26,13 @@ export const useRecentlyPlayed = () => {
   })
 }
 
-export const useSyncedPlaylists = () => {
+export const useSyncedPlaylists = (
+  bilibiliApi: BilibiliApi,
+  userMid: number,
+) => {
   return useQuery({
     queryKey: homeQueryKeys.playlists(),
-    queryFn: () =>
-      bilibiliApi.getFavoritePlaylists(
-        Number(process.env.EXPO_PUBLIC_USER_MID),
-      ),
+    queryFn: () => bilibiliApi.getFavoritePlaylists(userMid),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

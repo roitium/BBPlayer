@@ -88,6 +88,13 @@ interface BilibiliHotSearch {
   show_name: string
 }
 
+// 用户详细信息
+interface BilibiliUserInfo {
+  mid: number
+  name: string
+  face: string
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -96,4 +103,5 @@ export type {
   BilibiliPlaylist,
   BilibiliSearchVideo,
   BilibiliHotSearch,
+  BilibiliUserInfo,
 }

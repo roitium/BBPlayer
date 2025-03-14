@@ -14,6 +14,9 @@ import {
   Surface,
   IconButton,
   Menu,
+  Dialog,
+  TextInput,
+  Button,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
@@ -24,15 +27,57 @@ import {
 } from '@/hooks/api/useHomeData'
 import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import useAppStore from '@/lib/store/useAppStore'
 
 const mockCategories = [
-  { id: '1', name: '华语', icon: 'music-note' },
-  { id: '2', name: '流行', icon: 'music-note' },
-  { id: '3', name: '摇滚', icon: 'music-note' },
-  { id: '4', name: '民谣', icon: 'music-note' },
-  { id: '5', name: '电子', icon: 'music-note' },
-  { id: '6', name: '说唱', icon: 'music-note' },
+  { id: '1', name: '翻唱', icon: 'music-note' },
+  { id: '2', name: 'VOCALOID', icon: 'music-note' },
+  { id: '3', name: '人力音MAD', icon: 'music-note' },
+  { id: '4', name: '原创', icon: 'music-note' },
+  { id: '5', name: 'OST', icon: 'music-note' },
 ]
+
+const SetCookieDialog = ({
+  visible,
+  setVisible,
+  setCookie,
+  cookie,
+  setBilibiliCookie,
+}: {
+  visible: boolean
+  setVisible: (visible: boolean) => void
+  setCookie: (cookie: string) => void
+  cookie: string
+  setBilibiliCookie: (cookie: string) => void
+}) => {
+  return (
+    <Dialog
+      visible={visible}
+      onDismiss={() => setVisible(false)}
+    >
+      <Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
+      <Dialog.Content>
+        <TextInput
+          label='Cookie'
+          value={cookie}
+          onChangeText={setCookie}
+        />
+      </Dialog.Content>
+      <Dialog.Actions>
+        <Button onPress={() => setVisible(false)}>取消</Button>
+        <Button
+          onPress={() => {
+            setCookie(cookie)
+            setBilibiliCookie(cookie)
+            setVisible(false)
+          }}
+        >
+          确定
+        </Button>
+      </Dialog.Actions>
+    </Dialog>
+  )
+}
 
 const HomePage = () => {
   const { colors } = useTheme()
@@ -40,6 +85,15 @@ const HomePage = () => {
   const [refreshing, setRefreshing] = useState(false)
   const { addToQueue, clearQueue } = usePlayerStore()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
+  const {
+    bilibiliCookie,
+    bilibiliAvatar,
+    setBilibiliCookie,
+    bilibiliApi,
+    bilibiliUid,
+  } = useAppStore()
+  const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
+  const [cookie, setCookie] = useState(bilibiliCookie)
 
   // 播放单曲（清空队列后播放）
   const playSingleTrack = async (track: Track) => {
@@ -70,18 +124,18 @@ const HomePage = () => {
     data: recentlyPlayed,
     isLoading: recentlyPlayedLoading,
     refetch: recentlyPlayedRefetch,
-  } = useRecentlyPlayed()
+  } = useRecentlyPlayed(bilibiliApi)
 
   const {
     data: playlists,
     isLoading: playlistsLoading,
     refetch: playlistsRefetch,
-  } = useSyncedPlaylists()
+  } = useSyncedPlaylists(bilibiliApi, bilibiliUid)
   let {
     data: popularVideos,
     isLoading: popularVideosLoading,
     refetch: popularVideosRefetch,
-  } = usePopularVideos()
+  } = usePopularVideos(bilibiliApi)
 
   if (!recentlyPlayedLoading) recentlyPlayed = recentlyPlayed?.slice(0, 10)
   if (!popularVideosLoading) popularVideos = popularVideos?.slice(0, 10)
@@ -109,7 +163,8 @@ const HomePage = () => {
         <View className='flex-row items-center p-2'>
           <Image
             source={{ uri: item.cover }}
-            className='h-12 w-12 rounded'
+            className='rounded'
+            style={{ width: 48, height: 48 }}
           />
           <View className='ml-3 flex-1'>
             <Text
@@ -261,7 +316,7 @@ const HomePage = () => {
                 variant='headlineSmall'
                 style={{ fontWeight: 'bold' }}
               >
-                BiliMusic
+                BBPlayer
               </Text>
               <Text
                 variant='bodyMedium'
@@ -270,10 +325,18 @@ const HomePage = () => {
                 我只想听点音乐，拜托让一切简单点
               </Text>
             </View>
-            <Avatar.Image
-              size={40}
-              source={{ uri: 'https://i.pravatar.cc/300' }}
-            />
+            <TouchableOpacity
+              onPress={() => {
+                setSetCookieDialogVisible(true)
+              }}
+            >
+              <Avatar.Image
+                size={40}
+                source={{
+                  uri: bilibiliAvatar,
+                }}
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -378,6 +441,14 @@ const HomePage = () => {
       <View className='absolute right-0 bottom-0 left-0'>
         <NowPlayingBar />
       </View>
+
+      <SetCookieDialog
+        visible={setCookieDialogVisible}
+        setVisible={setSetCookieDialogVisible}
+        setCookie={setCookie}
+        cookie={cookie}
+        setBilibiliCookie={setBilibiliCookie}
+      />
     </View>
   )
 }

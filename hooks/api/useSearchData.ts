@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili'
+import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 
 export const searchQueryKeys = {
   all: ['search'] as const,
@@ -13,6 +13,7 @@ export const useSearchResults = (
   query: string,
   page: number,
   page_size: number,
+  bilibiliApi: BilibiliApi,
 ) => {
   return useQuery({
     queryKey: searchQueryKeys.results(query, page, page_size),
@@ -23,7 +24,7 @@ export const useSearchResults = (
 }
 
 // 热门搜索查询
-export const useHotSearches = () => {
+export const useHotSearches = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: searchQueryKeys.hotSearches(),
     queryFn: () => bilibiliApi.getHotSearches(),

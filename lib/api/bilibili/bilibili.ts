@@ -6,6 +6,7 @@ import type {
   BilibiliHotSearch,
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
+  BilibiliUserInfo,
 } from '@/types/apis/bilibili'
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
@@ -89,11 +90,14 @@ const convertHotSearches = (
 }
 
 // API 方法
-export const bilibiliApi = {
+export const createBilibiliApi = (getCookie: () => string) => ({
   // 获取历史记录
   async getHistory(): Promise<Track[]> {
-    const response =
-      await apiClient.get<BilibiliHistoryVideo[]>('/x/v2/history')
+    const response = await apiClient.get<BilibiliHistoryVideo[]>(
+      '/x/v2/history',
+      undefined,
+      getCookie(),
+    )
     return convertVideosToTracks(response)
   },
 
@@ -101,6 +105,8 @@ export const bilibiliApi = {
   async getPopularVideos(partition: string): Promise<Track[]> {
     const response = await apiClient.get<{ list: BilibiliVideoDetails[] }>(
       `/x/web-interface/ranking/v2?rid=${partition}`,
+      undefined,
+      getCookie(),
     )
     return convertVideoDetailsToTracks(response.list)
   },
@@ -109,6 +115,8 @@ export const bilibiliApi = {
   async getFavoritePlaylists(userMid: number): Promise<Playlist[]> {
     const response = await apiClient.get<{ list: BilibiliPlaylist[] | null }>(
       `/x/v3/fav/folder/created/list-all?up_mid=${userMid}`,
+      undefined,
+      getCookie(),
     )
     if (!response.list) {
       return []
@@ -125,12 +133,16 @@ export const bilibiliApi = {
     const response = await apiClient.get<{
       result: BilibiliSearchVideo[]
       numPages: number
-    }>('/x/web-interface/wbi/search/type', {
-      keyword,
-      search_type: 'video',
-      page: page.toString(),
-      page_size: page_size.toString(),
-    })
+    }>(
+      '/x/web-interface/wbi/search/type',
+      {
+        keyword,
+        search_type: 'video',
+        page: page.toString(),
+        page_size: page_size.toString(),
+      },
+      getCookie(),
+    )
     return {
       tracks: convertSearchVideosToTracks(response.result),
       numPages: response.numPages,
@@ -141,9 +153,13 @@ export const bilibiliApi = {
   async getHotSearches(): Promise<{ id: string; text: string }[]> {
     const response = await apiClient.get<{
       trending: { list: BilibiliHotSearch[] }
-    }>('/x/web-interface/search/square', {
-      limit: '10',
-    })
+    }>(
+      '/x/web-interface/search/square',
+      {
+        limit: '10',
+      },
+      getCookie(),
+    )
     return convertHotSearches(response.trending.list)
   },
 
@@ -162,6 +178,7 @@ export const bilibiliApi = {
         cid: String(cid),
         fnval: '16', // 16 表示 dash 格式
       },
+      getCookie(),
     )
     if (!response.dash.audio) {
       throw new Error('未找到音频流')
@@ -192,7 +209,13 @@ export const bilibiliApi = {
         }
       }
     }
-    throw new Error('未找到音频流')
+    // 最后如果都没有符合条件的，做个兜底，选择最高质量的音频流
+    return {
+      url: response.dash.audio[0].baseUrl,
+      quality: response.dash.audio[0].id,
+      getTime: Date.now() + 60, // 在当前时间基础上加 60 秒，做个提前量
+      type: 'dash',
+    }
   },
 
   // 获取分 p 列表
@@ -213,9 +236,28 @@ export const bilibiliApi = {
         duration: number
         first_frame: string
       }[]
-    >('/x/player/pagelist', {
-      bvid,
-    })
+    >(
+      '/x/player/pagelist',
+      {
+        bvid,
+      },
+      getCookie(),
+    )
     return response
   },
-}
+
+  // 获取用户详细信息
+  async getUserInfo(): Promise<BilibiliUserInfo> {
+    const response = await apiClient.get<BilibiliUserInfo>(
+      '/x/space/myinfo',
+      undefined,
+      getCookie(),
+    )
+    return response
+  },
+})
+
+// 为了向后兼容，导出一个默认的空 cookie 实例
+export const bilibiliApi = createBilibiliApi(() => '')
+
+export type BilibiliApi = ReturnType<typeof createBilibiliApi>

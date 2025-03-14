@@ -7,7 +7,7 @@ import TrackPlayer, {
   Capability,
   Event,
 } from 'react-native-track-player'
-import { bilibiliApi } from '../api/bilibili/bilibili'
+import useAppStore from './useAppStore'
 import type { Track } from '@/types/core/media'
 import { middleware } from 'zustand-expo-devtools'
 
@@ -61,6 +61,11 @@ const convertToRNTPTrack = (track: Track): RNTPTrack => {
     artist: track.artist,
     artwork: track.cover,
     duration: track.duration,
+    userAgent:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+    headers: {
+      referer: 'https://www.bilibili.com',
+    },
   }
 
   logDetailedDebug('RNTPTrack转换完成', rnTrack)
@@ -151,20 +156,15 @@ const AudioStreamHandler = {
       if (needsUpdate) {
         logDetailedDebug('需要更新B站音频流', { trackId: track.id })
         try {
+          // 使用 useAppStore 中的 bilibiliApi
+          const bilibiliApi = useAppStore.getState().bilibiliApi
+
           const bvid = track.id
           let cid = track.cid
           if (!cid) {
             logDetailedDebug('获取视频分P列表', { bvid })
             const pageList = await bilibiliApi.getPageList(bvid)
-            logDetailedDebug('分P列表获取成功', {
-              bvid,
-              pageCount: pageList.length,
-              pages: pageList.map((p) => ({
-                cid: p.cid,
-                page: p.page,
-                title: p.part,
-              })),
-            })
+            logDetailedDebug('分P列表获取成功', { pageList })
 
             // 处理多P视频
             if (pageList.length > 0) {
@@ -678,7 +678,9 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     // 切换重复模式
     toggleRepeatMode: () => {
       const { repeatMode } = get()
-      logDetailedDebug('调用 toggleRepeatMode()', { currentMode: repeatMode })
+      logDetailedDebug('调用 toggleRepeatMode()', {
+        currentMode: repeatMode,
+      })
 
       let newMode: 'off' | 'track' | 'queue'
       if (repeatMode === 'off') {
@@ -696,10 +698,14 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     // 切换随机模式
     toggleShuffleMode: () => {
       const { shuffleMode } = get()
-      logDetailedDebug('调用 toggleShuffleMode()', { currentMode: shuffleMode })
+      logDetailedDebug('调用 toggleShuffleMode()', {
+        currentMode: shuffleMode,
+      })
 
       set({ shuffleMode: !shuffleMode })
-      logDetailedDebug('状态已更新：随机模式已更改', { newMode: !shuffleMode })
+      logDetailedDebug('状态已更新：随机模式已更改', {
+        newMode: !shuffleMode,
+      })
     },
 
     // 清空队列
@@ -732,35 +738,9 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         title: track.title,
         source: track.source,
       })
-
-      const updatedTrack =
+      const { track: updatedTrack, needsUpdate } =
         await AudioStreamHandler.checkAndUpdateAudioStream(track)
-
-      if (!updatedTrack.needsUpdate) {
-        logDetailedDebug('音频流不需要更新', {
-          trackId: track.id,
-          title: track.title,
-        })
-        return track
-      }
-
-      // 如果是当前播放的曲目，需要更新播放器
-      // 不存在播放时音频流中途过期的情况，不需要更新
-      // const { currentTrack } = get()
-      // if (currentTrack && currentTrack.id === track.id) {
-      //   logDetailedDebug('直接替换当前播放曲目的音频流', {
-      //     trackId: updatedTrack.track.id,
-      //     title: updatedTrack.track.title,
-      //   })
-
-      //   // 更新当前播放的曲目
-      //   await TrackPlayer.updateNowPlayingMetadata({
-      //     ...convertToRNTPTrack(updatedTrack.track),
-      //   })
-      //   logDetailedDebug('当前播放曲目元数据已更新')
-      // }
-
-      return updatedTrack.track
+      return updatedTrack
     },
   }
 

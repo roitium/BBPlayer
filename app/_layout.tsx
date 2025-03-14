@@ -18,6 +18,9 @@ import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { type AppStateStatus, Platform, AppState, View } from 'react-native'
 import * as SplashScreen from 'expo-splash-screen'
 import { setupPlayer } from '@/lib/services/setupPlayer'
+import useAppStore from '@/lib/store/useAppStore'
+
+const developement = process.env.NODE_ENV === 'development'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -78,6 +81,8 @@ export default function RootLayout() {
     async function prepare() {
       try {
         await setupPlayer()
+        await useAppStore.getState().setBilibiliCookie(null)
+        await useAppStore.getState().setBilibiliUserInfo()
       } catch (error) {
         console.error(error)
       } finally {
@@ -132,7 +137,7 @@ export default function RootLayout() {
           </Stack>
           <StatusBar style='auto' />
         </PaperProvider>
-        <DevToolsBubble onCopy={onCopy} />
+        {developement && <DevToolsBubble onCopy={onCopy} />}
       </QueryClientProvider>
     </View>
   )

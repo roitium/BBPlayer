@@ -1,5 +1,3 @@
-const BILIBILI_COOKIE = process.env.EXPO_PUBLIC_BILIBILI_COOKIE || ''
-
 interface ApiError {
   code: number
   message: string
@@ -7,19 +5,16 @@ interface ApiError {
 
 class ApiClient {
   private baseUrl = 'https://api.bilibili.com'
-  private cookie: string
-
-  constructor() {
-    this.cookie = BILIBILI_COOKIE
-  }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
+    cookie = '',
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
+
     const headers = {
-      Cookie: this.cookie,
+      Cookie: cookie,
       'User-Agent':
         'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 BiliApp/6.66.0',
       ...options.headers,
@@ -46,21 +41,29 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  async get<T>(
+    endpoint: string,
+    params?: Record<string, string>,
+    cookie = '',
+  ): Promise<T> {
     const url = params
       ? `${endpoint}?${new URLSearchParams(params).toString()}`
       : endpoint
-    return this.request<T>(url, { method: 'GET' })
+    return this.request<T>(url, { method: 'GET' }, cookie)
   }
 
-  async post<T>(endpoint: string, data?: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  async post<T>(endpoint: string, data?: unknown, cookie = ''): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: data ? JSON.stringify(data) : undefined,
       },
-      body: data ? JSON.stringify(data) : undefined,
-    })
+      cookie,
+    )
   }
 }
 
