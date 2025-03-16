@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   ScrollView,
@@ -19,10 +19,11 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { router } from 'expo-router'
 import { useSearchResults, useHotSearches } from '@/hooks/api/useSearchData'
 import type { Track } from '@/types/core/media'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import useAppStore from '@/lib/store/useAppStore'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
 
 // 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
@@ -45,7 +46,18 @@ export default function SearchPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(20) // 每页显示20条结果
   const [pageInputValue, setPageInputValue] = useState('1')
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { bilibiliApi } = useAppStore()
+  const { addToQueue, clearQueue } = usePlayerStore()
+
+  // 播放单曲（清空队列后播放）
+  const playSingleTrack = async (track: Track) => {
+    try {
+      await clearQueue()
+      await addToQueue([track])
+    } catch (error) {
+      console.error('播放单曲失败', error)
+    }
+  }
 
   // 本地搜索历史状态
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
@@ -163,13 +175,14 @@ export default function SearchPage() {
     finalQuery,
     currentPage,
     pageSize,
+    bilibiliApi,
   )
 
   const searchResults = searchData?.tracks || []
   const totalPages = searchData?.numPages || 1
 
   const { data: hotSearches = [], isLoading: isLoadingHotSearches } =
-    useHotSearches()
+    useHotSearches(bilibiliApi)
 
   // 处理搜索输入
   const handleSearchInput = (query: string) => {
@@ -238,7 +251,7 @@ export default function SearchPage() {
   const renderSearchResultItem = (item: Track) => (
     <TouchableOpacity
       key={item.id}
-      onPress={() => router.push('/player')}
+      onPress={() => playSingleTrack(item)}
       activeOpacity={0.7}
     >
       <Surface
@@ -276,7 +289,7 @@ export default function SearchPage() {
               icon='play-circle-outline'
               iconColor={colors.primary}
               size={24}
-              onPress={() => router.push('/player')}
+              onPress={() => playSingleTrack(item)}
             />
           </View>
         </View>

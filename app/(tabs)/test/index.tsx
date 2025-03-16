@@ -103,6 +103,14 @@ export default function TestPage() {
         >
           打开播放器
         </Button>
+        <Button
+          mode='contained'
+          onPress={() => router.push('/playlist/111')}
+          loading={loading}
+          className='mb-2'
+        >
+          跳转到收藏夹
+        </Button>
       </View>
 
       <Text

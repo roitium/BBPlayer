@@ -29,6 +29,7 @@ import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
 import { formatDurationToHHMM } from '@/utils/times'
+import { router } from 'expo-router'
 
 const mockCategories = [
   { id: '1', name: '翻唱', icon: 'music-note' },
@@ -259,22 +260,24 @@ const HomePage = () => {
     </TouchableOpacity>
   )
 
-  // 渲染播放列表项
+  // 渲染收藏夹项
   const renderPlaylistItem = (item: Playlist) => (
     <TouchableOpacity
       key={item.id}
       className='mr-4 w-40'
       activeOpacity={0.7}
-      onPress={() => {}}
+      onPress={() => {
+        router.push(`/playlist/${item.id}`)
+      }}
     >
       <Surface
         className='overflow-hidden rounded-lg'
         elevation={1}
       >
-        <Image
+        {/* <Image
           source={{ uri: item.cover }}
           className='h-40 w-40 rounded-lg'
-        />
+        /> */}
         <View className='p-2'>
           <Text
             variant='titleSmall'

@@ -25,6 +25,11 @@ const developement = process.env.NODE_ENV === 'development'
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
 
+SplashScreen.setOptions({
+  duration: 200,
+  fade: true,
+})
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -67,7 +67,6 @@ interface BilibiliVideoDetails {
 interface BilibiliPlaylist {
   id: number
   title: string
-  cover: string
   media_count: number
 }
 
@@ -95,6 +94,41 @@ interface BilibiliUserInfo {
   face: string
 }
 
+// 收藏夹内容
+interface BilibiliFavoriteListContent {
+  id: number
+  bvid: string
+  upper: {
+    name: string
+    face: string
+  }
+  title: string
+  cover: string
+  duration: number
+  pubdate: number
+  page: number
+  type: number // 2：视频稿件 12：音频 21：视频合集
+  attr: number // 失效	0: 正常；9: up自己删除；1: 其他原因删除
+}
+
+// 收藏夹内容
+interface BilibiliFavoriteListContents {
+  info: {
+    id: number
+    title: string
+    cover: string
+    media_count: number
+    intro: string
+    upper: {
+      name: string
+      face: string
+    }
+  }
+  medias: BilibiliFavoriteListContent[]
+  has_more: boolean
+  ttl: number
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -104,4 +138,6 @@ export type {
   BilibiliSearchVideo,
   BilibiliHotSearch,
   BilibiliUserInfo,
+  BilibiliFavoriteListContent,
+  BilibiliFavoriteListContents,
 }
