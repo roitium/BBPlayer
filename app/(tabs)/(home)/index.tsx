@@ -115,12 +115,6 @@ const HomePage = () => {
     }
   }
 
-  // useRefreshQueriesOnFocus([
-  //   homeQueryKeys.recentlyPlayed(),
-  //   homeQueryKeys.playlists(),
-  //   homeQueryKeys.popularVideos(),
-  // ])
-
   let {
     data: recentlyPlayed,
     isLoading: recentlyPlayedLoading,

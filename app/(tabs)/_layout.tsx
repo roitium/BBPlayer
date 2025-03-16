@@ -16,7 +16,7 @@ export default function TabLayout() {
       <Tab.Screen
         name='(home)/index'
         options={{
-          title: 'Home',
+          title: '主页',
           tabBarIcon: ({ color }: { color: string }) => (
             <IconSymbol
               size={26}
@@ -29,7 +29,7 @@ export default function TabLayout() {
       <Tab.Screen
         name='(search)/search'
         options={{
-          title: 'Search',
+          title: '搜索',
           tabBarIcon: ({ color }: { color: string }) => (
             <IconSymbol
               size={26}
@@ -42,7 +42,7 @@ export default function TabLayout() {
       <Tab.Screen
         name='(library)/library'
         options={{
-          title: 'Library',
+          title: '音乐库',
           tabBarIcon: ({ color }: { color: string }) => (
             <IconSymbol
               size={26}

@@ -236,15 +236,17 @@ export default function PlayerPage() {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={toggleViewMode}
+            className='rounded-full'
           >
             <Surface
-              className='overflow-hidden rounded-2xl'
               elevation={5}
+              // 我不理解，为什么这里无法通过 className 设置
+              style={{ borderRadius: 16 }}
             >
               <Image
                 source={{ uri: currentTrack.cover }}
                 style={{ width: screenWidth - 80, height: screenWidth - 80 }}
-                className='rounded-2xl'
+                className='overflow-hidden rounded-2xl'
               />
             </Surface>
           </TouchableOpacity>
