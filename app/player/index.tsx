@@ -1,12 +1,13 @@
 import { router, Stack } from 'expo-router'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   View,
   Image,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   Animated,
+  PanResponder,
+  type LayoutChangeEvent,
 } from 'react-native'
 import {
   IconButton,
@@ -16,13 +17,171 @@ import {
   Menu,
   Divider,
 } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   usePlayerStore,
   usePlaybackProgress,
   usePlaybackStateHook,
 } from '@/lib/store/usePlayerStore'
-import { RepeatMode } from 'react-native-track-player'
+import { RepeatMode, State } from 'react-native-track-player'
+import {
+  type EdgeInsets,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context'
+
+// 格式化时间
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`
+}
+
+function DragableProgressBar() {
+  const { seekTo } = usePlayerStore()
+  const { position, duration } = usePlaybackProgress()
+  const { colors } = useTheme()
+  const [isDragging, setIsDragging] = useState(false)
+  const [localProgress, setLocalProgress] = useState(0) // 始终是一个 0-1 的值
+  const progressBarRef = useRef(null)
+  const progressBarWidth = useRef(0)
+  const playbackState = usePlaybackStateHook()
+  // 我不懂为什么，但是在 panResponder 内获取到的 duration 和 position 永远是 0，只能靠这种方法 hack 一下
+  const cachedDuration = useRef(duration)
+  const cachedPosition = useRef(position)
+
+  // 当 duration 和 position 变动时更新缓存
+  useEffect(() => {
+    if (duration > 0) {
+      cachedDuration.current = duration
+    }
+    if (position > 0) {
+      cachedPosition.current = position
+    }
+  }, [duration, position])
+
+  // 处理拖动事件和进度条更新
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      // 当手势开始时，更新一遍进度，防止进度条闪烁到开头
+      onPanResponderGrant: (_, gestureState) => {
+        setIsDragging(true)
+        setLocalProgress(cachedPosition.current / cachedDuration.current)
+      },
+      // 在滑动时实时更新进度，保证进度条实时更新
+      onPanResponderMove: (_, gestureState) => {
+        // 计算新的进度值（0-1之间）
+        const newProgress = Math.max(
+          0,
+          Math.min(1, gestureState.moveX / progressBarWidth.current),
+        )
+        setLocalProgress(newProgress)
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // 处理点击事件（10px 真的够用吗）
+        console.log(gestureState.moveX)
+        if (gestureState.moveX < 10) {
+          console.log('点击事件')
+          setIsDragging(false)
+          return
+        }
+        // 计算最终进度值并应用
+        const finalProgress = Math.max(
+          0,
+          Math.min(1, gestureState.moveX / progressBarWidth.current),
+        )
+        setLocalProgress(finalProgress)
+        seekTo(finalProgress * cachedDuration.current)
+        setIsDragging(false)
+      },
+      onPanResponderTerminate: () => {
+        // 如果手势被中断，恢复到当前播放位置
+        setIsDragging(false)
+        setLocalProgress(cachedPosition.current / cachedDuration.current)
+      },
+    }),
+  ).current
+
+  // 当播放位置更新且不在拖动状态，且不是缓冲状态时（缓冲状态不更新，避免闪烁），更新本地进度
+  // 这里不使用 cachedDuration 是因为在 useEffect 可以正确获取到 duration
+  useEffect(() => {
+    if (
+      !isDragging &&
+      duration > 0 &&
+      playbackState.state !== State.Buffering
+    ) {
+      setLocalProgress(position / duration)
+    }
+  }, [position, duration, isDragging, playbackState.state])
+
+  // 测量进度条宽度
+  const onLayout = (event: LayoutChangeEvent) => {
+    progressBarWidth.current = event.nativeEvent.layout.width
+  }
+
+  return (
+    <View className='mt-4'>
+      {/* 进度条主容器 */}
+      <View
+        className='h-8 w-full justify-center'
+        ref={progressBarRef}
+        onLayout={onLayout}
+        {...panResponder.panHandlers}
+      >
+        {/* 进度条背景 */}
+        <View
+          className='h-1.5 w-full overflow-hidden rounded-full'
+          style={{ backgroundColor: colors.surfaceVariant }}
+        >
+          {/* 进度条填充部分 */}
+          <View
+            className='h-full rounded-full'
+            style={{
+              backgroundColor: colors.primary,
+              width: `${localProgress * 100}%`,
+            }}
+          />
+        </View>
+
+        {/* 拖动手柄 */}
+        <TouchableOpacity
+          activeOpacity={1}
+          className='absolute size-4 rounded-full'
+          style={{
+            backgroundColor: colors.primary,
+            // -0.01 是为了与进度条对齐
+            left: `${(localProgress - 0.01) * 100}%`,
+            // 同样是为了对齐
+            top: 6,
+            borderWidth: 2,
+            borderColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 1.5,
+            elevation: 2,
+          }}
+        />
+      </View>
+
+      {/* 时间显示 */}
+      <View className='mt-1 flex-row justify-between'>
+        <Text
+          variant='bodySmall'
+          style={{ color: colors.onSurfaceVariant }}
+        >
+          {formatTime(localProgress * duration)}
+        </Text>
+        <Text
+          variant='bodySmall'
+          style={{ color: colors.onSurfaceVariant }}
+        >
+          {formatTime(duration)}
+        </Text>
+      </View>
+    </View>
+  )
+}
 
 export default function PlayerPage() {
   const { colors } = useTheme()
@@ -39,13 +198,9 @@ export default function PlayerPage() {
     togglePlay,
     skipToNext,
     skipToPrevious,
-    seekTo,
     toggleRepeatMode,
     toggleShuffleMode,
   } = usePlayerStore()
-
-  // 获取播放进度
-  const { position, duration } = usePlaybackProgress()
 
   // 获取播放状态
   const playbackState = usePlaybackStateHook()
@@ -56,13 +211,6 @@ export default function PlayerPage() {
   const [menuVisible, setMenuVisible] = useState(false)
   const [sliderValue, setSliderValue] = useState(0)
 
-  // 更新滑块值
-  useEffect(() => {
-    if (duration > 0) {
-      setSliderValue(position / duration)
-    }
-  }, [position, duration])
-
   // 动画值
   const scrollY = useRef(new Animated.Value(0)).current
   const headerOpacity = scrollY.interpolate({
@@ -70,13 +218,6 @@ export default function PlayerPage() {
     outputRange: [0, 1],
     extrapolate: 'clamp',
   })
-
-  // 格式化时间
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`
-  }
 
   // 切换视图模式 - 暂时只支持封面模式
   const toggleViewMode = () => {
@@ -86,7 +227,7 @@ export default function PlayerPage() {
   // 如果没有当前曲目，显示空状态
   if (!currentTrack) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className='flex-1 items-center justify-center'>
         <Text>没有正在播放的曲目</Text>
         <IconButton
           icon='arrow-left'
@@ -99,73 +240,17 @@ export default function PlayerPage() {
   // 当前歌词索引 - 暂不支持歌词功能
   const currentLyricIndex = 0
 
-  // 切换重复模式
-  const cycleRepeatMode = () => {
-    toggleRepeatMode()
-  }
-
-  // 处理滑块变化
-  const handleSliderChange = (value: number) => {
-    setSliderValue(value)
-    seekTo(value * duration)
-  }
-
-  // 使用自定义进度条替代Slider组件
-  const renderProgressBar = () => {
-    return (
-      <View className='mt-4'>
-        <View
-          className='h-1 w-full overflow-hidden rounded-full'
-          style={{ backgroundColor: colors.surfaceVariant }}
-        >
-          <View
-            className='h-full rounded-full'
-            style={{
-              backgroundColor: colors.primary,
-              width: `${(position / duration) * 100}%`,
-            }}
-          />
-        </View>
-        <View className='mt-1 flex-row justify-between'>
-          <Text
-            variant='bodySmall'
-            style={{ color: colors.onSurfaceVariant }}
-          >
-            {formatTime(position)}
-          </Text>
-          <Text
-            variant='bodySmall'
-            style={{ color: colors.onSurfaceVariant }}
-          >
-            {formatTime(duration)}
-          </Text>
-        </View>
-      </View>
-    )
-  }
-
   return (
     <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
+      className='h-full w-full'
+      style={{
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+      }}
     >
       <Stack.Screen
         options={{ animation: 'slide_from_bottom', headerShown: false }}
       />
-
-      {/* 背景图片（模糊效果） */}
-      <View className='absolute h-full w-full'>
-        <Image
-          source={{ uri: currentTrack.cover }}
-          className='h-full w-full'
-          style={{ opacity: 0.3 }}
-          blurRadius={25}
-        />
-        <View
-          className='absolute h-full w-full'
-          style={{ backgroundColor: colors.background, opacity: 0.7 }}
-        />
-      </View>
 
       {/* 顶部导航栏 */}
       <Animated.View
@@ -199,88 +284,83 @@ export default function PlayerPage() {
       </Animated.View>
 
       {/* 主内容区域 */}
-      <ScrollView
-        className='flex-1'
-        contentContainerStyle={{
-          paddingTop: insets.top + 8,
-          paddingBottom: 24,
-        }}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false },
-        )}
-        scrollEventThrottle={16}
-      >
-        {/* 顶部操作栏 */}
-        <View className='flex-row items-center justify-between px-4 py-2'>
-          <IconButton
-            icon='chevron-down'
-            size={24}
-            onPress={() => router.back()}
-          />
-          <Text
-            variant='titleMedium'
-            className='flex-1 text-center'
-          >
-            正在播放
-          </Text>
-          <IconButton
-            icon='dots-vertical'
-            size={24}
-            onPress={() => setMenuVisible(true)}
-          />
-        </View>
-
-        {/* 封面区域 */}
-        <View className='items-center justify-center px-8 py-6'>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={toggleViewMode}
-            className='rounded-full'
-          >
-            <Surface
-              elevation={5}
-              // 我不理解，为什么这里无法通过 className 设置
-              style={{ borderRadius: 16 }}
-            >
-              <Image
-                source={{ uri: currentTrack.cover }}
-                style={{ width: screenWidth - 80, height: screenWidth - 80 }}
-                className='overflow-hidden rounded-2xl'
-              />
-            </Surface>
-          </TouchableOpacity>
-        </View>
-
-        {/* 歌曲信息 */}
-        <View className='px-6'>
-          <View className='flex-row items-center justify-between'>
-            <View className='flex-1'>
-              <Text
-                variant='headlineSmall'
-                style={{ fontWeight: 'bold' }}
-                numberOfLines={1}
-              >
-                {currentTrack.title}
-              </Text>
-              <Text
-                variant='bodyMedium'
-                style={{ color: colors.onSurfaceVariant }}
-                numberOfLines={1}
-              >
-                {currentTrack.artist}
-              </Text>
-            </View>
+      <View className='flex flex-1 justify-between'>
+        {/* 上半部分：顶部操作栏、封面和歌曲信息 */}
+        <View>
+          {/* 顶部操作栏 */}
+          <View className='flex-row items-center justify-between px-4 py-2'>
             <IconButton
-              icon={isFavorite ? 'heart' : 'heart-outline'}
+              icon='chevron-down'
               size={24}
-              iconColor={isFavorite ? colors.error : colors.onSurfaceVariant}
-              onPress={() => setIsFavorite(!isFavorite)}
+              onPress={() => router.back()}
+            />
+            <Text
+              variant='titleMedium'
+              className='flex-1 text-center'
+            >
+              正在播放
+            </Text>
+            <IconButton
+              icon='dots-vertical'
+              size={24}
+              onPress={() => setMenuVisible(true)}
             />
           </View>
 
-          {/* 进度条 - 使用自定义进度条替代Slider */}
-          {renderProgressBar()}
+          {/* 封面区域 */}
+          <View className='items-center px-8 py-6'>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={toggleViewMode}
+              className='rounded-full'
+            >
+              <Surface
+                elevation={5}
+                // 我不理解，为什么这里无法通过 className 设置
+                style={{ borderRadius: 16 }}
+              >
+                <Image
+                  source={{ uri: currentTrack.cover }}
+                  style={{ width: screenWidth - 80, height: screenWidth - 80 }}
+                  className='overflow-hidden rounded-2xl'
+                />
+              </Surface>
+            </TouchableOpacity>
+          </View>
+
+          {/* 歌曲信息 */}
+          <View className='px-6'>
+            <View className='flex-row items-center justify-between'>
+              <View className='flex-1'>
+                <Text
+                  variant='headlineSmall'
+                  style={{ fontWeight: 'bold' }}
+                  numberOfLines={1}
+                >
+                  {currentTrack.title}
+                </Text>
+                <Text
+                  variant='bodyMedium'
+                  style={{ color: colors.onSurfaceVariant }}
+                  numberOfLines={1}
+                >
+                  {currentTrack.artist}
+                </Text>
+              </View>
+              <IconButton
+                icon={isFavorite ? 'heart' : 'heart-outline'}
+                size={24}
+                iconColor={isFavorite ? colors.error : colors.onSurfaceVariant}
+                onPress={() => setIsFavorite(!isFavorite)}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* 下半部分：进度条和控制栏 */}
+        <View className='px-6 pb-10'>
+          {/* 进度条 */}
+          <DragableProgressBar />
 
           {/* 播放控制 */}
           <View className='mt-6 flex-row items-center justify-between'>
@@ -295,18 +375,13 @@ export default function PlayerPage() {
               size={32}
               onPress={skipToPrevious}
             />
-            <TouchableOpacity
-              className='items-center justify-center rounded-full p-2'
-              style={{ backgroundColor: colors.primaryContainer }}
+            <IconButton
+              icon={isPlaying ? 'pause' : 'play'}
+              size={48}
+              iconColor={colors.primary}
               onPress={togglePlay}
-            >
-              <IconButton
-                icon={isPlaying ? 'pause' : 'play'}
-                size={36}
-                iconColor={colors.primary}
-                onPress={togglePlay}
-              />
-            </TouchableOpacity>
+              mode='contained'
+            />
             <IconButton
               icon='skip-next'
               size={32}
@@ -326,56 +401,83 @@ export default function PlayerPage() {
                   ? colors.primary
                   : colors.onSurfaceVariant
               }
-              onPress={cycleRepeatMode}
+              onPress={toggleRepeatMode}
             />
           </View>
         </View>
-      </ScrollView>
+      </View>
 
       {/* 菜单 */}
-      <Menu
-        visible={menuVisible}
-        onDismiss={() => setMenuVisible(false)}
-        anchor={{ x: screenWidth - 24, y: insets.top + 24 }}
-      >
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false)
-          }}
-          title='添加到播放列表'
-          leadingIcon='playlist-plus'
-        />
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false)
-          }}
-          title='查看艺术家'
-          leadingIcon='account-music'
-        />
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false)
-          }}
-          title='查看专辑'
-          leadingIcon='album'
-        />
-        <Divider />
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false)
-          }}
-          title='分享'
-          leadingIcon='share-variant'
-        />
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false)
-            toggleViewMode()
-          }}
-          title={viewMode === 'cover' ? '显示歌词' : '显示封面'}
-          leadingIcon={viewMode === 'cover' ? 'text' : 'image'}
-        />
-      </Menu>
+      <FunctionalMenu
+        menuVisible={menuVisible}
+        setMenuVisible={setMenuVisible}
+        screenWidth={screenWidth}
+        toggleViewMode={toggleViewMode}
+        viewMode={viewMode}
+        insets={insets}
+      />
     </View>
+  )
+}
+
+function FunctionalMenu({
+  menuVisible,
+  setMenuVisible,
+  screenWidth,
+  toggleViewMode,
+  viewMode,
+  insets,
+}: {
+  menuVisible: boolean
+  setMenuVisible: (visible: boolean) => void
+  screenWidth: number
+  toggleViewMode: () => void
+  viewMode: string
+  insets: EdgeInsets
+}) {
+  return (
+    <Menu
+      visible={menuVisible}
+      onDismiss={() => setMenuVisible(false)}
+      anchor={{ x: screenWidth - 24, y: insets.top + 24 }}
+    >
+      <Menu.Item
+        onPress={() => {
+          setMenuVisible(false)
+        }}
+        title='添加到播放列表'
+        leadingIcon='playlist-plus'
+      />
+      <Menu.Item
+        onPress={() => {
+          setMenuVisible(false)
+        }}
+        title='查看艺术家'
+        leadingIcon='account-music'
+      />
+      <Menu.Item
+        onPress={() => {
+          setMenuVisible(false)
+        }}
+        title='查看专辑'
+        leadingIcon='album'
+      />
+      <Divider />
+      <Menu.Item
+        onPress={() => {
+          setMenuVisible(false)
+        }}
+        title='分享'
+        leadingIcon='share-variant'
+      />
+      <Menu.Item
+        onPress={() => {
+          setMenuVisible(false)
+          toggleViewMode()
+        }}
+        title={viewMode === 'cover' ? '显示歌词' : '显示封面'}
+        leadingIcon={viewMode === 'cover' ? 'text' : 'image'}
+      />
+    </Menu>
   )
 }
