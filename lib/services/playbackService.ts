@@ -1,12 +1,15 @@
 import TrackPlayer, { Event } from 'react-native-track-player'
+import { usePlayerStore } from '../store/usePlayerStore'
 
 export const PlaybackService = async () => {
   // 播放控制
   TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play())
   TrackPlayer.addEventListener(Event.RemotePause, () => TrackPlayer.pause())
-  TrackPlayer.addEventListener(Event.RemoteNext, () => TrackPlayer.skipToNext())
+  TrackPlayer.addEventListener(Event.RemoteNext, () => {
+    usePlayerStore.getState().skipToNext()
+  })
   TrackPlayer.addEventListener(Event.RemotePrevious, () =>
-    TrackPlayer.skipToPrevious(),
+    usePlayerStore.getState().skipToPrevious(),
   )
 
   // 跳转控制

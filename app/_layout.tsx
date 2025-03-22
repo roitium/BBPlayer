@@ -79,7 +79,10 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        await setupPlayer()
+        if (!global.playerIsReady) {
+          await setupPlayer()
+          global.playerIsReady = true
+        }
         await useAppStore.getState().setBilibiliCookie(null)
         await useAppStore.getState().setBilibiliUserInfo()
       } catch (error) {

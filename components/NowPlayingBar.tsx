@@ -9,12 +9,11 @@ import {
   ProgressBar,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import TrackPlayer from 'react-native-track-player'
 
 export default function NowPlayingBar() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
-  const { currentTrack, isPlaying, skipToNext, skipToPrevious } =
+  const { currentTrack, isPlaying, skipToNext, skipToPrevious, togglePlay } =
     usePlayerStore()
   const progress = usePlaybackProgress()
 
@@ -22,7 +21,7 @@ export default function NowPlayingBar() {
 
   return (
     <Surface
-      className='mx-2 mb-2 overflow-hidden rounded-xl shadow-lg'
+      className='mx-2 overflow-hidden rounded-xl shadow-lg'
       elevation={2}
     >
       <TouchableOpacity
@@ -77,9 +76,7 @@ export default function NowPlayingBar() {
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={24}
-              onPress={() => {
-                isPlaying ? TrackPlayer.pause() : TrackPlayer.play()
-              }}
+              onPress={togglePlay}
               iconColor={colors.primary}
               style={{ margin: 0 }}
             />

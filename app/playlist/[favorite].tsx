@@ -48,7 +48,7 @@ export default function PlaylistPage() {
   const playAll = async () => {
     try {
       await clearQueue()
-      await addToQueue(favoriteData?.tracks || [])
+      await addToQueue(favoriteData?.tracks || [], true)
     } catch (error) {
       console.error('播放全部失败', error)
     }
@@ -183,9 +183,9 @@ export default function PlaylistPage() {
           style={{
             width: '100%',
             height: '100%',
-            opacity: 0.3,
+            opacity: 0.15,
           }}
-          blurRadius={10}
+          blurRadius={15}
         />
       </View>
 

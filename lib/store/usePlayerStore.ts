@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import TrackPlayer, {
-  type Track as RNTPTrack,
   State as TrackPlayerState,
   usePlaybackState,
   useProgress,
@@ -8,245 +7,12 @@ import TrackPlayer, {
   Event,
   RepeatMode,
 } from 'react-native-track-player'
-import useAppStore from './useAppStore'
 import type { Track } from '@/types/core/media'
 import { middleware } from 'zustand-expo-devtools'
 import { produce } from 'immer'
-
-// 音频流过期时间（毫秒）
-const STREAM_EXPIRY_TIME = 120 * 60 * 1000 // 120分钟
-const LAZY_LOAD_TRACK_COUNT = 3 // 每次惰性加载的曲目数量
-
-// ==================== 辅助函数 ====================
-
-const logError = (message: string, error: unknown) => {
-  console.error(`[Player Error] ${message}`, error)
-}
-
-// 增强版调试日志，包含时间戳
-const logDetailedDebug = (message: string, data?: unknown) => {
-  const timestamp = new Date().toISOString()
-  console.log(`[Player Debug ${timestamp}] ${message}`, data ? data : '')
-}
-
-// 将我们的Track类型转换为react-native-track-player的Track类型
-const convertToRNTPTrack = (track: Track): RNTPTrack => {
-  logDetailedDebug('转换Track为RNTPTrack', {
-    trackId: track.id,
-    title: track.title,
-    artist: track.artist,
-    source: track.source,
-  })
-
-  // 根据音频来源选择URL
-  let url = ''
-  if (track.source === 'bilibili' && track.biliStreamUrl) {
-    url = track.biliStreamUrl.url
-    logDetailedDebug('使用B站音频流URL', {
-      url,
-      quality: track.biliStreamUrl.quality,
-    })
-  } else if (track.source === 'local' && track.localStreamUrl) {
-    url = track.localStreamUrl
-    logDetailedDebug('使用本地音频流URL', { url })
-  } else {
-    logDetailedDebug('警告：没有找到有效的音频流URL', { source: track.source })
-  }
-
-  const rnTrack = {
-    id: track.id,
-    url,
-    title: track.title,
-    artist: track.artist,
-    artwork: track.cover,
-    duration: track.duration,
-    userAgent:
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
-    headers: {
-      referer: 'https://www.bilibili.com',
-    },
-  }
-
-  logDetailedDebug('RNTPTrack转换完成', rnTrack)
-  return rnTrack
-}
-
-// ==================== 类型定义 ====================
-
-// 播放器状态接口
-interface PlayerState {
-  // 队列相关
-  queue: Track[] // 我们自己维护的队列
-  rntpQueue: RNTPTrack[] // react-native-track-player 内部的队列
-  currentIndex: number // 我们自己维护的队列的当前播放索引
-  currentRntpIndex: number // rntp 内部队列的当前播放索引
-  currentTrack: Track | null
-
-  // 播放状态
-  isPlaying: boolean
-  isBuffering: boolean
-  repeatMode: RepeatMode
-  shuffleMode: boolean
-  shuffledQueue: Track[] // 存储 shuffle 后的队列
-}
-
-// 播放器操作接口
-interface PlayerActions {
-  // 初始化
-  initPlayer: () => Promise<void>
-
-  // 队列操作
-  addToQueue: (tracks: Track[], playNow?: boolean) => Promise<void>
-  clearQueue: () => Promise<void>
-  skipToTrack: (index: number) => Promise<void> // 新增方法：跳转到指定曲目
-
-  // 播放控制
-  togglePlay: () => Promise<void>
-  skipToNext: () => Promise<void>
-  skipToPrevious: () => Promise<void>
-  seekTo: (position: number) => Promise<void>
-
-  // 模式控制
-  toggleRepeatMode: () => void
-  toggleShuffleMode: () => void
-
-  // 音频流处理
-  checkAndUpdateAudioStream: (track: Track) => Promise<Track>
-  lazyLoadTracks: () => Promise<void> // 新增方法：惰性加载音频流
-}
-
-// 完整的播放器存储类型
-type PlayerStore = PlayerState & PlayerActions
-
-// ==================== 音频流处理 ====================
-
-// 音频流处理对象
-const AudioStreamHandler = {
-  // 检查并更新音频流
-  async checkAndUpdateAudioStream(
-    track: Track,
-  ): Promise<{ track: Track; needsUpdate: boolean }> {
-    logDetailedDebug('开始检查并更新音频流', {
-      trackId: track.id,
-      title: track.title,
-      source: track.source,
-    })
-
-    // 如果是本地音频，直接返回
-    if (track.source === 'local') {
-      logDetailedDebug('本地音频，无需更新流', { trackId: track.id })
-      return { track, needsUpdate: false }
-    }
-
-    // 如果是B站音频，检查是否需要更新流
-    if (track.source === 'bilibili') {
-      const now = Date.now()
-
-      // 检查是否有音频流或音频流是否过期
-      const needsUpdate =
-        !track.biliStreamUrl ||
-        now - track.biliStreamUrl.getTime > STREAM_EXPIRY_TIME
-
-      logDetailedDebug('B站音频流状态检查', {
-        trackId: track.id,
-        hasStream: !!track.biliStreamUrl,
-        streamAge: track.biliStreamUrl
-          ? now - track.biliStreamUrl.getTime
-          : 'N/A',
-        needsUpdate,
-        expiryTime: STREAM_EXPIRY_TIME,
-      })
-
-      if (needsUpdate) {
-        logDetailedDebug('需要更新B站音频流', { trackId: track.id })
-        try {
-          // 使用 useAppStore 中的 bilibiliApi
-          const bilibiliApi = useAppStore.getState().bilibiliApi
-
-          const bvid = track.id
-          let cid = track.cid
-          if (!cid) {
-            logDetailedDebug('获取视频分P列表', { bvid })
-            const pageList = await bilibiliApi.getPageList(bvid)
-            logDetailedDebug('分P列表获取成功', { pageList })
-
-            // 处理多P视频
-            if (pageList.length > 0) {
-              cid = pageList[0].cid
-              logDetailedDebug('使用第一个分P的cid', { bvid, cid })
-            } else {
-              logDetailedDebug('警告：视频没有分P信息', { bvid })
-            }
-          } else {
-            logDetailedDebug('使用已有的cid', { bvid, cid })
-          }
-
-          // 获取新的音频流
-          logDetailedDebug('开始获取音频流', { bvid, cid })
-          const streamUrl = await bilibiliApi.getAudioStream({
-            bvid,
-            cid: cid as number, // 确保 cid 是 number 类型
-            audioQuality: 30280,
-            enableDolby: false,
-            enableHiRes: false,
-          })
-
-          if (!streamUrl || !streamUrl.url) {
-            logError('获取音频流失败: 没有有效的URL', { streamUrl, bvid, cid })
-            return { track, needsUpdate: false }
-          }
-
-          logDetailedDebug('音频流获取成功', {
-            bvid,
-            cid,
-            url: streamUrl.url,
-            quality: streamUrl.quality,
-            type: streamUrl.type,
-          })
-
-          // 更新track对象
-          const updatedTrack = {
-            ...track,
-            cid: cid,
-            biliStreamUrl: {
-              url: streamUrl.url,
-              quality: streamUrl.quality || 0,
-              getTime: Date.now(),
-              type: streamUrl.type || 'dash',
-            },
-          }
-
-          logDetailedDebug('Track对象已更新音频流信息', {
-            trackId: updatedTrack.id,
-            title: updatedTrack.title,
-            streamUrl: updatedTrack.biliStreamUrl.url,
-            getTime: new Date(updatedTrack.biliStreamUrl.getTime).toISOString(),
-          })
-
-          return { track: updatedTrack, needsUpdate: true }
-        } catch (error: unknown) {
-          logError('更新音频流失败', error)
-          logDetailedDebug('更新音频流出错，返回原始track', {
-            trackId: track.id,
-          })
-          return { track, needsUpdate: false } // 失败时返回原始track
-        }
-      } else {
-        logDetailedDebug('B站音频流仍然有效，无需更新', {
-          trackId: track.id,
-          streamUrl: track.biliStreamUrl?.url,
-          getTime: track.biliStreamUrl
-            ? new Date(track.biliStreamUrl.getTime).toISOString()
-            : 'N/A',
-        })
-      }
-    }
-
-    return { track, needsUpdate: false }
-  },
-}
-
-// ==================== 播放器逻辑 ====================
+import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
+import { logDetailedDebug, logError } from '@/utils/log'
+import { checkAndUpdateAudioStream, convertToRNTPTrack } from '@/utils/player'
 
 // 播放器逻辑对象
 const PlayerLogic = {
@@ -263,7 +29,7 @@ const PlayerLogic = {
       })
       logDetailedDebug('播放器配置设置完成')
 
-      // 设置播放器能力
+      // 设置播放器能力（怕自己忘了记一下：如果想修改这些能力对应的函数调用，要去 /lib/services/playbackService 里改）
       logDetailedDebug('开始设置播放器能力')
       await TrackPlayer.updateOptions({
         capabilities: [
@@ -341,6 +107,12 @@ const PlayerLogic = {
             title: store.currentTrack?.title,
           })
           store.isBuffering = true
+        } else if (state === TrackPlayerState.Ready) {
+          logDetailedDebug('播放状态: 就绪', {
+            trackId: store.currentTrack?.id,
+            title: store.currentTrack?.title,
+          })
+          store.isBuffering = false
         }
       },
     )
@@ -348,57 +120,21 @@ const PlayerLogic = {
 
     // 监听播放完成
     logDetailedDebug('设置播放完成监听器')
-    TrackPlayer.addEventListener(
-      Event.PlaybackQueueEnded,
-      async (data: { position: number; track: number }) => {
-        const { position, track } = data
-        const store = getStore() // 获取最新的 store 状态
-        const { repeatMode, queue, currentIndex, shuffledQueue, shuffleMode } =
-          store
+    TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async () => {
+      const store = getStore() // 获取最新的 store 状态
+      const { repeatMode } = store
 
-        logDetailedDebug('播放队列结束', {
-          position,
-          trackIndex: track,
-          repeatMode,
-          currentIndex,
-          currentTrack: store.currentTrack?.title,
-          queueLength: queue.length,
-          shuffledQueueLength: shuffledQueue.length,
-        })
+      logDetailedDebug('播放队列结束（即单曲结束）', {
+        repeatMode,
+      })
 
-        // 根据不同的模式进行处理
-        if (repeatMode === RepeatMode.Track) {
-          logDetailedDebug('单曲循环模式，重新播放当前曲目')
-          // RNTP 可以自己处理单曲循环，我们啥也不用做
-        } else if (repeatMode === RepeatMode.Queue) {
-          logDetailedDebug('列表循环模式')
-          const nextIndex =
-            (currentIndex + 1) %
-            (shuffleMode ? shuffledQueue.length : queue.length) // 计算下一个索引
-          // 惰性加载
-          await store.lazyLoadTracks()
-          await store.skipToTrack(nextIndex)
-        } else {
-          // repeatMode === RepeatMode.Off
-          logDetailedDebug('无循环模式')
-          if (
-            currentIndex <
-            (shuffleMode ? shuffledQueue.length : queue.length) - 1
-          ) {
-            // 如果不是最后一首，则播放下一首
-            const nextIndex = currentIndex + 1
-            // 惰性加载
-            await store.lazyLoadTracks()
-            await store.skipToTrack(nextIndex)
-          } else {
-            logDetailedDebug('播放列表已结束，且无循环')
-            // 播放完毕，停止播放
-            await TrackPlayer.pause()
-            store.isPlaying = false
-          }
-        }
-      },
-    )
+      // 单曲结束后的行为
+      if (repeatMode !== RepeatMode.Track) {
+        // 如果不是单曲循环，则触发切换到下一首
+        logDetailedDebug('当前队列：', store.queue)
+        await store.skipToNext()
+      }
+    })
 
     // 监听播放错误
     logDetailedDebug('设置播放错误监听器')
@@ -424,23 +160,22 @@ const PlayerLogic = {
         }
       },
     )
-    logDetailedDebug('播放错误监听器设置完成')
 
     logDetailedDebug('所有事件监听器设置完成')
   },
 }
 
-// ==================== Zustand Store ====================
-
+/**
+ * 播放器状态存储
+ * 采用 zustand 自己维护一个 queue，rntp 仅用于播放当前的 track，通过 TrackPlayer.load 来替换当前播放的内容，所有操作都通过该 store 进行
+ */
 export const usePlayerStore = create<PlayerStore>((set, get) => {
   logDetailedDebug('创建播放器状态存储')
 
   // 初始状态
   const initialState: PlayerState = {
     queue: [],
-    rntpQueue: [],
     currentIndex: -1,
-    currentRntpIndex: -1,
     currentTrack: null,
     isPlaying: false,
     isBuffering: false,
@@ -452,7 +187,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
   logDetailedDebug('初始化播放器状态', initialState)
 
   // 创建store
-  const store: PlayerStore = {
+  const store = {
     ...initialState,
 
     // 初始化播放器
@@ -461,6 +196,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       await PlayerLogic.initPlayer()
       PlayerLogic.setupEventListeners(() => get())
       logDetailedDebug('播放器初始化完成')
+    },
+
+    // rntpQueue (现在始终返回一个只有一个元素的数组)
+    rntpQueue: async () => {
+      logDetailedDebug('调用 rntpQueue()')
+      const currentTrack = await TrackPlayer.getActiveTrack()
+      return currentTrack ? [currentTrack] : []
     },
 
     // 添加到队列
@@ -484,7 +226,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
             (track) => !state.queue.some((t) => t.id === track.id),
           )
 
-          // 如果 playNow 为 true，则将新曲目插入到当前播放曲目的后面，否则添加到队列末尾
+          if (newTracks.length === 0) {
+            logDetailedDebug('无新曲目需要添加')
+            return
+          }
+
+          // playNow 模式下，将新曲目插入到当前播放曲目的后面，否则添加到队列末尾
           if (playNow) {
             logDetailedDebug('立即播放模式，插入到当前播放曲目之后')
             const insertIndex = state.currentIndex + 1
@@ -492,9 +239,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
             // 更新当前索引和曲目
             state.currentIndex = insertIndex
-            state.currentTrack = newTracks[0] // 假设 newTracks 至少有一个元素
+            state.currentTrack = newTracks[0]
           } else {
-            // 添加到队列末尾
             logDetailedDebug('添加到队列末尾')
             state.queue.push(...newTracks)
           }
@@ -516,60 +262,42 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           }
         }),
       )
-      // 惰性加载
-      console.log(get().skipToPrevious)
-      await get().lazyLoadTracks()
+
+      // 如果是 playNow，则立即播放
+      if (playNow) {
+        await get().skipToTrack(get().currentIndex)
+        await TrackPlayer.play()
+        set({ isPlaying: true })
+      }
     },
 
-    // 惰性加载音频流
-    lazyLoadTracks: async () => {
-      logDetailedDebug('调用 lazyLoadTracks()')
-      const { queue, rntpQueue, currentIndex, shuffleMode, shuffledQueue } =
-        get()
-
-      // 确定要加载的曲目范围
+    // 预加载
+    preloadTracks: async (index: number) => {
+      const { queue, shuffleMode, shuffledQueue } = get()
       const currentQueue = shuffleMode ? shuffledQueue : queue
-      const start = rntpQueue.length // 从 rntpQueue 的末尾开始
-      const end = Math.min(start + LAZY_LOAD_TRACK_COUNT, currentQueue.length) // 最多加载 LAZY_LOAD_TRACK_COUNT 首
 
-      logDetailedDebug('惰性加载范围', {
-        start,
-        end,
-        currentRntpQueueLength: rntpQueue.length,
-        currentQueueLength: currentQueue.length,
+      // 预加载当前播放歌曲的后三首
+      const preloadStartIndex = index + 1
+      const preloadEndIndex = Math.min(
+        preloadStartIndex + 3,
+        currentQueue.length,
+      )
+      const tracksToPreload = currentQueue.slice(
+        preloadStartIndex,
+        preloadEndIndex,
+      )
+
+      logDetailedDebug('预加载曲目', {
+        preloadStartIndex,
+        preloadEndIndex,
+        tracksToPreload: tracksToPreload.map((t) => t.title),
       })
-
-      if (start >= end) {
-        logDetailedDebug('无需加载更多曲目')
-        return
-      }
-      const tracksToLoad = currentQueue.slice(start, end)
 
       // 检查并更新音频流
-      logDetailedDebug('开始批量检查并更新音频流', {
-        tracksCount: tracksToLoad.length,
-      })
-      const tracksWithStream = await Promise.all(
-        tracksToLoad.map((track) => get().checkAndUpdateAudioStream(track)),
+      await Promise.all(
+        tracksToPreload.map((track) => get().checkAndUpdateAudioStream(track)),
       )
-      logDetailedDebug('批量音频流更新完成')
-
-      // 转换为RNTPTrack并添加到播放队列
-      logDetailedDebug('转换为RNTPTrack并添加到TrackPlayer队列')
-      const rnTracks = tracksWithStream.map((item) => convertToRNTPTrack(item))
-      await TrackPlayer.add(rnTracks)
-
-      // 更新 rntpQueue
-      set(
-        produce((state: PlayerState) => {
-          state.rntpQueue.push(...rnTracks)
-        }),
-      )
-
-      logDetailedDebug('曲目已添加到TrackPlayer队列', {
-        tracksCount: rnTracks.length,
-        newRntpQueueLength: get().rntpQueue.length,
-      })
+      logDetailedDebug('预加载完成')
     },
 
     // 切换播放/暂停
@@ -580,8 +308,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         currentTrack: currentTrack?.title,
         currentIndex: get().currentIndex,
       })
-
       try {
+        if (!(await get().rntpQueue()).length) {
+          logDetailedDebug('队列为空，如果当前有曲目，尝试重新加载')
+          if (currentTrack) {
+            get().skipToTrack(get().currentIndex)
+          }
+        }
         if (isPlaying) {
           logDetailedDebug('当前正在播放，执行暂停')
           await TrackPlayer.pause()
@@ -612,33 +345,33 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       try {
         const currentQueue = shuffleMode ? shuffledQueue : queue
 
-        if (currentQueue.length <= 1) {
-          logDetailedDebug('队列中只有一首或没有曲目，无法跳转')
+        if (currentQueue.length === 0) {
+          logDetailedDebug('队列中没有曲目，无法跳转')
           return
         }
 
         let nextIndex: number
 
-        if (shuffleMode) {
-          // 随机模式下随机选择一首（不重复当前曲目）
-          logDetailedDebug('随机模式：随机选择下一曲')
+        if (repeatMode === RepeatMode.Queue) {
+          // 列表循环
+          nextIndex = (currentIndex + 1) % currentQueue.length
+        } else if (shuffleMode) {
+          // 随机模式
           do {
             nextIndex = Math.floor(Math.random() * currentQueue.length)
           } while (nextIndex === currentIndex && currentQueue.length > 1)
-          logDetailedDebug('随机选择的索引', {
-            nextIndex,
-            trackId: currentQueue[nextIndex].id,
-            title: currentQueue[nextIndex].title,
-          })
         } else {
-          // 顺序模式
-          logDetailedDebug('顺序模式：跳转到下一曲')
-          // 如果当前曲目是最后一首，则跳转到第一首（循环）
-          nextIndex = (currentIndex + 1) % currentQueue.length
+          // 顺序播放 & 关闭循环
+          nextIndex = currentIndex + 1
+          if (nextIndex >= currentQueue.length) {
+            logDetailedDebug('已到达最后一首，停止播放')
+            await TrackPlayer.pause() // 停止播放
+            set({ isPlaying: false })
+            return
+          }
         }
-        // 惰性加载
-        await get().lazyLoadTracks()
-        await get().skipToTrack(nextIndex)
+
+        await get().skipToTrack(nextIndex) // 切换到下一首
       } catch (error) {
         logError('跳转到下一曲失败', error)
       }
@@ -657,8 +390,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       try {
         const currentQueue = shuffleMode ? shuffledQueue : queue
 
-        if (currentQueue.length <= 1) {
-          logDetailedDebug('队列中只有一首或没有曲目，无法跳转')
+        if (currentQueue.length === 0) {
+          logDetailedDebug('队列中没有曲目，无法跳转')
           return
         }
 
@@ -683,9 +416,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           previousIndex =
             currentIndex === 0 ? currentQueue.length - 1 : currentIndex - 1
         }
-        // 惰性加载
-        await get().lazyLoadTracks()
-        await get().skipToTrack(previousIndex)
+
+        await get().skipToTrack(previousIndex) // 切换到上一首
       } catch (error) {
         logError('跳转到上一曲失败', error)
       }
@@ -722,7 +454,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       } else {
         newMode = RepeatMode.Off
       }
-      await TrackPlayer.setRepeatMode(newMode)
+      await TrackPlayer.setRepeatMode(newMode) // 设置重复模式
       set({ repeatMode: newMode })
       logDetailedDebug('状态已更新：重复模式已更改', { newMode })
     },
@@ -795,9 +527,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
 
         set({
           queue: [],
-          rntpQueue: [],
           currentIndex: -1,
-          currentRntpIndex: -1,
           currentTrack: null,
           isPlaying: false,
           shuffledQueue: [],
@@ -816,7 +546,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         source: track.source,
       })
       const { track: updatedTrack, needsUpdate } =
-        await AudioStreamHandler.checkAndUpdateAudioStream(track)
+        await checkAndUpdateAudioStream(track)
       return updatedTrack
     },
 
@@ -843,35 +573,39 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         logDetailedDebug('未找到指定索引的曲目', { index })
         return
       }
-      // 找到 rntp 内部队列中对应的 track 的 index
-      const rntpIndex = get().rntpQueue.findIndex((t) => t.id === track.id)
-      logDetailedDebug('rntp 内部队列索引', { rntpIndex, trackId: track.id })
 
-      if (rntpIndex === -1) {
-        logDetailedDebug('未在 rntp 队列中找到对应曲目，可能未加载', {
-          trackId: track.id,
-          index,
-        })
-        return
-      }
+      // 检查并更新音频流
+      const updatedTrack = await get().checkAndUpdateAudioStream(track)
 
-      await TrackPlayer.skip(rntpIndex)
-      // await TrackPlayer.play() // 确保开始播放
+      // 使用 TrackPlayer.load() 替换当前曲目
+      await TrackPlayer.load(convertToRNTPTrack(updatedTrack))
 
-      // 更新状态
+      // 更新状态 (在 load 之后，确保状态是最新的)
       set(
         produce((state: PlayerState) => {
           state.currentIndex = index
-          state.currentRntpIndex = rntpIndex
-          state.currentTrack = track
-          state.isPlaying = true // 设置播放状态为 true
+          state.currentTrack = updatedTrack
+          const shuffledQueueIndex = state.shuffledQueue.findIndex(
+            (t) => t.id === updatedTrack.id,
+          )
+          if (shuffledQueueIndex !== -1) {
+            state.shuffledQueue[shuffledQueueIndex] = updatedTrack
+          }
+          const queueIndex = state.queue.findIndex(
+            (t) => t.id === updatedTrack.id,
+          )
+          if (queueIndex !== -1) {
+            state.queue[queueIndex] = updatedTrack
+          }
         }),
       )
 
+      // 预加载
+      // get().preloadTracks(index)
+
       logDetailedDebug('已跳转到指定曲目', {
         index,
-        trackTitle: track.title,
-        rntpIndex,
+        trackTitle: updatedTrack.title,
       })
     },
   }
