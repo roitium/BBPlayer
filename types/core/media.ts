@@ -1,12 +1,12 @@
 export interface Track {
   id: string // 对 b 站视频来说，是 bvid
   cid?: number // b 站特有的属性
-  title: string
-  artist: string
-  cover: string
-  source: 'bilibili' | 'local'
-  createTime: number // 时间戳
-  duration: number // 秒
+  title?: string
+  artist?: string
+  cover?: string
+  source?: 'bilibili' | 'local'
+  createTime?: number // 时间戳
+  duration?: number // 秒
   biliStreamUrl?: {
     url: string
     quality: number
@@ -14,6 +14,7 @@ export interface Track {
     type: 'mp4' | 'dash'
   }
   localStreamUrl?: string // 本地音乐的本地路径
+  hasMetadata: boolean // 是否已经获取过元数据(如果为 false 则只有 id 和 source)
 }
 
 // 播放列表，b 站的多 p 视频、收藏夹、视频合集都会映射到这个类型

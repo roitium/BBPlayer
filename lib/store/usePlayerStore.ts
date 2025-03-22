@@ -13,6 +13,7 @@ import { produce } from 'immer'
 import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
 import { logDetailedDebug, logError } from '@/utils/log'
 import { checkAndUpdateAudioStream, convertToRNTPTrack } from '@/utils/player'
+import useAppStore from './useAppStore'
 
 // 播放器逻辑对象
 const PlayerLogic = {
@@ -148,15 +149,13 @@ const PlayerLogic = {
             trackId: nowTrack.id,
             title: nowTrack.title,
           })
-          const track = await getStore().checkAndUpdateAudioStream(nowTrack)
-          if (track) {
-            logDetailedDebug('更新音频流成功', {
-              trackId: track.id,
-              title: track.title,
-            })
-            // 使用 load 方法替换当前曲目
-            await TrackPlayer.load(convertToRNTPTrack(track))
-          }
+          const track = await getStore().patchMetadataAndAudio(nowTrack)
+          logDetailedDebug('更新音频流成功', {
+            trackId: track.id,
+            title: track.title,
+          })
+          // 使用 load 方法替换当前曲目
+          await TrackPlayer.load(convertToRNTPTrack(track))
         }
       },
     )
@@ -206,7 +205,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
 
     // 添加到队列
-    addToQueue: async (tracks: Track[], playNow = false) => {
+    addToQueue: async (tracks: Track[], playNow = true) => {
       logDetailedDebug('调用 addToQueue()', {
         tracksCount: tracks.length,
         tracks: tracks.map((t) => ({ id: t.id, title: t.title })),
@@ -293,9 +292,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         tracksToPreload: tracksToPreload.map((t) => t.title),
       })
 
-      // 检查并更新音频流
       await Promise.all(
-        tracksToPreload.map((track) => get().checkAndUpdateAudioStream(track)),
+        tracksToPreload.map((track) => get().patchMetadataAndAudio(track)),
       )
       logDetailedDebug('预加载完成')
     },
@@ -345,8 +343,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       try {
         const currentQueue = shuffleMode ? shuffledQueue : queue
 
-        if (currentQueue.length === 0) {
-          logDetailedDebug('队列中没有曲目，无法跳转')
+        if (currentQueue.length <= 1) {
+          logDetailedDebug('队列中没有（或只有一首）曲目，无法跳转')
           return
         }
 
@@ -390,8 +388,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       try {
         const currentQueue = shuffleMode ? shuffledQueue : queue
 
-        if (currentQueue.length === 0) {
-          logDetailedDebug('队列中没有曲目，无法跳转')
+        if (currentQueue.length <= 1) {
+          logDetailedDebug('队列中没有（或只有一首）曲目，无法跳转')
           return
         }
 
@@ -538,16 +536,86 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       }
     },
 
-    // 检查并更新音频流
-    checkAndUpdateAudioStream: async (track: Track): Promise<Track> => {
-      logDetailedDebug('调用 checkAndUpdateAudioStream()', {
+    // 检查并更新音频流和元数据，并将最终结果更新到 queue 中
+    patchMetadataAndAudio: async (track: Track): Promise<Track> => {
+      logDetailedDebug('调用 patchMetadataAndAudio()', {
         trackId: track.id,
         title: track.title,
         source: track.source,
       })
-      const { track: updatedTrack, needsUpdate } =
-        await checkAndUpdateAudioStream(track)
-      return updatedTrack
+      let updatedTrack = track
+      try {
+        if (!track.hasMetadata) {
+          logDetailedDebug('这个 track 没有元数据，先获取元数据', {
+            trackId: track.id,
+          })
+          const bilibiliApi = useAppStore.getState().bilibiliApi
+          const metadata = await bilibiliApi.getVideoDetails(track.id)
+          updatedTrack = {
+            ...track,
+            title: metadata.title,
+            artist: metadata.owner.name,
+            cover: metadata.pic,
+            duration: metadata.duration,
+            createTime: metadata.pubdate,
+            cid: metadata.cid,
+            hasMetadata: true,
+          }
+          // 在这里立即更新当前曲目的信息，避免显示空白。
+          set(
+            produce((state: PlayerState) => {
+              const queueIndex = state.queue.findIndex(
+                (t) => t.id === updatedTrack.id,
+              )
+              if (queueIndex !== -1) {
+                state.queue[queueIndex] = updatedTrack
+              }
+              const shuffledQueueIndex = state.shuffledQueue.findIndex(
+                (t) => t.id === updatedTrack.id,
+              )
+              if (shuffledQueueIndex !== -1) {
+                state.shuffledQueue[shuffledQueueIndex] = updatedTrack
+              }
+            }),
+          )
+          logDetailedDebug('B站音频元数据获取成功，开始继续检查音频流', {
+            trackId: updatedTrack.id,
+            title: updatedTrack.title,
+            artist: updatedTrack.artist,
+            cover: updatedTrack.cover,
+            duration: updatedTrack.duration,
+            createTime: updatedTrack.createTime,
+          })
+        }
+        const { track: finalTrack, needsUpdate } =
+          await checkAndUpdateAudioStream(updatedTrack)
+        if (needsUpdate) {
+          logDetailedDebug('音频流需要更新，更新到 queue 中', {
+            trackId: finalTrack.id,
+            title: finalTrack.title,
+          })
+          set(
+            produce((state: PlayerState) => {
+              const queueIndex = state.queue.findIndex(
+                (t) => t.id === finalTrack.id,
+              )
+              if (queueIndex !== -1) {
+                state.queue[queueIndex] = finalTrack
+              }
+              const shuffledQueueIndex = state.shuffledQueue.findIndex(
+                (t) => t.id === finalTrack.id,
+              )
+              if (shuffledQueueIndex !== -1) {
+                state.shuffledQueue[shuffledQueueIndex] = finalTrack
+              }
+            }),
+          )
+        }
+        return finalTrack
+      } catch (error) {
+        logError('检查并更新音频流失败', error)
+        return track
+      }
     },
 
     // 跳转到指定曲目
@@ -573,9 +641,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         logDetailedDebug('未找到指定索引的曲目', { index })
         return
       }
+      // 乐观更新当前曲目，让界面显示更迅速
+      if (track.hasMetadata) {
+        set({ currentTrack: track, isBuffering: true })
+      }
 
       // 检查并更新音频流
-      const updatedTrack = await get().checkAndUpdateAudioStream(track)
+      const updatedTrack = await get().patchMetadataAndAudio(track)
 
       // 使用 TrackPlayer.load() 替换当前曲目
       await TrackPlayer.load(convertToRNTPTrack(updatedTrack))
@@ -585,23 +657,11 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         produce((state: PlayerState) => {
           state.currentIndex = index
           state.currentTrack = updatedTrack
-          const shuffledQueueIndex = state.shuffledQueue.findIndex(
-            (t) => t.id === updatedTrack.id,
-          )
-          if (shuffledQueueIndex !== -1) {
-            state.shuffledQueue[shuffledQueueIndex] = updatedTrack
-          }
-          const queueIndex = state.queue.findIndex(
-            (t) => t.id === updatedTrack.id,
-          )
-          if (queueIndex !== -1) {
-            state.queue[queueIndex] = updatedTrack
-          }
         }),
       )
 
       // 预加载
-      // get().preloadTracks(index)
+      get().preloadTracks(index)
 
       logDetailedDebug('已跳转到指定曲目', {
         index,

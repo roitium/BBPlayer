@@ -57,10 +57,11 @@ interface BilibiliVideoDetails {
   title: string
   pic: string
   pubdate: number
-  duration: string
+  duration: number
   owner: {
     name: string
   }
+  cid: number
 }
 
 // 收藏夹
@@ -129,6 +130,12 @@ interface BilibiliFavoriteListContents {
   ttl: number
 }
 
+type BilibiliFavoriteListAllContents = {
+  id: number
+  bvid: string
+  type: number // 2：视频稿件 12：音频 21：视频合集
+}[]
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -140,4 +147,5 @@ export type {
   BilibiliUserInfo,
   BilibiliFavoriteListContent,
   BilibiliFavoriteListContents,
+  BilibiliFavoriteListAllContents,
 }

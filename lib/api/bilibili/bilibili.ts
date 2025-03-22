@@ -9,6 +9,7 @@ import type {
   BilibiliUserInfo,
   BilibiliFavoriteListContents,
   BilibiliFavoriteListContent,
+  BilibiliFavoriteListAllContents,
 } from '@/types/apis/bilibili'
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
@@ -22,6 +23,7 @@ const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
     source: 'bilibili' as const,
     duration: video.duration,
     createTime: 0,
+    hasMetadata: true,
   }))
 }
 
@@ -40,6 +42,7 @@ const convertVideoDetailsToTracks = (
         source: 'bilibili' as const,
         duration: Number(video.duration),
         createTime: video.pubdate,
+        hasMetadata: true,
       })
     }
     return tracks
@@ -116,6 +119,7 @@ const convertFavoriteListContentsToTracks = (
           source: 'bilibili' as const,
           duration: content.duration,
           createTime: content.pubdate,
+          hasMetadata: true,
         })
       }
     }
@@ -293,6 +297,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     return response
   },
 
+  // 获取收藏夹内容(可以获取到更详细的信息，但是需要分页)
   async getFavoriteListContents(
     favoriteId: number,
     pn: number,
@@ -315,6 +320,32 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       hasMore: response.has_more,
       favoriteMeta: response.info,
     }
+  },
+
+  // 获取收藏夹所有视频内容（可以一次拿到所有数据，但是只有 bvid）
+  async getFavoriteListAllContents(
+    favoriteId: number,
+  ): Promise<BilibiliFavoriteListAllContents> {
+    const response = await apiClient.get<BilibiliFavoriteListAllContents>(
+      '/x/v3/fav/resource/ids',
+      {
+        media_id: favoriteId.toString(),
+      },
+      getCookie(),
+    )
+    return response.filter((item) => item.type === 2)
+  },
+
+  // 获取一个视频的详细信息
+  async getVideoDetails(bvid: string): Promise<BilibiliVideoDetails> {
+    const response = await apiClient.get<BilibiliVideoDetails>(
+      '/x/web-interface/view',
+      {
+        bvid,
+      },
+      getCookie(),
+    )
+    return response
   },
 })
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>

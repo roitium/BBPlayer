@@ -196,7 +196,7 @@ const HomePage = () => {
                 variant='bodySmall'
                 style={{ color: colors.onSurfaceVariant }}
               >
-                {formatDurationToHHMM(item.duration)}
+                {item.duration ? formatDurationToHHMM(item.duration) : ''}
               </Text>
             </View>
           </View>

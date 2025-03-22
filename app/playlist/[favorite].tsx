@@ -47,8 +47,16 @@ export default function PlaylistPage() {
   // 播放全部
   const playAll = async () => {
     try {
+      const allContentIds = await bilibiliApi.getFavoriteListAllContents(
+        Number(favorite),
+      )
+      const allTracks = allContentIds.map((c) => ({
+        id: c.bvid,
+        source: 'bilibili' as const,
+        hasMetadata: false,
+      }))
       await clearQueue()
-      await addToQueue(favoriteData?.tracks || [], true)
+      await addToQueue(allTracks, true)
     } catch (error) {
       console.error('播放全部失败', error)
     }
@@ -112,7 +120,7 @@ export default function PlaylistPage() {
                   variant='bodySmall'
                   style={{ color: colors.onSurfaceVariant }}
                 >
-                  {formatDurationToHHMM(item.duration)}
+                  {item.duration ? formatDurationToHHMM(item.duration) : ''}
                 </Text>
               </View>
             </View>
