@@ -168,7 +168,7 @@ export default function PlaylistPage() {
       className='flex-1'
       style={{ backgroundColor: colors.background }}
     >
-      <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)' }}>
+      <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
         <Appbar.BackAction
           onPress={() => {
             router.back()
