@@ -24,6 +24,7 @@ import type { Track } from '@/types/core/media'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import { formatDurationToHHMM } from '@/utils/times'
 
 // 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
@@ -250,7 +251,7 @@ export default function SearchPage() {
   // 渲染搜索结果项
   const renderSearchResultItem = (item: Track) => (
     <TouchableOpacity
-      key={item.id}
+      key={`search_result_${item.id}_${item.duration}`}
       onPress={() => playSingleTrack(item)}
       activeOpacity={0.7}
     >
@@ -283,7 +284,7 @@ export default function SearchPage() {
               variant='bodySmall'
               style={{ color: colors.onSurfaceVariant }}
             >
-              {item.duration}
+              {item.duration ? formatDurationToHHMM(item.duration) : '未知时长'}
             </Text>
             <IconButton
               icon='play-circle-outline'

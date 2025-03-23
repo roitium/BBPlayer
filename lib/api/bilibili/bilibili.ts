@@ -13,6 +13,7 @@ import type {
 } from '@/types/apis/bilibili'
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
+import { formatHHMMToSeconds } from '@/utils/times'
 // 转换工具函数
 const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
   return videos.map((video) => ({
@@ -80,16 +81,15 @@ const convertFavoriteToPlaylists = (
 const convertSearchVideosToTracks = (
   videos: BilibiliSearchVideo[],
 ): Track[] => {
-  // FIXME: 忽略 duration 类型错误，只是因为我现在不想改了
-  // @ts-expect-error
   return videos.map((video) => ({
     id: video.bvid,
     title: video.title.replace(/<em[^>]*>|<\/em>/g, ''),
     artist: video.author,
     cover: `https:${video.pic}`,
     source: 'bilibili' as const,
-    duration: video.duration,
+    duration: formatHHMMToSeconds(video.duration),
     createTime: video.senddate,
+    hasMetadata: true,
   }))
 }
 
