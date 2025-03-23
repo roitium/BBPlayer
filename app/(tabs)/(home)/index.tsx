@@ -21,6 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
 import {
+  usePersonalInformation,
   usePopularVideos,
   useRecentlyPlayed,
   useSyncedPlaylists,
@@ -87,13 +88,7 @@ const HomePage = () => {
   const [refreshing, setRefreshing] = useState(false)
   const { addToQueue, clearQueue } = usePlayerStore()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
-  const {
-    bilibiliCookie,
-    bilibiliAvatar,
-    setBilibiliCookie,
-    bilibiliApi,
-    bilibiliUid,
-  } = useAppStore()
+  const { bilibiliCookie, setBilibiliCookie, bilibiliApi } = useAppStore()
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [cookie, setCookie] = useState(bilibiliCookie)
 
@@ -110,11 +105,17 @@ const HomePage = () => {
   // 添加到队列
   const addTrackToQueue = async (track: Track) => {
     try {
-      await addToQueue([track])
+      await addToQueue([track], false)
     } catch (error) {
       console.error('添加到队列失败', error)
     }
   }
+
+  const {
+    data: personalInfo,
+    isLoading: personalInfoLoading,
+    refetch: personalInfoRefetch,
+  } = usePersonalInformation(bilibiliApi)
 
   let {
     data: recentlyPlayed,
@@ -126,7 +127,8 @@ const HomePage = () => {
     data: playlists,
     isLoading: playlistsLoading,
     refetch: playlistsRefetch,
-  } = useSyncedPlaylists(bilibiliApi, bilibiliUid)
+  } = useSyncedPlaylists(bilibiliApi, personalInfo?.mid)
+
   let {
     data: popularVideos,
     isLoading: popularVideosLoading,
@@ -161,15 +163,6 @@ const HomePage = () => {
             source={{ uri: item.cover }}
             className='rounded'
             style={{ width: 48, height: 48 }}
-            // onError={(error) => {
-            //   // console.log('图片加载失败：', error)
-            //   // Toast.show({
-            //   //   text1: `图片加载失败：${item.cover}`,
-            //   //   text2: `错误：${error.nativeEvent.error}`,
-            //   //   type: 'error',
-            //   // })
-            //   Alert.alert('图片加载失败', error.nativeEvent.error)
-            // }}
           />
           <View className='ml-3 flex-1'>
             <Text
@@ -296,6 +289,22 @@ const HomePage = () => {
     </TouchableOpacity>
   )
 
+  const getGreetingMsg = () => {
+    const hour = new Date().getHours()
+    switch (true) {
+      case hour >= 0 && hour < 6:
+        return '凌晨好'
+      case hour >= 6 && hour < 12:
+        return '早上好'
+      case hour >= 12 && hour < 18:
+        return '下午好'
+      case hour >= 18 && hour < 24:
+        return '晚上好'
+      default:
+        return '你不好'
+    }
+  }
+
   return (
     <View
       className='flex-1'
@@ -329,7 +338,8 @@ const HomePage = () => {
                 variant='bodyMedium'
                 style={{ color: colors.onSurfaceVariant }}
               >
-                我只想听点音乐，拜托让一切简单点
+                {getGreetingMsg()}，
+                {personalInfoLoading ? '陌生人' : personalInfo?.name}
               </Text>
             </View>
             <TouchableOpacity
@@ -340,7 +350,7 @@ const HomePage = () => {
               <Avatar.Image
                 size={40}
                 source={{
-                  uri: bilibiliAvatar,
+                  uri: personalInfo?.face,
                 }}
               />
             </TouchableOpacity>

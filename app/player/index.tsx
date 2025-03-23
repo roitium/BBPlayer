@@ -37,7 +37,7 @@ const formatTime = (seconds: number) => {
 
 function DragableProgressBar() {
   const { seekTo } = usePlayerStore()
-  const { position, duration } = usePlaybackProgress()
+  const { position, duration } = usePlaybackProgress(300)
   const { colors } = useTheme()
   const [isDragging, setIsDragging] = useState(false)
   const [localProgress, setLocalProgress] = useState(0) // 始终是一个 0-1 的值
@@ -47,6 +47,13 @@ function DragableProgressBar() {
   // 我不懂为什么，但是在 panResponder 内获取到的 duration 和 position 永远是 0，只能靠这种方法 hack 一下
   const cachedDuration = useRef(duration)
   const cachedPosition = useRef(position)
+  const { currentTrack } = usePlayerStore()
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条
+  useEffect(() => {
+    setLocalProgress(0)
+    cachedPosition.current = 0
+  }, [currentTrack])
 
   // 当 duration 和 position 变动时更新缓存
   useEffect(() => {
@@ -201,9 +208,6 @@ export default function PlayerPage() {
     toggleRepeatMode,
     toggleShuffleMode,
   } = usePlayerStore()
-
-  // 获取播放状态
-  const playbackState = usePlaybackStateHook()
 
   // 本地状态
   const [isFavorite, setIsFavorite] = useState(false)

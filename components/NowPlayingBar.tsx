@@ -1,5 +1,6 @@
 import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
 import { router } from 'expo-router'
+import { useEffect } from 'react'
 import { View, Image, TouchableOpacity } from 'react-native'
 import {
   IconButton,
@@ -15,7 +16,12 @@ export default function NowPlayingBar() {
   const insets = useSafeAreaInsets()
   const { currentTrack, isPlaying, skipToNext, skipToPrevious, togglePlay } =
     usePlayerStore()
-  const progress = usePlaybackProgress()
+  const progress = usePlaybackProgress(100)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条，不需要 progress 作为 dep
+  useEffect(() => {
+    progress.position = 0
+  }, [currentTrack])
 
   if (!currentTrack) return null
 

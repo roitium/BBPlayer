@@ -79,6 +79,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
+        await useAppStore.getState().setBilibiliCookie(null)
         if (!global.playerIsReady) {
           await setupPlayer()
           global.playerIsReady = true
@@ -91,15 +92,6 @@ export default function RootLayout() {
     }
 
     prepare()
-  }, [])
-
-  useEffect(() => {
-    async function setupBilibiliCookie() {
-      await useAppStore.getState().setBilibiliCookie(null)
-      await useAppStore.getState().setBilibiliUserInfo()
-    }
-
-    setupBilibiliCookie()
   }, [])
 
   const onLayoutRootView = useCallback(() => {

@@ -4,12 +4,9 @@ import { createBilibiliApi } from '../api/bilibili/bilibili'
 
 interface AppState {
   bilibiliCookie: string
-  bilibiliUid: number
-  bilibiliAvatar: string
   bilibiliApi: ReturnType<typeof createBilibiliApi>
 
   setBilibiliCookie: (cookie: string | null) => Promise<void>
-  setBilibiliUserInfo: () => Promise<void>
 }
 
 const useAppStore = create<AppState>((set, get) => {
@@ -18,8 +15,6 @@ const useAppStore = create<AppState>((set, get) => {
 
   return {
     bilibiliCookie: '',
-    bilibiliUid: 0,
-    bilibiliAvatar: '',
     bilibiliApi,
 
     setBilibiliCookie: async (cookie: string | null) => {
@@ -30,19 +25,6 @@ const useAppStore = create<AppState>((set, get) => {
         set({
           bilibiliCookie: (await AsyncStorage.getItem('bilibiliCookie')) || '',
         })
-      }
-    },
-    setBilibiliUserInfo: async () => {
-      if (get().bilibiliCookie) {
-        try {
-          const userInfo = await get().bilibiliApi.getUserInfo()
-          set({
-            bilibiliUid: userInfo.mid,
-            bilibiliAvatar: userInfo.face,
-          })
-        } catch (error) {
-          console.error('获取用户信息失败:', error)
-        }
       }
     },
   }

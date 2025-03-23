@@ -6,7 +6,17 @@ export const homeQueryKeys = {
   recentlyPlayed: () => [...homeQueryKeys.all, 'recentlyPlayed'] as const,
   playlists: () => [...homeQueryKeys.all, 'playlists'] as const,
   popularVideos: () => [...homeQueryKeys.all, 'popularVideos'] as const,
+  personalInformation: () =>
+    [...homeQueryKeys.all, 'personalInformation'] as const,
 } as const
+
+export const usePersonalInformation = (bilibiliApi: BilibiliApi) => {
+  return useQuery({
+    queryKey: homeQueryKeys.personalInformation(),
+    queryFn: () => bilibiliApi.getUserInfo(),
+    staleTime: 20 * 60 * 1000, // 不需要刷新太频繁
+  })
+}
 
 export const usePopularVideos = (bilibiliApi: BilibiliApi) => {
   return useQuery({
@@ -17,7 +27,6 @@ export const usePopularVideos = (bilibiliApi: BilibiliApi) => {
   })
 }
 
-// 单独的查询 hooks，以便可以独立刷新和缓存
 export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: homeQueryKeys.recentlyPlayed(),
@@ -28,11 +37,12 @@ export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
 
 export const useSyncedPlaylists = (
   bilibiliApi: BilibiliApi,
-  userMid: number,
+  userMid?: number,
 ) => {
   return useQuery({
     queryKey: homeQueryKeys.playlists(),
-    queryFn: () => bilibiliApi.getFavoritePlaylists(userMid),
+    queryFn: () => bilibiliApi.getFavoritePlaylists(userMid as number), // 这里需要断言，因为下面的enabled依赖于userMid
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!userMid,
   })
 }
