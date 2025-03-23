@@ -1,6 +1,9 @@
-interface ApiError {
+import { BilibiliApiError } from '@/utils/errors'
+
+type ReqResponse<T> = {
   code: number
   message: string
+  data: T
 }
 
 class ApiClient {
@@ -19,26 +22,26 @@ class ApiClient {
         'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 BiliApp/6.66.0',
       ...options.headers,
     }
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    })
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      })
-
-      const data = await response.json()
-
-      if (data.code !== 0) {
-        throw new Error(data.message || '请求失败')
-      }
-
-      return data.data
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`API 请求失败: ${error.message}`)
-      }
+    if (!response.ok) {
+      const error = new Error(
+        `请求 ${url} 失败: ${response.status} ${response.statusText}`,
+      )
       throw error
     }
+
+    const data: ReqResponse<T> = await response.json()
+
+    if (data.code !== 0) {
+      const apiError = new BilibiliApiError(data.message, data.code, data.data)
+      throw apiError
+    }
+
+    return data.data
   }
 
   async get<T>(

@@ -9,7 +9,6 @@ import TrackPlayer, {
   AppKilledPlaybackBehavior,
 } from 'react-native-track-player'
 import type { Track } from '@/types/core/media'
-import { middleware } from 'zustand-expo-devtools'
 import { produce } from 'immer'
 import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
 import { logDetailedDebug, logError } from '@/utils/log'
@@ -679,7 +678,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
   return store
 })
 
-middleware(usePlayerStore)
+// middleware(usePlayerStore)
 
 // 导出一些有用的hooks
 export const usePlaybackProgress = useProgress

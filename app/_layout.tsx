@@ -23,6 +23,8 @@ import useAppStore from '@/lib/store/useAppStore'
 import Toast from 'react-native-toast-message'
 import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
+import { BilibiliApiError } from '@/utils/errors'
+import GlobalErrorFallback from '@/components/ErrorBoundary'
 
 const developement = process.env.NODE_ENV === 'development'
 
@@ -46,6 +48,26 @@ Sentry.init({
   enableNativeFramesTracking: !isRunningInExpoGo(),
 })
 
+// 设置全局错误处理器，捕获未被处理的 JS 错误
+if (!developement) {
+  // biome-ignore lint/suspicious/noExplicitAny: 无需解释
+  const errorUtils = (global as any).ErrorUtils
+  if (errorUtils) {
+    const originalErrorHandler = errorUtils.getGlobalHandler()
+
+    errorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
+      Sentry.captureException(error, {
+        tags: {
+          scope: 'GlobalErrorHandler',
+          isFatal: String(isFatal),
+        },
+      })
+
+      originalErrorHandler(error, isFatal)
+    })
+  }
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -60,8 +82,27 @@ const queryClient = new QueryClient({
     onError: (error, query) => {
       Toast.show({
         type: 'error',
-        text1: `请求 ${query.queryKey} 失败`,
+        text1: `请求 ${query.queryKey} 失败，已记录错误`,
         text2: error.message,
+      })
+
+      if (error instanceof BilibiliApiError) {
+        if (error.msgCode === -101) {
+          // -101 为未登录，不报告
+          console.log('未登录')
+          return
+        }
+      }
+
+      Sentry.captureException(error, {
+        tags: {
+          scope: 'QueryCache',
+          queryKey: JSON.stringify(query.queryKey),
+        },
+        extra: {
+          queryHash: query.queryHash,
+          retry: query.options.retry,
+        },
       })
     },
   }),
@@ -155,24 +196,33 @@ export default Sentry.wrap(function RootLayout() {
       onLayout={onLayoutRootView}
       className='flex-1'
     >
-      <QueryClientProvider client={queryClient}>
-        <PaperProvider theme={paperTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-              name='(tabs)'
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name='player/index'
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name='+not-found' />
-          </Stack>
-          <StatusBar style='auto' />
-        </PaperProvider>
-        {developement && <DevToolsBubble onCopy={onCopy} />}
-      </QueryClientProvider>
-      <Toast />
+      <Sentry.ErrorBoundary
+        fallback={({ error, resetError }) => (
+          <GlobalErrorFallback
+            error={error}
+            resetError={resetError}
+          />
+        )}
+      >
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider theme={paperTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen
+                name='(tabs)'
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name='player/index'
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name='+not-found' />
+            </Stack>
+            <StatusBar style='auto' />
+          </PaperProvider>
+          {developement && <DevToolsBubble onCopy={onCopy} />}
+        </QueryClientProvider>
+        <Toast />
+      </Sentry.ErrorBoundary>
     </View>
   )
 })
