@@ -3523,6 +3523,7 @@ __metadata:
     jest: "npm:^29.2.1"
     jest-expo: "npm:~52.0.4"
     nativewind: "npm:^4.1.23"
+    promise: "npm:^8.3.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-native: "npm:0.76.7"
