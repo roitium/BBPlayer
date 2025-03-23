@@ -6,6 +6,7 @@ import TrackPlayer, {
   Capability,
   Event,
   RepeatMode,
+  AppKilledPlaybackBehavior,
 } from 'react-native-track-player'
 import type { Track } from '@/types/core/media'
 import { middleware } from 'zustand-expo-devtools'
@@ -14,6 +15,7 @@ import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
 import { logDetailedDebug, logError } from '@/utils/log'
 import { checkAndUpdateAudioStream, convertToRNTPTrack } from '@/utils/player'
 import useAppStore from './useAppStore'
+import { PRELOAD_TRACKS } from '@/constants/player'
 
 // 播放器逻辑对象
 const PlayerLogic = {
@@ -27,6 +29,7 @@ const PlayerLogic = {
         maxBuffer: 50,
         backBuffer: 30,
         waitForBuffer: true,
+        autoHandleInterruptions: true,
       })
       logDetailedDebug('播放器配置设置完成')
 
@@ -48,6 +51,9 @@ const PlayerLogic = {
           Capability.SkipToPrevious,
         ],
         progressUpdateEventInterval: 1,
+        android: {
+          appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
+        },
       })
       logDetailedDebug('播放器能力设置完成')
     } catch (error: unknown) {
@@ -166,7 +172,7 @@ const PlayerLogic = {
 
 /**
  * 播放器状态存储
- * 采用 zustand 自己维护一个 queue，rntp 仅用于播放当前的 track，通过 TrackPlayer.load 来替换当前播放的内容，所有操作都通过该 store 进行
+ * 采用 zustand 自己维护一个 queue，rntp 仅用于播放当前的 track，通过 TrackPlayer.load 来替换当前播放的内容，所有队列操作都通过该 store 进行
  */
 export const usePlayerStore = create<PlayerStore>((set, get) => {
   logDetailedDebug('创建播放器状态存储')
@@ -275,10 +281,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       const { queue, shuffleMode, shuffledQueue } = get()
       const currentQueue = shuffleMode ? shuffledQueue : queue
 
-      // 预加载当前播放歌曲的后三首
+      // 预加载当前播放歌曲的后 n 首
       const preloadStartIndex = index + 1
       const preloadEndIndex = Math.min(
-        preloadStartIndex + 3,
+        preloadStartIndex + PRELOAD_TRACKS,
         currentQueue.length,
       )
       const tracksToPreload = currentQueue.slice(

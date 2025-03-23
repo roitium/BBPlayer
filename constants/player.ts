@@ -1,4 +1,4 @@
-// 音频流过期时间（毫秒）
-const STREAM_EXPIRY_TIME = 120 * 60 * 1000 // 120分钟
+const STREAM_EXPIRY_TIME = 120 * 60 * 1000 // 音频流过期时间 120 分钟
+const PRELOAD_TRACKS = 3 // 预加载音轨数
 
-export { STREAM_EXPIRY_TIME }
+export { STREAM_EXPIRY_TIME, PRELOAD_TRACKS }
