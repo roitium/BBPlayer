@@ -38,3 +38,4 @@ yarn-error.*
 
 app-example
 temp-builds
+.env.local

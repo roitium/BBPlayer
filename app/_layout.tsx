@@ -1,5 +1,5 @@
 import '../css/global.css'
-import { Stack } from 'expo-router'
+import { Stack, useNavigationContainerRef } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -21,6 +21,9 @@ import * as SplashScreen from 'expo-splash-screen'
 import { setupPlayer } from '@/lib/services/setupPlayer'
 import useAppStore from '@/lib/store/useAppStore'
 import Toast from 'react-native-toast-message'
+import * as Sentry from '@sentry/react-native'
+import { isRunningInExpoGo } from 'expo'
+
 const developement = process.env.NODE_ENV === 'development'
 
 // Keep the splash screen visible while we fetch resources
@@ -29,6 +32,18 @@ SplashScreen.preventAutoHideAsync()
 SplashScreen.setOptions({
   duration: 200,
   fade: true,
+})
+
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+})
+
+Sentry.init({
+  dsn: 'https://893ea8eb3743da1e065f56b3aa5e96f9@o4508985265618944.ingest.us.sentry.io/4508985267191808',
+  debug: developement,
+  tracesSampleRate: developement ? 1.0 : 0.1,
+  integrations: [navigationIntegration],
+  enableNativeFramesTracking: !isRunningInExpoGo(),
 })
 
 const queryClient = new QueryClient({
@@ -58,7 +73,8 @@ function onAppStateChange(status: AppStateStatus) {
   }
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
+  const ref = useNavigationContainerRef()
   const [appIsReady, setAppIsReady] = useState(false)
 
   const colorScheme = useColorScheme()
@@ -79,6 +95,12 @@ export default function RootLayout() {
       return eventSubscription.remove
     })
   }, [])
+
+  useEffect(() => {
+    if (ref?.current) {
+      navigationIntegration.registerNavigationContainer(ref)
+    }
+  }, [ref])
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', onAppStateChange)
@@ -153,4 +175,4 @@ export default function RootLayout() {
       <Toast />
     </View>
   )
-}
+})

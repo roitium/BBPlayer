@@ -39,6 +39,14 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "bbplayer",
+          "organization": "roitium"
+        }
       ]
     ],
     "experiments": {
