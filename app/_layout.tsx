@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   focusManager,
   onlineManager,
+  QueryCache,
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
@@ -40,6 +41,15 @@ const queryClient = new QueryClient({
       refetchInterval: false,
     },
   },
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      Toast.show({
+        type: 'error',
+        text1: `请求 ${query.queryKey} 失败`,
+        text2: error.message,
+      })
+    },
+  }),
 })
 
 function onAppStateChange(status: AppStateStatus) {

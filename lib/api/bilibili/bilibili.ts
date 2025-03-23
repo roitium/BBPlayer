@@ -51,17 +51,6 @@ const convertVideoDetailsToTracks = (
     console.error(error)
     return []
   }
-  // return videos.map((video) => {
-  //   return {
-  //     id: video.bvid,
-  //     title: video.title,
-  //     artist: video.owner.name,
-  //     cover: video.pic,
-  //     source: 'bilibili' as const,
-  //     duration: formatHHMMToSeconds(video.duration),
-  //     createTime: video.pubdate,
-  //   }
-  // })
 }
 
 const convertFavoriteToPlaylists = (
