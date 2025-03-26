@@ -457,8 +457,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       } else {
         newMode = RepeatMode.Off
       }
-      await TrackPlayer.setRepeatMode(newMode) // 设置重复模式
       set({ repeatMode: newMode })
+      await TrackPlayer.setRepeatMode(newMode) // 设置重复模式
       logDetailedDebug('状态已更新：重复模式已更改', { newMode })
     },
 
