@@ -29,8 +29,8 @@ import {
 import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
-import { formatDurationToHHMM } from '@/utils/times'
 import { router } from 'expo-router'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 const mockCategories = [
   { id: '1', name: '翻唱', icon: 'music-note' },
@@ -189,7 +189,7 @@ const HomePage = () => {
                 variant='bodySmall'
                 style={{ color: colors.onSurfaceVariant }}
               >
-                {item.duration ? formatDurationToHHMM(item.duration) : ''}
+                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
               </Text>
             </View>
           </View>

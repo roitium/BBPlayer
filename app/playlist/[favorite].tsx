@@ -14,7 +14,7 @@ import {
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
-import { formatDurationToHHMM } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/times'
 import type { Track } from '@/types/core/media'
 import { useFavoriteData } from '@/hooks/api/useFavoriteData'
 
@@ -120,7 +120,7 @@ export default function PlaylistPage() {
                   variant='bodySmall'
                   style={{ color: colors.onSurfaceVariant }}
                 >
-                  {item.duration ? formatDurationToHHMM(item.duration) : ''}
+                  {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
                 </Text>
               </View>
             </View>
