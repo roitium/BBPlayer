@@ -39,3 +39,4 @@ yarn-error.*
 app-example
 temp-builds
 .env.local
+.yarn/install-state.gz
