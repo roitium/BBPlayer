@@ -27,16 +27,12 @@ import {
   type EdgeInsets,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
-
-// 格式化时间
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`
-}
+import { useShallow } from 'zustand/react/shallow'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 function DragableProgressBar() {
-  const { seekTo } = usePlayerStore()
+  const seekTo = usePlayerStore((state) => state.seekTo)
+  const currentTrack = usePlayerStore((state) => state.currentTrack)
   const { position, duration } = usePlaybackProgress(300)
   const { colors } = useTheme()
   const [isDragging, setIsDragging] = useState(false)
@@ -47,7 +43,6 @@ function DragableProgressBar() {
   // 我不懂为什么，但是在 panResponder 内获取到的 duration 和 position 永远是 0，只能靠这种方法 hack 一下
   const cachedDuration = useRef(duration)
   const cachedPosition = useRef(position)
-  const { currentTrack } = usePlayerStore()
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条
   useEffect(() => {
@@ -177,13 +172,13 @@ function DragableProgressBar() {
           variant='bodySmall'
           style={{ color: colors.onSurfaceVariant }}
         >
-          {formatTime(localProgress * duration)}
+          {formatDurationToHHMMSS(localProgress * duration)}
         </Text>
         <Text
           variant='bodySmall'
           style={{ color: colors.onSurfaceVariant }}
         >
-          {formatTime(duration)}
+          {formatDurationToHHMMSS(duration)}
         </Text>
       </View>
     </View>
@@ -196,18 +191,16 @@ export default function PlayerPage() {
   const { width: screenWidth } = Dimensions.get('window')
 
   // 从播放器store获取状态和方法
-  const {
-    currentTrack,
-    isPlaying,
-    isBuffering,
-    repeatMode,
-    shuffleMode,
-    togglePlay,
-    skipToNext,
-    skipToPrevious,
-    toggleRepeatMode,
-    toggleShuffleMode,
-  } = usePlayerStore()
+  const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
+    useShallow((state) => {
+      return {
+        currentTrack: state.currentTrack,
+        isPlaying: state.isPlaying,
+        repeatMode: state.repeatMode,
+        shuffleMode: state.shuffleMode,
+      }
+    }),
+  )
 
   // 本地状态
   const [isFavorite, setIsFavorite] = useState(false)
@@ -372,24 +365,24 @@ export default function PlayerPage() {
               icon={shuffleMode ? 'shuffle-variant' : 'shuffle-disabled'}
               size={24}
               iconColor={shuffleMode ? colors.primary : colors.onSurfaceVariant}
-              onPress={toggleShuffleMode}
+              onPress={usePlayerStore.getState().toggleShuffleMode}
             />
             <IconButton
               icon='skip-previous'
               size={32}
-              onPress={skipToPrevious}
+              onPress={usePlayerStore.getState().skipToPrevious}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={48}
               iconColor={colors.primary}
-              onPress={togglePlay}
+              onPress={usePlayerStore.getState().togglePlay}
               mode='contained'
             />
             <IconButton
               icon='skip-next'
               size={32}
-              onPress={skipToNext}
+              onPress={usePlayerStore.getState().skipToNext}
             />
             <IconButton
               icon={
@@ -405,7 +398,7 @@ export default function PlayerPage() {
                   ? colors.primary
                   : colors.onSurfaceVariant
               }
-              onPress={toggleRepeatMode}
+              onPress={usePlayerStore.getState().toggleRepeatMode}
             />
           </View>
         </View>

@@ -86,9 +86,11 @@ const HomePage = () => {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const [refreshing, setRefreshing] = useState(false)
-  const { addToQueue, clearQueue } = usePlayerStore()
+  const addToQueue = usePlayerStore((state) => state.addToQueue)
+  const clearQueue = usePlayerStore((state) => state.clearQueue)
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
-  const { bilibiliCookie, setBilibiliCookie, bilibiliApi } = useAppStore()
+  const bilibiliCookie = useAppStore((state) => state.bilibiliCookie)
+  const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [cookie, setCookie] = useState(bilibiliCookie)
 
@@ -464,7 +466,7 @@ const HomePage = () => {
         setVisible={setSetCookieDialogVisible}
         setCookie={setCookie}
         cookie={cookie}
-        setBilibiliCookie={setBilibiliCookie}
+        setBilibiliCookie={useAppStore.getState().setBilibiliCookie}
       />
     </View>
   )

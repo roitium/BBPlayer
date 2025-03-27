@@ -6,7 +6,9 @@ import { useState } from 'react'
 import type { Track } from '@/types/core/media'
 
 export default function TestPage() {
-  const { addToQueue, clearQueue, queue } = usePlayerStore()
+  const addToQueue = usePlayerStore((state) => state.addToQueue)
+  const clearQueue = usePlayerStore((state) => state.clearQueue)
+  const queue = usePlayerStore((state) => state.queue)
   const [loading, setLoading] = useState(false)
 
   // 测试曲目
@@ -20,6 +22,7 @@ export default function TestPage() {
       source: 'bilibili',
       duration: 199,
       createTime: Date.now(),
+      hasMetadata: true,
     },
     {
       id: 'BV1F24y1y7By',
@@ -30,6 +33,7 @@ export default function TestPage() {
       source: 'bilibili',
       duration: 256,
       createTime: Date.now(),
+      hasMetadata: true,
     },
   ]
 

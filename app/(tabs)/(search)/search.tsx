@@ -24,7 +24,7 @@ import type { Track } from '@/types/core/media'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import { formatDurationToHHMM } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 // 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
@@ -47,8 +47,9 @@ export default function SearchPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(20) // 每页显示20条结果
   const [pageInputValue, setPageInputValue] = useState('1')
-  const { bilibiliApi } = useAppStore()
-  const { addToQueue, clearQueue } = usePlayerStore()
+  const bilibiliApi = useAppStore((store) => store.bilibiliApi)
+  const addToQueue = usePlayerStore((state) => state.addToQueue)
+  const clearQueue = usePlayerStore((state) => state.clearQueue)
 
   // 播放单曲（清空队列后播放）
   const playSingleTrack = async (track: Track) => {
@@ -284,7 +285,9 @@ export default function SearchPage() {
               variant='bodySmall'
               style={{ color: colors.onSurfaceVariant }}
             >
-              {item.duration ? formatDurationToHHMM(item.duration) : '未知时长'}
+              {item.duration
+                ? formatDurationToHHMMSS(item.duration)
+                : '未知时长'}
             </Text>
             <IconButton
               icon='play-circle-outline'

@@ -14,8 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 export default function NowPlayingBar() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
-  const { currentTrack, isPlaying, skipToNext, skipToPrevious, togglePlay } =
-    usePlayerStore()
+  const currentTrack = usePlayerStore((state) => state.currentTrack)
+  const isPlaying = usePlayerStore((state) => state.isPlaying)
   const progress = usePlaybackProgress(100)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条，不需要 progress 作为 dep
@@ -74,24 +74,20 @@ export default function NowPlayingBar() {
             <IconButton
               icon='skip-previous'
               size={24}
-              onPress={() => {
-                skipToPrevious()
-              }}
+              onPress={usePlayerStore.getState().skipToPrevious}
               iconColor={colors.onSurfaceVariant}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={24}
-              onPress={togglePlay}
+              onPress={usePlayerStore.getState().togglePlay}
               iconColor={colors.primary}
               style={{ margin: 0 }}
             />
             <IconButton
               icon='skip-next'
               size={24}
-              onPress={() => {
-                skipToNext()
-              }}
+              onPress={usePlayerStore.getState().skipToNext}
               iconColor={colors.onSurfaceVariant}
             />
           </View>

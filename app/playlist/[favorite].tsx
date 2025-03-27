@@ -22,7 +22,8 @@ export default function PlaylistPage() {
   const { favorite } = useLocalSearchParams()
   const { colors } = useTheme()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
-  const { addToQueue, clearQueue } = usePlayerStore()
+  const addToQueue = usePlayerStore((state) => state.addToQueue)
+  const clearQueue = usePlayerStore((state) => state.clearQueue)
   const { bilibiliApi } = useAppStore()
 
   // 播放单曲（清空队列后播放）
