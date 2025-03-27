@@ -16,15 +16,21 @@ import { useColorScheme } from '@/hooks/useColorScheme'
 import * as Network from 'expo-network'
 import * as Clipboard from 'expo-clipboard'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
-import { type AppStateStatus, Platform, AppState, View } from 'react-native'
+import {
+  type AppStateStatus,
+  Platform,
+  AppState,
+  View,
+  InteractionManager,
+} from 'react-native'
 import * as SplashScreen from 'expo-splash-screen'
-import { setupPlayer } from '@/lib/services/setupPlayer'
 import useAppStore from '@/lib/store/useAppStore'
 import Toast from 'react-native-toast-message'
 import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
 import { BilibiliApiError } from '@/utils/errors'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
+import { setupPlayer } from '@/lib/services/setupPlayer'
 
 const developement = process.env.NODE_ENV === 'development'
 
@@ -153,12 +159,9 @@ export default Sentry.wrap(function RootLayout() {
     async function prepare() {
       try {
         await useAppStore.getState().setBilibiliCookie(null)
-        if (!global.playerIsReady) {
-          await setupPlayer()
-          global.playerIsReady = true
-        }
       } catch (error) {
-        console.error(error)
+        console.error('Initial preparation error:', error)
+        Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })
       } finally {
         setAppIsReady(true)
       }
@@ -166,6 +169,32 @@ export default Sentry.wrap(function RootLayout() {
 
     prepare()
   }, [])
+
+  // 异步初始化播放器 (在 appIsReady 后执行)
+  useEffect(() => {
+    if (appIsReady) {
+      const initializePlayer = async () => {
+        if (!global.playerIsReady) {
+          try {
+            await setupPlayer()
+            console.log('Deferred player setup complete.')
+            global.playerIsReady = true
+          } catch (error) {
+            console.error('Deferred player setup failed:', error)
+            Sentry.captureException(error, {
+              tags: { scope: 'DeferredPlayerSetup' },
+            })
+            global.playerIsReady = false
+          }
+        }
+        // ---
+      }
+
+      InteractionManager.runAfterInteractions(() =>
+        Sentry.startSpan({ name: 'initializePlayer' }, initializePlayer),
+      )
+    }
+  }, [appIsReady])
 
   const onLayoutRootView = useCallback(() => {
     if (appIsReady) {

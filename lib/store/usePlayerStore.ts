@@ -15,6 +15,7 @@ import { logDetailedDebug, logError } from '@/utils/log'
 import { checkAndUpdateAudioStream, convertToRNTPTrack } from '@/utils/player'
 import useAppStore from './useAppStore'
 import { PRELOAD_TRACKS } from '@/constants/player'
+import Toast from 'react-native-toast-message'
 
 // 播放器逻辑对象
 const PlayerLogic = {
@@ -169,6 +170,18 @@ const PlayerLogic = {
   },
 }
 
+const checkPlayerReady = () => {
+  if (!global.playerIsReady) {
+    Toast.show({
+      type: 'error',
+      text1: '播放器未初始化',
+      text2: '请稍后再试',
+    })
+    return false
+  }
+  return true
+}
+
 /**
  * 播放器状态存储
  * 采用 zustand 自己维护一个 queue，rntp 仅用于播放当前的 track，通过 TrackPlayer.load 来替换当前播放的内容，所有队列操作都通过该 store 进行
@@ -216,6 +229,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         tracks: tracks.map((t) => ({ id: t.id, title: t.title })),
         playNow,
       })
+
+      if (!checkPlayerReady()) return
 
       set(
         produce((state: PlayerState) => {
@@ -311,6 +326,9 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         currentTrack: currentTrack?.title,
         currentIndex: get().currentIndex,
       })
+
+      if (!checkPlayerReady()) return
+
       try {
         if (!(await get().rntpQueue()).length) {
           logDetailedDebug('队列为空，如果当前有曲目，尝试重新加载')
@@ -344,6 +362,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         repeatMode,
         currentTrack: get().currentTrack?.title,
       })
+
+      if (!checkPlayerReady()) return
 
       try {
         const currentQueue = shuffleMode ? shuffledQueue : queue
@@ -390,6 +410,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         currentTrack: get().currentTrack?.title,
       })
 
+      if (!checkPlayerReady()) return
+
       try {
         const currentQueue = shuffleMode ? shuffledQueue : queue
 
@@ -434,6 +456,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         currentIndex: get().currentIndex,
       })
 
+      if (!checkPlayerReady()) return
+
       try {
         await TrackPlayer.seekTo(position)
         logDetailedDebug('跳转成功', { position })
@@ -448,6 +472,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       logDetailedDebug('调用 toggleRepeatMode()', {
         currentMode: repeatMode,
       })
+
+      if (!checkPlayerReady()) return
 
       let newMode: RepeatMode
       if (repeatMode === RepeatMode.Off) {
@@ -466,6 +492,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
     toggleShuffleMode: () => {
       const { shuffleMode, queue, currentIndex } = get()
       logDetailedDebug('调用 toggleShuffleMode()', { currentMode: shuffleMode })
+
+      if (!checkPlayerReady()) return
 
       if (shuffleMode) {
         // 关闭随机模式，恢复原始队列
@@ -523,6 +551,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         currentQueueLength: get().queue.length,
         currentTrack: get().currentTrack?.title,
       })
+
+      if (!checkPlayerReady()) return
 
       try {
         logDetailedDebug('重置播放器')
@@ -635,6 +665,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         shuffleMode,
         currentTrack: get().currentTrack?.title,
       })
+
+      if (!checkPlayerReady()) return
 
       if (index < 0 || index >= currentQueue.length) {
         logDetailedDebug('索引超出范围', { index })
