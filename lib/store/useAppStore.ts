@@ -9,7 +9,7 @@ interface AppState {
   setBilibiliCookie: (cookie: string | null) => Promise<void>
 }
 
-const useAppStore = create<AppState>((set, get) => {
+const useAppStore = create<AppState>()((set, get) => {
   // 创建一个 API 实例，传入获取 cookie 的函数
   const bilibiliApi = createBilibiliApi(() => get().bilibiliCookie)
 

@@ -173,7 +173,7 @@ const PlayerLogic = {
  * 播放器状态存储
  * 采用 zustand 自己维护一个 queue，rntp 仅用于播放当前的 track，通过 TrackPlayer.load 来替换当前播放的内容，所有队列操作都通过该 store 进行
  */
-export const usePlayerStore = create<PlayerStore>((set, get) => {
+export const usePlayerStore = create<PlayerStore>()((set, get) => {
   logDetailedDebug('创建播放器状态存储')
 
   // 初始状态
