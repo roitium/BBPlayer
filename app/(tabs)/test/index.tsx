@@ -4,6 +4,8 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import type { Track } from '@/types/core/media'
+import TrackPlayer from 'react-native-track-player'
+import { convertToRNTPTrack } from '@/utils/player'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -15,13 +17,19 @@ export default function TestPage() {
   const testTracks: Track[] = [
     {
       id: 'BV1m34y1M7pG',
-      title: '若能化为星座',
-      artist: '孤独摇滚',
+      title: '测试过期曲目',
+      artist: '测试过期曲目',
       cover:
         'https://i2.hdslb.com/bfs/archive/67101d909983ae1a5de3637c01ab8c1b4ec3e6e5.jpg',
       source: 'bilibili',
       duration: 199,
       createTime: Date.now(),
+      biliStreamUrl: {
+        url: 'https://cn-sxty-cu-03-07.bilivideo.com/upgcxcode/82/16/26430541682/26430541682-1-30216.m4s',
+        quality: 30216,
+        getTime: 1743150959908,
+        type: 'dash',
+      },
       hasMetadata: true,
     },
     {
@@ -36,6 +44,35 @@ export default function TestPage() {
       hasMetadata: true,
     },
   ]
+
+  const testResumeExpiredTrack = async () => {
+    const track = {
+      id: 'BV1m34y1M7pG',
+      title: '测试过期曲目',
+      artist: '测试过期曲目',
+      cover:
+        'https://i2.hdslb.com/bfs/archive/67101d909983ae1a5de3637c01ab8c1b4ec3e6e5.jpg',
+      source: 'bilibili' as const,
+      duration: 199,
+      createTime: Date.now(),
+      biliStreamUrl: {
+        url: 'https://cn-sxty-cu-03-07.bilivideo.com/upgcxcode/82/16/26430541682/26430541682-1-30216.m4s',
+        quality: 30216,
+        getTime: 1743150959908,
+        type: 'dash' as const,
+      },
+      hasMetadata: true,
+    }
+
+    await TrackPlayer.stop()
+    await usePlayerStore.setState({
+      currentTrack: track,
+      currentIndex: 0,
+      isPlaying: false,
+    })
+    await TrackPlayer.load(convertToRNTPTrack(track))
+    // await usePlayerStore.getState().togglePlay()
+  }
 
   // 播放测试曲目
   const handlePlayTrack = async (track: Track) => {
@@ -114,6 +151,14 @@ export default function TestPage() {
           className='mb-2'
         >
           跳转到收藏夹
+        </Button>
+        <Button
+          mode='contained'
+          onPress={testResumeExpiredTrack}
+          loading={loading}
+          className='mb-2'
+        >
+          测试恢复过期曲目(该操作会破坏播放状态，测试后请重启应用)
         </Button>
       </View>
 

@@ -41,7 +41,10 @@ function convertToRNTPTrack(track: Track): RNTPTrack {
     },
   }
 
-  logDetailedDebug('RNTPTrack转换完成', rnTrack)
+  logDetailedDebug('RNTPTrack转换完成', {
+    title: rnTrack.title,
+    id: rnTrack.id,
+  })
   return rnTrack
 }
 

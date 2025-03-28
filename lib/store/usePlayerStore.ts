@@ -153,7 +153,13 @@ const PlayerLogic = {
     TrackPlayer.addEventListener(
       Event.PlaybackError,
       async (data: { code: string; message: string }) => {
-        logError('播放错误', data)
+        if (data.code === 'android-io-bad-http-status') {
+          logDetailedDebug(
+            '播放错误：服务器返回了错误状态码，重新加载曲目，但不上报错误',
+          )
+        } else {
+          logError('播放错误', data)
+        }
         const nowTrack = usePlayerStore.getState().currentTrack
         if (nowTrack) {
           logDetailedDebug('当前播放的曲目', {
@@ -164,11 +170,11 @@ const PlayerLogic = {
             .getState()
             .patchMetadataAndAudio(nowTrack)
           logDetailedDebug('更新音频流成功', {
-            trackId: track.id,
-            title: track.title,
+            trackId: track.track.id,
+            title: track.track.title,
           })
           // 使用 load 方法替换当前曲目
-          await TrackPlayer.load(convertToRNTPTrack(track))
+          await TrackPlayer.load(convertToRNTPTrack(track.track))
         }
       },
     )
@@ -331,27 +337,53 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
     // 切换播放/暂停
     togglePlay: async () => {
-      const { isPlaying, currentTrack } = get()
+      const {
+        isPlaying,
+        currentTrack,
+        skipToTrack,
+        currentIndex,
+        rntpQueue,
+        patchMetadataAndAudio,
+        seekTo,
+      } = get()
       logDetailedDebug('调用 togglePlay()', {
         isPlaying,
         currentTrack: currentTrack?.title,
-        currentIndex: get().currentIndex,
+        currentIndex: currentIndex,
       })
 
       if (!checkPlayerReady()) return
 
+      if (!currentTrack) {
+        logDetailedDebug('当前没有播放的曲目，无需操作')
+        return
+      }
+
       try {
-        if (!(await get().rntpQueue()).length) {
+        if (!(await rntpQueue()).length) {
           logDetailedDebug('队列为空，如果当前有曲目，尝试重新加载')
           if (currentTrack) {
-            get().skipToTrack(get().currentIndex)
+            skipToTrack(currentIndex)
           }
         }
         if (isPlaying) {
           logDetailedDebug('当前正在播放，执行暂停')
           await TrackPlayer.pause()
         } else {
-          logDetailedDebug('当前已暂停，执行播放')
+          logDetailedDebug(
+            '当前已暂停，即将播放，让我们做些检查看看 track 是否过期',
+          )
+          const { needsUpdate, track } =
+            await patchMetadataAndAudio(currentTrack)
+          if (needsUpdate) {
+            // 如果需要更新音频流，则先替换掉当前播放的歌曲，并将播放位置恢复到上次播放的位置
+            logDetailedDebug(
+              '音频流需要更新，刚刚更新过了，现在替换掉当前播放的歌曲',
+            )
+            const { position } = await TrackPlayer.getProgress()
+            await TrackPlayer.load(convertToRNTPTrack(track))
+            await seekTo(position)
+          }
           await TrackPlayer.play()
         }
 
@@ -591,7 +623,9 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
     },
 
     // 检查并更新音频流和元数据，并将最终结果更新到 queue 中
-    patchMetadataAndAudio: async (track: Track): Promise<Track> => {
+    patchMetadataAndAudio: async (
+      track: Track,
+    ): Promise<{ track: Track; needsUpdate: boolean }> => {
       logDetailedDebug('调用 patchMetadataAndAudio()', {
         trackId: track.id,
         title: track.title,
@@ -665,10 +699,10 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             }),
           )
         }
-        return finalTrack
+        return { track: finalTrack, needsUpdate: true }
       } catch (error) {
-        logError('检查并更新音频流失败', error)
-        return track
+        logError('检查并更新音频流失败，返回原始track', error)
+        return { track, needsUpdate: false }
       }
     },
 
@@ -706,13 +740,13 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       const updatedTrack = await get().patchMetadataAndAudio(track)
 
       // 使用 TrackPlayer.load() 替换当前曲目
-      await TrackPlayer.load(convertToRNTPTrack(updatedTrack))
+      await TrackPlayer.load(convertToRNTPTrack(updatedTrack.track))
 
       // 更新状态 (在 load 之后，确保状态是最新的）
       set(
         produce((state: PlayerState) => {
           state.currentIndex = index
-          state.currentTrack = updatedTrack
+          state.currentTrack = updatedTrack.track
         }),
       )
 
@@ -721,7 +755,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
       logDetailedDebug('已跳转到指定曲目', {
         index,
-        trackTitle: updatedTrack.title,
+        trackTitle: updatedTrack.track.title,
       })
     },
   }

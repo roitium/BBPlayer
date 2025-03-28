@@ -43,7 +43,9 @@ interface PlayerActions {
   toggleShuffleMode: () => void
 
   // 音频流处理
-  patchMetadataAndAudio: (track: Track) => Promise<Track>
+  patchMetadataAndAudio: (
+    track: Track,
+  ) => Promise<{ track: Track; needsUpdate: boolean }>
   preloadTracks: (index: number) => Promise<void>
 }
 
