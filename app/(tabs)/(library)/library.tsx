@@ -149,7 +149,7 @@ const FavoriteFolderListComponent = ({
   // 渲染收藏夹项
   const renderPlaylistItem = (item: Playlist) => (
     <View key={item.id}>
-      <View className='my-1 overflow-hidden'>
+      <View className='my-2 overflow-hidden'>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
