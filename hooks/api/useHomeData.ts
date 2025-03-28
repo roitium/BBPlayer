@@ -35,7 +35,7 @@ export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
   })
 }
 
-export const useSyncedPlaylists = (
+export const useGetFavoritePlaylists = (
   bilibiliApi: BilibiliApi,
   userMid?: number,
 ) => {

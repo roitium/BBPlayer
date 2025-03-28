@@ -23,7 +23,7 @@ export interface Playlist {
   id: number
   title: string
   count: number
-  cover: string
+  cover?: string
   contents?: Track[]
   source: 'bilibili' | 'local'
   biliType: 'multi_part' | 'favorite' | 'collection'

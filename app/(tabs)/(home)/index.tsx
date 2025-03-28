@@ -24,7 +24,7 @@ import {
   usePersonalInformation,
   usePopularVideos,
   useRecentlyPlayed,
-  useSyncedPlaylists,
+  useGetFavoritePlaylists,
 } from '@/hooks/api/useHomeData'
 import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
@@ -129,7 +129,7 @@ const HomePage = () => {
     data: playlists,
     isLoading: playlistsLoading,
     refetch: playlistsRefetch,
-  } = useSyncedPlaylists(bilibiliApi, personalInfo?.mid)
+  } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
   let {
     data: popularVideos,
