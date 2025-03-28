@@ -19,7 +19,7 @@ import type { Track } from '@/types/core/media'
 import { useFavoriteData } from '@/hooks/api/useFavoriteData'
 
 export default function PlaylistPage() {
-  const { favorite } = useLocalSearchParams()
+  const { id } = useLocalSearchParams()
   const { colors } = useTheme()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -29,8 +29,7 @@ export default function PlaylistPage() {
   // 播放单曲（清空队列后播放）
   const playSingleTrack = async (track: Track) => {
     try {
-      await clearQueue()
-      await addToQueue([track])
+      await addToQueue([track], true, true)
     } catch (error) {
       console.error('播放单曲失败', error)
     }
@@ -49,15 +48,14 @@ export default function PlaylistPage() {
   const playAll = async () => {
     try {
       const allContentIds = await bilibiliApi.getFavoriteListAllContents(
-        Number(favorite),
+        Number(id),
       )
       const allTracks = allContentIds.map((c) => ({
         id: c.bvid,
         source: 'bilibili' as const,
         hasMetadata: false,
       }))
-      await clearQueue()
-      await addToQueue(allTracks, true)
+      await addToQueue(allTracks, true, true)
     } catch (error) {
       console.error('播放全部失败', error)
     }
@@ -65,7 +63,7 @@ export default function PlaylistPage() {
 
   // 获取收藏夹数据
   const { data: favoriteData, isLoading: favoriteDataLoading } =
-    useFavoriteData(bilibiliApi, Number(favorite), 1)
+    useFavoriteData(bilibiliApi, Number(id), 1)
 
   // 渲染歌曲项
   const renderTrackItem = (item: Track, index: number) => {

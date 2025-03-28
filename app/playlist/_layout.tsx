@@ -4,7 +4,7 @@ export default function PlaylistLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name='[favorite]'
+        name='favorite/[id]'
         options={{ headerShown: false }}
       />
     </Stack>

@@ -109,7 +109,7 @@ export default function TestPage() {
         </Button>
         <Button
           mode='contained'
-          onPress={() => router.push('/playlist/111')}
+          onPress={() => router.push('/playlist/favorite/111')}
           loading={loading}
           className='mb-2'
         >

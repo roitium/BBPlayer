@@ -262,7 +262,7 @@ const HomePage = () => {
       className='mr-4 w-40'
       activeOpacity={0.7}
       onPress={() => {
-        router.push(`/playlist/${item.id}`)
+        router.push(`/playlist/favorite/${item.id}`)
       }}
     >
       <Surface
