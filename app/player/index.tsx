@@ -172,13 +172,13 @@ function DragableProgressBar() {
           variant='bodySmall'
           style={{ color: colors.onSurfaceVariant }}
         >
-          {formatDurationToHHMMSS(localProgress * duration)}
+          {formatDurationToHHMMSS(localProgress * Math.trunc(duration))}
         </Text>
         <Text
           variant='bodySmall'
           style={{ color: colors.onSurfaceVariant }}
         >
-          {formatDurationToHHMMSS(duration)}
+          {formatDurationToHHMMSS(Math.trunc(duration))}
         </Text>
       </View>
     </View>
