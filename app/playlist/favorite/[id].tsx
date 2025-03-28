@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router'
 import { useState } from 'react'
-import { View, ScrollView, Image, TouchableOpacity } from 'react-native'
+import { View, Image, TouchableOpacity, FlatList } from 'react-native'
 import {
   Text,
   useTheme,
@@ -16,14 +16,14 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import type { Track } from '@/types/core/media'
-import { useFavoriteData } from '@/hooks/api/useFavoriteData'
+import { useInfiniteFavoriteList } from '@/hooks/api/useFavoriteData'
 
 export default function PlaylistPage() {
   const { id } = useLocalSearchParams()
   const { colors } = useTheme()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
-  const clearQueue = usePlayerStore((state) => state.clearQueue)
+  const currentTrack = usePlayerStore((state) => state.currentTrack)
   const { bilibiliApi } = useAppStore()
 
   // 播放单曲（清空队列后播放）
@@ -62,8 +62,14 @@ export default function PlaylistPage() {
   }
 
   // 获取收藏夹数据
-  const { data: favoriteData, isLoading: favoriteDataLoading } =
-    useFavoriteData(bilibiliApi, Number(id), 1)
+  const {
+    data: favoriteData,
+    isPending: isFavoriteDataPending,
+    isError: isFavoriteDataError,
+    isFetching: isFavoriteDataFetching,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteFavoriteList(bilibiliApi, Number(id))
 
   // 渲染歌曲项
   const renderTrackItem = (item: Track, index: number) => {
@@ -159,13 +165,23 @@ export default function PlaylistPage() {
     )
   }
 
-  if (favoriteDataLoading) {
+  if (isFavoriteDataPending) {
     return (
       <View className='flex-1 items-center justify-center'>
-        <ActivityIndicator
-          size='large'
-          color={colors.primary}
-        />
+        <ActivityIndicator size='large' />
+      </View>
+    )
+  }
+
+  if (isFavoriteDataError) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <Text
+          variant='titleMedium'
+          className='text-center'
+        >
+          加载失败
+        </Text>
       </View>
     )
   }
@@ -186,7 +202,7 @@ export default function PlaylistPage() {
       {/* 顶部背景图 */}
       <View className='absolute h-full w-full'>
         <Image
-          source={{ uri: favoriteData?.favoriteMeta.cover }}
+          source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
           style={{
             width: '100%',
             height: '100%',
@@ -196,16 +212,16 @@ export default function PlaylistPage() {
         />
       </View>
 
-      <ScrollView
+      <View
         className='flex-1'
-        contentContainerStyle={{ paddingBottom: 80 }}
+        style={{ paddingBottom: currentTrack ? 80 : 0 }}
       >
         {/* 顶部收藏夹信息 */}
         <View className='relative flex flex-col'>
           {/* 收藏夹信息 */}
           <View className='flex flex-row p-4'>
             <Image
-              source={{ uri: favoriteData?.favoriteMeta.cover }}
+              source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
               style={{ width: 120, height: 120, borderRadius: 8 }}
             />
             <View className='ml-4 flex-1 justify-center'>
@@ -214,14 +230,14 @@ export default function PlaylistPage() {
                 style={{ fontWeight: 'bold' }}
                 numberOfLines={2}
               >
-                {favoriteData?.favoriteMeta.title}
+                {favoriteData?.pages[0].favoriteMeta.title}
               </Text>
               <Text
                 variant='bodyMedium'
                 numberOfLines={1}
               >
-                {favoriteData?.favoriteMeta.upper.name} •{' '}
-                {favoriteData?.favoriteMeta.media_count} 首歌曲
+                {favoriteData?.pages[0].favoriteMeta.upper.name} •{' '}
+                {favoriteData?.pages[0].favoriteMeta.media_count} 首歌曲
               </Text>
             </View>
           </View>
@@ -232,7 +248,7 @@ export default function PlaylistPage() {
               variant='bodyMedium'
               numberOfLines={2}
             >
-              {favoriteData?.favoriteMeta.intro}
+              {favoriteData?.pages[0].favoriteMeta.intro}
             </Text>
 
             <IconButton
@@ -245,12 +261,26 @@ export default function PlaylistPage() {
           <Divider />
         </View>
         {/* 歌曲列表 */}
-        <View className='px-4 pt-4'>
+        {/* <View className='px-4 pt-4'>
           {favoriteData?.tracks.map((track, index) =>
             renderTrackItem(track, index),
           )}
-        </View>
-      </ScrollView>
+        </View> */}
+        <FlatList
+          data={favoriteData?.pages.flatMap((page) => page.tracks)}
+          renderItem={({ item, index }) => renderTrackItem(item, index)}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          onEndReached={hasNextPage ? () => fetchNextPage() : null}
+          ListFooterComponent={
+            hasNextPage ? (
+              <View className='flex-row items-center justify-center p-4'>
+                <ActivityIndicator size='small' />
+              </View>
+            ) : null
+          }
+        />
+      </View>
 
       {/* 当前播放栏 */}
       <View className='absolute right-0 bottom-0 left-0'>

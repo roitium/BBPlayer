@@ -9,11 +9,9 @@ import {
   useTheme,
   ProgressBar,
 } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function NowPlayingBar() {
   const { colors } = useTheme()
-  const insets = useSafeAreaInsets()
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const isPlaying = usePlayerStore((state) => state.isPlaying)
   const progress = usePlaybackProgress(100)

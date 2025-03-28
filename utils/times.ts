@@ -9,8 +9,8 @@ export const formatDurationToHHMMSS = (seconds: number): string => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
-// HH:MM 转换为秒
-export const formatHHMMToSeconds = (duration: string): number => {
-  const [hours, minutes] = duration.split(':').map(Number)
-  return hours * 3600 + minutes * 60
+// MM:SS 转换为秒
+export const formatMMSSToSeconds = (duration: string): number => {
+  const [minutes, seconds] = duration.split(':').map(Number)
+  return minutes * 60 + seconds
 }

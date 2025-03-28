@@ -13,7 +13,7 @@ import type {
 } from '@/types/apis/bilibili'
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
-import { formatHHMMToSeconds } from '@/utils/times'
+import { formatMMSSToSeconds } from '@/utils/times'
 // 转换工具函数
 const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
   return videos.map((video) => ({
@@ -76,7 +76,7 @@ const convertSearchVideosToTracks = (
     artist: video.author,
     cover: `https:${video.pic}`,
     source: 'bilibili' as const,
-    duration: formatHHMMToSeconds(video.duration),
+    duration: formatMMSSToSeconds(video.duration),
     createTime: video.senddate,
     hasMetadata: true,
   }))

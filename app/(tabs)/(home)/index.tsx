@@ -20,17 +20,16 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
-import {
-  usePersonalInformation,
-  usePopularVideos,
-  useRecentlyPlayed,
-  useGetFavoritePlaylists,
-} from '@/hooks/api/useHomeData'
 import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
 import { router } from 'expo-router'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import {
+  usePersonalInformation,
+  useRecentlyPlayed,
+} from '@/hooks/api/useUserData'
+import { useGetFavoritePlaylists } from '@/hooks/api/useFavoriteData'
 
 const mockCategories = [
   { id: '1', name: '翻唱', icon: 'music-note' },
@@ -131,19 +130,11 @@ const HomePage = () => {
     refetch: playlistsRefetch,
   } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
-  let {
-    data: popularVideos,
-    isLoading: popularVideosLoading,
-    refetch: popularVideosRefetch,
-  } = usePopularVideos(bilibiliApi)
-
   if (!recentlyPlayedLoading) recentlyPlayed = recentlyPlayed?.slice(0, 10)
-  if (!popularVideosLoading) popularVideos = popularVideos?.slice(0, 10)
 
   const onRefresh = () => {
     setRefreshing(true)
     recentlyPlayedRefetch()
-    popularVideosRefetch()
     playlistsRefetch()
     setRefreshing(false)
   }
@@ -221,37 +212,6 @@ const HomePage = () => {
           </Menu>
         </View>
       </Surface>
-    </TouchableOpacity>
-  )
-
-  // 渲染推荐项
-  const renderForYouItem = (item: Track) => (
-    <TouchableOpacity
-      key={item.id}
-      className='mr-4 w-32'
-      activeOpacity={0.7}
-      onPress={() => playSingleTrack(item)}
-      onLongPress={() => setMenuVisible(item.id)}
-    >
-      <Image
-        source={{ uri: item.cover }}
-        className='h-32 w-32 rounded-lg'
-      />
-      <View className='mt-2'>
-        <Text
-          variant='titleSmall'
-          numberOfLines={1}
-        >
-          {item.title}
-        </Text>
-        <Text
-          variant='bodySmall'
-          style={{ color: colors.onSurfaceVariant }}
-          numberOfLines={1}
-        >
-          {item.artist}
-        </Text>
-      </View>
     </TouchableOpacity>
   )
 
@@ -380,6 +340,37 @@ const HomePage = () => {
           </ScrollView>
         </View>
 
+        {/* 你的收藏夹 */}
+        <View className='mb-6'>
+          <View className='mb-2 flex-row items-center justify-between px-4'>
+            <Text
+              variant='titleLarge'
+              style={{ fontWeight: 'bold' }}
+            >
+              收藏夹
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                router.push('/library')
+              }}
+            >
+              <Text
+                variant='labelLarge'
+                style={{ color: colors.primary }}
+              >
+                查看全部
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
+          >
+            {playlists?.map(renderPlaylistItem)}
+          </ScrollView>
+        </View>
+
         {/* 最近播放 */}
         <View className='mb-6 px-4'>
           <View className='mb-2 flex-row items-center justify-between'>
@@ -399,60 +390,6 @@ const HomePage = () => {
             </TouchableOpacity>
           </View>
           {recentlyPlayed?.map(renderRecentItem)}
-        </View>
-
-        {/* 为你推荐 */}
-        <View className='mb-6'>
-          <View className='mb-2 flex-row items-center justify-between px-4'>
-            <Text
-              variant='titleLarge'
-              style={{ fontWeight: 'bold' }}
-            >
-              为你推荐
-            </Text>
-            <TouchableOpacity>
-              <Text
-                variant='labelLarge'
-                style={{ color: colors.primary }}
-              >
-                更多
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
-          >
-            {popularVideos?.map(renderForYouItem)}
-          </ScrollView>
-        </View>
-
-        {/* 你的播放列表 */}
-        <View className='mb-6'>
-          <View className='mb-2 flex-row items-center justify-between px-4'>
-            <Text
-              variant='titleLarge'
-              style={{ fontWeight: 'bold' }}
-            >
-              你的播放列表
-            </Text>
-            <TouchableOpacity>
-              <Text
-                variant='labelLarge'
-                style={{ color: colors.primary }}
-              >
-                查看全部
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
-          >
-            {playlists?.map(renderPlaylistItem)}
-          </ScrollView>
         </View>
       </ScrollView>
 

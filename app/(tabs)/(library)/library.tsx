@@ -4,7 +4,6 @@ import {
   Text,
   SegmentedButtons,
   IconButton,
-  Surface,
   useTheme,
   Searchbar,
   FAB,
@@ -16,9 +15,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import useAppStore from '@/lib/store/useAppStore'
-import { useGetFavoritePlaylists } from '@/hooks/api/useHomeData'
 import type { Playlist } from '@/types/core/media'
 import { router } from 'expo-router'
+import { useGetFavoritePlaylists } from '@/hooks/api/useFavoriteData'
 
 export default function LibraryScreen() {
   const { colors } = useTheme()
@@ -149,12 +148,8 @@ const FavoriteFolderListComponent = ({
 
   // 渲染收藏夹项
   const renderPlaylistItem = (item: Playlist) => (
-    <>
-      <Surface
-        key={item.id}
-        className='my-1 overflow-hidden rounded-lg'
-        elevation={0}
-      >
+    <View key={item.id}>
+      <View className='my-1 overflow-hidden'>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
@@ -177,9 +172,9 @@ const FavoriteFolderListComponent = ({
             />
           </View>
         </TouchableOpacity>
-      </Surface>
+      </View>
       <Divider />
-    </>
+    </View>
   )
 
   if (isHidden) return null

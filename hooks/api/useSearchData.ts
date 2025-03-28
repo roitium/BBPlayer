@@ -18,7 +18,7 @@ export const useSearchResults = (
   return useQuery({
     queryKey: searchQueryKeys.results(query, page, page_size),
     queryFn: () => bilibiliApi.searchVideos(query, page, page_size),
-    staleTime: 5 * 60 * 1000, // 5分钟
+    staleTime: 5 * 60 * 1000,
     enabled: query.trim().length > 0, // 只有当查询不为空时才启用
   })
 }
@@ -28,6 +28,6 @@ export const useHotSearches = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: searchQueryKeys.hotSearches(),
     queryFn: () => bilibiliApi.getHotSearches(),
-    staleTime: 15 * 60 * 1000, // 15分钟
+    staleTime: 15 * 60 * 1000,
   })
 }
