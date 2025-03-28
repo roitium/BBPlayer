@@ -56,13 +56,15 @@ const PlayerLogic = {
         },
       })
       logDetailedDebug('播放器能力设置完成')
+      // 设置重复模式为 Off
+      await TrackPlayer.setRepeatMode(RepeatMode.Off)
     } catch (error: unknown) {
       logError('初始化播放器失败', error)
     }
   },
 
   // 设置事件监听器
-  setupEventListeners(getStore: () => PlayerStore): void {
+  setupEventListeners(): void {
     logDetailedDebug('开始设置事件监听器')
 
     // 监听播放状态变化
@@ -71,7 +73,7 @@ const PlayerLogic = {
       Event.PlaybackState,
       async (data: { state: TrackPlayerState }) => {
         const { state } = data
-        const store = getStore()
+        const store = usePlayerStore.getState()
 
         // 获取状态名称用于日志
         const stateName =
@@ -128,7 +130,7 @@ const PlayerLogic = {
     // 监听播放完成
     logDetailedDebug('设置播放完成监听器')
     TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async () => {
-      const store = getStore() // 获取最新的 store 状态
+      const store = usePlayerStore.getState() // 获取最新的 store 状态
       const { repeatMode } = store
 
       logDetailedDebug('播放队列结束（即单曲结束）', {
@@ -138,7 +140,10 @@ const PlayerLogic = {
       // 单曲结束后的行为
       if (repeatMode !== RepeatMode.Track) {
         // 如果不是单曲循环，则触发切换到下一首
-        logDetailedDebug('当前队列：', store.queue)
+        logDetailedDebug(
+          '当前队列：',
+          store.queue.map((track) => track.title),
+        )
         await store.skipToNext()
       }
     })
@@ -149,13 +154,15 @@ const PlayerLogic = {
       Event.PlaybackError,
       async (data: { code: string; message: string }) => {
         logError('播放错误', data)
-        const nowTrack = getStore().currentTrack
+        const nowTrack = usePlayerStore.getState().currentTrack
         if (nowTrack) {
           logDetailedDebug('当前播放的曲目', {
             trackId: nowTrack.id,
             title: nowTrack.title,
           })
-          const track = await getStore().patchMetadataAndAudio(nowTrack)
+          const track = await usePlayerStore
+            .getState()
+            .patchMetadataAndAudio(nowTrack)
           logDetailedDebug('更新音频流成功', {
             trackId: track.id,
             title: track.title,
@@ -211,7 +218,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
     initPlayer: async () => {
       logDetailedDebug('调用 initPlayer()')
       await PlayerLogic.initPlayer()
-      PlayerLogic.setupEventListeners(() => get())
+      PlayerLogic.setupEventListeners()
       logDetailedDebug('播放器初始化完成')
     },
 
@@ -223,7 +230,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
     },
 
     // 添加到队列
-    addToQueue: async (tracks: Track[], playNow = true) => {
+    addToQueue: async (tracks: Track[], playNow = true, clearQueue = false) => {
       logDetailedDebug('调用 addToQueue()', {
         tracksCount: tracks.length,
         tracks: tracks.map((t) => ({ id: t.id, title: t.title })),
@@ -231,6 +238,10 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       })
 
       if (!checkPlayerReady()) return
+
+      if (clearQueue) {
+        await get().clearQueue()
+      }
 
       set(
         produce((state: PlayerState) => {
@@ -476,22 +487,27 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       if (!checkPlayerReady()) return
 
       let newMode: RepeatMode
+      // 在设置播放器的重复模式时，列表循环、关闭循环模式都设置为 Off，方便靠我们自己的逻辑管理
       if (repeatMode === RepeatMode.Off) {
         newMode = RepeatMode.Track
+        await TrackPlayer.setRepeatMode(newMode)
       } else if (repeatMode === RepeatMode.Track) {
         newMode = RepeatMode.Queue
+        await TrackPlayer.setRepeatMode(RepeatMode.Off)
       } else {
         newMode = RepeatMode.Off
+        await TrackPlayer.setRepeatMode(RepeatMode.Off)
       }
       set({ repeatMode: newMode })
-      await TrackPlayer.setRepeatMode(newMode) // 设置重复模式
       logDetailedDebug('状态已更新：重复模式已更改', { newMode })
     },
 
     // 切换随机模式
     toggleShuffleMode: () => {
       const { shuffleMode, queue, currentIndex } = get()
-      logDetailedDebug('调用 toggleShuffleMode()', { currentMode: shuffleMode })
+      logDetailedDebug('调用 toggleShuffleMode()', {
+        currentMode: shuffleMode,
+      })
 
       if (!checkPlayerReady()) return
 
@@ -558,13 +574,16 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         logDetailedDebug('重置播放器')
         await TrackPlayer.reset()
 
-        set({
-          queue: [],
-          currentIndex: -1,
-          currentTrack: null,
-          isPlaying: false,
-          shuffledQueue: [],
-        })
+        set(
+          produce((store) => {
+            store.queue = []
+            store.currentIndex = -1
+            store.currentTrack = null
+            store.isPlaying = false
+            store.shuffledQueue = []
+            store.isBuffering = false
+          }),
+        )
         logDetailedDebug('状态已更新：队列已清空，播放器已重置')
       } catch (error) {
         logError('清空队列失败', error)
@@ -689,7 +708,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       // 使用 TrackPlayer.load() 替换当前曲目
       await TrackPlayer.load(convertToRNTPTrack(updatedTrack))
 
-      // 更新状态 (在 load 之后，确保状态是最新的)
+      // 更新状态 (在 load 之后，确保状态是最新的）
       set(
         produce((state: PlayerState) => {
           state.currentIndex = index

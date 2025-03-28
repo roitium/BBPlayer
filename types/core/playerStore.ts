@@ -23,7 +23,11 @@ interface PlayerActions {
   initPlayer: () => Promise<void>
 
   // 队列操作
-  addToQueue: (tracks: Track[], playNow?: boolean) => Promise<void>
+  addToQueue: (
+    tracks: Track[],
+    playNow?: boolean,
+    clearQueue?: boolean,
+  ) => Promise<void>
   clearQueue: () => Promise<void>
   skipToTrack: (index: number) => Promise<void>
   rntpQueue: () => Promise<RNTPTracker[]>

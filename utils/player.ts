@@ -17,7 +17,6 @@ function convertToRNTPTrack(track: Track): RNTPTrack {
   if (track.source === 'bilibili' && track.biliStreamUrl) {
     url = track.biliStreamUrl.url
     logDetailedDebug('使用B站音频流URL', {
-      url,
       quality: track.biliStreamUrl.quality,
     })
   } else if (track.source === 'local' && track.localStreamUrl) {
