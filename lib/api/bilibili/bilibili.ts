@@ -419,7 +419,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     const data = {
       resources: resources.join(','),
       media_id: String(favoriteId),
-      csrf: '6216783c30d2d64ddcf82a5baa804357',
+      csrf: csrf[2],
       platform: 'web',
     }
 
