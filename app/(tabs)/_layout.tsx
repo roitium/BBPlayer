@@ -1,6 +1,6 @@
-import { IconSymbol } from '@/components/ui/IconSymbol'
 import { MaterialBottomTabs as Tab } from '@/components/MaterialBottomTabBar'
 import { useTheme } from 'react-native-paper'
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 
 export default function TabLayout() {
   const theme = useTheme()
@@ -18,10 +18,10 @@ export default function TabLayout() {
         options={{
           title: '主页',
           tabBarIcon: ({ color }: { color: string }) => (
-            <IconSymbol
-              size={26}
-              name='house.fill'
+            <MaterialCommunityIcons
+              name='home'
               color={color}
+              size={26}
             />
           ),
         }}
@@ -31,10 +31,10 @@ export default function TabLayout() {
         options={{
           title: '搜索',
           tabBarIcon: ({ color }: { color: string }) => (
-            <IconSymbol
-              size={26}
-              name='magnifyingglass'
+            <MaterialCommunityIcons
+              name='magnify'
               color={color}
+              size={26}
             />
           ),
         }}
@@ -44,10 +44,10 @@ export default function TabLayout() {
         options={{
           title: '音乐库',
           tabBarIcon: ({ color }: { color: string }) => (
-            <IconSymbol
-              size={26}
-              name='book.fill'
+            <MaterialCommunityIcons
+              name='library-shelves'
               color={color}
+              size={26}
             />
           ),
         }}
@@ -57,10 +57,10 @@ export default function TabLayout() {
         options={{
           title: '测试',
           tabBarIcon: ({ color }: { color: string }) => (
-            <IconSymbol
-              size={26}
-              name='wrench.fill'
+            <MaterialCommunityIcons
+              name='wrench'
               color={color}
+              size={26}
             />
           ),
         }}

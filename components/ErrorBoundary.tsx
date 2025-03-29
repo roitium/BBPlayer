@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native'
+import { Button } from 'react-native-paper'
 
 export default function GlobalErrorFallback({
   error,
@@ -16,7 +17,7 @@ export default function GlobalErrorFallback({
         className='rounded bg-blue-500 px-5 py-2'
         onPress={resetError}
       >
-        <Text className='font-bold text-white'>重试</Text>
+        <Button className='font-bold text-white'>重试</Button>
       </TouchableOpacity>
     </View>
   )
