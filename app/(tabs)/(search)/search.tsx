@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import Toast from 'react-native-toast-message'
 
 // 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
@@ -45,16 +46,14 @@ export default function SearchPage() {
   const [pageInputValue, setPageInputValue] = useState('1')
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
-  const clearQueue = usePlayerStore((state) => state.clearQueue)
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
 
-  // 播放单曲（清空队列后播放）
-  const playSingleTrack = async (track: Track) => {
+  // 下一首播放
+  const playNext = async (track: Track) => {
     try {
-      await clearQueue()
-      await addToQueue([track])
+      await addToQueue([track], false, false, undefined, true)
     } catch (error) {
-      console.error('播放单曲失败', error)
+      console.error('添加到队列失败', error)
     }
   }
 
@@ -251,7 +250,7 @@ export default function SearchPage() {
     <TouchableRipple
       key={item.id}
       style={{ paddingVertical: 5 }}
-      onPress={() => playSingleTrack(item)}
+      onPress={() => playNext(item)}
     >
       <Surface
         className='overflow-hidden rounded-lg'
@@ -291,20 +290,21 @@ export default function SearchPage() {
             anchorPosition='bottom'
           >
             <Menu.Item
-              leadingIcon='play-circle'
-              onPress={() => {
-                playSingleTrack(item)
-                setMenuVisible(null)
-              }}
-              title='立即播放'
-            />
-            <Menu.Item
               leadingIcon='playlist-plus'
               onPress={() => {
-                addToQueue([item])
-                setMenuVisible(null)
+                Toast.show({
+                  type: 'success',
+                  text1: '开发中，敬请期待',
+                })
               }}
-              title='添加到当前播放队列'
+              title='添加到收藏夹'
+            />
+            <Menu.Item
+              leadingIcon='play-circle-outline'
+              onPress={() => {
+                playNext(item)
+              }}
+              title='下一首播放'
             />
           </Menu>
         </View>

@@ -397,10 +397,12 @@ function RecentlyPlayedItem({
     }
   }
 
-  // 添加到队列
-  const addTrackToQueue = async (track: Track) => {
+  // 下一首播放
+  const playNext = async (track: Track) => {
     try {
-      await usePlayerStore.getState().addToQueue([track], false, false)
+      await usePlayerStore
+        .getState()
+        .addToQueue([track], false, false, undefined, true)
     } catch (error) {
       console.error('添加到队列失败', error)
     }
@@ -411,7 +413,7 @@ function RecentlyPlayedItem({
       key={item.id}
       className='mb-2'
       activeOpacity={0.7}
-      onPress={() => playSingleTrack(item)}
+      onPress={() => playNext(item)}
     >
       <Surface
         className='overflow-hidden rounded-lg'
@@ -462,7 +464,7 @@ function RecentlyPlayedItem({
             />
             <Menu.Item
               leadingIcon='playlist-plus'
-              onPress={() => addTrackToQueue(item)}
+              onPress={() => playNext(item)}
               title='添加到播放队列'
             />
           </Menu>
