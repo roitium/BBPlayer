@@ -261,29 +261,27 @@ function PlaylistItem({
   item: Playlist
 }) {
   return (
-    <TouchableOpacity
-      key={item.id}
-      className='mr-4 w-40'
-      activeOpacity={0.7}
-      onPress={() => {
-        router.push(`/playlist/favorite/${item.id}`)
-      }}
+    <Surface
+      className='my-2 mr-4 w-40 overflow-hidden'
+      elevation={1}
+      style={{ borderRadius: 8, padding: 8 }}
     >
-      <Surface
-        className='overflow-hidden rounded-lg'
-        elevation={1}
+      <TouchableOpacity
+        key={item.id}
+        activeOpacity={0.5}
+        onPress={() => {
+          router.push(`/playlist/favorite/${item.id}`)
+        }}
       >
-        <View className='p-2'>
-          <Text
-            variant='titleSmall'
-            numberOfLines={1}
-          >
-            {item.title}
-          </Text>
-          <Text variant='bodySmall'>{item.count} 首歌曲</Text>
-        </View>
-      </Surface>
-    </TouchableOpacity>
+        <Text
+          variant='titleSmall'
+          numberOfLines={1}
+        >
+          {item.title}
+        </Text>
+        <Text variant='bodySmall'>{item.count} 首歌曲</Text>
+      </TouchableOpacity>
+    </Surface>
   )
 }
 
@@ -291,6 +289,7 @@ function FavoriteList({
   data,
   isPending,
 }: { data?: Playlist[]; isPending: boolean }) {
+  const { colors } = useTheme()
   return (
     <>
       <View className='mb-2 flex-row items-center justify-between px-4'>
@@ -305,7 +304,12 @@ function FavoriteList({
             router.push('/library')
           }}
         >
-          <Text variant='labelLarge'>查看全部</Text>
+          <Text
+            variant='labelLarge'
+            style={{ color: colors.primary }}
+          >
+            查看全部
+          </Text>
         </TouchableOpacity>
       </View>
       {isPending ? (
@@ -339,6 +343,7 @@ function RecentlyPlayed({
   menuVisible: string | null
   setMenuVisible: (visible: string | null) => void
 }) {
+  const { colors } = useTheme()
   return (
     <>
       <View className='mb-2 flex-row items-center justify-between'>
@@ -349,7 +354,12 @@ function RecentlyPlayed({
           最近播放
         </Text>
         <TouchableOpacity>
-          <Text variant='labelLarge'>查看全部</Text>
+          <Text
+            variant='labelLarge'
+            style={{ color: colors.primary }}
+          >
+            查看全部
+          </Text>
         </TouchableOpacity>
       </View>
       {isPending ? (
