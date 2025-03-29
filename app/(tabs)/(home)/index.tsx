@@ -79,8 +79,7 @@ function HomePage() {
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await recentlyPlayedRefetch()
-    await playlistsRefetch()
+    await Promise.all([recentlyPlayedRefetch(), playlistsRefetch()])
     setRefreshing(false)
   }
 
