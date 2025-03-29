@@ -19,7 +19,7 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { useSearchResults, useHotSearches } from '@/hooks/api/useSearchData'
+import { useSearchResults, useHotSearches } from '@/hooks/queries/useSearchData'
 import type { Track } from '@/types/core/media'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import useAppStore from '@/lib/store/useAppStore'

@@ -29,8 +29,8 @@ import { formatDurationToHHMMSS } from '@/utils/times'
 import {
   usePersonalInformation,
   useRecentlyPlayed,
-} from '@/hooks/api/useUserData'
-import { useGetFavoritePlaylists } from '@/hooks/api/useFavoriteData'
+} from '@/hooks/queries/useUserData'
+import { useGetFavoritePlaylists } from '@/hooks/queries/useFavoriteData'
 
 const mockCategories = [
   { id: '1', name: '翻唱', icon: 'music-note' },

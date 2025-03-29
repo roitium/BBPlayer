@@ -17,7 +17,7 @@ import NowPlayingBar from '@/components/NowPlayingBar'
 import useAppStore from '@/lib/store/useAppStore'
 import type { Playlist } from '@/types/core/media'
 import { router } from 'expo-router'
-import { useGetFavoritePlaylists } from '@/hooks/api/useFavoriteData'
+import { useGetFavoritePlaylists } from '@/hooks/queries/useFavoriteData'
 
 export default function LibraryScreen() {
   const { colors } = useTheme()

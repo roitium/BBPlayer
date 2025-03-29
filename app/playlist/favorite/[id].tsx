@@ -16,7 +16,7 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import type { Track } from '@/types/core/media'
-import { useInfiniteFavoriteList } from '@/hooks/api/useFavoriteData'
+import { useInfiniteFavoriteList } from '@/hooks/queries/useFavoriteData'
 
 export default function PlaylistPage() {
   const { id } = useLocalSearchParams()
