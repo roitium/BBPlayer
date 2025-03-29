@@ -45,8 +45,8 @@ export default function NowPlayingBar() {
         <View className='flex-row items-center p-2'>
           {/* 封面 */}
           <Image
-            source={{ uri: currentTrack?.cover }}
-            className='h-12 w-12 rounded-md'
+            source={{ uri: currentTrack.cover }}
+            style={{ height: 48, width: 48, borderRadius: 6 }}
           />
 
           {/* 歌曲信息 */}
@@ -54,14 +54,12 @@ export default function NowPlayingBar() {
             <Text
               variant='titleMedium'
               numberOfLines={1}
-              style={{ color: colors.onSurface }}
             >
               {currentTrack?.title}
             </Text>
             <Text
               variant='bodySmall'
               numberOfLines={1}
-              style={{ color: colors.onSurfaceVariant }}
             >
               {currentTrack?.artist}
             </Text>
@@ -73,7 +71,6 @@ export default function NowPlayingBar() {
               icon='skip-previous'
               size={24}
               onPress={usePlayerStore.getState().skipToPrevious}
-              iconColor={colors.onSurfaceVariant}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
@@ -86,7 +83,6 @@ export default function NowPlayingBar() {
               icon='skip-next'
               size={24}
               onPress={usePlayerStore.getState().skipToNext}
-              iconColor={colors.onSurfaceVariant}
             />
           </View>
         </View>
