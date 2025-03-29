@@ -17,6 +17,7 @@ import {
   Dialog,
   TextInput,
   Button,
+  ActivityIndicator,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
@@ -39,217 +40,47 @@ const mockCategories = [
   { id: '5', name: 'OST', icon: 'music-note' },
 ]
 
-const SetCookieDialog = ({
-  visible,
-  setVisible,
-  setCookie,
-  cookie,
-  setBilibiliCookie,
-}: {
-  visible: boolean
-  setVisible: (visible: boolean) => void
-  setCookie: (cookie: string) => void
-  cookie: string
-  setBilibiliCookie: (cookie: string) => void
-}) => {
-  return (
-    <Dialog
-      visible={visible}
-      onDismiss={() => setVisible(false)}
-    >
-      <Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
-      <Dialog.Content>
-        <TextInput
-          label='Cookie'
-          value={cookie}
-          onChangeText={setCookie}
-        />
-      </Dialog.Content>
-      <Dialog.Actions>
-        <Button onPress={() => setVisible(false)}>取消</Button>
-        <Button
-          onPress={() => {
-            setCookie(cookie)
-            setBilibiliCookie(cookie)
-            setVisible(false)
-          }}
-        >
-          确定
-        </Button>
-      </Dialog.Actions>
-    </Dialog>
-  )
-}
-
-const HomePage = () => {
+function HomePage() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const [refreshing, setRefreshing] = useState(false)
-  const addToQueue = usePlayerStore((state) => state.addToQueue)
-  const clearQueue = usePlayerStore((state) => state.clearQueue)
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
   const bilibiliCookie = useAppStore((state) => state.bilibiliCookie)
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [cookie, setCookie] = useState(bilibiliCookie)
-
-  // 播放单曲（清空队列后播放）
-  const playSingleTrack = async (track: Track) => {
-    try {
-      await clearQueue()
-      await addToQueue([track])
-    } catch (error) {
-      console.error('播放单曲失败', error)
-    }
-  }
-
-  // 添加到队列
-  const addTrackToQueue = async (track: Track) => {
-    try {
-      await addToQueue([track], false)
-    } catch (error) {
-      console.error('添加到队列失败', error)
-    }
-  }
+  const [slicedRecentlyPlayed, setSlicedRecentlyPlayed] = useState<Track[]>([])
 
   const {
     data: personalInfo,
-    isLoading: personalInfoLoading,
-    refetch: personalInfoRefetch,
+    isPending: personalInfoPending,
+    isError: personalInfoError,
   } = usePersonalInformation(bilibiliApi)
 
-  let {
+  const {
     data: recentlyPlayed,
-    isLoading: recentlyPlayedLoading,
+    isPending: recentlyPlayedPending,
+    isError: recentlyPlayedError,
     refetch: recentlyPlayedRefetch,
   } = useRecentlyPlayed(bilibiliApi)
 
   const {
     data: playlists,
-    isLoading: playlistsLoading,
+    isPending: playlistsPending,
+    isError: playlistsError,
     refetch: playlistsRefetch,
   } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
-  if (!recentlyPlayedLoading) recentlyPlayed = recentlyPlayed?.slice(0, 10)
-
-  const onRefresh = () => {
-    setRefreshing(true)
-    recentlyPlayedRefetch()
-    playlistsRefetch()
-    setRefreshing(false)
+  if (!recentlyPlayedPending && !recentlyPlayedError) {
+    setSlicedRecentlyPlayed(recentlyPlayed.slice(0, 10))
   }
 
-  // 渲染最近播放项
-  const renderRecentItem = (item: Track) => (
-    <TouchableOpacity
-      key={item.id}
-      className='mb-2'
-      activeOpacity={0.7}
-      onPress={() => playSingleTrack(item)}
-    >
-      <Surface
-        className='overflow-hidden rounded-lg'
-        elevation={0}
-      >
-        <View className='flex-row items-center p-2'>
-          <Image
-            source={{ uri: item.cover }}
-            className='rounded'
-            style={{ width: 48, height: 48 }}
-          />
-          <View className='ml-3 flex-1'>
-            <Text
-              variant='titleMedium'
-              numberOfLines={1}
-            >
-              {item.title}
-            </Text>
-            <View className='flex-row items-center'>
-              <Text
-                variant='bodySmall'
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                {item.artist}
-              </Text>
-              <Text
-                className='mx-1'
-                variant='bodySmall'
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                •
-              </Text>
-              <Text
-                variant='bodySmall'
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
-              </Text>
-            </View>
-          </View>
-          <Menu
-            visible={menuVisible === item.id}
-            onDismiss={() => setMenuVisible(null)}
-            anchor={
-              <IconButton
-                icon='dots-vertical'
-                iconColor={colors.onSurfaceVariant}
-                size={24}
-                onPress={() => setMenuVisible(item.id)}
-              />
-            }
-            anchorPosition='bottom'
-          >
-            <Menu.Item
-              leadingIcon='play-circle'
-              onPress={() => playSingleTrack(item)}
-              title='立即播放'
-            />
-            <Menu.Item
-              leadingIcon='playlist-plus'
-              onPress={() => addTrackToQueue(item)}
-              title='添加到播放队列'
-            />
-          </Menu>
-        </View>
-      </Surface>
-    </TouchableOpacity>
-  )
-
-  // 渲染收藏夹项
-  const renderPlaylistItem = (item: Playlist) => (
-    <TouchableOpacity
-      key={item.id}
-      className='mr-4 w-40'
-      activeOpacity={0.7}
-      onPress={() => {
-        router.push(`/playlist/favorite/${item.id}`)
-      }}
-    >
-      <Surface
-        className='overflow-hidden rounded-lg'
-        elevation={1}
-      >
-        {/* <Image
-          source={{ uri: item.cover }}
-          className='h-40 w-40 rounded-lg'
-        /> */}
-        <View className='p-2'>
-          <Text
-            variant='titleSmall'
-            numberOfLines={1}
-          >
-            {item.title}
-          </Text>
-          <Text
-            variant='bodySmall'
-            style={{ color: colors.onSurfaceVariant }}
-          >
-            {item.count} 首歌曲
-          </Text>
-        </View>
-      </Surface>
-    </TouchableOpacity>
-  )
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await recentlyPlayedRefetch()
+    await playlistsRefetch()
+    setRefreshing(false)
+  }
 
   const getGreetingMsg = () => {
     const hour = new Date().getHours()
@@ -301,7 +132,9 @@ const HomePage = () => {
                 style={{ color: colors.onSurfaceVariant }}
               >
                 {getGreetingMsg()}，
-                {personalInfoLoading ? '陌生人' : personalInfo?.name}
+                {personalInfoPending || personalInfoError
+                  ? '陌生人'
+                  : personalInfo.name}
               </Text>
             </View>
             <TouchableOpacity
@@ -311,9 +144,13 @@ const HomePage = () => {
             >
               <Avatar.Image
                 size={40}
-                source={{
-                  uri: personalInfo?.face,
-                }}
+                source={
+                  !personalInfoPending && !personalInfoError
+                    ? {
+                        uri: personalInfo.face,
+                      }
+                    : require('@/assets/bilibili-default-avatar.jpg')
+                }
               />
             </TouchableOpacity>
           </View>
@@ -340,56 +177,22 @@ const HomePage = () => {
           </ScrollView>
         </View>
 
-        {/* 你的收藏夹 */}
+        {/* 收藏夹 */}
         <View className='mb-6'>
-          <View className='mb-2 flex-row items-center justify-between px-4'>
-            <Text
-              variant='titleLarge'
-              style={{ fontWeight: 'bold' }}
-            >
-              收藏夹
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                router.push('/library')
-              }}
-            >
-              <Text
-                variant='labelLarge'
-                style={{ color: colors.primary }}
-              >
-                查看全部
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
-          >
-            {playlists?.map(renderPlaylistItem)}
-          </ScrollView>
+          <FavoriteList
+            data={playlists}
+            isPending={playlistsPending}
+          />
         </View>
 
         {/* 最近播放 */}
         <View className='mb-6 px-4'>
-          <View className='mb-2 flex-row items-center justify-between'>
-            <Text
-              variant='titleLarge'
-              style={{ fontWeight: 'bold' }}
-            >
-              最近播放
-            </Text>
-            <TouchableOpacity>
-              <Text
-                variant='labelLarge'
-                style={{ color: colors.primary }}
-              >
-                查看全部
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {recentlyPlayed?.map(renderRecentItem)}
+          <RecentlyPlayed
+            data={slicedRecentlyPlayed}
+            isPending={recentlyPlayedPending}
+            menuVisible={menuVisible}
+            setMenuVisible={setMenuVisible}
+          />
         </View>
       </ScrollView>
 
@@ -406,6 +209,255 @@ const HomePage = () => {
         setBilibiliCookie={useAppStore.getState().setBilibiliCookie}
       />
     </View>
+  )
+}
+
+function SetCookieDialog({
+  visible,
+  setVisible,
+  setCookie,
+  cookie,
+  setBilibiliCookie,
+}: {
+  visible: boolean
+  setVisible: (visible: boolean) => void
+  setCookie: (cookie: string) => void
+  cookie: string
+  setBilibiliCookie: (cookie: string) => void
+}) {
+  return (
+    <Dialog
+      visible={visible}
+      onDismiss={() => setVisible(false)}
+    >
+      <Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
+      <Dialog.Content>
+        <TextInput
+          label='Cookie'
+          value={cookie}
+          onChangeText={setCookie}
+        />
+      </Dialog.Content>
+      <Dialog.Actions>
+        <Button onPress={() => setVisible(false)}>取消</Button>
+        <Button
+          onPress={() => {
+            setCookie(cookie)
+            setBilibiliCookie(cookie)
+            setVisible(false)
+          }}
+        >
+          确定
+        </Button>
+      </Dialog.Actions>
+    </Dialog>
+  )
+}
+
+function PlaylistItem({
+  item,
+}: {
+  item: Playlist
+}) {
+  return (
+    <TouchableOpacity
+      key={item.id}
+      className='mr-4 w-40'
+      activeOpacity={0.7}
+      onPress={() => {
+        router.push(`/playlist/favorite/${item.id}`)
+      }}
+    >
+      <Surface
+        className='overflow-hidden rounded-lg'
+        elevation={1}
+      >
+        <View className='p-2'>
+          <Text
+            variant='titleSmall'
+            numberOfLines={1}
+          >
+            {item.title}
+          </Text>
+          <Text variant='bodySmall'>{item.count} 首歌曲</Text>
+        </View>
+      </Surface>
+    </TouchableOpacity>
+  )
+}
+
+function FavoriteList({
+  data,
+  isPending,
+}: { data?: Playlist[]; isPending: boolean }) {
+  return (
+    <>
+      <View className='mb-2 flex-row items-center justify-between px-4'>
+        <Text
+          variant='titleLarge'
+          style={{ fontWeight: 'bold' }}
+        >
+          收藏夹
+        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            router.push('/library')
+          }}
+        >
+          <Text variant='labelLarge'>查看全部</Text>
+        </TouchableOpacity>
+      </View>
+      {isPending ? (
+        <ActivityIndicator />
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
+        >
+          {data?.map((item) => (
+            <PlaylistItem
+              key={item.id}
+              item={item}
+            />
+          ))}
+        </ScrollView>
+      )}
+    </>
+  )
+}
+
+function RecentlyPlayed({
+  data,
+  isPending,
+  menuVisible,
+  setMenuVisible,
+}: {
+  data?: Track[]
+  isPending: boolean
+  menuVisible: string | null
+  setMenuVisible: (visible: string | null) => void
+}) {
+  return (
+    <>
+      <View className='mb-2 flex-row items-center justify-between'>
+        <Text
+          variant='titleLarge'
+          style={{ fontWeight: 'bold' }}
+        >
+          最近播放
+        </Text>
+        <TouchableOpacity>
+          <Text variant='labelLarge'>查看全部</Text>
+        </TouchableOpacity>
+      </View>
+      {isPending ? (
+        <ActivityIndicator />
+      ) : (
+        data?.map((item) => (
+          <RecentlyPlayedItem
+            key={item.id}
+            item={item}
+            menuVisible={menuVisible}
+            setMenuVisible={setMenuVisible}
+          />
+        ))
+      )}
+    </>
+  )
+}
+
+// 渲染最近播放项
+function RecentlyPlayedItem({
+  item,
+  menuVisible,
+  setMenuVisible,
+}: {
+  item: Track
+  menuVisible: string | null
+  setMenuVisible: (visible: string | null) => void
+}) {
+  // 播放单曲（清空队列后播放）
+  const playSingleTrack = async (track: Track) => {
+    try {
+      await usePlayerStore.getState().addToQueue([track], true, true)
+    } catch (error) {
+      console.error('播放单曲失败', error)
+    }
+  }
+
+  // 添加到队列
+  const addTrackToQueue = async (track: Track) => {
+    try {
+      await usePlayerStore.getState().addToQueue([track], false, false)
+    } catch (error) {
+      console.error('添加到队列失败', error)
+    }
+  }
+
+  return (
+    <TouchableOpacity
+      key={item.id}
+      className='mb-2'
+      activeOpacity={0.7}
+      onPress={() => playSingleTrack(item)}
+    >
+      <Surface
+        className='overflow-hidden rounded-lg'
+        elevation={0}
+      >
+        <View className='flex-row items-center p-2'>
+          <Image
+            source={{ uri: item.cover }}
+            className='rounded'
+            style={{ width: 48, height: 48 }}
+          />
+          <View className='ml-3 flex-1'>
+            <Text
+              variant='titleMedium'
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
+            <View className='flex-row items-center'>
+              <Text variant='bodySmall'>{item.artist}</Text>
+              <Text
+                className='mx-1'
+                variant='bodySmall'
+              >
+                •
+              </Text>
+              <Text variant='bodySmall'>
+                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
+              </Text>
+            </View>
+          </View>
+          <Menu
+            visible={menuVisible === item.id}
+            onDismiss={() => setMenuVisible(null)}
+            anchor={
+              <IconButton
+                icon='dots-vertical'
+                size={24}
+                onPress={() => setMenuVisible(item.id)}
+              />
+            }
+            anchorPosition='bottom'
+          >
+            <Menu.Item
+              leadingIcon='play-circle'
+              onPress={() => playSingleTrack(item)}
+              title='立即播放'
+            />
+            <Menu.Item
+              leadingIcon='playlist-plus'
+              onPress={() => addTrackToQueue(item)}
+              title='添加到播放队列'
+            />
+          </Menu>
+        </View>
+      </Surface>
+    </TouchableOpacity>
   )
 }
 
