@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router'
 import { useState } from 'react'
-import { View, Image, TouchableOpacity, FlatList } from 'react-native'
+import { View, Image, FlatList } from 'react-native'
 import {
   Text,
   useTheme,
@@ -10,13 +10,18 @@ import {
   ActivityIndicator,
   Appbar,
   Divider,
+  TouchableRipple,
 } from 'react-native-paper'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import type { Track } from '@/types/core/media'
-import { useInfiniteFavoriteList } from '@/hooks/queries/useFavoriteData'
+import {
+  useBatchDeleteFavoriteListContents,
+  useInfiniteFavoriteList,
+} from '@/hooks/queries/useFavoriteData'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function PlaylistPage() {
   const { id } = useLocalSearchParams()
@@ -24,7 +29,12 @@ export default function PlaylistPage() {
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const { bilibiliApi } = useAppStore()
+  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
+  const queryClient = useQueryClient()
+  const { mutate } = useBatchDeleteFavoriteListContents(
+    bilibiliApi,
+    queryClient,
+  )
 
   // 播放单曲（清空队列后播放）
   const playSingleTrack = async (track: Track) => {
@@ -66,18 +76,16 @@ export default function PlaylistPage() {
     data: favoriteData,
     isPending: isFavoriteDataPending,
     isError: isFavoriteDataError,
-    isFetching: isFavoriteDataFetching,
     fetchNextPage,
     hasNextPage,
   } = useInfiniteFavoriteList(bilibiliApi, Number(id))
 
   // 渲染歌曲项
-  const renderTrackItem = (item: Track, index: number) => {
+  const TrackItem = ({ item, index }: { item: Track; index: number }) => {
     return (
-      <TouchableOpacity
+      <TouchableRipple
         key={item.id}
-        className='mb-2'
-        activeOpacity={0.7}
+        style={{ paddingVertical: 5 }}
         onPress={() => playSingleTrack(item)}
       >
         <Surface
@@ -90,7 +98,6 @@ export default function PlaylistPage() {
               style={{
                 width: 40,
                 textAlign: 'center',
-                color: colors.onSurfaceVariant,
               }}
             >
               {index + 1}
@@ -101,30 +108,16 @@ export default function PlaylistPage() {
               style={{ width: 48, height: 48 }}
             />
             <View className='ml-3 flex-1'>
-              <Text
-                variant='titleMedium'
-                numberOfLines={1}
-              >
-                {item.title}
-              </Text>
+              <Text variant='titleMedium'>{item.title}</Text>
               <View className='flex-row items-center'>
-                <Text
-                  variant='bodySmall'
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {item.artist}
-                </Text>
+                <Text variant='bodySmall'>{item.artist}</Text>
                 <Text
                   className='mx-1'
                   variant='bodySmall'
-                  style={{ color: colors.onSurfaceVariant }}
                 >
                   •
                 </Text>
-                <Text
-                  variant='bodySmall'
-                  style={{ color: colors.onSurfaceVariant }}
-                >
+                <Text variant='bodySmall'>
                   {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
                 </Text>
               </View>
@@ -135,7 +128,6 @@ export default function PlaylistPage() {
               anchor={
                 <IconButton
                   icon='dots-vertical'
-                  iconColor={colors.onSurfaceVariant}
                   size={24}
                   onPress={() => setMenuVisible(item.id)}
                 />
@@ -158,10 +150,18 @@ export default function PlaylistPage() {
                 }}
                 title='添加到播放队列'
               />
+              <Menu.Item
+                leadingIcon='playlist-plus'
+                onPress={() => {
+                  mutate({ bvids: [item.id], favoriteId: Number(id) })
+                  setMenuVisible(null)
+                }}
+                title='从收藏夹中删除'
+              />
             </Menu>
           </View>
         </Surface>
-      </TouchableOpacity>
+      </TouchableRipple>
     )
   }
 
@@ -260,15 +260,14 @@ export default function PlaylistPage() {
 
           <Divider />
         </View>
-        {/* 歌曲列表 */}
-        {/* <View className='px-4 pt-4'>
-          {favoriteData?.tracks.map((track, index) =>
-            renderTrackItem(track, index),
-          )}
-        </View> */}
         <FlatList
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
-          renderItem={({ item, index }) => renderTrackItem(item, index)}
+          renderItem={({ item, index }) => (
+            <TrackItem
+              item={item}
+              index={index}
+            />
+          )}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           onEndReached={hasNextPage ? () => fetchNextPage() : null}

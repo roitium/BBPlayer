@@ -55,15 +55,21 @@ class ApiClient {
     return this.request<T>(url, { method: 'GET' }, cookie)
   }
 
-  async post<T>(endpoint: string, data?: unknown, cookie = ''): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    data?: unknown,
+    cookie = '',
+    headers?: Record<string, never>,
+  ): Promise<T> {
     return this.request<T>(
       endpoint,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          ...headers,
         },
-        body: data ? JSON.stringify(data) : undefined,
+        body: data ? (data as BodyInit) : undefined,
       },
       cookie,
     )

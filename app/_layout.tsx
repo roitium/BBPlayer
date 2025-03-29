@@ -5,6 +5,7 @@ import 'react-native-reanimated'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   focusManager,
+  MutationCache,
   onlineManager,
   QueryCache,
   QueryClient,
@@ -48,7 +49,7 @@ const navigationIntegration = Sentry.reactNavigationIntegration({
 
 Sentry.init({
   dsn: 'https://893ea8eb3743da1e065f56b3aa5e96f9@o4508985265618944.ingest.us.sentry.io/4508985267191808',
-  debug: developement,
+  debug: false,
   tracesSampleRate: developement ? 1 : 0.8,
   integrations: [navigationIntegration],
   enableNativeFramesTracking: !isRunningInExpoGo(),
@@ -88,16 +89,12 @@ const queryClient = new QueryClient({
     onError: (error, query) => {
       Toast.show({
         type: 'error',
-        text1: `请求 ${query.queryKey} 失败，已记录错误`,
+        text1: `请求 ${query.queryKey} 失败`,
         text2: error.message,
       })
 
       if (error instanceof BilibiliApiError) {
-        if (error.msgCode === -101) {
-          // -101 为未登录，不报告
-          console.log('未登录')
-          return
-        }
+        if (!developement) return
       }
 
       Sentry.captureException(error, {
@@ -108,6 +105,27 @@ const queryClient = new QueryClient({
         extra: {
           queryHash: query.queryHash,
           retry: query.options.retry,
+        },
+      })
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, variables, context, mutation) => {
+      Toast.show({
+        type: 'error',
+        text1: `请求 mutation: ${mutation.mutationId} 失败`,
+        text2: error.message,
+      })
+
+      console.log(error)
+
+      if (error instanceof BilibiliApiError) {
+        if (!developement) return
+      }
+      Sentry.captureException(error, {
+        tags: {
+          scope: 'MutationCache',
+          mutationId: mutation.mutationId,
         },
       })
     },

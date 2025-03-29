@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import {
+  type QueryClient,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 
 export const favoriteListQueryKeys = {
@@ -29,6 +34,11 @@ export const useInfiniteFavoriteList = (
   })
 }
 
+/**
+ * 获取收藏夹列表
+ * @param bilibiliApi
+ * @param userMid
+ */
 export const useGetFavoritePlaylists = (
   bilibiliApi: BilibiliApi,
   userMid?: number,
@@ -38,5 +48,27 @@ export const useGetFavoritePlaylists = (
     queryFn: () => bilibiliApi.getFavoritePlaylists(userMid as number), // 这里需要断言，因为下面的enabled依赖于userMid
     staleTime: 5 * 60 * 1000,
     enabled: !!userMid,
+  })
+}
+
+/**
+ * 删除收藏夹内容
+ */
+export const useBatchDeleteFavoriteListContents = (
+  bilibiliApi: BilibiliApi,
+  queryClient: QueryClient,
+) => {
+  return useMutation({
+    mutationFn: (params: { bvids: string[]; favoriteId: number }) =>
+      bilibiliApi.batchDeleteFavoriteListContents(
+        params.favoriteId,
+        params.bvids,
+      ),
+    onSuccess: (data, variables) =>
+      queryClient.refetchQueries({
+        queryKey: favoriteListQueryKeys.infiniteFavoriteList(
+          variables.favoriteId,
+        ), // 刷新收藏夹内容
+      }),
   })
 }

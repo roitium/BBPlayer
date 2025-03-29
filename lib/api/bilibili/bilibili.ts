@@ -14,6 +14,27 @@ import type {
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/times'
+import { BilibiliApiError } from '@/utils/errors'
+
+/**
+ * 转换B站bvid为avid
+ */
+function bv2av(bvid: string): number {
+  const XOR_CODE = 23442827791579n
+  const MASK_CODE = 2251799813685247n
+  const BASE = 58n
+
+  const data = 'FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf'
+  const bvidArr = Array.from(bvid)
+  ;[bvidArr[3], bvidArr[9]] = [bvidArr[9], bvidArr[3]]
+  ;[bvidArr[4], bvidArr[7]] = [bvidArr[7], bvidArr[4]]
+  bvidArr.splice(0, 3)
+  const tmp = bvidArr.reduce(
+    (pre, bvidChar) => pre * BASE + BigInt(data.indexOf(bvidChar)),
+    0n,
+  )
+  return Number((tmp & MASK_CODE) ^ XOR_CODE)
+}
 
 /**
  * 转换B站历史记录视频为Track格式
@@ -109,18 +130,22 @@ const transformFavoriteContentsToTracks = (
   contents: BilibiliFavoriteListContent[],
 ): Track[] => {
   try {
-    return contents
-      .filter((content) => content.type === 2)
-      .map((content) => ({
-        id: content.bvid,
-        title: content.title,
-        artist: content.upper.name,
-        cover: content.cover,
-        source: 'bilibili' as const,
-        duration: content.duration,
-        createTime: content.pubdate,
-        hasMetadata: true,
-      }))
+    if (!contents) return []
+    return (
+      contents
+        // 去除已失效和非视频稿件
+        .filter((content) => content.type === 2 && content.attr === 0)
+        .map((content) => ({
+          id: content.bvid,
+          title: content.title,
+          artist: content.upper.name,
+          cover: content.cover,
+          source: 'bilibili' as const,
+          duration: content.duration,
+          createTime: content.pubdate,
+          hasMetadata: true,
+        }))
+    )
   } catch (error) {
     console.error(error)
     return []
@@ -367,6 +392,44 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       getCookie(),
     )
     return response
+  },
+
+  /**
+   * 批量删除收藏夹内容
+   */
+  async batchDeleteFavoriteListContents(
+    favoriteId: number,
+    bvids: string[],
+  ): Promise<void> {
+    const resources: string[] = []
+    for (const bvid of bvids) {
+      resources.push(`${bv2av(bvid)}:2`)
+    }
+
+    const regex = /(^|;)\s*bili_jct\s*=\s*([^;]+)/
+    const csrf = getCookie().match(regex)
+    if (!csrf) {
+      throw new BilibiliApiError(
+        'batchDeleteFavoriteListContents: 获取 csrf 失败，请检查是否填入正确 cookie！',
+        0,
+        { cookie: getCookie(), favoriteId, bvids },
+      )
+    }
+
+    const data = {
+      resources: resources.join(','),
+      media_id: String(favoriteId),
+      csrf: '6216783c30d2d64ddcf82a5baa804357',
+      platform: 'web',
+    }
+
+    await apiClient.post<void>(
+      '/x/v3/fav/resource/batch-del',
+      new URLSearchParams(data).toString(),
+      getCookie(),
+    )
+
+    return
   },
 })
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>

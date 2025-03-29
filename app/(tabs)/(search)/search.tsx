@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  Alert,
-} from 'react-native'
+import { View, ScrollView, TouchableOpacity, Image, Alert } from 'react-native'
 import {
   Searchbar,
   Text,
@@ -16,6 +9,9 @@ import {
   IconButton,
   ActivityIndicator,
   Button,
+  TouchableRipple,
+  Menu,
+  TextInput,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
@@ -50,6 +46,7 @@ export default function SearchPage() {
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const clearQueue = usePlayerStore((state) => state.clearQueue)
+  const [menuVisible, setMenuVisible] = useState<string | null>(null)
 
   // 播放单曲（清空队列后播放）
   const playSingleTrack = async (track: Track) => {
@@ -251,72 +248,94 @@ export default function SearchPage() {
 
   // 渲染搜索结果项
   const renderSearchResultItem = (item: Track) => (
-    <TouchableOpacity
-      key={`search_result_${item.id}_${item.duration}`}
+    <TouchableRipple
+      key={item.id}
+      style={{ paddingVertical: 5 }}
       onPress={() => playSingleTrack(item)}
-      activeOpacity={0.7}
     >
       <Surface
-        className='mb-2 overflow-hidden rounded-lg'
+        className='overflow-hidden rounded-lg'
         elevation={0}
       >
-        <View className='flex-row items-center p-3'>
+        <View className='flex-row items-center p-2'>
           <Image
             source={{ uri: item.cover }}
-            className='h-12 w-12 rounded'
+            className='rounded'
+            style={{ width: 48, height: 48 }}
           />
           <View className='ml-3 flex-1'>
-            <Text
-              variant='titleMedium'
-              numberOfLines={1}
-            >
-              {item.title}
-            </Text>
-            <Text
-              variant='bodySmall'
-              style={{ color: colors.onSurfaceVariant }}
-              numberOfLines={1}
-            >
-              {item.artist}
-            </Text>
+            <Text variant='titleMedium'>{item.title}</Text>
+            <View className='flex-row items-center'>
+              <Text variant='bodySmall'>{item.artist}</Text>
+              <Text
+                className='mx-1'
+                variant='bodySmall'
+              >
+                •
+              </Text>
+              <Text variant='bodySmall'>
+                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
+              </Text>
+            </View>
           </View>
-          <View className='flex-row items-center'>
-            <Text
-              variant='bodySmall'
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              {item.duration
-                ? formatDurationToHHMMSS(item.duration)
-                : '未知时长'}
-            </Text>
-            <IconButton
-              icon='play-circle-outline'
-              iconColor={colors.primary}
-              size={24}
-              onPress={() => playSingleTrack(item)}
+          <Menu
+            visible={menuVisible === item.id}
+            onDismiss={() => setMenuVisible(null)}
+            anchor={
+              <IconButton
+                icon='dots-vertical'
+                size={24}
+                onPress={() => setMenuVisible(item.id)}
+              />
+            }
+            anchorPosition='bottom'
+          >
+            <Menu.Item
+              leadingIcon='play-circle'
+              onPress={() => {
+                playSingleTrack(item)
+                setMenuVisible(null)
+              }}
+              title='立即播放'
             />
-          </View>
+            <Menu.Item
+              leadingIcon='playlist-plus'
+              onPress={() => {
+                addToQueue([item])
+                setMenuVisible(null)
+              }}
+              title='添加到当前播放队列'
+            />
+          </Menu>
         </View>
       </Surface>
-    </TouchableOpacity>
+    </TouchableRipple>
   )
 
   // 渲染分页控件
   const renderPagination = () => (
-    <View className='mt-4 mb-6 flex-row items-center justify-between'>
-      <Button
-        mode='outlined'
-        onPress={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage <= 1}
-        icon='chevron-left'
-      >
-        上一页
-      </Button>
+    <View className='item-center flex flex-col'>
+      <View className='mt-4 mb-6 flex-row items-center justify-center gap-5'>
+        <Button
+          mode='outlined'
+          onPress={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          icon='chevron-left'
+        >
+          上一页
+        </Button>
 
-      <View className='flex-row items-center'>
-        <Text variant='bodyMedium'>
-          {currentPage} / {totalPages}
-        </Text>
+        <Button
+          mode='outlined'
+          onPress={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          icon='chevron-right'
+          contentStyle={{ flexDirection: 'row-reverse' }}
+        >
+          下一页
+        </Button>
+      </View>
+      <View className='mx-auto flex-row items-center'>
         <View className='ml-2 flex-row items-center'>
           <TextInput
             value={pageInputValue}
@@ -325,14 +344,13 @@ export default function SearchPage() {
             keyboardType='number-pad'
             style={{
               width: 50,
-              height: 40,
-              borderWidth: 1,
-              borderColor: colors.outline,
-              borderRadius: 4,
-              textAlign: 'center',
-              color: colors.onSurface,
+              height: 30,
             }}
           />
+          <Text variant='bodyMedium'>
+            {' / '}
+            {totalPages}
+          </Text>
           <Button
             mode='text'
             onPress={handlePageJump}
@@ -342,16 +360,6 @@ export default function SearchPage() {
           </Button>
         </View>
       </View>
-
-      <Button
-        mode='outlined'
-        onPress={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage >= totalPages}
-        icon='chevron-right'
-        contentStyle={{ flexDirection: 'row-reverse' }}
-      >
-        下一页
-      </Button>
     </View>
   )
 
