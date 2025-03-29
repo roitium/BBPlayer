@@ -5,6 +5,7 @@ import {
   useQuery,
 } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
+import Toast from 'react-native-toast-message'
 
 export const favoriteListQueryKeys = {
   all: ['favoriteList'] as const,
@@ -64,11 +65,16 @@ export const useBatchDeleteFavoriteListContents = (
         params.favoriteId,
         params.bvids,
       ),
-    onSuccess: (data, variables) =>
+    onSuccess: (data, variables) => {
+      Toast.show({
+        type: 'success',
+        text1: '删除成功',
+      })
       queryClient.refetchQueries({
         queryKey: favoriteListQueryKeys.infiniteFavoriteList(
           variables.favoriteId,
         ), // 刷新收藏夹内容
-      }),
+      })
+    },
   })
 }

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router'
 import { useState } from 'react'
-import { View, Image, FlatList } from 'react-native'
+import { View, Image, FlatList, RefreshControl } from 'react-native'
 import {
   Text,
   useTheme,
@@ -31,6 +31,7 @@ export default function PlaylistPage() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const queryClient = useQueryClient()
+  const [refreshing, setRefreshing] = useState(false)
   const { mutate } = useBatchDeleteFavoriteListContents(
     bilibiliApi,
     queryClient,
@@ -77,6 +78,7 @@ export default function PlaylistPage() {
     isPending: isFavoriteDataPending,
     isError: isFavoriteDataError,
     fetchNextPage,
+    refetch,
     hasNextPage,
   } = useInfiniteFavoriteList(bilibiliApi, Number(id))
 
@@ -248,7 +250,7 @@ export default function PlaylistPage() {
               variant='bodyMedium'
               numberOfLines={2}
             >
-              {favoriteData?.pages[0].favoriteMeta.intro}
+              {favoriteData?.pages[0].favoriteMeta.intro || '还没有简介哦~'}
             </Text>
 
             <IconButton
@@ -268,6 +270,18 @@ export default function PlaylistPage() {
               index={index}
             />
           )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true)
+                await refetch()
+                setRefreshing(false)
+              }}
+              colors={[colors.primary]}
+              progressViewOffset={50}
+            />
+          }
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           onEndReached={hasNextPage ? () => fetchNextPage() : null}
