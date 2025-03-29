@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
@@ -71,9 +71,11 @@ function HomePage() {
     refetch: playlistsRefetch,
   } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
-  if (!recentlyPlayedPending && !recentlyPlayedError) {
-    setSlicedRecentlyPlayed(recentlyPlayed.slice(0, 10))
-  }
+  useEffect(() => {
+    if (!recentlyPlayedPending && !recentlyPlayedError && recentlyPlayed) {
+      setSlicedRecentlyPlayed(recentlyPlayed.slice(0, 10))
+    }
+  }, [recentlyPlayed, recentlyPlayedPending, recentlyPlayedError])
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -149,7 +151,7 @@ function HomePage() {
                     ? {
                         uri: personalInfo.face,
                       }
-                    : require('@/assets/bilibili-default-avatar.jpg')
+                    : require('@/assets/images/bilibili-default-avatar.jpg')
                 }
               />
             </TouchableOpacity>
