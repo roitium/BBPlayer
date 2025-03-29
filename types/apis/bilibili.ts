@@ -1,4 +1,6 @@
-// 获取音频流入参（dash）
+/**
+ * 获取音频流入参（dash）
+ */
 interface BilibiliAudioStreamParams {
   bvid: string
   cid: number
@@ -7,7 +9,9 @@ interface BilibiliAudioStreamParams {
   enableHiRes: boolean
 }
 
-// 获取音频流（dash）返回值
+/**
+ * 获取音频流（dash）返回值
+ */
 interface BilibiliAudioStreamResponse {
   dash: {
     audio:
@@ -38,7 +42,9 @@ interface BilibiliAudioStreamResponse {
   }
 }
 
-// 历史记录获得的视频信息
+/**
+ * 历史记录获得的视频信息
+ */
 interface BilibiliHistoryVideo {
   aid: number
   bvid: string
@@ -50,7 +56,9 @@ interface BilibiliHistoryVideo {
   duration: number
 }
 
-// 通过 details 接口获取的视频完整信息
+/**
+ * 通过details接口获取的视频完整信息
+ */
 interface BilibiliVideoDetails {
   aid: number
   bvid: string
@@ -64,14 +72,18 @@ interface BilibiliVideoDetails {
   cid: number
 }
 
-// 收藏夹
+/**
+ * 收藏夹信息
+ */
 interface BilibiliPlaylist {
   id: number
   title: string
   media_count: number
 }
 
-// 搜索结果接口
+/**
+ * 搜索结果视频信息
+ */
 interface BilibiliSearchVideo {
   aid: number
   bvid: string
@@ -82,20 +94,26 @@ interface BilibiliSearchVideo {
   senddate: number
 }
 
-// 热门搜索接口
+/**
+ * 热门搜索信息
+ */
 interface BilibiliHotSearch {
   keyword: string
   show_name: string
 }
 
-// 用户详细信息
+/**
+ * 用户详细信息
+ */
 interface BilibiliUserInfo {
   mid: number
   name: string
   face: string
 }
 
-// 收藏夹内容
+/**
+ * 收藏夹内容项
+ */
 interface BilibiliFavoriteListContent {
   id: number
   bvid: string
@@ -112,7 +130,9 @@ interface BilibiliFavoriteListContent {
   attr: number // 失效	0: 正常；9: up自己删除；1: 其他原因删除
 }
 
-// 收藏夹内容
+/**
+ * 收藏夹内容列表
+ */
 interface BilibiliFavoriteListContents {
   info: {
     id: number
@@ -130,6 +150,9 @@ interface BilibiliFavoriteListContents {
   ttl: number
 }
 
+/**
+ * 收藏夹所有内容（仅ID）
+ */
 type BilibiliFavoriteListAllContents = {
   id: number
   bvid: string

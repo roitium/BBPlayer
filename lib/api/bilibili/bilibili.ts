@@ -14,8 +14,13 @@ import type {
 import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/times'
-// 转换工具函数
-const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
+
+/**
+ * 转换B站历史记录视频为Track格式
+ */
+const transformHistoryVideosToTracks = (
+  videos: BilibiliHistoryVideo[],
+): Track[] => {
   return videos.map((video) => ({
     id: video.bvid,
     title: video.title,
@@ -28,32 +33,33 @@ const convertVideosToTracks = (videos: BilibiliHistoryVideo[]): Track[] => {
   }))
 }
 
-// 通过 details 接口获取的视频完整信息转换为 Track
-const convertVideoDetailsToTracks = (
+/**
+ * 转换B站视频详情为Track格式
+ */
+const transformVideoDetailsToTracks = (
   videos: BilibiliVideoDetails[],
 ): Track[] => {
   try {
-    const tracks: Track[] = []
-    for (const video of videos) {
-      tracks.push({
-        id: video.bvid,
-        title: video.title,
-        artist: video.owner.name,
-        cover: video.pic,
-        source: 'bilibili' as const,
-        duration: Number(video.duration),
-        createTime: video.pubdate,
-        hasMetadata: true,
-      })
-    }
-    return tracks
+    return videos.map((video) => ({
+      id: video.bvid,
+      title: video.title,
+      artist: video.owner.name,
+      cover: video.pic,
+      source: 'bilibili' as const,
+      duration: Number(video.duration),
+      createTime: video.pubdate,
+      hasMetadata: true,
+    }))
   } catch (error) {
     console.error(error)
     return []
   }
 }
 
-const convertFavoriteToPlaylists = (
+/**
+ * 转换B站收藏夹为Playlist格式
+ */
+const transformFavoriteListsToPlaylists = (
   playlists: BilibiliPlaylist[],
 ): Playlist[] => {
   return playlists.map((playlist) => ({
@@ -66,8 +72,10 @@ const convertFavoriteToPlaylists = (
   }))
 }
 
-// 转换搜索结果为Track
-const convertSearchVideosToTracks = (
+/**
+ * 转换B站搜索结果视频为Track格式
+ */
+const transformSearchResultsToTracks = (
   videos: BilibiliSearchVideo[],
 ): Track[] => {
   return videos.map((video) => ({
@@ -82,8 +90,10 @@ const convertSearchVideosToTracks = (
   }))
 }
 
-// 转换热门搜索为简单对象
-const convertHotSearches = (
+/**
+ * 转换B站热门搜索为简单对象
+ */
+const transformHotSearches = (
   hotSearches: BilibiliHotSearch[],
 ): { id: string; text: string }[] => {
   return hotSearches.map((item) => ({
@@ -92,56 +102,62 @@ const convertHotSearches = (
   }))
 }
 
-// 转换收藏夹内容为Track
-const convertFavoriteListContentsToTracks = (
+/**
+ * 转换B站收藏夹内容为Track格式
+ */
+const transformFavoriteContentsToTracks = (
   contents: BilibiliFavoriteListContent[],
 ): Track[] => {
   try {
-    const tracks: Track[] = []
-    for (const content of contents) {
-      if (content.type === 2) {
-        tracks.push({
-          id: content.bvid,
-          title: content.title,
-          artist: content.upper.name,
-          cover: content.cover,
-          source: 'bilibili' as const,
-          duration: content.duration,
-          createTime: content.pubdate,
-          hasMetadata: true,
-        })
-      }
-    }
-    return tracks
+    return contents
+      .filter((content) => content.type === 2)
+      .map((content) => ({
+        id: content.bvid,
+        title: content.title,
+        artist: content.upper.name,
+        cover: content.cover,
+        source: 'bilibili' as const,
+        duration: content.duration,
+        createTime: content.pubdate,
+        hasMetadata: true,
+      }))
   } catch (error) {
     console.error(error)
     return []
   }
 }
 
-// API 方法
+/**
+ * 创建B站API客户端
+ */
 export const createBilibiliApi = (getCookie: () => string) => ({
-  // 获取历史记录
+  /**
+   * 获取用户观看历史记录
+   */
   async getHistory(): Promise<Track[]> {
     const response = await apiClient.get<BilibiliHistoryVideo[]>(
       '/x/v2/history',
       undefined,
       getCookie(),
     )
-    return convertVideosToTracks(response)
+    return transformHistoryVideosToTracks(response)
   },
 
-  // 获取某个分区的热门视频
+  /**
+   * 获取分区热门视频
+   */
   async getPopularVideos(partition: string): Promise<Track[]> {
     const response = await apiClient.get<{ list: BilibiliVideoDetails[] }>(
       `/x/web-interface/ranking/v2?rid=${partition}`,
       undefined,
       getCookie(),
     )
-    return convertVideoDetailsToTracks(response.list)
+    return transformVideoDetailsToTracks(response.list)
   },
 
-  // 获取收藏夹列表
+  /**
+   * 获取用户收藏夹列表
+   */
   async getFavoritePlaylists(userMid: number): Promise<Playlist[]> {
     const response = await apiClient.get<{ list: BilibiliPlaylist[] | null }>(
       `/x/v3/fav/folder/created/list-all?up_mid=${userMid}`,
@@ -151,10 +167,12 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     if (!response.list) {
       return []
     }
-    return convertFavoriteToPlaylists(response.list)
+    return transformFavoriteListsToPlaylists(response.list)
   },
 
-  // 搜索视频
+  /**
+   * 搜索视频
+   */
   async searchVideos(
     keyword: string,
     page: number,
@@ -174,12 +192,14 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       getCookie(),
     )
     return {
-      tracks: convertSearchVideosToTracks(response.result),
+      tracks: transformSearchResultsToTracks(response.result),
       numPages: response.numPages,
     }
   },
 
-  // 获取热门搜索
+  /**
+   * 获取热门搜索关键词
+   */
   async getHotSearches(): Promise<{ id: string; text: string }[]> {
     const response = await apiClient.get<{
       trending: { list: BilibiliHotSearch[] }
@@ -190,10 +210,12 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       },
       getCookie(),
     )
-    return convertHotSearches(response.trending.list)
+    return transformHotSearches(response.trending.list)
   },
 
-  // 获取音频流（dash）
+  /**
+   * 获取视频音频流信息
+   */
   async getAudioStream({
     bvid,
     cid,
@@ -225,7 +247,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       return {
         url: response.dash.hiRes.audio.baseUrl,
         quality: response.dash.hiRes.audio.id,
-        getTime: Date.now() + 60, // 在当前时间基础上加 60 秒，做个提前量
+        getTime: Date.now() + 60,
         type: 'dash',
       }
     }
@@ -234,7 +256,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         return {
           url: audio.baseUrl,
           quality: audio.id,
-          getTime: Date.now() + 60, // 在当前时间基础上加 60 秒，做个提前量
+          getTime: Date.now() + 60,
           type: 'dash',
         }
       }
@@ -243,12 +265,14 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     return {
       url: response.dash.audio[0].baseUrl,
       quality: response.dash.audio[0].id,
-      getTime: Date.now() + 60, // 在当前时间基础上加 60 秒，做个提前量
+      getTime: Date.now() + 60,
       type: 'dash',
     }
   },
 
-  // 获取分 p 列表
+  /**
+   * 获取视频分P列表
+   */
   async getPageList(bvid: string): Promise<
     {
       cid: number
@@ -276,7 +300,9 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     return response
   },
 
-  // 获取用户详细信息
+  /**
+   * 获取用户信息
+   */
   async getUserInfo(): Promise<BilibiliUserInfo> {
     const response = await apiClient.get<BilibiliUserInfo>(
       '/x/space/myinfo',
@@ -286,7 +312,9 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     return response
   },
 
-  // 获取收藏夹内容(可以获取到更详细的信息，但是需要分页)
+  /**
+   * 获取收藏夹内容(分页)
+   */
   async getFavoriteListContents(
     favoriteId: number,
     pn: number,
@@ -305,13 +333,15 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       getCookie(),
     )
     return {
-      tracks: convertFavoriteListContentsToTracks(response.medias),
+      tracks: transformFavoriteContentsToTracks(response.medias),
       hasMore: response.has_more,
       favoriteMeta: response.info,
     }
   },
 
-  // 获取收藏夹所有视频内容（可以一次拿到所有数据，但是只有 bvid）
+  /**
+   * 获取收藏夹所有视频内容（仅bvid）
+   */
   async getFavoriteListAllContents(
     favoriteId: number,
   ): Promise<BilibiliFavoriteListAllContents> {
@@ -325,7 +355,9 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     return response.filter((item) => item.type === 2)
   },
 
-  // 获取一个视频的详细信息
+  /**
+   * 获取视频详细信息
+   */
   async getVideoDetails(bvid: string): Promise<BilibiliVideoDetails> {
     const response = await apiClient.get<BilibiliVideoDetails>(
       '/x/web-interface/view',
