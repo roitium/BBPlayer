@@ -37,26 +37,17 @@ export default function PlaylistPage() {
     queryClient,
   )
 
-  // 播放单曲（清空队列后播放）
-  const playSingleTrack = async (track: Track) => {
+  // 下一首播放
+  const playNext = async (track: Track) => {
     try {
-      await addToQueue([track], true, true)
-    } catch (error) {
-      console.error('播放单曲失败', error)
-    }
-  }
-
-  // 添加到队列
-  const addTrackToQueue = async (track: Track) => {
-    try {
-      await addToQueue([track])
+      await addToQueue([track], false, false, undefined, true)
     } catch (error) {
       console.error('添加到队列失败', error)
     }
   }
 
   // 播放全部
-  const playAll = async () => {
+  const playAll = async (startFromId?: string) => {
     try {
       const allContentIds = await bilibiliApi.getFavoriteListAllContents(
         Number(id),
@@ -66,7 +57,7 @@ export default function PlaylistPage() {
         source: 'bilibili' as const,
         hasMetadata: false,
       }))
-      await addToQueue(allTracks, true, true)
+      await addToQueue(allTracks, true, true, startFromId)
     } catch (error) {
       console.error('播放全部失败', error)
     }
@@ -88,7 +79,7 @@ export default function PlaylistPage() {
       <TouchableRipple
         key={item.id}
         style={{ paddingVertical: 5 }}
-        onPress={() => playSingleTrack(item)}
+        onPress={() => playAll(item.id)}
       >
         <Surface
           className='overflow-hidden rounded-lg'
@@ -137,23 +128,15 @@ export default function PlaylistPage() {
               anchorPosition='bottom'
             >
               <Menu.Item
-                leadingIcon='play-circle'
+                leadingIcon='play-circle-outline'
                 onPress={() => {
-                  playSingleTrack(item)
+                  playNext(item)
                   setMenuVisible(null)
                 }}
-                title='立即播放'
+                title='下一首播放'
               />
               <Menu.Item
-                leadingIcon='playlist-plus'
-                onPress={() => {
-                  addTrackToQueue(item)
-                  setMenuVisible(null)
-                }}
-                title='添加到播放队列'
-              />
-              <Menu.Item
-                leadingIcon='playlist-plus'
+                leadingIcon='playlist-remove'
                 onPress={() => {
                   mutate({ bvids: [item.id], favoriteId: Number(id) })
                   setMenuVisible(null)
@@ -256,7 +239,7 @@ export default function PlaylistPage() {
             <IconButton
               mode='contained'
               icon='play'
-              onPress={playAll}
+              onPress={() => playAll()}
             />
           </View>
 

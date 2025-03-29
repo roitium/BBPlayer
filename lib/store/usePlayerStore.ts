@@ -235,12 +235,29 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       return currentTrack ? [currentTrack] : []
     },
 
-    // 添加到队列
-    addToQueue: async (tracks: Track[], playNow = true, clearQueue = false) => {
+    /**
+     * 添加多条曲目到队列
+     * 当 playNow 为 false 时，startFromId 不生效
+     * @param tracks
+     * @param playNow 是否立即播放（在 startFromId 为空时是播放新增队列的第一首歌曲）
+     * @param clearQueue
+     * @param startFromId 从指定曲目（靠 id 索引）开始播放
+     * @param playNext （仅在 playNow 为 false 时）是否把新曲目插入到当前播放曲目的后面
+     * @returns
+     */
+    addToQueue: async (
+      tracks: Track[],
+      playNow = true,
+      clearQueue = false,
+      startFromId?: string,
+      playNext = false,
+    ) => {
       logDetailedDebug('调用 addToQueue()', {
         tracksCount: tracks.length,
         tracks: tracks.map((t) => ({ id: t.id, title: t.title })),
         playNow,
+        startFromId,
+        clearQueue,
       })
 
       if (!checkPlayerReady()) return
@@ -273,9 +290,31 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             const insertIndex = state.currentIndex + 1
             state.queue.splice(insertIndex, 0, ...newTracks)
 
-            // 更新当前索引和曲目
-            state.currentIndex = insertIndex
-            state.currentTrack = newTracks[0]
+            if (startFromId) {
+              const startFromIndex = state.queue.findIndex(
+                (t) => t.id === startFromId,
+              )
+              if (startFromIndex !== -1) {
+                logDetailedDebug(
+                  '指定了起始曲目，将 currentIndex 和 currentTrack 更新',
+                  {
+                    startFromIndex,
+                    startFromId,
+                    currentTrack: state.currentTrack?.title,
+                  },
+                )
+                state.currentIndex = startFromIndex
+                state.currentTrack = state.queue[startFromIndex]
+              }
+            } else {
+              // 更新当前索引和曲目
+              state.currentIndex = insertIndex
+              state.currentTrack = newTracks[0]
+            }
+          } else if (playNext) {
+            logDetailedDebug('播放模式，插入到当前播放曲目之后')
+            const insertIndex = state.currentIndex + 1
+            state.queue.splice(insertIndex, 0, ...newTracks)
           } else {
             logDetailedDebug('添加到队列末尾')
             state.queue.push(...newTracks)
@@ -287,8 +326,13 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             addedTracks: newTracks.length,
           })
 
-          // 如果是首次添加，且没有正在播放的曲目, 则把第一首曲目设为当前曲目
-          if (state.queue.length > 0 && state.currentTrack === null) {
+          // 如果没有正在播放的曲目，且 playNow 为 false, 则把第一首曲目设为当前曲目
+          // 目的是保证能显示播放栏
+          if (
+            state.queue.length > 0 &&
+            state.currentTrack === null &&
+            !playNow
+          ) {
             logDetailedDebug('队列之前为空，把第一首设为当前曲目', {
               trackId: state.queue[0].id,
               title: state.queue[0].title,
@@ -733,7 +777,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       }
       // 乐观更新当前曲目，让界面显示更迅速
       if (track.hasMetadata) {
-        set({ currentTrack: track, isBuffering: true })
+        set({ currentTrack: track, isBuffering: true, currentIndex: index })
       }
 
       // 检查并更新音频流

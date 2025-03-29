@@ -27,6 +27,8 @@ interface PlayerActions {
     tracks: Track[],
     playNow?: boolean,
     clearQueue?: boolean,
+    startFromId?: string,
+    playNext?: boolean,
   ) => Promise<void>
   clearQueue: () => Promise<void>
   skipToTrack: (index: number) => Promise<void>
