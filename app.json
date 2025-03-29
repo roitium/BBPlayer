@@ -18,7 +18,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.roitium.BBPlayer",
-      "versionCode": 21
+      "versionCode": 22
     },
     "web": {
       "bundler": "metro",
