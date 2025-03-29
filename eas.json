@@ -1,14 +1,11 @@
 {
   "cli": {
     "version": ">= 13.4.2",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
       "distribution": "internal"
     },
     "production": {
@@ -17,8 +14,5 @@
         "buildType": "apk"
       }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }
