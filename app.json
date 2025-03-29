@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.roitium.BBPlayer"
+      "package": "com.roitium.BBPlayer",
+      "versionCode": 21
     },
     "web": {
       "bundler": "metro",
