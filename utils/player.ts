@@ -48,6 +48,14 @@ function convertToRNTPTrack(track: Track): RNTPTrack {
   return rnTrack
 }
 
+function checkBilibiliAudioExpiry(track: Track): boolean {
+  const now = Date.now()
+  return (
+    !track.biliStreamUrl ||
+    now - track.biliStreamUrl.getTime > STREAM_EXPIRY_TIME
+  )
+}
+
 async function checkAndUpdateAudioStream(
   track: Track,
 ): Promise<{ track: Track; needsUpdate: boolean }> {
@@ -67,9 +75,7 @@ async function checkAndUpdateAudioStream(
     const now = Date.now()
 
     // 检查是否有音频流或音频流是否过期
-    const needsUpdate =
-      !track.biliStreamUrl ||
-      now - track.biliStreamUrl.getTime > STREAM_EXPIRY_TIME
+    const needsUpdate = checkBilibiliAudioExpiry(track)
 
     logDetailedDebug('B站音频流状态检查', {
       trackId: track.id,
@@ -168,4 +174,8 @@ async function checkAndUpdateAudioStream(
   return { track, needsUpdate: false }
 }
 
-export { convertToRNTPTrack, checkAndUpdateAudioStream }
+export {
+  convertToRNTPTrack,
+  checkAndUpdateAudioStream,
+  checkBilibiliAudioExpiry,
+}

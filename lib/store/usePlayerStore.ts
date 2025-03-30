@@ -12,7 +12,11 @@ import type { Track } from '@/types/core/media'
 import { produce } from 'immer'
 import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
 import { logDetailedDebug, logError } from '@/utils/log'
-import { checkAndUpdateAudioStream, convertToRNTPTrack } from '@/utils/player'
+import {
+  checkAndUpdateAudioStream,
+  checkBilibiliAudioExpiry,
+  convertToRNTPTrack,
+} from '@/utils/player'
 import useAppStore from './useAppStore'
 import { PRELOAD_TRACKS } from '@/constants/player'
 import Toast from 'react-native-toast-message'
@@ -417,6 +421,13 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
           logDetailedDebug(
             '当前已暂停，即将播放，让我们做些检查看看 track 是否过期',
           )
+          const isExpired = checkBilibiliAudioExpiry(currentTrack)
+          if (!isExpired) {
+            logDetailedDebug('音频流没过期，继续播放')
+            await TrackPlayer.play()
+            set({ isPlaying: true })
+            return
+          }
           const { needsUpdate, track } =
             await patchMetadataAndAudio(currentTrack)
           if (needsUpdate) {
