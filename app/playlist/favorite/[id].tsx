@@ -21,7 +21,6 @@ import {
   useBatchDeleteFavoriteListContents,
   useInfiniteFavoriteList,
 } from '@/hooks/queries/useFavoriteData'
-import { useQueryClient } from '@tanstack/react-query'
 
 export default function PlaylistPage() {
   const { id } = useLocalSearchParams()
@@ -30,12 +29,8 @@ export default function PlaylistPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-  const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
-  const { mutate } = useBatchDeleteFavoriteListContents(
-    bilibiliApi,
-    queryClient,
-  )
+  const { mutate } = useBatchDeleteFavoriteListContents(bilibiliApi)
 
   // 下一首播放
   const playNext = async (track: Track) => {
@@ -137,9 +132,12 @@ export default function PlaylistPage() {
               />
               <Menu.Item
                 leadingIcon='playlist-remove'
-                onPress={() => {
+                onPress={async () => {
                   mutate({ bvids: [item.id], favoriteId: Number(id) })
                   setMenuVisible(null)
+                  setRefreshing(true)
+                  await refetch()
+                  setRefreshing(false)
                 }}
                 title='从收藏夹中删除'
               />

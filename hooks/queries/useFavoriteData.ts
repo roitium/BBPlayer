@@ -1,9 +1,4 @@
-import {
-  type QueryClient,
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-} from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 import Toast from 'react-native-toast-message'
 
@@ -57,7 +52,6 @@ export const useGetFavoritePlaylists = (
  */
 export const useBatchDeleteFavoriteListContents = (
   bilibiliApi: BilibiliApi,
-  queryClient: QueryClient,
 ) => {
   return useMutation({
     mutationFn: (params: { bvids: string[]; favoriteId: number }) =>
@@ -70,11 +64,12 @@ export const useBatchDeleteFavoriteListContents = (
         type: 'success',
         text1: '删除成功',
       })
-      queryClient.refetchQueries({
-        queryKey: favoriteListQueryKeys.infiniteFavoriteList(
-          variables.favoriteId,
-        ), // 刷新收藏夹内容
-      })
+      // 在 production 版本这行代码不生效，不知道什么原因，现在刷新逻辑直接放在 mutate 之后
+      // queryClient.refetchQueries({
+      //   queryKey: favoriteListQueryKeys.infiniteFavoriteList(
+      //     variables.favoriteId,
+      //   ), // 刷新收藏夹内容
+      // })
     },
   })
 }
