@@ -2,12 +2,14 @@ import { View, ScrollView } from 'react-native'
 import { Text, Button, Card } from 'react-native-paper'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { router } from 'expo-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Track } from '@/types/core/media'
 import TrackPlayer from 'react-native-track-player'
 import { convertToRNTPTrack } from '@/utils/player'
 import * as Updates from 'expo-updates'
 import { showToast } from '@/utils/toast'
+import type BottomSheet from '@gorhom/bottom-sheet'
+import PlayerQueueModal from '@/components/PlayerQueueModal'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -16,6 +18,11 @@ export default function TestPage() {
   const [loading, setLoading] = useState(false)
   const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
     Updates.useUpdates()
+  const sheetRef = useRef<BottomSheet>(null)
+
+  const showPlayerQueueModal = () => {
+    sheetRef.current?.snapToPosition('75%')
+  }
 
   const testCheckUpdate = async () => {
     const result = await Updates.checkForUpdateAsync()
@@ -153,131 +160,143 @@ export default function TestPage() {
   }
 
   return (
-    <ScrollView className='flex-1 p-4'>
-      <Text
-        variant='headlineMedium'
-        className='mb-4'
-      >
-        音频播放测试
-      </Text>
+    <>
+      <ScrollView className='flex-1 p-4'>
+        <Text
+          variant='headlineMedium'
+          className='mb-4'
+        >
+          音频播放测试
+        </Text>
 
-      <View className='mb-4'>
-        <Button
-          mode='contained'
-          onPress={handleAddToQueue}
-          loading={loading}
-          className='mb-2'
-        >
-          添加测试曲目到队列
-        </Button>
-        <Button
-          mode='outlined'
-          onPress={handleClearQueue}
-          loading={loading}
-          className='mb-2'
-        >
-          清空队列
-        </Button>
-        <Button
-          mode='outlined'
-          onPress={() => router.push('/player')}
-          className='mb-2'
-        >
-          打开播放器
-        </Button>
-        <Button
-          mode='contained'
-          onPress={() => router.push('/playlist/favorite/111')}
-          loading={loading}
-          className='mb-2'
-        >
-          跳转到收藏夹
-        </Button>
-        <Button
-          mode='contained'
-          onPress={testResumeExpiredTrack}
-          loading={loading}
-          className='mb-2'
-        >
-          测试恢复过期曲目(该操作会破坏播放状态，测试后请重启应用)
-        </Button>
-        <Button
-          mode='contained'
-          onPress={testCheckUpdate}
-          loading={loading}
-          className='mb-2'
-        >
-          查询是否有可热更新的包
-        </Button>
-        <Button
-          mode='contained'
-          onPress={testUpdatePackage}
-          loading={loading}
-          className='mb-2'
-        >
-          拉取更新并重载
-        </Button>
-        <Button
-          mode='contained'
-          loading={loading}
-          className='mb-2'
-        >
-          看我看我看我！！！！
-        </Button>
-      </View>
+        <View className='mb-4'>
+          <Button
+            mode='contained'
+            onPress={handleAddToQueue}
+            loading={loading}
+            className='mb-2'
+          >
+            添加测试曲目到队列
+          </Button>
+          <Button
+            mode='outlined'
+            onPress={handleClearQueue}
+            loading={loading}
+            className='mb-2'
+          >
+            清空队列
+          </Button>
+          <Button
+            mode='outlined'
+            onPress={() => router.push('/player')}
+            className='mb-2'
+          >
+            打开播放器
+          </Button>
+          <Button
+            mode='contained'
+            onPress={() => router.push('/playlist/favorite/111')}
+            loading={loading}
+            className='mb-2'
+          >
+            跳转到收藏夹
+          </Button>
+          <Button
+            mode='contained'
+            onPress={testResumeExpiredTrack}
+            loading={loading}
+            className='mb-2'
+          >
+            测试恢复过期曲目(该操作会破坏播放状态，测试后请重启应用)
+          </Button>
+          <Button
+            mode='contained'
+            onPress={testCheckUpdate}
+            loading={loading}
+            className='mb-2'
+          >
+            查询是否有可热更新的包
+          </Button>
+          <Button
+            mode='contained'
+            onPress={testUpdatePackage}
+            loading={loading}
+            className='mb-2'
+          >
+            拉取更新并重载
+          </Button>
+          <Button
+            mode='contained'
+            loading={loading}
+            className='mb-2'
+            onPress={showPlayerQueueModal}
+          >
+            打开模态框
+          </Button>
+          <Button
+            mode='contained'
+            loading={loading}
+            className='mb-2'
+            onPress={() => sheetRef.current?.close()}
+          >
+            关闭模态框
+          </Button>
+        </View>
 
-      <Text
-        variant='titleMedium'
-        className='mb-2'
-      >
-        测试曲目:
-      </Text>
-      {testTracks.map((track) => (
-        <Card
-          key={track.id}
+        <Text
+          variant='titleMedium'
           className='mb-2'
         >
-          <Card.Cover source={{ uri: track.cover }} />
-          <Card.Title
-            title={track.title}
-            subtitle={track.artist}
-          />
-          <Card.Actions>
-            <Button
-              onPress={() => handlePlayTrack(track)}
-              loading={loading}
-            >
-              播放
-            </Button>
-          </Card.Actions>
-        </Card>
-      ))}
+          测试曲目:
+        </Text>
+        {testTracks.map((track) => (
+          <Card
+            key={track.id}
+            className='mb-2'
+          >
+            <Card.Cover source={{ uri: track.cover }} />
+            <Card.Title
+              title={track.title}
+              subtitle={track.artist}
+            />
+            <Card.Actions>
+              <Button
+                onPress={() => handlePlayTrack(track)}
+                loading={loading}
+              >
+                播放
+              </Button>
+            </Card.Actions>
+          </Card>
+        ))}
 
-      <Text
-        variant='titleMedium'
-        className='mt-4 mb-2'
-      >
-        当前队列 ({queue.length}):
-      </Text>
-      {queue.map((track) => (
-        <Card
-          key={track.id}
-          className='mb-2'
+        <Text
+          variant='titleMedium'
+          className='mt-4 mb-2'
         >
-          <Card.Title
-            title={track.title}
-            subtitle={track.artist}
-          />
-          <Card.Actions>
-            <Button
-              onPress={() => handlePlayTrack(track)}
-              loading={loading}
-            >
-              播放
-            </Button>
-          </Card.Actions>
-        </Card>
-      ))}
-    </ScrollView>
+          当前队列 ({queue.length}):
+        </Text>
+        {queue.map((track) => (
+          <Card
+            key={track.id}
+            className='mb-2'
+          >
+            <Card.Title
+              title={track.title}
+              subtitle={track.artist}
+            />
+            <Card.Actions>
+              <Button
+                onPress={() => handlePlayTrack(track)}
+                loading={loading}
+              >
+                播放
+              </Button>
+            </Card.Actions>
+          </Card>
+        ))}
+      </ScrollView>
+      <PlayerQueueModal sheetRef={sheetRef} />
+    </>
   )
 }

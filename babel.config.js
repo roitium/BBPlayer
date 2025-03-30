@@ -10,5 +10,6 @@ module.exports = (api) => {
         plugins: ['react-native-paper/babel', 'transform-remove-console'],
       },
     },
+    plugins: ['react-native-reanimated/plugin'],
   }
 }

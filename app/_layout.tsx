@@ -34,6 +34,7 @@ import GlobalErrorFallback from '@/components/ErrorBoundary'
 import { setupPlayer } from '@/lib/services/setupPlayer'
 import { showToast } from '@/utils/toast'
 import * as Updates from 'expo-updates'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 const manifest = Updates.manifest
 const metadata = 'metadata' in manifest ? manifest.metadata : undefined
@@ -279,25 +280,27 @@ export default Sentry.wrap(function RootLayout() {
           />
         )}
       >
-        <QueryClientProvider client={queryClient}>
-          <PaperProvider theme={paperTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen
-                name='(tabs)'
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name='player/index'
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen name='+not-found' />
-            </Stack>
-            <StatusBar style='auto' />
-          </PaperProvider>
-          {developement && <DevToolsBubble onCopy={onCopy} />}
-        </QueryClientProvider>
-        <Toast />
+        <GestureHandlerRootView>
+          <QueryClientProvider client={queryClient}>
+            <PaperProvider theme={paperTheme}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen
+                  name='(tabs)'
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name='player/index'
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen name='+not-found' />
+              </Stack>
+            </PaperProvider>
+            {developement && <DevToolsBubble onCopy={onCopy} />}
+          </QueryClientProvider>
+          <Toast />
+        </GestureHandlerRootView>
       </Sentry.ErrorBoundary>
+      <StatusBar style='auto' />
     </View>
   )
 })

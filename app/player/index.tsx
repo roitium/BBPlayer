@@ -16,6 +16,7 @@ import {
   Surface,
   Menu,
   Divider,
+  Tooltip,
 } from 'react-native-paper'
 import {
   usePlayerStore,
@@ -29,6 +30,8 @@ import {
 } from 'react-native-safe-area-context'
 import { useShallow } from 'zustand/react/shallow'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import PlayerQueueModal from '@/components/PlayerQueueModal'
+import type BottomSheet from '@gorhom/bottom-sheet'
 
 function DragableProgressBar() {
   const seekTo = usePlayerStore((state) => state.seekTo)
@@ -189,6 +192,7 @@ export default function PlayerPage() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const { width: screenWidth } = Dimensions.get('window')
+  const sheetRef = useRef<BottomSheet>(null)
 
   // 从播放器store获取状态和方法
   const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
@@ -330,9 +334,9 @@ export default function PlayerPage() {
             <View className='flex-row items-center justify-between'>
               <View className='flex-1'>
                 <Text
-                  variant='headlineSmall'
+                  variant='titleLarge'
                   style={{ fontWeight: 'bold' }}
-                  numberOfLines={1}
+                  numberOfLines={4}
                 >
                   {currentTrack.title}
                 </Text>
@@ -355,18 +359,12 @@ export default function PlayerPage() {
         </View>
 
         {/* 下半部分：进度条和控制栏 */}
-        <View className='px-6 pb-10'>
+        <View className='px-6 pb-5'>
           {/* 进度条 */}
           <DragableProgressBar />
 
           {/* 播放控制 */}
-          <View className='mt-6 flex-row items-center justify-between'>
-            <IconButton
-              icon={shuffleMode ? 'shuffle-variant' : 'shuffle-disabled'}
-              size={24}
-              iconColor={shuffleMode ? colors.primary : colors.onSurfaceVariant}
-              onPress={usePlayerStore.getState().toggleShuffleMode}
-            />
+          <View className='mt-6 flex-row items-center justify-center gap-10'>
             <IconButton
               icon='skip-previous'
               size={32}
@@ -384,22 +382,44 @@ export default function PlayerPage() {
               size={32}
               onPress={usePlayerStore.getState().skipToNext}
             />
-            <IconButton
-              icon={
-                repeatMode === RepeatMode.Off
-                  ? 'repeat-off'
-                  : repeatMode === RepeatMode.Track
-                    ? 'repeat-once'
-                    : 'repeat'
-              }
-              size={24}
-              iconColor={
-                repeatMode !== RepeatMode.Off
-                  ? colors.primary
-                  : colors.onSurfaceVariant
-              }
-              onPress={usePlayerStore.getState().toggleRepeatMode}
-            />
+          </View>
+          {/* 控制按钮部分 */}
+          <View className='mt-3 flex-row items-center justify-center gap-8'>
+            <Tooltip title='切换随机播放模式'>
+              <IconButton
+                icon={shuffleMode ? 'shuffle-variant' : 'shuffle-disabled'}
+                size={24}
+                iconColor={
+                  shuffleMode ? colors.primary : colors.onSurfaceVariant
+                }
+                onPress={usePlayerStore.getState().toggleShuffleMode}
+              />
+            </Tooltip>
+            <Tooltip title='切换循环播放模式'>
+              <IconButton
+                icon={
+                  repeatMode === RepeatMode.Off
+                    ? 'repeat-off'
+                    : repeatMode === RepeatMode.Track
+                      ? 'repeat-once'
+                      : 'repeat'
+                }
+                size={24}
+                iconColor={
+                  repeatMode !== RepeatMode.Off
+                    ? colors.primary
+                    : colors.onSurfaceVariant
+                }
+                onPress={usePlayerStore.getState().toggleRepeatMode}
+              />
+            </Tooltip>
+            <Tooltip title='打开播放列表'>
+              <IconButton
+                icon='format-list-bulleted'
+                size={24}
+                onPress={() => sheetRef.current?.snapToPosition('75%')}
+              />
+            </Tooltip>
           </View>
         </View>
       </View>
@@ -413,6 +433,9 @@ export default function PlayerPage() {
         viewMode={viewMode}
         insets={insets}
       />
+
+      {/* 播放列表 */}
+      <PlayerQueueModal sheetRef={sheetRef} />
     </View>
   )
 }
