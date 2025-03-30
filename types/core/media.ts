@@ -26,5 +26,5 @@ export interface Playlist {
   cover?: string
   contents?: Track[]
   source: 'bilibili' | 'local'
-  biliType: 'multi_part' | 'favorite' | 'collection'
+  biliType?: 'multi_part' | 'favorite' | 'collection'
 }
