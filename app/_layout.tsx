@@ -32,6 +32,7 @@ import { isRunningInExpoGo } from 'expo'
 import { BilibiliApiError } from '@/utils/errors'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import { setupPlayer } from '@/lib/services/setupPlayer'
+import { showToast } from '@/utils/toast'
 
 const developement = process.env.NODE_ENV === 'development'
 
@@ -87,10 +88,10 @@ const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error, query) => {
-      Toast.show({
-        type: 'error',
-        text1: `请求 ${query.queryKey} 失败`,
-        text2: error.message,
+      showToast({
+        severity: 'error',
+        title: `请求 ${query.queryKey} 失败`,
+        message: error.message,
       })
 
       if (error instanceof BilibiliApiError) {
@@ -111,10 +112,10 @@ const queryClient = new QueryClient({
   }),
   mutationCache: new MutationCache({
     onError: (error, variables, context, mutation) => {
-      Toast.show({
-        type: 'error',
-        text1: `请求 mutation: ${mutation.mutationId} 失败`,
-        text2: error.message,
+      showToast({
+        severity: 'error',
+        title: `请求 mutation: ${mutation.mutationId} 失败`,
+        message: error.message,
       })
 
       console.log(error)

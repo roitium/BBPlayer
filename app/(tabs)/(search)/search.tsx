@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import Toast from 'react-native-toast-message'
+import { showToast } from '@/utils/toast'
 
 // 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
@@ -292,9 +292,9 @@ export default function SearchPage() {
             <Menu.Item
               leadingIcon='playlist-plus'
               onPress={() => {
-                Toast.show({
-                  type: 'success',
-                  text1: '开发中，敬请期待',
+                showToast({
+                  severity: 'info',
+                  title: '开发中，敬请期待',
                 })
               }}
               title='添加到收藏夹'

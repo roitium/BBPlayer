@@ -6,12 +6,53 @@ import { useState } from 'react'
 import type { Track } from '@/types/core/media'
 import TrackPlayer from 'react-native-track-player'
 import { convertToRNTPTrack } from '@/utils/player'
+import * as Updates from 'expo-updates'
+import { showToast } from '@/utils/toast'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const clearQueue = usePlayerStore((state) => state.clearQueue)
   const queue = usePlayerStore((state) => state.queue)
   const [loading, setLoading] = useState(false)
+  const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
+    Updates.useUpdates()
+
+  const testCheckUpdate = async () => {
+    const result = await Updates.checkForUpdateAsync()
+    showToast({
+      severity: 'success',
+      title: '检查更新结果',
+      message: `isAvailable: ${result.isAvailable}, whyNotAvailable: ${result.reason}, isRollbackToEmbedding: ${result.isRollBackToEmbedded}`,
+      length: 'long',
+    })
+  }
+
+  const testUpdatePackage = async () => {
+    if (isUpdatePending) {
+      await Updates.reloadAsync()
+      return
+    }
+    const result = await Updates.checkForUpdateAsync()
+    if (!result.isAvailable) {
+      showToast({
+        severity: 'error',
+        title: '没有可用的更新',
+        message: '当前已是最新版本',
+      })
+      return
+    }
+    const updateResult = await Updates.fetchUpdateAsync()
+    if (updateResult.isNew === true) {
+      showToast({
+        severity: 'info',
+        title: '有新版本可用',
+        message: '现在更新',
+      })
+      setTimeout(() => {
+        Updates.reloadAsync()
+      }, 1000)
+    }
+  }
 
   // 测试曲目
   const testTracks: Track[] = [
@@ -159,6 +200,22 @@ export default function TestPage() {
           className='mb-2'
         >
           测试恢复过期曲目(该操作会破坏播放状态，测试后请重启应用)
+        </Button>
+        <Button
+          mode='contained'
+          onPress={testCheckUpdate}
+          loading={loading}
+          className='mb-2'
+        >
+          查询是否有可热更新的包
+        </Button>
+        <Button
+          mode='contained'
+          onPress={testUpdatePackage}
+          loading={loading}
+          className='mb-2'
+        >
+          拉取更新并重载
         </Button>
       </View>
 
