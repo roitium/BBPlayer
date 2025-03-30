@@ -6,13 +6,15 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "production"
     }
   }
 }

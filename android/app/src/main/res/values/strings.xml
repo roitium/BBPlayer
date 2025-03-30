@@ -3,10 +3,8 @@
   <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
-  <!-- rtnp channel id -->
   <string name="rntp_temporary_channel_id">bilibili_player</string>
-  <!-- rtnp channel name -->
   <string name="rntp_temporary_channel_name">bilibili_player</string>
-  <!-- playback_channel_name used by KotlinAudio in rntp -->
   <string name="playback_channel_name">BBPlayer</string>
+  <string name="expo_runtime_version">1.0.0</string>
 </resources>

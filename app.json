@@ -10,7 +10,10 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.roitium.BBPlayer"
+      "bundleIdentifier": "com.roitium.BBPlayer",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +21,8 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.roitium.BBPlayer",
-      "versionCode": 22
+      "versionCode": 22,
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -62,6 +66,9 @@
         "projectId": "1cbd8d50-e322-4ead-98b6-4ee8b6f2a707"
       }
     },
-    "owner": "roitium"
+    "owner": "roitium",
+    "updates": {
+      "url": "https://u.expo.dev/1cbd8d50-e322-4ead-98b6-4ee8b6f2a707"
+    }
   }
 }
