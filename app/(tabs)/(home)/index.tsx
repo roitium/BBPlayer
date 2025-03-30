@@ -413,7 +413,7 @@ function RecentlyPlayedItem({
       key={item.id}
       className='mb-2'
       activeOpacity={0.7}
-      onPress={() => playNext(item)}
+      onPress={() => playSingleTrack(item)}
     >
       <Surface
         className='overflow-hidden rounded-lg'
