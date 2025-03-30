@@ -6,5 +6,5 @@
   <string name="rntp_temporary_channel_id">bilibili_player</string>
   <string name="rntp_temporary_channel_name">bilibili_player</string>
   <string name="playback_channel_name">BBPlayer</string>
-  <string name="expo_runtime_version">1.0.0</string>
+  <string name="expo_runtime_version">0.0.1</string>
 </resources>

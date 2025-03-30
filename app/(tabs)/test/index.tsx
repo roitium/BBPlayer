@@ -217,6 +217,13 @@ export default function TestPage() {
         >
           拉取更新并重载
         </Button>
+        <Button
+          mode='contained'
+          loading={loading}
+          className='mb-2'
+        >
+          看我看我看我！！！！
+        </Button>
       </View>
 
       <Text
