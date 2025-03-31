@@ -326,8 +326,11 @@ export default function PlayerPage() {
               >
                 <Image
                   source={{ uri: currentTrack.cover }}
-                  style={{ width: screenWidth - 80, height: screenWidth - 80 }}
-                  className='overflow-hidden rounded-2xl'
+                  style={{
+                    width: screenWidth - 80,
+                    height: screenWidth - 80,
+                    borderRadius: 16,
+                  }}
                 />
               </Surface>
             </TouchableOpacity>

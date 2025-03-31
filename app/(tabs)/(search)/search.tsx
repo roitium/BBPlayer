@@ -260,8 +260,7 @@ export default function SearchPage() {
         <View className='flex-row items-center p-2'>
           <Image
             source={{ uri: item.cover }}
-            className='rounded'
-            style={{ width: 48, height: 48 }}
+            style={{ width: 48, height: 48, borderRadius: 4 }}
           />
           <View className='ml-3 flex-1'>
             <Text variant='titleMedium'>{item.title}</Text>

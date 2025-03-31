@@ -6,7 +6,7 @@ import {
   useCallback,
   useState,
 } from 'react'
-import { View, FlatList, RefreshControl, Image as RNImage } from 'react-native'
+import { View, FlatList, RefreshControl } from 'react-native'
 import Image from '@d11/react-native-fast-image'
 import {
   Text,
@@ -141,14 +141,13 @@ export default function PlaylistPage() {
       {/* 顶部背景图 */}
       <View className='absolute h-full w-full'>
         {/* TODO: 如何在 react-native-fast-image 中实现模糊效果 */}
-        <RNImage
+        <Image
           source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
           style={{
             width: '100%',
             height: '100%',
             opacity: 0.15,
           }}
-          blurRadius={15}
         />
       </View>
 
@@ -282,8 +281,7 @@ const TrackItem = memo(function TrackItem({
           </Text>
           <Image
             source={{ uri: item.cover }}
-            className='rounded'
-            style={{ width: 48, height: 48 }}
+            style={{ width: 48, height: 48, borderRadius: 4 }}
           />
           <View className='ml-3 flex-1'>
             <Text variant='titleMedium'>{item.title}</Text>
