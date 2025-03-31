@@ -250,7 +250,11 @@ export default function PlayerPage() {
       }}
     >
       <Stack.Screen
-        options={{ animation: 'slide_from_bottom', headerShown: false }}
+        options={{
+          animation: 'slide_from_bottom',
+          headerShown: false,
+          animationDuration: 200,
+        }}
       />
 
       {/* 顶部导航栏 */}
