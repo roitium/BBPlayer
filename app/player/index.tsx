@@ -2,13 +2,13 @@ import { router, Stack } from 'expo-router'
 import { useState, useEffect, useRef } from 'react'
 import {
   View,
-  Image,
   TouchableOpacity,
   Dimensions,
   Animated,
   PanResponder,
   type LayoutChangeEvent,
 } from 'react-native'
+import Image from '@d11/react-native-fast-image'
 import {
   IconButton,
   Text,

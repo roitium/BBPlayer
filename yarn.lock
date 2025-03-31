@@ -1187,6 +1187,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@d11/react-native-fast-image@npm:^8.9.2":
+  version: 8.9.2
+  resolution: "@d11/react-native-fast-image@npm:8.9.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/c3c17ef85244ec0a034dc936fd7c8cd14140e0b143d3d52cbe5bc4e9f37f9d62223c7d1f4f7315f562de62e07e29e8c7ec1810f06a8f184a4cb7322105cb65c6
+  languageName: node
+  linkType: hard
+
 "@egjs/hammerjs@npm:^2.0.17":
   version: 2.0.17
   resolution: "@egjs/hammerjs@npm:2.0.17"
@@ -3751,6 +3761,7 @@ __metadata:
   resolution: "bbplayer@workspace:."
   dependencies:
     "@babel/core": "npm:^7.25.2"
+    "@d11/react-native-fast-image": "npm:^8.9.2"
     "@expo/vector-icons": "npm:^14.0.2"
     "@gorhom/bottom-sheet": "npm:^5"
     "@pchmn/expo-material3-theme": "npm:^1.3.2"

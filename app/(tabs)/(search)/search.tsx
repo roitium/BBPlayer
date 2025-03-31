@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, ScrollView, TouchableOpacity, Image, Alert } from 'react-native'
+import { View, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import Image from '@d11/react-native-fast-image'
 import {
   Searchbar,
   Text,

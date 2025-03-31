@@ -2,10 +2,10 @@ import NowPlayingBar from '@/components/NowPlayingBar'
 import {
   ScrollView,
   View,
-  Image,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native'
+import Image from '@d11/react-native-fast-image'
 import {
   Text,
   useTheme,
