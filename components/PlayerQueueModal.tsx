@@ -1,6 +1,6 @@
-import { useCallback, useMemo, type RefObject } from 'react'
+import { memo, useCallback, type RefObject } from 'react'
 import { View } from 'react-native'
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet' // Import BottomSheetFlatList
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import {
@@ -12,27 +12,18 @@ import {
 } from 'react-native-paper'
 import { showToast } from '@/utils/toast'
 
-function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
-  const queue = usePlayerStore((state) => state.queue)
-  const skipToTrack = usePlayerStore((state) => state.skipToTrack)
-  const snapPoints = useMemo(() => ['75%'], [])
-  const colors = useTheme()
-
-  const switchTrack = useCallback(
-    (track: Track) => {
-      const index = queue.indexOf(track)
-      if (index === -1) return
-      skipToTrack(index)
-    },
-    [skipToTrack, queue],
-  )
-
-  const TrackItem = useCallback(
-    ({ track }: { track: Track }) => (
-      <TouchableRipple
-        key={track.id}
-        onPress={() => switchTrack(track)}
-      >
+const TrackItem = memo(
+  ({
+    track,
+    onSwitchTrack,
+    onRemoveTrack,
+  }: {
+    track: Track
+    onSwitchTrack: (track: Track) => void
+    onRemoveTrack: (track: Track) => void
+  }) => {
+    return (
+      <TouchableRipple onPress={() => onSwitchTrack(track)}>
         <Surface
           className='overflow-hidden rounded-lg'
           elevation={0}
@@ -60,47 +51,75 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
             <IconButton
               icon='close-circle-outline'
               size={24}
-              onPress={() =>
-                showToast({
-                  message: '你就当删除成功',
-                  title: '正在开发',
-                  type: 'info',
-                })
-              }
+              onPress={() => onRemoveTrack(track)}
             />
           </View>
         </Surface>
       </TouchableRipple>
-    ),
-    [switchTrack],
+    )
+  },
+)
+
+function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
+  const queue = usePlayerStore((state) => state.queue)
+  const skipToTrack = usePlayerStore((state) => state.skipToTrack)
+  const theme = useTheme()
+
+  const switchTrackHandler = useCallback(
+    (track: Track) => {
+      const index = queue.findIndex((t) => t.id === track.id)
+      if (index === -1) return
+      skipToTrack(index)
+    },
+    [skipToTrack, queue],
   )
+
+  const removeTrackHandler = useCallback((track: Track) => {
+    // TODO: 实现删除逻辑
+    console.log('Attempting to remove track:', track.id)
+    showToast({
+      message: `你就当 ${track.title || track.id} 删除成功`,
+      title: '正在开发',
+      type: 'info',
+    })
+  }, [])
+
+  const keyExtractor = useCallback((item: Track) => item.id, [])
+
+  const renderItem = useCallback(
+    ({ item }: { item: Track }) => (
+      <TrackItem
+        track={item}
+        onSwitchTrack={switchTrackHandler}
+        onRemoveTrack={removeTrackHandler}
+      />
+    ),
+    [switchTrackHandler, removeTrackHandler],
+  )
+
   return (
     <BottomSheet
       ref={sheetRef}
       index={-1}
-      snapPoints={snapPoints}
       enableDynamicSizing={false}
       enablePanDownToClose={true}
+      snapPoints={['75%']}
       backgroundStyle={{
-        backgroundColor: colors.colors.elevation.level1,
+        backgroundColor: theme.colors.elevation.level1,
       }}
       handleStyle={{
         borderBottomWidth: 1,
-        borderBottomColor: colors.colors.elevation.level5,
+        borderBottomColor: theme.colors.elevation.level5,
       }}
     >
-      <BottomSheetScrollView
+      <BottomSheetFlatList
+        data={queue}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         contentContainerStyle={{
-          backgroundColor: colors.colors.elevation.level1,
+          backgroundColor: theme.colors.elevation.level1,
         }}
-      >
-        {queue.map((track) => (
-          <TrackItem
-            track={track}
-            key={track.id}
-          />
-        ))}
-      </BottomSheetScrollView>
+      />
     </BottomSheet>
   )
 }

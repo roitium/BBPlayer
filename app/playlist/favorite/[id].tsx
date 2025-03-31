@@ -1,5 +1,11 @@
 import { useLocalSearchParams, router } from 'expo-router'
-import { useState } from 'react'
+import {
+  type Dispatch,
+  memo,
+  type SetStateAction,
+  useCallback,
+  useState,
+} from 'react'
 import { View, Image, FlatList, RefreshControl } from 'react-native'
 import {
   Text,
@@ -32,31 +38,40 @@ export default function PlaylistPage() {
   const [refreshing, setRefreshing] = useState(false)
   const { mutate } = useBatchDeleteFavoriteListContents(bilibiliApi)
 
+  // @ts-ignore 故意定向到一个不存在的页面，触发 404
+  if (typeof id !== 'string') return router.replace('/not-found')
+
   // 下一首播放
-  const playNext = async (track: Track) => {
-    try {
-      await addToQueue([track], false, false, undefined, true)
-    } catch (error) {
-      console.error('添加到队列失败', error)
-    }
-  }
+  const playNext = useCallback(
+    async (track: Track) => {
+      try {
+        await addToQueue([track], false, false, undefined, true)
+      } catch (error) {
+        console.error('添加到队列失败', error)
+      }
+    },
+    [addToQueue],
+  )
 
   // 播放全部
-  const playAll = async (startFromId?: string) => {
-    try {
-      const allContentIds = await bilibiliApi.getFavoriteListAllContents(
-        Number(id),
-      )
-      const allTracks = allContentIds.map((c) => ({
-        id: c.bvid,
-        source: 'bilibili' as const,
-        hasMetadata: false,
-      }))
-      await addToQueue(allTracks, true, true, startFromId)
-    } catch (error) {
-      console.error('播放全部失败', error)
-    }
-  }
+  const playAll = useCallback(
+    async (startFromId?: string) => {
+      try {
+        const allContentIds = await bilibiliApi.getFavoriteListAllContents(
+          Number(id),
+        )
+        const allTracks = allContentIds.map((c) => ({
+          id: c.bvid,
+          source: 'bilibili' as const,
+          hasMetadata: false,
+        }))
+        await addToQueue(allTracks, true, true, startFromId)
+      } catch (error) {
+        console.error('播放全部失败', error)
+      }
+    },
+    [addToQueue, bilibiliApi.getFavoriteListAllContents, id],
+  )
 
   // 获取收藏夹数据
   const {
@@ -68,85 +83,25 @@ export default function PlaylistPage() {
     hasNextPage,
   } = useInfiniteFavoriteList(bilibiliApi, Number(id))
 
-  // 渲染歌曲项
-  const TrackItem = ({ item, index }: { item: Track; index: number }) => {
-    return (
-      <TouchableRipple
-        key={item.id}
-        style={{ paddingVertical: 5 }}
-        onPress={() => playAll(item.id)}
-      >
-        <Surface
-          className='overflow-hidden rounded-lg'
-          elevation={0}
-        >
-          <View className='flex-row items-center p-2'>
-            <Text
-              variant='titleMedium'
-              style={{
-                width: 40,
-                textAlign: 'center',
-              }}
-            >
-              {index + 1}
-            </Text>
-            <Image
-              source={{ uri: item.cover }}
-              className='rounded'
-              style={{ width: 48, height: 48 }}
-            />
-            <View className='ml-3 flex-1'>
-              <Text variant='titleMedium'>{item.title}</Text>
-              <View className='flex-row items-center'>
-                <Text variant='bodySmall'>{item.artist}</Text>
-                <Text
-                  className='mx-1'
-                  variant='bodySmall'
-                >
-                  •
-                </Text>
-                <Text variant='bodySmall'>
-                  {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
-                </Text>
-              </View>
-            </View>
-            <Menu
-              visible={menuVisible === item.id}
-              onDismiss={() => setMenuVisible(null)}
-              anchor={
-                <IconButton
-                  icon='dots-vertical'
-                  size={24}
-                  onPress={() => setMenuVisible(item.id)}
-                />
-              }
-              anchorPosition='bottom'
-            >
-              <Menu.Item
-                leadingIcon='play-circle-outline'
-                onPress={() => {
-                  playNext(item)
-                  setMenuVisible(null)
-                }}
-                title='下一首播放'
-              />
-              <Menu.Item
-                leadingIcon='playlist-remove'
-                onPress={async () => {
-                  mutate({ bvids: [item.id], favoriteId: Number(id) })
-                  setMenuVisible(null)
-                  setRefreshing(true)
-                  await refetch()
-                  setRefreshing(false)
-                }}
-                title='从收藏夹中删除'
-              />
-            </Menu>
-          </View>
-        </Surface>
-      </TouchableRipple>
-    )
-  }
+  const renderItem = useCallback(
+    ({ item, index }: { item: Track; index: number }) => {
+      return (
+        <TrackItem
+          item={item}
+          index={index}
+          playAll={playAll}
+          menuVisible={menuVisible}
+          setMenuVisible={setMenuVisible}
+          setRefreshing={setRefreshing}
+          refetch={refetch}
+          playNext={playNext}
+          mutate={mutate}
+          favoriteId={id}
+        />
+      )
+    },
+    [id, menuVisible, refetch, playAll, playNext, mutate],
+  )
 
   if (isFavoriteDataPending) {
     return (
@@ -245,12 +200,7 @@ export default function PlaylistPage() {
         </View>
         <FlatList
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
-          renderItem={({ item, index }) => (
-            <TrackItem
-              item={item}
-              index={index}
-            />
-          )}
+          renderItem={renderItem}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -283,3 +233,105 @@ export default function PlaylistPage() {
     </View>
   )
 }
+
+const TrackItem = memo(function TrackItem({
+  item,
+  index,
+  menuVisible,
+  setMenuVisible,
+  setRefreshing,
+  refetch,
+  playAll,
+  mutate,
+  playNext,
+  favoriteId,
+}: {
+  item: Track
+  index: number
+  playAll: (startFromId?: string) => Promise<void>
+  menuVisible: string | null
+  setMenuVisible: Dispatch<SetStateAction<string | null>>
+  setRefreshing: Dispatch<SetStateAction<boolean>>
+  refetch: ReturnType<typeof useInfiniteFavoriteList>['refetch']
+  playNext: (track: Track) => Promise<void>
+  mutate: ReturnType<typeof useBatchDeleteFavoriteListContents>['mutate']
+  favoriteId: string
+}) {
+  console.log(`refreshed conponent: ${item.id}`)
+  return (
+    <TouchableRipple
+      key={item.id}
+      style={{ paddingVertical: 5 }}
+      onPress={() => playAll(item.id)}
+    >
+      <Surface
+        className='overflow-hidden rounded-lg'
+        elevation={0}
+      >
+        <View className='flex-row items-center p-2'>
+          <Text
+            variant='titleMedium'
+            style={{
+              width: 40,
+              textAlign: 'center',
+            }}
+          >
+            {index + 1}
+          </Text>
+          <Image
+            source={{ uri: item.cover }}
+            className='rounded'
+            style={{ width: 48, height: 48 }}
+          />
+          <View className='ml-3 flex-1'>
+            <Text variant='titleMedium'>{item.title}</Text>
+            <View className='flex-row items-center'>
+              <Text variant='bodySmall'>{item.artist}</Text>
+              <Text
+                className='mx-1'
+                variant='bodySmall'
+              >
+                •
+              </Text>
+              <Text variant='bodySmall'>
+                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
+              </Text>
+            </View>
+          </View>
+          <Menu
+            visible={menuVisible === item.id}
+            onDismiss={() => setMenuVisible(null)}
+            anchor={
+              <IconButton
+                icon='dots-vertical'
+                size={24}
+                onPress={() => setMenuVisible(item.id)}
+              />
+            }
+            anchorPosition='bottom'
+          >
+            <Menu.Item
+              leadingIcon='play-circle-outline'
+              onPress={() => {
+                playNext(item)
+                setMenuVisible(null)
+              }}
+              title='下一首播放'
+            />
+            <Menu.Item
+              leadingIcon='playlist-remove'
+              onPress={async () => {
+                mutate({ bvids: [item.id], favoriteId: Number(favoriteId) })
+                setMenuVisible(null)
+                setRefreshing(true)
+                await refetch()
+                setRefreshing(false)
+              }}
+              title='从收藏夹中删除'
+            />
+          </Menu>
+        </View>
+      </Surface>
+    </TouchableRipple>
+  )
+})
