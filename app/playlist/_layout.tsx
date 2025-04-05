@@ -7,6 +7,10 @@ export default function PlaylistLayout() {
         name='favorite/[id]'
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name='collection/[id]'
+        options={{ headerShown: false }}
+      />
     </Stack>
   )
 }

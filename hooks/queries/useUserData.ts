@@ -12,7 +12,7 @@ export const usePersonalInformation = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: ['user', 'personalInformation'],
     queryFn: () => bilibiliApi.getUserInfo(),
-    staleTime: 20 * 60 * 1000, // 不需要刷新太频繁
+    staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
   })
 }
 

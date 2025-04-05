@@ -104,6 +104,8 @@ export default function PlaylistPage() {
     [id, menuVisible, refetch, playAll, playNext, mutate],
   )
 
+  const keyExtractor = useCallback((item: Track) => item.id, [])
+
   if (isFavoriteDataPending) {
     return (
       <View className='flex-1 items-center justify-center'>
@@ -215,7 +217,7 @@ export default function PlaylistPage() {
               progressViewOffset={50}
             />
           }
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           showsVerticalScrollIndicator={false}
           onEndReached={hasNextPage ? () => fetchNextPage() : null}
           ListFooterComponent={

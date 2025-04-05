@@ -159,6 +159,56 @@ type BilibiliFavoriteListAllContents = {
   type: number // 2：视频稿件 12：音频 21：视频合集
 }[]
 
+/**
+ * 追更合集/收藏夹列表中的单项数据
+ */
+interface BilibiliCollection {
+  id: number
+  title: string
+  cover: string
+  upper: {
+    mid: number
+    name: string
+    // face: string 恒为空
+  }
+  media_count: number
+  ctime: number // 创建时间
+  intro: string
+  attr: number // 在不转换成 8-bit 的情况下，可能会有值：22 关注的别人收藏夹 0 追更视频合集 1 已失效（应通过 state 来区分）
+  state: 0 | 1 // 0: 正常；1:收藏夹已失效
+}
+
+/**
+ * 追更合集/收藏夹内容
+ */
+type BilibiliCollectionContent = {
+  info: {
+    id: number
+    season_type: number // 未知
+    title: string
+    cover: string
+    media_count: number
+    intro: string
+    upper: {
+      name: string
+      mid: number
+    }
+  }
+  medias: {
+    id: number // avid
+    bvid: string
+    title: string
+    cover: string
+    intro: string
+    duration: number
+    pubtime: number
+    upper: {
+      mid: number
+      name: string
+    }
+  }
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -171,4 +221,6 @@ export type {
   BilibiliFavoriteListContent,
   BilibiliFavoriteListContents,
   BilibiliFavoriteListAllContents,
+  BilibiliCollection,
+  BilibiliCollectionContent,
 }

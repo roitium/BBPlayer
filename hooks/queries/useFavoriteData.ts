@@ -8,6 +8,8 @@ export const favoriteListQueryKeys = {
     [...favoriteListQueryKeys.all, 'infiniteFavoriteList', favoriteId] as const,
   allFavoriteList: () =>
     [...favoriteListQueryKeys.all, 'allFavoriteList'] as const,
+  infiniteCollectionList: (mid: number) =>
+    [...favoriteListQueryKeys.all, 'infiniteCollectionList', mid] as const,
 } as const
 
 /**
@@ -71,5 +73,23 @@ export const useBatchDeleteFavoriteListContents = (
       //   ), // 刷新收藏夹内容
       // })
     },
+  })
+}
+
+/**
+ * 获取追更合集列表（分页）
+ */
+export const useInfiniteCollectionsList = (
+  bilibiliApi: BilibiliApi,
+  mid: number,
+) => {
+  return useInfiniteQuery({
+    queryKey: favoriteListQueryKeys.infiniteCollectionList(mid),
+    queryFn: ({ pageParam }) => bilibiliApi.getCollectionsList(pageParam, mid),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages, lastPageParam) =>
+      lastPage.hasMore ? lastPageParam + 1 : undefined,
+    staleTime: 1,
+    enabled: !!mid,
   })
 }
