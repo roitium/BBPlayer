@@ -78,11 +78,13 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
 
   const switchTrackHandler = useCallback(
     (track: Track) => {
-      const index = queue.findIndex((t) => t.id === track.id)
+      const index = shuffleMode
+        ? shuffledQueue.findIndex((t) => t.id === track.id)
+        : queue.findIndex((t) => t.id === track.id)
       if (index === -1) return
       skipToTrack(index)
     },
-    [skipToTrack, queue],
+    [skipToTrack, queue, shuffledQueue, shuffleMode],
   )
 
   const removeTrackHandler = useCallback(
