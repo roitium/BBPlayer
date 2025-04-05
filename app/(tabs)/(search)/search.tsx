@@ -50,13 +50,27 @@ export default function SearchPage() {
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
 
   // 下一首播放
-  const playNext = async (track: Track) => {
-    try {
-      await addToQueue([track], false, false, undefined, true)
-    } catch (error) {
-      console.error('添加到队列失败', error)
-    }
-  }
+  const playNext = useCallback(
+    async (track: Track) => {
+      try {
+        await addToQueue([track], false, false, undefined, true)
+      } catch (error) {
+        console.error('添加到队列失败', error)
+      }
+    },
+    [addToQueue],
+  )
+
+  const playNow = useCallback(
+    async (track: Track) => {
+      try {
+        await addToQueue([track], true, false, undefined, false)
+      } catch (error) {
+        console.error('添加到队列失败', error)
+      }
+    },
+    [addToQueue],
+  )
 
   // 本地搜索历史状态
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
@@ -251,7 +265,7 @@ export default function SearchPage() {
     <TouchableRipple
       key={item.id}
       style={{ paddingVertical: 5 }}
-      onPress={() => playNext(item)}
+      onPress={() => playNow(item)}
     >
       <Surface
         className='overflow-hidden rounded-lg'
@@ -303,6 +317,7 @@ export default function SearchPage() {
               leadingIcon='play-circle-outline'
               onPress={() => {
                 playNext(item)
+                setMenuVisible(null)
               }}
               title='下一首播放'
             />

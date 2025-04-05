@@ -10,22 +10,29 @@ import {
   useTheme,
   IconButton,
 } from 'react-native-paper'
-import { showToast } from '@/utils/toast'
 
 const TrackItem = memo(
   ({
     track,
     onSwitchTrack,
     onRemoveTrack,
+    isCurrentTrack,
   }: {
     track: Track
     onSwitchTrack: (track: Track) => void
     onRemoveTrack: (track: Track) => void
+    isCurrentTrack: boolean
   }) => {
+    const colors = useTheme().colors
     return (
       <TouchableRipple onPress={() => onSwitchTrack(track)}>
         <Surface
           className='overflow-hidden rounded-lg'
+          style={{
+            backgroundColor: isCurrentTrack
+              ? colors.elevation.level5
+              : undefined,
+          }}
           elevation={0}
         >
           <View className='flex-row items-center justify-between p-2'>
@@ -61,7 +68,11 @@ const TrackItem = memo(
 )
 
 function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
+  const shuffleMode = usePlayerStore((state) => state.shuffleMode)
   const queue = usePlayerStore((state) => state.queue)
+  const removeTrack = usePlayerStore((state) => state.removeTrack)
+  const currentTrack = usePlayerStore((state) => state.currentTrack)
+  const shuffledQueue = usePlayerStore((state) => state.shuffledQueue)
   const skipToTrack = usePlayerStore((state) => state.skipToTrack)
   const theme = useTheme()
 
@@ -74,15 +85,12 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
     [skipToTrack, queue],
   )
 
-  const removeTrackHandler = useCallback((track: Track) => {
-    // TODO: 实现删除逻辑
-    console.log('Attempting to remove track:', track.id)
-    showToast({
-      message: `你就当 ${track.title || track.id} 删除成功`,
-      title: '正在开发',
-      type: 'info',
-    })
-  }, [])
+  const removeTrackHandler = useCallback(
+    async (track: Track) => {
+      await removeTrack(track.id)
+    },
+    [removeTrack],
+  )
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
 
@@ -92,9 +100,10 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
         track={item}
         onSwitchTrack={switchTrackHandler}
         onRemoveTrack={removeTrackHandler}
+        isCurrentTrack={item.id === currentTrack?.id}
       />
     ),
-    [switchTrackHandler, removeTrackHandler],
+    [switchTrackHandler, removeTrackHandler, currentTrack],
   )
 
   return (
@@ -113,7 +122,7 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
       }}
     >
       <BottomSheetFlatList
-        data={queue}
+        data={shuffleMode ? shuffledQueue : queue}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         contentContainerStyle={{

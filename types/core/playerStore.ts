@@ -33,6 +33,7 @@ interface PlayerActions {
   clearQueue: () => Promise<void>
   skipToTrack: (index: number) => Promise<void>
   rntpQueue: () => Promise<RNTPTracker[]>
+  removeTrack: (id: string) => Promise<void>
 
   // 播放控制
   togglePlay: () => Promise<void>

@@ -20,6 +20,7 @@ import {
 import useAppStore from './useAppStore'
 import { PRELOAD_TRACKS } from '@/constants/player'
 import Toast from 'react-native-toast-message'
+import { showToast } from '@/utils/toast'
 
 // 播放器逻辑对象
 const PlayerLogic = {
@@ -237,6 +238,73 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       logDetailedDebug('调用 rntpQueue()')
       const currentTrack = await TrackPlayer.getActiveTrack()
       return currentTrack ? [currentTrack] : []
+    },
+
+    removeTrack: async (id: string) => {
+      logDetailedDebug('调用 removeTrack()', { id })
+      const { queue, shuffledQueue, shuffleMode, currentTrack } = get()
+      const currentQueue = shuffleMode ? shuffledQueue : queue
+      if (currentTrack?.id === id) {
+        logDetailedDebug('当前正在播放的曲目被删除，判断是否是最后一首')
+        if (currentQueue.length === 1) {
+          logDetailedDebug('队列只有一首歌曲，清空队列并停止播放')
+          set(
+            produce((state: PlayerState) => {
+              state.queue = []
+              state.currentIndex = -1
+              state.currentTrack = null
+              state.isPlaying = false
+              state.shuffledQueue = []
+            }),
+          )
+          await TrackPlayer.stop()
+          await TrackPlayer.remove([0])
+          return
+        }
+        const lastTrack = currentQueue.at(-1)
+        if (lastTrack) {
+          if (lastTrack.id === id) {
+            logDetailedDebug('是最后一首，则跳转到上一首')
+            await get().skipToPrevious()
+          } else {
+            logDetailedDebug('不是最后一首，则跳转到下一首')
+            await get().skipToNext()
+          }
+        }
+      }
+      const queueIndex = queue.findIndex((t) => t.id === id)
+      if (queueIndex === -1) {
+        logDetailedDebug(
+          '在队列中找不到该曲目，无法删除，已上报日志并重置播放器',
+        )
+        showToast({
+          message: '在播放列表中找不到该曲目，已重置播放器',
+          title: '播放器异常',
+          type: 'error',
+        })
+        await get().clearQueue()
+        return
+      }
+      const shuffledQueueIndex = shuffledQueue.findIndex((t) => t.id === id)
+      // 当没有开启过随机模式时，shuffledQueue 为空，所以在判断 shuffledQueueIndex 时还需要判断列表不为空
+      if (shuffledQueueIndex === -1 && shuffledQueue.length > 0) {
+        logDetailedDebug(
+          '在随机队列中找不到该曲目，无法删除，已上报日志并重置播放器',
+        )
+        showToast({
+          message: '在播放列表中找不到该曲目，已重置播放器',
+          title: '播放器异常',
+          type: 'error',
+        })
+        await get().clearQueue()
+        return
+      }
+      set(
+        produce((state: PlayerState) => {
+          state.queue.splice(queueIndex, 1)
+          state.shuffledQueue.splice(shuffledQueueIndex, 1)
+        }),
+      )
     },
 
     /**
@@ -476,11 +544,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         if (repeatMode === RepeatMode.Queue) {
           // 列表循环
           nextIndex = (currentIndex + 1) % currentQueue.length
-        } else if (shuffleMode) {
-          // 随机模式
-          do {
-            nextIndex = Math.floor(Math.random() * currentQueue.length)
-          } while (nextIndex === currentIndex && currentQueue.length > 1)
         } else {
           // 顺序播放 & 关闭循环
           nextIndex = currentIndex + 1
