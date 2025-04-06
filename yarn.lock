@@ -3334,7 +3334,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.9.0":
+"ajv@npm:^8.0.0, ajv@npm:^8.11.0, ajv@npm:^8.9.0":
   version: 8.17.1
   resolution: "ajv@npm:8.17.1"
   dependencies:
@@ -3778,6 +3778,7 @@ __metadata:
     babel-plugin-transform-remove-console: "npm:^6.9.4"
     expo: "npm:~52.0.41"
     expo-blur: "npm:~14.0.3"
+    expo-build-properties: "npm:~0.13.2"
     expo-clipboard: "npm:~7.0.1"
     expo-constants: "npm:~17.0.8"
     expo-dev-client: "npm:~5.0.15"
@@ -5412,6 +5413,18 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/fa511f6a2cf893a6b9fe2baac121e34655f5f10d7fb9fbcee1482acd9c30436bdfcb8ad0587bff65bef5cf7b7dfaf740e4c771cdd0d956e92df0ddf39173631e
+  languageName: node
+  linkType: hard
+
+"expo-build-properties@npm:~0.13.2":
+  version: 0.13.2
+  resolution: "expo-build-properties@npm:0.13.2"
+  dependencies:
+    ajv: "npm:^8.11.0"
+    semver: "npm:^7.6.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/7df50514dda73dde8ca141047c850f7a1d2b42dd3d6822b5ae284c0854a592b23fece95b758b8acc40b4e5a50a7652e72f2dba0810f21284770d472d0ea692fb
   languageName: node
   linkType: hard
 

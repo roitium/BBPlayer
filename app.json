@@ -53,6 +53,14 @@
           "project": "bbplayer",
           "organization": "roitium"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ],
     "experiments": {
