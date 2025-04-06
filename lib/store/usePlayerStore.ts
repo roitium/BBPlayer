@@ -59,6 +59,7 @@ const PlayerLogic = {
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
         },
+        icon: require('../../assets/images/icon.png'),
       })
       logDetailedDebug('播放器能力设置完成')
       // 设置重复模式为 Off
