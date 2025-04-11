@@ -34,4 +34,4 @@ jobs:
         run: eas update --auto --non-interactive
 
       - name: 🚀 Submit source map
-        run: npx sentry-expo-upload-sourcemaps dist
+        run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} npx sentry-expo-upload-sourcemaps dist
