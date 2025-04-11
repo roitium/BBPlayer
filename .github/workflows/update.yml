@@ -1,10 +1,5 @@
 on:
-  workflow_dispatch:
-    inputs:
-      description:
-        description: 'Update description'
-        required: true
-        default: 'Update'
+  workflow_dispatch
 jobs:
   update:
     runs-on: ubuntu-latest
