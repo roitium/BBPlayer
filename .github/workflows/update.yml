@@ -31,7 +31,7 @@ jobs:
         run: yarn install --immutable
 
       - name: 🚀 Create update
-        run: eas update --channel production --non-interactive
+        run: eas update --auto --non-interactive
 
       - name: 🚀 Submit source map
         run: npx sentry-expo-upload-sourcemaps dist
