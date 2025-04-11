@@ -1,0 +1,34 @@
+on:
+  workflow_dispatch:
+    inputs:
+      description:
+        description: 'Update description'
+        required: true
+        default: 'Update'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🚀 Create update
+        run: eas update --channel production --non-interactive
+
+      - name: 🚀 Submit source map
+        run: npx sentry-expo-upload-sourcemaps dist
