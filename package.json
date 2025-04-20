@@ -50,6 +50,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.7",
+    "react-native-file-viewer": "^2.1.5",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-logs": "^5.3.0",
     "react-native-mmkv": "2.12.2",

@@ -24,6 +24,7 @@ const config = {
     errorLevels: 'sentry',
     FS: EXPOFS,
     fileName: 'logs_{date-today}', // Create a new file every day
+    fileNameDateType: 'iso',
     mapLevels: {
       debug: 'log',
       info: 'info',

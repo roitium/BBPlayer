@@ -3,13 +3,12 @@ import { Text, Button, Card } from 'react-native-paper'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { router } from 'expo-router'
 import { useRef, useState } from 'react'
-import type { Track } from '@/types/core/media'
-import TrackPlayer from 'react-native-track-player'
-import { convertToRNTPTrack } from '@/utils/player'
 import * as Updates from 'expo-updates'
 import { showToast } from '@/utils/toast'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import PlayerQueueModal from '@/components/PlayerQueueModal'
+import * as EXPOFS from 'expo-file-system'
+import FileViewer from 'react-native-file-viewer'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -61,90 +60,27 @@ export default function TestPage() {
     }
   }
 
-  // 测试曲目
-  const testTracks: Track[] = [
-    {
-      id: 'BV1m34y1M7pG',
-      title: '测试过期曲目',
-      artist: '测试过期曲目',
-      cover:
-        'https://i2.hdslb.com/bfs/archive/67101d909983ae1a5de3637c01ab8c1b4ec3e6e5.jpg',
-      source: 'bilibili',
-      duration: 199,
-      createTime: Date.now(),
-      biliStreamUrl: {
-        url: 'https://cn-sxty-cu-03-07.bilivideo.com/upgcxcode/82/16/26430541682/26430541682-1-30216.m4s',
-        quality: 30216,
-        getTime: 1743150959908,
-        type: 'dash',
-      },
-      hasMetadata: true,
-    },
-    {
-      id: 'BV1F24y1y7By',
-      title: '林俊杰 - 江南',
-      artist: '林俊杰',
-      cover:
-        'https://i0.hdslb.com/bfs/archive/a5fb7753912b10c8e2464cc6c8f3741a2c35ff0a.jpg',
-      source: 'bilibili',
-      duration: 256,
-      createTime: Date.now(),
-      hasMetadata: true,
-    },
-  ]
-
-  const testResumeExpiredTrack = async () => {
-    const track = {
-      id: 'BV1m34y1M7pG',
-      title: '测试过期曲目',
-      artist: '测试过期曲目',
-      cover:
-        'https://i2.hdslb.com/bfs/archive/67101d909983ae1a5de3637c01ab8c1b4ec3e6e5.jpg',
-      source: 'bilibili' as const,
-      duration: 199,
-      createTime: Date.now(),
-      biliStreamUrl: {
-        url: 'https://cn-sxty-cu-03-07.bilivideo.com/upgcxcode/82/16/26430541682/26430541682-1-30216.m4s',
-        quality: 30216,
-        getTime: 1743150959908,
-        type: 'dash' as const,
-      },
-      hasMetadata: true,
-    }
-
-    await TrackPlayer.stop()
-    await usePlayerStore.setState({
-      currentTrack: track,
-      currentIndex: 0,
-      isPlaying: false,
-    })
-    await TrackPlayer.load(convertToRNTPTrack(track))
-    // await usePlayerStore.getState().togglePlay()
-  }
-
-  // 播放测试曲目
-  const handlePlayTrack = async (track: Track) => {
-    try {
-      setLoading(true)
-      await addToQueue([track])
-      router.push('/player')
-    } catch (error) {
-      console.error('播放失败:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // 添加到队列
-  const handleAddToQueue = async () => {
-    try {
-      setLoading(true)
-      await addToQueue(testTracks)
-    } catch (error) {
-      console.error('添加到队列失败:', error)
-    } finally {
-      setLoading(false)
-    }
+  const openLogFile = async () => {
+    let date = new Date()
+    const offset = date.getTimezoneOffset()
+    date = new Date(date.getTime() - offset * 60 * 1000)
+    const logFilePath = `${EXPOFS.documentDirectory}logs_${date.toISOString().split('T')[0]}.log`
+    FileViewer.open(logFilePath)
+      .then(() => {
+        console.log('open file')
+        showToast({
+          severity: 'info',
+          title: '打开文件成功',
+        })
+      })
+      .catch((err) => {
+        console.log('open file error', err)
+        showToast({
+          severity: 'error',
+          title: '打开文件失败',
+          message: err,
+        })
+      })
   }
 
   // 清空队列
@@ -161,23 +97,11 @@ export default function TestPage() {
 
   return (
     <>
-      <ScrollView className='flex-1 p-4'>
-        <Text
-          variant='headlineMedium'
-          className='mb-4'
-        >
-          音频播放测试
-        </Text>
-
+      <ScrollView
+        className='flex-1 p-4 '
+        contentContainerStyle={{ paddingBottom: 80 }}
+      >
         <View className='mb-4'>
-          <Button
-            mode='contained'
-            onPress={handleAddToQueue}
-            loading={loading}
-            className='mb-2'
-          >
-            添加测试曲目到队列
-          </Button>
           <Button
             mode='outlined'
             onPress={handleClearQueue}
@@ -192,22 +116,6 @@ export default function TestPage() {
             className='mb-2'
           >
             打开播放器
-          </Button>
-          <Button
-            mode='contained'
-            onPress={() => router.push('/playlist/favorite/111')}
-            loading={loading}
-            className='mb-2'
-          >
-            跳转到收藏夹
-          </Button>
-          <Button
-            mode='contained'
-            onPress={testResumeExpiredTrack}
-            loading={loading}
-            className='mb-2'
-          >
-            测试恢复过期曲目(该操作会破坏播放状态，测试后请重启应用)
           </Button>
           <Button
             mode='contained'
@@ -241,34 +149,15 @@ export default function TestPage() {
           >
             关闭模态框
           </Button>
-        </View>
-
-        <Text
-          variant='titleMedium'
-          className='mb-2'
-        >
-          测试曲目:
-        </Text>
-        {testTracks.map((track) => (
-          <Card
-            key={track.id}
+          <Button
+            mode='contained'
+            loading={loading}
             className='mb-2'
+            onPress={openLogFile}
           >
-            <Card.Cover source={{ uri: track.cover }} />
-            <Card.Title
-              title={track.title}
-              subtitle={track.artist}
-            />
-            <Card.Actions>
-              <Button
-                onPress={() => handlePlayTrack(track)}
-                loading={loading}
-              >
-                播放
-              </Button>
-            </Card.Actions>
-          </Card>
-        ))}
+            运行日志
+          </Button>
+        </View>
 
         <Text
           variant='titleMedium'
@@ -285,14 +174,6 @@ export default function TestPage() {
               title={track.title}
               subtitle={track.artist}
             />
-            <Card.Actions>
-              <Button
-                onPress={() => handlePlayTrack(track)}
-                loading={loading}
-              >
-                播放
-              </Button>
-            </Card.Actions>
           </Card>
         ))}
       </ScrollView>

@@ -3799,6 +3799,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-native: "npm:0.76.7"
+    react-native-file-viewer: "npm:^2.1.5"
     react-native-gesture-handler: "npm:~2.20.2"
     react-native-logs: "npm:^5.3.0"
     react-native-mmkv: "npm:2.12.2"
@@ -9773,6 +9774,15 @@ __metadata:
     react-native-svg:
       optional: true
   checksum: 10c0/d6052499b8615b58e02ee43b7d2906fd2b5ef90410c26af94dd11d6d93ed116ab0c96f7228573734030f1d41b4e8e2878a63b2223eb86c797730df207ed0c2f0
+  languageName: node
+  linkType: hard
+
+"react-native-file-viewer@npm:^2.1.5":
+  version: 2.1.5
+  resolution: "react-native-file-viewer@npm:2.1.5"
+  peerDependencies:
+    react-native: ">=0.47"
+  checksum: 10c0/92bb7245c4c6dd82253d4eb2cbcca5cb4a1a0bcbd5a29d2d7171b2b0290dc6690b9df759b590fd7b5f1f2e64b5bbf35db6165aa4d5aaab8e8ff2f75b4a35b448
   languageName: node
   linkType: hard
 
