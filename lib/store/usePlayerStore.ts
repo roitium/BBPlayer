@@ -29,13 +29,23 @@ const PlayerLogic = {
     logDetailedDebug('开始初始化播放器')
     try {
       logDetailedDebug('设置播放器配置')
-      await TrackPlayer.setupPlayer({
-        minBuffer: 15,
-        maxBuffer: 50,
-        backBuffer: 30,
-        waitForBuffer: true,
-        autoHandleInterruptions: true,
-      })
+      const setup = async () => {
+        try {
+          await TrackPlayer.setupPlayer({
+            minBuffer: 15,
+            maxBuffer: 50,
+            backBuffer: 30,
+            waitForBuffer: true,
+            autoHandleInterruptions: true,
+          })
+        } catch (e) {
+          return (e as Error & { code?: string }).code
+        }
+      }
+      // 避免在后台初始化播放器失败（虽然这是小概率事件）
+      while ((await setup()) === 'android_cannot_setup_player_in_background') {
+        await new Promise<void>((resolve) => setTimeout(resolve, 1))
+      }
       logDetailedDebug('播放器配置设置完成')
 
       // 设置播放器能力（怕自己忘了记一下：如果想修改这些能力对应的函数调用，要去 /lib/services/playbackService 里改）
