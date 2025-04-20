@@ -20,6 +20,12 @@ export const favoriteListQueryKeys = {
     [...favoriteListQueryKeys.all, 'allFavoriteList'] as const,
   infiniteCollectionList: (mid: number) =>
     [...favoriteListQueryKeys.all, 'infiniteCollectionList', mid] as const,
+  collectionAllContents: (collectionId: number) =>
+    [
+      ...favoriteListQueryKeys.all,
+      'collectionAllContents',
+      collectionId,
+    ] as const,
 } as const
 
 /**
@@ -123,5 +129,20 @@ export const useInfiniteCollectionsList = (
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
     enabled: !!mid, // 依赖 mid
+  })
+}
+
+/**
+ * 获取合集详细信息和完整内容
+ */
+export const useCollectionAllContents = (
+  bilibiliApi: BilibiliApi,
+  collectionId: number,
+) => {
+  return useQuery({
+    queryKey: favoriteListQueryKeys.collectionAllContents(collectionId),
+    queryFn: () =>
+      throwResultAsync(bilibiliApi.getCollectionAllContents(collectionId)),
+    staleTime: 1,
   })
 }

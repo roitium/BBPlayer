@@ -33,7 +33,7 @@ import log from '@/utils/log'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
-export default function PlaylistPage() {
+export default function FavoritePage() {
   const { id } = useLocalSearchParams()
   const { colors } = useTheme()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
@@ -171,53 +171,15 @@ export default function PlaylistPage() {
         className='flex-1'
         style={{ paddingBottom: currentTrack ? 80 : 0 }}
       >
-        {/* 顶部收藏夹信息 */}
-        <View className='relative flex flex-col'>
-          {/* 收藏夹信息 */}
-          <View className='flex flex-row p-4'>
-            <Image
-              source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
-              style={{ width: 120, height: 120, borderRadius: 8 }}
-            />
-            <View className='ml-4 flex-1 justify-center'>
-              <Text
-                variant='titleLarge'
-                style={{ fontWeight: 'bold' }}
-                numberOfLines={2}
-              >
-                {favoriteData?.pages[0].favoriteMeta.title}
-              </Text>
-              <Text
-                variant='bodyMedium'
-                numberOfLines={1}
-              >
-                {favoriteData?.pages[0].favoriteMeta.upper.name} •{' '}
-                {favoriteData?.pages[0].favoriteMeta.media_count} 首歌曲
-              </Text>
-            </View>
-          </View>
-
-          {/* 描述和操作按钮 */}
-          <View className='flex flex-row items-center justify-between p-4'>
-            <Text
-              variant='bodyMedium'
-              numberOfLines={2}
-            >
-              {favoriteData?.pages[0].favoriteMeta.intro || '还没有简介哦~'}
-            </Text>
-
-            <IconButton
-              mode='contained'
-              icon='play'
-              onPress={() => playAll()}
-            />
-          </View>
-
-          <Divider />
-        </View>
         <FlatList
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
           renderItem={renderItem}
+          ListHeaderComponent={
+            <Header
+              favoriteData={favoriteData}
+              playAll={playAll}
+            />
+          }
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -250,6 +212,61 @@ export default function PlaylistPage() {
     </View>
   )
 }
+
+const Header = memo(function Header({
+  favoriteData,
+  playAll,
+}: {
+  favoriteData: ReturnType<typeof useInfiniteFavoriteList>['data']
+  playAll: () => Promise<void>
+}) {
+  if (!favoriteData) return null
+  return (
+    <View className='relative flex flex-col'>
+      {/* 收藏夹信息 */}
+      <View className='flex flex-row p-4'>
+        <Image
+          source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
+          style={{ width: 120, height: 120, borderRadius: 8 }}
+        />
+        <View className='ml-4 flex-1 justify-center'>
+          <Text
+            variant='titleLarge'
+            style={{ fontWeight: 'bold' }}
+            numberOfLines={2}
+          >
+            {favoriteData?.pages[0].favoriteMeta.title}
+          </Text>
+          <Text
+            variant='bodyMedium'
+            numberOfLines={1}
+          >
+            {favoriteData?.pages[0].favoriteMeta.upper.name} •{' '}
+            {favoriteData?.pages[0].favoriteMeta.media_count} 首歌曲
+          </Text>
+        </View>
+      </View>
+
+      {/* 描述和操作按钮 */}
+      <View className='flex flex-row items-center justify-between p-4'>
+        <Text
+          variant='bodyMedium'
+          style={{ maxWidth: 300 }}
+        >
+          {favoriteData?.pages[0].favoriteMeta.intro || '还没有简介哦~'}
+        </Text>
+
+        <IconButton
+          mode='contained'
+          icon='play'
+          onPress={() => playAll()}
+        />
+      </View>
+
+      <Divider />
+    </View>
+  )
+})
 
 const TrackItem = memo(function TrackItem({
   item,

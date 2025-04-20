@@ -209,6 +209,57 @@ type BilibiliCollectionContent = {
   }
 }
 
+/**
+ * 合集详情信息
+ */
+interface BilibiliCollectionInfo {
+  id: number
+  season_type: number // wtf
+  title: string
+  cover: string
+  upper: {
+    mid: number
+    name: string
+  }
+  cnt_info: {
+    collect: number
+    play: number
+    danmaku: number
+  }
+  media_count: number
+  intro: string
+}
+
+/**
+ * 合集内单个内容
+ */
+interface BilibiliMediaItem {
+  id: number
+  title: string
+  cover: string
+  duration: number
+  pubtime: number
+  bvid: string
+  upper: {
+    mid: number
+    name: string
+  }
+  cnt_info: {
+    collect: number
+    play: number
+    danmaku: number
+  }
+}
+
+/**
+ * /x/space/fav/season/list
+ * 合集内容
+ */
+interface BilibiliCollectionAllContents {
+  info: BilibiliCollectionInfo
+  medias: BilibiliMediaItem[]
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -223,4 +274,7 @@ export type {
   BilibiliFavoriteListAllContents,
   BilibiliCollection,
   BilibiliCollectionContent,
+  BilibiliCollectionAllContents,
+  BilibiliCollectionInfo,
+  BilibiliMediaItem,
 }

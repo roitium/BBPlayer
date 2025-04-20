@@ -128,7 +128,7 @@ const queryClient = new QueryClient({
 
       // 这两个错误属于三方依赖的错误，不应该报告到 Sentry
       if (error instanceof BilibiliApiError || error instanceof CsrfError) {
-        if (!developement) return
+        return
       }
 
       Sentry.captureException(error, {
@@ -155,7 +155,7 @@ const queryClient = new QueryClient({
       rootLog.error(`请求 mutation: ${mutation.mutationId} 失败`, error)
 
       if (error instanceof BilibiliApiError || error instanceof CsrfError) {
-        if (!developement) return
+        return
       }
 
       Sentry.captureException(error, {

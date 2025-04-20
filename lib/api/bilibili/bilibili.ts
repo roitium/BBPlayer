@@ -13,6 +13,9 @@ import type {
   BilibiliFavoriteListContent,
   BilibiliFavoriteListAllContents,
   BilibiliCollection,
+  BilibiliCollectionAllContents,
+  BilibiliMediaItem,
+  BilibiliCollectionInfo,
 } from '@/types/apis/bilibili'
 import type { Track, Playlist } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/times'
@@ -163,6 +166,27 @@ const transformFavoriteContentsToTracks = (
     )
   } catch (error) {
     bilibiliApiLog.error('Error transforming favorite contents:', error)
+    return []
+  }
+}
+
+const transformCollectionAllContentsToTracks = (
+  contents: BilibiliMediaItem[],
+): Track[] => {
+  if (!contents) return []
+  try {
+    return contents.map((content) => ({
+      id: content.bvid,
+      title: content.title,
+      artist: content.upper.name,
+      cover: content.cover,
+      source: 'bilibili' as const,
+      duration: content.duration,
+      createTime: content.pubtime,
+      hasMetadata: true,
+    }))
+  } catch (error) {
+    bilibiliApiLog.error('Error transforming collection contents:', error)
     return []
   }
 }
@@ -516,6 +540,33 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         count: response.count,
         hasMore: response.has_more,
       }))
+  },
+
+  /**
+   * 获取合集详细信息和完整内容
+   */
+  getCollectionAllContents(
+    collectionId: number,
+  ): ResultAsync<
+    { info: BilibiliCollectionInfo; medias: Track[] },
+    BilibiliApiError
+  > {
+    return apiClient
+      .get<BilibiliCollectionAllContents>(
+        '/x/space/fav/season/list',
+        {
+          season_id: collectionId.toString(),
+          ps: '20',
+          pn: '1',
+        },
+        getCookie(),
+      )
+      .map((response) => {
+        return {
+          info: response.info,
+          medias: transformCollectionAllContentsToTracks(response.medias),
+        }
+      })
   },
 })
 
