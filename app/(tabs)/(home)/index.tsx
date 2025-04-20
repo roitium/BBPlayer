@@ -1,9 +1,12 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
 import {
-  ScrollView,
+  // ScrollView, // Removed ScrollView
   View,
   TouchableOpacity,
-  RefreshControl,
+  // RefreshControl, // Removed RefreshControl
+  FlatList,
+  ScrollView,
+  RefreshControl, // Keep FlatList
 } from 'react-native'
 import Image from '@d11/react-native-fast-image'
 import {
@@ -20,7 +23,7 @@ import {
   ActivityIndicator,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import type { Track, Playlist } from '@/types/core/media'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import useAppStore from '@/lib/store/useAppStore'
@@ -46,13 +49,11 @@ const mockCategories = [
 function HomePage() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
-  const [refreshing, setRefreshing] = useState(false)
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
   const bilibiliCookie = useAppStore((state) => state.bilibiliCookie)
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [cookie, setCookie] = useState(bilibiliCookie)
-  const [slicedRecentlyPlayed, setSlicedRecentlyPlayed] = useState<Track[]>([])
 
   const {
     data: personalInfo,
@@ -71,35 +72,17 @@ function HomePage() {
     data: playlists,
     isPending: playlistsPending,
     isError: playlistsError,
-    refetch: playlistsRefetch,
   } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
-  useEffect(() => {
-    if (!recentlyPlayedPending && !recentlyPlayedError && recentlyPlayed) {
-      setSlicedRecentlyPlayed(recentlyPlayed.slice(0, 10))
-    }
-  }, [recentlyPlayed, recentlyPlayedPending, recentlyPlayedError])
-
-  const onRefresh = async () => {
-    setRefreshing(true)
-    await Promise.all([recentlyPlayedRefetch(), playlistsRefetch()])
-    setRefreshing(false)
-  }
+  // Removed onRefresh handler
 
   const getGreetingMsg = () => {
     const hour = new Date().getHours()
-    switch (true) {
-      case hour >= 0 && hour < 6:
-        return '凌晨好'
-      case hour >= 6 && hour < 12:
-        return '早上好'
-      case hour >= 12 && hour < 18:
-        return '下午好'
-      case hour >= 18 && hour < 24:
-        return '晚上好'
-      default:
-        return '你不好'
-    }
+    if (hour >= 0 && hour < 6) return '凌晨好'
+    if (hour >= 6 && hour < 12) return '早上好'
+    if (hour >= 12 && hour < 18) return '下午好'
+    if (hour >= 18 && hour < 24) return '晚上好'
+    return '你好'
   }
 
   return (
@@ -107,18 +90,8 @@ function HomePage() {
       className='flex-1'
       style={{ backgroundColor: colors.background }}
     >
-      <ScrollView
-        className='flex-1'
-        contentContainerStyle={{ paddingBottom: 80 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-          />
-        }
-      >
-        {/* 顶部欢迎区域 */}
+      <View className='flex-1 pb-[80px]'>
+        {/*顶部欢迎区域*/}
         <View
           className='px-4 pt-2 pb-4'
           style={{ paddingTop: insets.top + 8 }}
@@ -136,23 +109,19 @@ function HomePage() {
                 style={{ color: colors.onSurfaceVariant }}
               >
                 {getGreetingMsg()}，
-                {personalInfoPending || personalInfoError
+                {personalInfoPending || personalInfoError || !personalInfo
                   ? '陌生人'
                   : personalInfo.name}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => {
-                setSetCookieDialogVisible(true)
-              }}
-            >
+            <TouchableOpacity onPress={() => setSetCookieDialogVisible(true)}>
               <Avatar.Image
                 size={40}
                 source={
-                  !personalInfoPending && !personalInfoError
-                    ? {
-                        uri: personalInfo.face,
-                      }
+                  !personalInfoPending &&
+                  !personalInfoError &&
+                  personalInfo?.face
+                    ? { uri: personalInfo.face }
                     : require('@/assets/images/bilibili-default-avatar.jpg')
                 }
               />
@@ -160,7 +129,6 @@ function HomePage() {
           </View>
         </View>
 
-        {/* 分类选择区 */}
         <View className='mb-4 px-4'>
           <ScrollView
             horizontal
@@ -171,7 +139,9 @@ function HomePage() {
               <Chip
                 key={category.id}
                 icon={category.icon}
-                onPress={() => {}}
+                onPress={() => {
+                  homeLog.info(`Category pressed: ${category.name}`)
+                }}
                 style={{ marginRight: 8 }}
                 mode='outlined'
               >
@@ -180,27 +150,26 @@ function HomePage() {
             ))}
           </ScrollView>
         </View>
-
-        {/* 收藏夹 */}
         <View className='mb-6'>
           <FavoriteList
             data={playlists}
             isPending={playlistsPending}
+            isError={playlistsError}
           />
         </View>
-
-        {/* 最近播放 */}
+        {/* Recently Played (Uses FlatList) */}
         <View className='mb-6 px-4'>
           <RecentlyPlayed
-            data={slicedRecentlyPlayed}
+            data={recentlyPlayed}
             isPending={recentlyPlayedPending}
+            isError={recentlyPlayedError}
             menuVisible={menuVisible}
             setMenuVisible={setMenuVisible}
+            refetch={recentlyPlayedRefetch}
           />
         </View>
-      </ScrollView>
+      </View>
 
-      {/* 当前播放栏 */}
       <View className='absolute right-0 bottom-0 left-0'>
         <NowPlayingBar />
       </View>
@@ -229,6 +198,11 @@ function SetCookieDialog({
   cookie: string
   setBilibiliCookie: (cookie: string) => void
 }) {
+  const handleConfirm = () => {
+    setBilibiliCookie(cookie)
+    setVisible(false)
+  }
+
   return (
     <Dialog
       visible={visible}
@@ -240,29 +214,32 @@ function SetCookieDialog({
           label='Cookie'
           value={cookie}
           onChangeText={setCookie}
+          mode='outlined'
+          numberOfLines={5}
+          multiline
+          style={{ maxHeight: 200 }}
+          textAlignVertical='top'
         />
+        <Text
+          variant='bodySmall'
+          style={{ marginTop: 8 }}
+        >
+          请在此处粘贴您的 Bilibili Cookie 以获取个人数据。
+        </Text>
       </Dialog.Content>
       <Dialog.Actions>
         <Button onPress={() => setVisible(false)}>取消</Button>
-        <Button
-          onPress={() => {
-            setCookie(cookie)
-            setBilibiliCookie(cookie)
-            setVisible(false)
-          }}
-        >
-          确定
-        </Button>
+        <Button onPress={handleConfirm}>确定</Button>
       </Dialog.Actions>
     </Dialog>
   )
 }
 
-function PlaylistItem({
-  item,
-}: {
-  item: Playlist
-}) {
+function PlaylistItem({ item }: { item: Playlist }) {
+  const handlePress = () => {
+    router.push(`/playlist/favorite/${item.id}`)
+  }
+
   return (
     <Surface
       className='my-2 mr-4 w-40 overflow-hidden'
@@ -272,9 +249,7 @@ function PlaylistItem({
       <TouchableOpacity
         key={item.id}
         activeOpacity={0.5}
-        onPress={() => {
-          router.push(`/playlist/favorite/${item.id}`)
-        }}
+        onPress={handlePress}
       >
         <Text
           variant='titleSmall'
@@ -291,8 +266,18 @@ function PlaylistItem({
 function FavoriteList({
   data,
   isPending,
-}: { data?: Playlist[]; isPending: boolean }) {
+  isError,
+}: {
+  data?: Playlist[]
+  isPending: boolean
+  isError: boolean
+}) {
   const { colors } = useTheme()
+
+  const handleViewAll = () => {
+    router.push('/library')
+  }
+
   return (
     <>
       <View className='mb-2 flex-row items-center justify-between px-4'>
@@ -302,11 +287,7 @@ function FavoriteList({
         >
           收藏夹
         </Text>
-        <TouchableOpacity
-          onPress={() => {
-            router.push('/library')
-          }}
-        >
+        <TouchableOpacity onPress={handleViewAll}>
           <Text
             variant='labelLarge'
             style={{ color: colors.primary }}
@@ -316,16 +297,28 @@ function FavoriteList({
         </TouchableOpacity>
       </View>
       {isPending ? (
-        <ActivityIndicator />
+        <ActivityIndicator style={{ marginTop: 10, marginBottom: 10 }} />
+      ) : isError ? (
+        <Text
+          style={{ textAlign: 'center', color: 'red', paddingHorizontal: 16 }}
+        >
+          加载收藏夹失败
+        </Text>
+      ) : !data || data.length === 0 ? (
+        <Text
+          style={{ textAlign: 'center', color: 'grey', paddingHorizontal: 16 }}
+        >
+          暂无收藏夹
+        </Text>
       ) : (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
         >
-          {data?.map((item) => (
+          {data.map((item) => (
             <PlaylistItem
-              key={item.id}
+              key={item.id.toString()}
               item={item}
             />
           ))}
@@ -338,17 +331,42 @@ function FavoriteList({
 function RecentlyPlayed({
   data,
   isPending,
+  isError,
   menuVisible,
   setMenuVisible,
+  refetch,
 }: {
   data?: Track[]
   isPending: boolean
+  isError: boolean
   menuVisible: string | null
   setMenuVisible: (visible: string | null) => void
+  refetch: () => void
 }) {
   const { colors } = useTheme()
+  const [refreshing, setRefreshing] = useState(false)
+
+  const canShow = refreshing || isPending
+
+  const renderItem = useCallback(
+    ({ item }: { item: Track }) => (
+      <RecentlyPlayedItem
+        item={item}
+        menuVisible={menuVisible}
+        setMenuVisible={setMenuVisible}
+      />
+    ),
+    [menuVisible, setMenuVisible],
+  )
+
+  const keyExtractor = useCallback((item: Track) => item.id, [])
+
+  const estimatedItemHeight = 72
+  const flatListHeight = estimatedItemHeight * 3 + 30
+
   return (
     <>
+      {/* Header */}
       <View className='mb-2 flex-row items-center justify-between'>
         <Text
           variant='titleLarge'
@@ -356,7 +374,9 @@ function RecentlyPlayed({
         >
           最近播放
         </Text>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => homeLog.info('View All Recently Played pressed')}
+        >
           <Text
             variant='labelLarge'
             style={{ color: colors.primary }}
@@ -365,24 +385,55 @@ function RecentlyPlayed({
           </Text>
         </TouchableOpacity>
       </View>
-      {isPending ? (
-        <ActivityIndicator />
+
+      {/* Content Area */}
+      {canShow ? (
+        <ActivityIndicator style={{ marginTop: 10, marginBottom: 10 }} />
+      ) : isError ? (
+        <Text style={{ textAlign: 'center', color: 'red' }}>
+          加载最近播放失败
+        </Text>
+      ) : !data || data.length === 0 ? (
+        <Text style={{ textAlign: 'center', color: 'grey' }}>暂无播放记录</Text>
       ) : (
-        data?.map((item) => (
-          <RecentlyPlayedItem
-            key={item.id}
-            item={item}
-            menuVisible={menuVisible}
-            setMenuVisible={setMenuVisible}
+        <View
+          style={{
+            height: flatListHeight,
+            borderRadius: 8,
+            borderColor: colors.surfaceVariant,
+            borderWidth: 1,
+          }}
+        >
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            showsVerticalScrollIndicator={false}
+            extraData={menuVisible}
+            contentContainerStyle={{
+              paddingBottom: 8,
+              paddingLeft: 4,
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isPending}
+                onRefresh={async () => {
+                  setRefreshing(true)
+                  await refetch()
+                  setRefreshing(false)
+                }}
+                colors={[colors.primary]}
+                progressViewOffset={50}
+              />
+            }
           />
-        ))
+        </View>
       )}
     </>
   )
 }
 
-// 渲染最近播放项
-function RecentlyPlayedItem({
+const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
   item,
   menuVisible,
   setMenuVisible,
@@ -391,7 +442,6 @@ function RecentlyPlayedItem({
   menuVisible: string | null
   setMenuVisible: (visible: string | null) => void
 }) {
-  // 播放单曲（清空队列后播放）
   const playSingleTrack = async (track: Track) => {
     try {
       await usePlayerStore.getState().addToQueue([track], true, true)
@@ -400,7 +450,6 @@ function RecentlyPlayedItem({
     }
   }
 
-  // 下一首播放
   const playNext = async (track: Track) => {
     try {
       await usePlayerStore
@@ -410,6 +459,9 @@ function RecentlyPlayedItem({
       homeLog.sentry('添加到队列失败', error)
     }
   }
+
+  const handleDismissMenu = () => setMenuVisible(null)
+  const handleOpenMenu = () => setMenuVisible(item.id.toString())
 
   return (
     <TouchableOpacity
@@ -436,44 +488,54 @@ function RecentlyPlayedItem({
             </Text>
             <View className='flex-row items-center'>
               <Text variant='bodySmall'>{item.artist}</Text>
-              <Text
-                className='mx-1'
-                variant='bodySmall'
-              >
-                •
-              </Text>
-              <Text variant='bodySmall'>
-                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
-              </Text>
+              {item.duration != null && item.duration > 0 && (
+                <>
+                  <Text
+                    className='mx-1'
+                    variant='bodySmall'
+                  >
+                    •
+                  </Text>
+                  <Text variant='bodySmall'>
+                    {formatDurationToHHMMSS(item.duration)}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
           <Menu
-            visible={menuVisible === item.id}
-            onDismiss={() => setMenuVisible(null)}
+            visible={menuVisible === item.id.toString()}
+            onDismiss={handleDismissMenu}
             anchor={
               <IconButton
                 icon='dots-vertical'
                 size={24}
-                onPress={() => setMenuVisible(item.id)}
+                onPress={handleOpenMenu}
               />
             }
             anchorPosition='bottom'
           >
             <Menu.Item
-              leadingIcon='play-circle'
-              onPress={() => playSingleTrack(item)}
+              leadingIcon='play-circle-outline'
+              onPress={() => {
+                playSingleTrack(item)
+                handleDismissMenu()
+              }}
               title='立即播放'
             />
             <Menu.Item
-              leadingIcon='playlist-plus'
-              onPress={() => playNext(item)}
-              title='添加到播放队列'
+              leadingIcon='playlist-play'
+              onPress={() => {
+                playNext(item)
+                handleDismissMenu()
+              }}
+              title='下一首播放'
             />
           </Menu>
         </View>
       </Surface>
     </TouchableOpacity>
   )
-}
+})
 
 export default HomePage

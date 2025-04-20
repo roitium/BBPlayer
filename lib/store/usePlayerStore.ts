@@ -571,6 +571,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
         if (currentQueue.length <= 1) {
           logDetailedDebug('队列中没有（或只有一首）曲目，无法跳转')
+          set({ isPlaying: false })
           return
         }
 
