@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { View, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import Image from '@d11/react-native-fast-image'
 import {
@@ -18,12 +18,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { useSearchResults, useHotSearches } from '@/hooks/queries/useSearchData'
 import type { Track } from '@/types/core/media'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import { showToast } from '@/utils/toast'
 import log from '@/utils/log'
+import { useMMKVObject } from 'react-native-mmkv'
 
 const searchLog = log.extend('SEARCH')
 
@@ -51,6 +51,8 @@ export default function SearchPage() {
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
+  const [searchHistory, setSearchHistory] =
+    useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
 
   // 下一首播放
   const playNext = useCallback(
@@ -75,36 +77,16 @@ export default function SearchPage() {
     [addToQueue],
   )
 
-  // 本地搜索历史状态
-  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([])
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
-
-  // 从本地存储加载搜索历史
-  const loadSearchHistory = useCallback(async () => {
-    try {
-      setIsLoadingHistory(true)
-      const historyJson = await AsyncStorage.getItem(SEARCH_HISTORY_KEY)
-      if (historyJson) {
-        const history = JSON.parse(historyJson) as SearchHistoryItem[]
-        setSearchHistory(history)
-      }
-    } catch (error) {
-      searchLog.sentry('加载搜索历史失败:', error)
-    } finally {
-      setIsLoadingHistory(false)
-    }
-  }, [])
-
   // 保存搜索历史到本地存储
   const saveSearchHistory = useCallback(
     async (history: SearchHistoryItem[]) => {
       try {
-        await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history))
+        await setSearchHistory(history)
       } catch (error) {
         searchLog.sentry('保存搜索历史失败:', error)
       }
     },
-    [],
+    [setSearchHistory],
   )
 
   // 添加搜索历史
@@ -120,7 +102,7 @@ export default function SearchPage() {
       }
 
       // 检查是否已存在相同的查询
-      const existingIndex = searchHistory.findIndex(
+      const existingIndex = searchHistory?.findIndex(
         (item) => item.text.toLowerCase() === query.toLowerCase(),
       )
 
@@ -128,6 +110,7 @@ export default function SearchPage() {
 
       if (existingIndex !== -1) {
         // 如果已存在，移除旧的并添加新的到顶部
+        if (!searchHistory) return
         newHistory = [
           newItem,
           ...searchHistory.filter(
@@ -136,6 +119,7 @@ export default function SearchPage() {
         ]
       } else {
         // 如果不存在，添加到顶部
+        if (!searchHistory) return
         newHistory = [newItem, ...searchHistory]
       }
 
@@ -147,20 +131,19 @@ export default function SearchPage() {
       setSearchHistory(newHistory)
       await saveSearchHistory(newHistory)
     },
-    [searchHistory, saveSearchHistory],
+    [searchHistory, saveSearchHistory, setSearchHistory],
   )
 
   // 清除所有搜索历史
   const clearAllSearchHistory = useCallback(async () => {
     try {
-      await AsyncStorage.removeItem(SEARCH_HISTORY_KEY)
       setSearchHistory([])
       Alert.alert('提示', '搜索历史已清除')
     } catch (error) {
       searchLog.sentry('清除搜索历史失败:', error)
       Alert.alert('错误', '清除搜索历史失败')
     }
-  }, [])
+  }, [setSearchHistory])
 
   // 确认清除搜索历史
   const confirmClearHistory = useCallback(() => {
@@ -180,11 +163,6 @@ export default function SearchPage() {
       { cancelable: true },
     )
   }, [clearAllSearchHistory])
-
-  // 组件挂载时加载搜索历史
-  useEffect(() => {
-    loadSearchHistory()
-  }, [loadSearchHistory])
 
   // 使用API查询 - 使用防抖后的查询
   const { data: searchData, isLoading: isLoadingResults } = useSearchResults(
@@ -420,7 +398,7 @@ export default function SearchPage() {
                 >
                   最近搜索
                 </Text>
-                {searchHistory.length > 0 && (
+                {searchHistory && searchHistory.length > 0 && (
                   <TouchableOpacity onPress={confirmClearHistory}>
                     <Text
                       variant='labelMedium'
@@ -431,9 +409,7 @@ export default function SearchPage() {
                   </TouchableOpacity>
                 )}
               </View>
-              {isLoadingHistory ? (
-                <ActivityIndicator size='small' />
-              ) : searchHistory.length > 0 ? (
+              {searchHistory && searchHistory.length > 0 ? (
                 <View className='flex-row flex-wrap'>
                   {searchHistory.map((item) => (
                     <Chip

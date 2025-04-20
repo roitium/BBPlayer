@@ -4,7 +4,7 @@ import {
   mapConsoleTransport,
   sentryTransport,
 } from 'react-native-logs'
-import * as RNFS from '@dr.pogodin/react-native-fs'
+import * as EXPOFS from 'expo-file-system'
 import { InteractionManager } from 'react-native'
 import * as Sentry from '@sentry/react-native'
 
@@ -22,7 +22,7 @@ const config = {
   transportOptions: {
     SENTRY: Sentry,
     errorLevels: 'sentry',
-    FS: RNFS,
+    FS: EXPOFS,
     fileName: 'logs_{date-today}', // Create a new file every day
     mapLevels: {
       debug: 'log',
