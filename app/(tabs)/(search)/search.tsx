@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { View, ScrollView, TouchableOpacity } from 'react-native'
 import Image from '@d11/react-native-fast-image'
 import {
   Searchbar,
@@ -79,9 +79,9 @@ export default function SearchPage() {
 
   // 保存搜索历史到本地存储
   const saveSearchHistory = useCallback(
-    async (history: SearchHistoryItem[]) => {
+    (history: SearchHistoryItem[]) => {
       try {
-        await setSearchHistory(history)
+        setSearchHistory(history)
       } catch (error) {
         searchLog.sentry('保存搜索历史失败:', error)
       }
@@ -101,6 +101,11 @@ export default function SearchPage() {
         timestamp: Date.now(),
       }
 
+      if (!searchHistory) {
+        setSearchHistory([newItem])
+        return
+      }
+
       // 检查是否已存在相同的查询
       const existingIndex = searchHistory?.findIndex(
         (item) => item.text.toLowerCase() === query.toLowerCase(),
@@ -110,7 +115,6 @@ export default function SearchPage() {
 
       if (existingIndex !== -1) {
         // 如果已存在，移除旧的并添加新的到顶部
-        if (!searchHistory) return
         newHistory = [
           newItem,
           ...searchHistory.filter(
@@ -119,7 +123,6 @@ export default function SearchPage() {
         ]
       } else {
         // 如果不存在，添加到顶部
-        if (!searchHistory) return
         newHistory = [newItem, ...searchHistory]
       }
 
@@ -133,36 +136,6 @@ export default function SearchPage() {
     },
     [searchHistory, saveSearchHistory, setSearchHistory],
   )
-
-  // 清除所有搜索历史
-  const clearAllSearchHistory = useCallback(async () => {
-    try {
-      setSearchHistory([])
-      Alert.alert('提示', '搜索历史已清除')
-    } catch (error) {
-      searchLog.sentry('清除搜索历史失败:', error)
-      Alert.alert('错误', '清除搜索历史失败')
-    }
-  }, [setSearchHistory])
-
-  // 确认清除搜索历史
-  const confirmClearHistory = useCallback(() => {
-    Alert.alert(
-      '清除搜索历史',
-      '确定要清除所有搜索历史吗？',
-      [
-        {
-          text: '取消',
-          style: 'cancel',
-        },
-        {
-          text: '确定',
-          onPress: clearAllSearchHistory,
-        },
-      ],
-      { cancelable: true },
-    )
-  }, [clearAllSearchHistory])
 
   // 使用API查询 - 使用防抖后的查询
   const { data: searchData, isLoading: isLoadingResults } = useSearchResults(
@@ -399,7 +372,7 @@ export default function SearchPage() {
                   最近搜索
                 </Text>
                 {searchHistory && searchHistory.length > 0 && (
-                  <TouchableOpacity onPress={confirmClearHistory}>
+                  <TouchableOpacity onPress={() => setSearchHistory([])}>
                     <Text
                       variant='labelMedium'
                       style={{ color: colors.primary }}
