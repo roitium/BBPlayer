@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { storage } from '@/utils/mmkv'
 import { create } from 'zustand'
 import { createBilibiliApi } from '../api/bilibili/bilibili'
 
@@ -6,7 +6,7 @@ interface AppState {
   bilibiliCookie: string
   bilibiliApi: ReturnType<typeof createBilibiliApi>
 
-  setBilibiliCookie: (cookie: string | null) => Promise<void>
+  setBilibiliCookie: (cookie: string | null) => void
 }
 
 const useAppStore = create<AppState>()((set, get) => {
@@ -17,13 +17,13 @@ const useAppStore = create<AppState>()((set, get) => {
     bilibiliCookie: '',
     bilibiliApi,
 
-    setBilibiliCookie: async (cookie: string | null) => {
+    setBilibiliCookie: (cookie: string | null) => {
       if (cookie) {
         set({ bilibiliCookie: cookie })
-        await AsyncStorage.setItem('bilibiliCookie', cookie)
+        storage.set('bilibili_cookie', cookie)
       } else {
         set({
-          bilibiliCookie: (await AsyncStorage.getItem('bilibiliCookie')) || '',
+          bilibiliCookie: storage.getString('bilibili_cookie') || '',
         })
       }
     },
