@@ -29,12 +29,15 @@ import useAppStore from '@/lib/store/useAppStore'
 import Toast from 'react-native-toast-message'
 import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
-import { BilibiliApiError } from '@/utils/errors'
+import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import { setupPlayer } from '@/lib/services/setupPlayer'
 import { showToast } from '@/utils/toast'
 import * as Updates from 'expo-updates'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import log from '@/utils/log'
+
+const rootLog = log.extend('ROOT')
 
 const manifest = Updates.manifest
 const metadata = 'metadata' in manifest ? manifest.metadata : undefined
@@ -121,8 +124,10 @@ const queryClient = new QueryClient({
         title: `请求 ${query.queryKey} 失败`,
         message: error.message,
       })
+      rootLog.error(`请求 ${query.queryKey} 失败`, error)
 
-      if (error instanceof BilibiliApiError) {
+      // 这两个错误属于三方依赖的错误，不应该报告到 Sentry
+      if (error instanceof BilibiliApiError || error instanceof CsrfError) {
         if (!developement) return
       }
 
@@ -138,6 +143,7 @@ const queryClient = new QueryClient({
       })
     },
   }),
+
   mutationCache: new MutationCache({
     onError: (error, variables, context, mutation) => {
       showToast({
@@ -146,11 +152,12 @@ const queryClient = new QueryClient({
         message: error.message,
       })
 
-      console.log(error)
+      rootLog.error(`请求 mutation: ${mutation.mutationId} 失败`, error)
 
-      if (error instanceof BilibiliApiError) {
+      if (error instanceof BilibiliApiError || error instanceof CsrfError) {
         if (!developement) return
       }
+
       Sentry.captureException(error, {
         tags: {
           scope: 'MutationCache',

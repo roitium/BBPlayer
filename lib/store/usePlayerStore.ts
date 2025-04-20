@@ -11,7 +11,7 @@ import TrackPlayer, {
 import type { Track } from '@/types/core/media'
 import { produce } from 'immer'
 import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
-import { logDetailedDebug, logError } from '@/utils/log'
+import log from '@/utils/log'
 import {
   checkAndUpdateAudioStream,
   checkBilibiliAudioExpiry,
@@ -21,6 +21,12 @@ import useAppStore from './useAppStore'
 import { PRELOAD_TRACKS } from '@/constants/player'
 import Toast from 'react-native-toast-message'
 import { showToast } from '@/utils/toast'
+import { err, ok, type Result } from 'neverthrow'
+import type { BilibiliApiError } from '@/utils/errors'
+
+const playerLog = log.extend('PLAYER')
+const logDetailedDebug = playerLog.debug
+const logError = playerLog.sentry
 
 // 播放器逻辑对象
 const PlayerLogic = {
@@ -185,12 +191,21 @@ const PlayerLogic = {
           const track = await usePlayerStore
             .getState()
             .patchMetadataAndAudio(nowTrack)
+          if (track.isErr()) {
+            logError('更新音频流失败', track.error)
+            return
+          }
           logDetailedDebug('更新音频流成功', {
-            trackId: track.track.id,
-            title: track.track.title,
+            trackId: track.value.track.id,
+            title: track.value.track.title,
           })
           // 使用 load 方法替换当前曲目
-          await TrackPlayer.load(convertToRNTPTrack(track.track))
+          const rntpTrack = convertToRNTPTrack(track.value.track)
+          if (rntpTrack.isErr()) {
+            logError('更新音频流失败', rntpTrack.error)
+            return
+          }
+          await TrackPlayer.load(rntpTrack.value)
         }
       },
     )
@@ -507,15 +522,24 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             set({ isPlaying: true })
             return
           }
-          const { needsUpdate, track } =
-            await patchMetadataAndAudio(currentTrack)
+          const result = await patchMetadataAndAudio(currentTrack)
+          if (result.isErr()) {
+            logError('更新音频流失败', result.error)
+            return
+          }
+          const { needsUpdate, track } = result.value
           if (needsUpdate) {
             // 如果需要更新音频流，则先替换掉当前播放的歌曲，并将播放位置恢复到上次播放的位置
             logDetailedDebug(
               '音频流需要更新，刚刚更新过了，现在替换掉当前播放的歌曲',
             )
             const { position } = await TrackPlayer.getProgress()
-            await TrackPlayer.load(convertToRNTPTrack(track))
+            const rntpTrack = convertToRNTPTrack(track)
+            if (rntpTrack.isErr()) {
+              logError('更新音频流失败', rntpTrack.error)
+              return
+            }
+            await TrackPlayer.load(rntpTrack.value)
             await seekTo(position)
           }
           await TrackPlayer.play()
@@ -754,7 +778,9 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
     // 检查并更新音频流和元数据，并将最终结果更新到 queue 中
     patchMetadataAndAudio: async (
       track: Track,
-    ): Promise<{ track: Track; needsUpdate: boolean }> => {
+    ): Promise<
+      Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | unknown>
+    > => {
       logDetailedDebug('调用 patchMetadataAndAudio()', {
         trackId: track.id,
         title: track.title,
@@ -768,14 +794,18 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
           })
           const bilibiliApi = useAppStore.getState().bilibiliApi
           const metadata = await bilibiliApi.getVideoDetails(track.id)
+          if (metadata.isErr()) {
+            logError('获取元数据失败,返回原始track', metadata.error)
+            return err(metadata.error)
+          }
           updatedTrack = {
             ...track,
-            title: metadata.title,
-            artist: metadata.owner.name,
-            cover: metadata.pic,
-            duration: metadata.duration,
-            createTime: metadata.pubdate,
-            cid: metadata.cid,
+            title: metadata.value.title,
+            artist: metadata.value.owner.name,
+            cover: metadata.value.pic,
+            duration: metadata.value.duration,
+            createTime: metadata.value.pubdate,
+            cid: metadata.value.cid,
             hasMetadata: true,
           }
           // 在这里立即更新当前曲目的信息，避免显示空白。
@@ -804,8 +834,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             createTime: updatedTrack.createTime,
           })
         }
-        const { track: finalTrack, needsUpdate } =
-          await checkAndUpdateAudioStream(updatedTrack)
+        const result = await checkAndUpdateAudioStream(updatedTrack)
+        if (result.isErr()) {
+          return err(result.error)
+        }
+        const { track: finalTrack, needsUpdate } = result.value
         if (needsUpdate) {
           logDetailedDebug('音频流需要更新，更新到 queue 中', {
             trackId: finalTrack.id,
@@ -828,10 +861,9 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             }),
           )
         }
-        return { track: finalTrack, needsUpdate: true }
+        return ok({ track: finalTrack, needsUpdate: true })
       } catch (error) {
-        logError('检查并更新音频流失败，返回原始track', error)
-        return { track, needsUpdate: false }
+        return err(error)
       }
     },
 
@@ -867,15 +899,24 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
       // 检查并更新音频流
       const updatedTrack = await get().patchMetadataAndAudio(track)
+      if (updatedTrack.isErr()) {
+        logError('更新音频流失败', updatedTrack.error)
+        return
+      }
 
       // 使用 TrackPlayer.load() 替换当前曲目
-      await TrackPlayer.load(convertToRNTPTrack(updatedTrack.track))
+      const rntpTrack = convertToRNTPTrack(updatedTrack.value.track)
+      if (rntpTrack.isErr()) {
+        logError('更新音频流失败', rntpTrack.error)
+        return
+      }
+      await TrackPlayer.load(rntpTrack.value)
 
       // 更新状态 (在 load 之后，确保状态是最新的）
       set(
         produce((state: PlayerState) => {
           state.currentIndex = index
-          state.currentTrack = updatedTrack.track
+          state.currentTrack = updatedTrack.value.track
         }),
       )
 
@@ -884,7 +925,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
       logDetailedDebug('已跳转到指定曲目', {
         index,
-        trackTitle: updatedTrack.track.title,
+        trackTitle: updatedTrack.value.track.title,
       })
     },
   }

@@ -1,5 +1,8 @@
 import TrackPlayer from 'react-native-track-player'
 import { usePlayerStore } from '../store/usePlayerStore'
+import log from '@/utils/log'
+
+const setupPlayerLog = log.extend('SETUP_PLAYER')
 
 /**
  * 初始化播放器
@@ -10,7 +13,7 @@ export const setupPlayer = async (): Promise<void> => {
     // 初始化播放器
     await usePlayerStore.getState().initPlayer()
   } catch (error) {
-    console.error('初始化播放器失败:', error)
+    setupPlayerLog.sentry('初始化播放器失败', error)
   }
 }
 
@@ -25,6 +28,6 @@ export const resetPlayer = async (): Promise<void> => {
     await TrackPlayer.reset()
     global.playerIsReady = false
   } catch (error) {
-    console.error('重置播放器失败:', error)
+    setupPlayerLog.sentry('重置播放器失败:', error)
   }
 }

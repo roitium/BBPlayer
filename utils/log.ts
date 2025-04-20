@@ -1,27 +1,42 @@
+import {
+  fileAsyncTransport,
+  logger,
+  mapConsoleTransport,
+  sentryTransport,
+} from 'react-native-logs'
+import * as RNFS from '@dr.pogodin/react-native-fs'
+import { InteractionManager } from 'react-native'
 import * as Sentry from '@sentry/react-native'
 
-const logError = (message: string, error: unknown, scope = 'Player') => {
-  console.error(`[${scope} Error] ${message}`, error)
-
-  // 向 Sentry 报告错误
-  Sentry.captureException(error, {
-    tags: {
-      scope,
+// 创建 Logger 实例
+const config = {
+  severity: 'debug',
+  transport: [mapConsoleTransport, fileAsyncTransport, sentryTransport],
+  levels: {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+    sentry: 4, // 只有使用这个级别才会被 Sentry 捕获为 error
+  },
+  transportOptions: {
+    SENTRY: Sentry,
+    errorLevels: 'sentry',
+    FS: RNFS,
+    fileName: 'logs_{date-today}', // Create a new file every day
+    mapLevels: {
+      debug: 'log',
+      info: 'info',
+      warn: 'warn',
+      error: 'error',
+      sentry: 'error',
     },
-    extra: {
-      message,
-    },
-  })
+  },
+  asyncFunc: InteractionManager.runAfterInteractions,
+  async: true,
 }
 
-// 增强版调试日志，包含时间戳
-const logDetailedDebug = (
-  message: string,
-  data?: unknown,
-  scope = 'Player',
-) => {
-  const timestamp = new Date().toISOString()
-  console.log(`[${scope} Debug ${timestamp}] ${message}`, data ? data : '')
-}
+// @ts-ignore 忽略 TS 报错
+const log = logger.createLogger(config)
 
-export { logError, logDetailedDebug }
+export default log

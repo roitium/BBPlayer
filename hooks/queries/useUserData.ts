@@ -1,4 +1,5 @@
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
+import { throwResultAsync } from '@/utils/neverthrowUtils'
 import { useQuery } from '@tanstack/react-query'
 
 const userQueryKeys = {
@@ -11,7 +12,7 @@ const userQueryKeys = {
 export const usePersonalInformation = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: ['user', 'personalInformation'],
-    queryFn: () => bilibiliApi.getUserInfo(),
+    queryFn: () => throwResultAsync(bilibiliApi.getUserInfo()),
     staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
   })
 }
@@ -19,7 +20,7 @@ export const usePersonalInformation = (bilibiliApi: BilibiliApi) => {
 export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: userQueryKeys.recentlyPlayed(),
-    queryFn: () => bilibiliApi.getHistory(),
+    queryFn: () => throwResultAsync(bilibiliApi.getHistory()),
     staleTime: 1 * 60 * 1000,
   })
 }

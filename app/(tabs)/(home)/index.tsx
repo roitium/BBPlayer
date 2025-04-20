@@ -31,6 +31,9 @@ import {
   useRecentlyPlayed,
 } from '@/hooks/queries/useUserData'
 import { useGetFavoritePlaylists } from '@/hooks/queries/useFavoriteData'
+import log from '@/utils/log'
+
+const homeLog = log.extend('HOME')
 
 const mockCategories = [
   { id: '1', name: '翻唱', icon: 'music-note' },
@@ -393,7 +396,7 @@ function RecentlyPlayedItem({
     try {
       await usePlayerStore.getState().addToQueue([track], true, true)
     } catch (error) {
-      console.error('播放单曲失败', error)
+      homeLog.sentry('播放单曲失败', error)
     }
   }
 
@@ -404,7 +407,7 @@ function RecentlyPlayedItem({
         .getState()
         .addToQueue([track], false, false, undefined, true)
     } catch (error) {
-      console.error('添加到队列失败', error)
+      homeLog.sentry('添加到队列失败', error)
     }
   }
 

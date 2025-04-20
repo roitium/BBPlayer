@@ -28,6 +28,10 @@ import {
   useBatchDeleteFavoriteListContents,
   useInfiniteFavoriteList,
 } from '@/hooks/queries/useFavoriteData'
+import { showToast } from '@/utils/toast'
+import log from '@/utils/log'
+
+const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
 export default function PlaylistPage() {
   const { id } = useLocalSearchParams()
@@ -48,7 +52,7 @@ export default function PlaylistPage() {
       try {
         await addToQueue([track], false, false, undefined, true)
       } catch (error) {
-        console.error('添加到队列失败', error)
+        playlistLog.sentry('添加到队列失败', error)
       }
     },
     [addToQueue],
@@ -61,14 +65,23 @@ export default function PlaylistPage() {
         const allContentIds = await bilibiliApi.getFavoriteListAllContents(
           Number(id),
         )
-        const allTracks = allContentIds.map((c) => ({
+        if (allContentIds.isErr()) {
+          playlistLog.sentry('获取所有内容失败', allContentIds.error)
+          showToast({
+            severity: 'error',
+            title: '获取收藏夹所有内容失败，无法播放',
+            message: allContentIds.error.message,
+          })
+          return
+        }
+        const allTracks = allContentIds.value.map((c) => ({
           id: c.bvid,
           source: 'bilibili' as const,
           hasMetadata: false,
         }))
         await addToQueue(allTracks, true, true, startFromId)
       } catch (error) {
-        console.error('播放全部失败', error)
+        playlistLog.sentry('播放全部失败', error)
       }
     },
     [addToQueue, bilibiliApi.getFavoriteListAllContents, id],
@@ -261,7 +274,6 @@ const TrackItem = memo(function TrackItem({
   mutate: ReturnType<typeof useBatchDeleteFavoriteListContents>['mutate']
   favoriteId: string
 }) {
-  console.log(`refreshed conponent: ${item.id}`)
   return (
     <TouchableRipple
       key={item.id}

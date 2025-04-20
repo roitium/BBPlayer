@@ -1,3 +1,7 @@
+import log from '@/utils/log'
+
+const nativeIntentLog = log.extend('NATIVE_INTENT')
+
 export function redirectSystemPath({
   path,
   initial,
@@ -12,7 +16,7 @@ export function redirectSystemPath({
     }
     return path
   } catch {
-    console.log('Unexpected error:', path)
+    nativeIntentLog.error('无法解析 nativeIntent 路径', path)
     return '/unexpected-error'
   }
 }

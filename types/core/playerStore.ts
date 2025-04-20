@@ -1,6 +1,8 @@
 import type { RepeatMode } from 'react-native-track-player'
 import type { Track } from './media'
 import type { Track as RNTPTracker } from 'react-native-track-player'
+import type { Result } from 'neverthrow'
+import type { BilibiliApiError } from '@/utils/errors'
 
 // 播放器状态接口
 interface PlayerState {
@@ -48,7 +50,9 @@ interface PlayerActions {
   // 音频流处理
   patchMetadataAndAudio: (
     track: Track,
-  ) => Promise<{ track: Track; needsUpdate: boolean }>
+  ) => Promise<
+    Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | unknown>
+  >
   preloadTracks: (index: number) => Promise<void>
 }
 

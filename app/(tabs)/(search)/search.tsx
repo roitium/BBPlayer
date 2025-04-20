@@ -23,6 +23,9 @@ import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import { showToast } from '@/utils/toast'
+import log from '@/utils/log'
+
+const searchLog = log.extend('SEARCH')
 
 // 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
@@ -55,7 +58,7 @@ export default function SearchPage() {
       try {
         await addToQueue([track], false, false, undefined, true)
       } catch (error) {
-        console.error('添加到队列失败', error)
+        searchLog.sentry('添加到队列失败', error)
       }
     },
     [addToQueue],
@@ -66,7 +69,7 @@ export default function SearchPage() {
       try {
         await addToQueue([track], true, false, undefined, false)
       } catch (error) {
-        console.error('添加到队列失败', error)
+        searchLog.sentry('添加到队列失败', error)
       }
     },
     [addToQueue],
@@ -86,7 +89,7 @@ export default function SearchPage() {
         setSearchHistory(history)
       }
     } catch (error) {
-      console.error('加载搜索历史失败:', error)
+      searchLog.sentry('加载搜索历史失败:', error)
     } finally {
       setIsLoadingHistory(false)
     }
@@ -98,7 +101,7 @@ export default function SearchPage() {
       try {
         await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history))
       } catch (error) {
-        console.error('保存搜索历史失败:', error)
+        searchLog.sentry('保存搜索历史失败:', error)
       }
     },
     [],
@@ -154,7 +157,7 @@ export default function SearchPage() {
       setSearchHistory([])
       Alert.alert('提示', '搜索历史已清除')
     } catch (error) {
-      console.error('清除搜索历史失败:', error)
+      searchLog.sentry('清除搜索历史失败:', error)
       Alert.alert('错误', '清除搜索历史失败')
     }
   }, [])

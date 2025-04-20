@@ -1,3 +1,5 @@
+import { Result, type ResultAsync, okAsync, errAsync } from 'neverthrow'
+import { apiClient } from './client'
 import type {
   BilibiliHistoryVideo,
   BilibiliVideoDetails,
@@ -12,13 +14,20 @@ import type {
   BilibiliFavoriteListAllContents,
   BilibiliCollection,
 } from '@/types/apis/bilibili'
-import { apiClient } from './client'
 import type { Track, Playlist } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/times'
-import { BilibiliApiError } from '@/utils/errors'
+import {
+  AudioStreamError,
+  CsrfError,
+  type BilibiliApiError,
+  type BilibiliApiMethodError,
+} from '@/utils/errors'
+import log from '@/utils/log'
+
+const bilibiliApiLog = log.extend('BILIBILI_API')
 
 /**
- * 转换B站bvid为avid
+ * 转换B站bvid为avid (同步操作，保持不变)
  */
 function bv2av(bvid: string): number {
   const XOR_CODE = 23442827791579n
@@ -37,27 +46,26 @@ function bv2av(bvid: string): number {
   return Number((tmp & MASK_CODE) ^ XOR_CODE)
 }
 
-/**
- * 转换B站历史记录视频为Track格式
- */
 const transformHistoryVideosToTracks = (
   videos: BilibiliHistoryVideo[],
 ): Track[] => {
-  return videos.map((video) => ({
-    id: video.bvid,
-    title: video.title,
-    artist: video.owner.name,
-    cover: video.pic,
-    source: 'bilibili' as const,
-    duration: video.duration,
-    createTime: 0,
-    hasMetadata: true,
-  }))
+  try {
+    return videos.map((video) => ({
+      id: video.bvid,
+      title: video.title,
+      artist: video.owner.name,
+      cover: video.pic,
+      source: 'bilibili' as const,
+      duration: video.duration,
+      createTime: 0,
+      hasMetadata: true,
+    }))
+  } catch (error) {
+    bilibiliApiLog.error('Error transforming history videos:', error)
+    return []
+  }
 }
 
-/**
- * 转换B站视频详情为Track格式
- */
 const transformVideoDetailsToTracks = (
   videos: BilibiliVideoDetails[],
 ): Track[] => {
@@ -73,65 +81,71 @@ const transformVideoDetailsToTracks = (
       hasMetadata: true,
     }))
   } catch (error) {
-    console.error(error)
+    bilibiliApiLog.error('Error transforming video details:', error)
     return []
   }
 }
 
-/**
- * 转换B站收藏夹为Playlist格式
- */
 const transformFavoriteListsToPlaylists = (
-  playlists: BilibiliPlaylist[],
+  playlists: BilibiliPlaylist[] | null,
 ): Playlist[] => {
-  return playlists.map((playlist) => ({
-    id: playlist.id,
-    title: playlist.title,
-    count: playlist.media_count,
-    cover: '',
-    source: 'bilibili' as const,
-    biliType: 'favorite' as const,
-  }))
+  if (!playlists) return []
+  try {
+    return playlists.map((playlist) => ({
+      id: playlist.id,
+      title: playlist.title,
+      count: playlist.media_count,
+      cover: '',
+      source: 'bilibili' as const,
+      biliType: 'favorite' as const,
+    }))
+  } catch (error) {
+    bilibiliApiLog.error('Error transforming favorite lists:', error)
+    return []
+  }
 }
 
-/**
- * 转换B站搜索结果视频为Track格式
- */
 const transformSearchResultsToTracks = (
   videos: BilibiliSearchVideo[],
 ): Track[] => {
-  return videos.map((video) => ({
-    id: video.bvid,
-    title: video.title.replace(/<em[^>]*>|<\/em>/g, ''),
-    artist: video.author,
-    cover: `https:${video.pic}`,
-    source: 'bilibili' as const,
-    duration: formatMMSSToSeconds(video.duration),
-    createTime: video.senddate,
-    hasMetadata: true,
-  }))
+  if (!videos) return []
+  try {
+    return videos.map((video) => ({
+      id: video.bvid,
+      title: video.title.replace(/<em[^>]*>|<\/em>/g, ''),
+      artist: video.author,
+      cover: `https:${video.pic}`,
+      source: 'bilibili' as const,
+      duration: formatMMSSToSeconds(video.duration),
+      createTime: video.senddate,
+      hasMetadata: true,
+    }))
+  } catch (error) {
+    bilibiliApiLog.error('Error transforming search results:', error)
+    return []
+  }
 }
 
-/**
- * 转换B站热门搜索为简单对象
- */
 const transformHotSearches = (
   hotSearches: BilibiliHotSearch[],
 ): { id: string; text: string }[] => {
-  return hotSearches.map((item) => ({
-    id: `hot_${item.keyword}`,
-    text: item.keyword,
-  }))
+  if (!hotSearches) return []
+  try {
+    return hotSearches.map((item) => ({
+      id: `hot_${item.keyword}`,
+      text: item.keyword,
+    }))
+  } catch (error) {
+    bilibiliApiLog.error('Error transforming hot searches:', error)
+    return []
+  }
 }
 
-/**
- * 转换B站收藏夹内容为Track格式
- */
 const transformFavoriteContentsToTracks = (
-  contents: BilibiliFavoriteListContent[],
+  contents: BilibiliFavoriteListContent[] | null,
 ): Track[] => {
+  if (!contents) return []
   try {
-    if (!contents) return []
     return (
       contents
         // 去除已失效和非视频稿件
@@ -148,7 +162,7 @@ const transformFavoriteContentsToTracks = (
         }))
     )
   } catch (error) {
-    console.error(error)
+    bilibiliApiLog.error('Error transforming favorite contents:', error)
     return []
   }
 }
@@ -160,155 +174,174 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   /**
    * 获取用户观看历史记录
    */
-  async getHistory(): Promise<Track[]> {
-    const response = await apiClient.get<BilibiliHistoryVideo[]>(
-      '/x/v2/history',
-      undefined,
-      getCookie(),
-    )
-    return transformHistoryVideosToTracks(response)
+  getHistory(): ResultAsync<Track[], BilibiliApiError> {
+    return apiClient
+      .get<BilibiliHistoryVideo[]>('/x/v2/history', undefined, getCookie())
+      .map(transformHistoryVideosToTracks)
   },
 
   /**
    * 获取分区热门视频
    */
-  async getPopularVideos(partition: string): Promise<Track[]> {
-    const response = await apiClient.get<{ list: BilibiliVideoDetails[] }>(
-      `/x/web-interface/ranking/v2?rid=${partition}`,
-      undefined,
-      getCookie(),
-    )
-    return transformVideoDetailsToTracks(response.list)
+  getPopularVideos(partition: string): ResultAsync<Track[], BilibiliApiError> {
+    return apiClient
+      .get<{ list: BilibiliVideoDetails[] }>(
+        `/x/web-interface/ranking/v2?rid=${partition}`,
+        undefined,
+        getCookie(),
+      )
+      .map((response) => transformVideoDetailsToTracks(response.list))
   },
 
   /**
    * 获取用户收藏夹列表
    */
-  async getFavoritePlaylists(userMid: number): Promise<Playlist[]> {
-    const response = await apiClient.get<{ list: BilibiliPlaylist[] | null }>(
-      `/x/v3/fav/folder/created/list-all?up_mid=${userMid}`,
-      undefined,
-      getCookie(),
-    )
-    if (!response.list) {
-      return []
-    }
-    return transformFavoriteListsToPlaylists(response.list)
+  getFavoritePlaylists(
+    userMid: number,
+  ): ResultAsync<Playlist[], BilibiliApiError> {
+    return apiClient
+      .get<{ list: BilibiliPlaylist[] | null }>(
+        `/x/v3/fav/folder/created/list-all?up_mid=${userMid}`,
+        undefined,
+        getCookie(),
+      )
+      .map((response) => transformFavoriteListsToPlaylists(response.list))
   },
 
   /**
    * 搜索视频
    */
-  async searchVideos(
+  searchVideos(
     keyword: string,
     page: number,
     page_size: number,
-  ): Promise<{ tracks: Track[]; numPages: number }> {
-    const response = await apiClient.get<{
-      result: BilibiliSearchVideo[]
-      numPages: number
-    }>(
-      '/x/web-interface/wbi/search/type',
-      {
-        keyword,
-        search_type: 'video',
-        page: page.toString(),
-        page_size: page_size.toString(),
-      },
-      getCookie(),
-    )
-    return {
-      tracks: transformSearchResultsToTracks(response.result),
-      numPages: response.numPages,
-    }
+  ): ResultAsync<{ tracks: Track[]; numPages: number }, BilibiliApiError> {
+    return apiClient
+      .get<{
+        result: BilibiliSearchVideo[]
+        numPages: number
+      }>(
+        '/x/web-interface/wbi/search/type',
+        {
+          keyword,
+          search_type: 'video',
+          page: page.toString(),
+          page_size: page_size.toString(),
+        },
+        getCookie(),
+      )
+      .map((response) => ({
+        tracks: transformSearchResultsToTracks(response.result),
+        numPages: response.numPages,
+      }))
   },
 
   /**
    * 获取热门搜索关键词
    */
-  async getHotSearches(): Promise<{ id: string; text: string }[]> {
-    const response = await apiClient.get<{
-      trending: { list: BilibiliHotSearch[] }
-    }>(
-      '/x/web-interface/search/square',
-      {
-        limit: '10',
-      },
-      getCookie(),
-    )
-    return transformHotSearches(response.trending.list)
+  getHotSearches(): ResultAsync<
+    { id: string; text: string }[],
+    BilibiliApiError
+  > {
+    return apiClient
+      .get<{
+        trending: { list: BilibiliHotSearch[] }
+      }>(
+        '/x/web-interface/search/square',
+        {
+          limit: '10',
+        },
+        getCookie(),
+      )
+      .map((response) => transformHotSearches(response.trending.list))
   },
 
   /**
    * 获取视频音频流信息
    */
-  async getAudioStream({
-    bvid,
-    cid,
-    audioQuality,
-    enableDolby,
-    enableHiRes,
-  }: BilibiliAudioStreamParams): Promise<Track['biliStreamUrl']> {
-    const response = await apiClient.get<BilibiliAudioStreamResponse>(
-      '/x/player/wbi/playurl',
-      {
-        bvid,
-        cid: String(cid),
-        fnval: '16', // 16 表示 dash 格式
-      },
-      getCookie(),
-    )
-    if (!response.dash.audio) {
-      throw new Error('未找到音频流')
-    }
-    if (enableDolby && response.dash.dolby?.audio) {
-      return {
-        url: response.dash.dolby.audio[0].baseUrl,
-        quality: response.dash.dolby.audio[0].id,
-        getTime: Date.now() + 60, // 在当前时间基础上加 60 秒，做个提前量
-        type: 'dash',
-      }
-    }
-    if (enableHiRes && response.dash.hiRes?.audio) {
-      return {
-        url: response.dash.hiRes.audio.baseUrl,
-        quality: response.dash.hiRes.audio.id,
-        getTime: Date.now() + 60,
-        type: 'dash',
-      }
-    }
-    for (const audio of response.dash.audio) {
-      if (audio.id === audioQuality) {
-        return {
-          url: audio.baseUrl,
-          quality: audio.id,
-          getTime: Date.now() + 60,
-          type: 'dash',
+  getAudioStream(
+    params: BilibiliAudioStreamParams,
+  ): ResultAsync<Track['biliStreamUrl'], BilibiliApiMethodError> {
+    const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params
+    return apiClient
+      .get<BilibiliAudioStreamResponse>(
+        '/x/player/wbi/playurl',
+        {
+          bvid,
+          cid: String(cid),
+          fnval: '16', // 16 表示 dash 格式
+        },
+        getCookie(),
+      )
+      .andThen((response) => {
+        const { dash } = response
+
+        if (!dash?.audio || dash.audio.length === 0) {
+          return errAsync(new AudioStreamError('未找到有效的音频流数据'))
         }
-      }
-    }
-    // 最后如果都没有符合条件的，做个兜底，选择最高质量的音频流
-    return {
-      url: response.dash.audio[0].baseUrl,
-      quality: response.dash.audio[0].id,
-      getTime: Date.now() + 60,
-      type: 'dash',
-    }
+
+        let stream: Track['biliStreamUrl'] | null = null
+        const getTime = Date.now() + 60 * 1000 // 加 60s 提前量
+
+        // Dolby
+        if (enableDolby && dash.dolby?.audio && dash.dolby.audio.length > 0) {
+          stream = {
+            url: dash.dolby.audio[0].baseUrl,
+            quality: dash.dolby.audio[0].id,
+            getTime,
+            type: 'dash',
+          }
+          // Hi-Res
+        } else if (enableHiRes && dash.hiRes?.audio) {
+          stream = {
+            url: dash.hiRes.audio.baseUrl,
+            quality: dash.hiRes.audio.id,
+            getTime,
+            type: 'dash',
+          }
+          // 筛选指定质量
+        } else {
+          const targetAudio = dash.audio.find(
+            (audio) => audio.id === audioQuality,
+          )
+          if (targetAudio) {
+            stream = {
+              url: targetAudio.baseUrl,
+              quality: targetAudio.id,
+              getTime,
+              type: 'dash',
+            }
+          }
+        }
+
+        // 如果没有找到匹配的流，则使用第一个可用流（最高质量）
+        if (!stream) {
+          stream = {
+            url: dash.audio[0].baseUrl,
+            quality: dash.audio[0].id,
+            getTime,
+            type: 'dash',
+          }
+        }
+
+        return okAsync(stream)
+      })
   },
 
   /**
    * 获取视频分P列表
    */
-  async getPageList(bvid: string): Promise<
+  getPageList(bvid: string): ResultAsync<
     {
       cid: number
       page: number
       part: string
       duration: number
       first_frame: string
-    }[]
+    }[],
+    BilibiliApiError
   > {
-    const response = await apiClient.get<
+    return apiClient.get<
       {
         cid: number
         page: number
@@ -323,167 +356,167 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       },
       getCookie(),
     )
-    return response
   },
 
   /**
    * 获取用户信息
    */
-  async getUserInfo(): Promise<BilibiliUserInfo> {
-    const response = await apiClient.get<BilibiliUserInfo>(
+  getUserInfo(): ResultAsync<BilibiliUserInfo, BilibiliApiError> {
+    return apiClient.get<BilibiliUserInfo>(
       '/x/space/myinfo',
       undefined,
       getCookie(),
     )
-    return response
   },
 
   /**
    * 获取收藏夹内容(分页)
-   * （已过滤掉非视频稿件和失效视频）
    */
-  async getFavoriteListContents(
+  getFavoriteListContents(
     favoriteId: number,
     pn: number,
-  ): Promise<{
-    tracks: Track[]
-    hasMore: boolean
-    favoriteMeta: BilibiliFavoriteListContents['info']
-  }> {
-    const response = await apiClient.get<BilibiliFavoriteListContents>(
-      '/x/v3/fav/resource/list',
-      {
-        media_id: favoriteId.toString(),
-        pn: pn.toString(),
-        ps: '20',
-      },
-      getCookie(),
-    )
-    return {
-      tracks: transformFavoriteContentsToTracks(response.medias),
-      hasMore: response.has_more,
-      favoriteMeta: response.info,
-    }
+  ): ResultAsync<
+    {
+      tracks: Track[]
+      hasMore: boolean
+      favoriteMeta: BilibiliFavoriteListContents['info']
+    },
+    BilibiliApiError
+  > {
+    return apiClient
+      .get<BilibiliFavoriteListContents>(
+        '/x/v3/fav/resource/list',
+        {
+          media_id: favoriteId.toString(),
+          pn: pn.toString(),
+          ps: '20', // Page size
+        },
+        getCookie(),
+      )
+      .map((response) => ({
+        tracks: transformFavoriteContentsToTracks(response.medias),
+        hasMore: response.has_more,
+        favoriteMeta: response.info,
+      }))
   },
 
   /**
-   * 获取收藏夹所有视频内容（仅bvid）
-   * （已过滤掉非视频稿件）
+   * 获取收藏夹所有视频内容（仅bvid和类型）
    */
-  async getFavoriteListAllContents(
+  getFavoriteListAllContents(
     favoriteId: number,
-  ): Promise<BilibiliFavoriteListAllContents> {
-    const response = await apiClient.get<BilibiliFavoriteListAllContents>(
-      '/x/v3/fav/resource/ids',
-      {
-        media_id: favoriteId.toString(),
-      },
-      getCookie(),
-    )
-    return response.filter((item) => item.type === 2)
+  ): ResultAsync<BilibiliFavoriteListAllContents, BilibiliApiError> {
+    return apiClient
+      .get<BilibiliFavoriteListAllContents>(
+        '/x/v3/fav/resource/ids',
+        {
+          media_id: favoriteId.toString(),
+        },
+        getCookie(),
+      )
+      .map((response) => response.filter((item) => item.type === 2)) // 过滤非视频稿件
   },
 
   /**
    * 获取视频详细信息
    */
-  async getVideoDetails(bvid: string): Promise<BilibiliVideoDetails> {
-    const response = await apiClient.get<BilibiliVideoDetails>(
+  getVideoDetails(
+    bvid: string,
+  ): ResultAsync<BilibiliVideoDetails, BilibiliApiError> {
+    // Direct pass-through
+    return apiClient.get<BilibiliVideoDetails>(
       '/x/web-interface/view',
       {
         bvid,
       },
       getCookie(),
     )
-    return response
   },
 
   /**
    * 批量删除收藏夹内容
    */
-  async batchDeleteFavoriteListContents(
+  batchDeleteFavoriteListContents(
     favoriteId: number,
     bvids: string[],
-  ): Promise<void> {
-    const resources: string[] = []
-    for (const bvid of bvids) {
-      resources.push(`${bv2av(bvid)}:2`)
-    }
+  ): ResultAsync<void, BilibiliApiMethodError> {
+    const resourcesResult = Result.fromThrowable(
+      () => bvids.map((bvid) => `${bv2av(bvid)}:2`), // bv2av could throw if bvid is invalid format, though unlikely here
+      (e) =>
+        new Error(
+          `转换 bvid 到 avid 失败: ${e instanceof Error ? e.message : String(e)}`,
+        ),
+    )()
 
-    const regex = /(^|;)\s*bili_jct\s*=\s*([^;]+)/
-    const csrf = getCookie().match(regex)
-    if (!csrf) {
-      throw new BilibiliApiError(
-        'batchDeleteFavoriteListContents: 获取 csrf 失败，请检查是否填入正确 cookie！',
-        0,
-        { cookie: getCookie(), favoriteId, bvids },
-      )
-    }
+    const csrfResult = Result.fromThrowable(
+      () => {
+        const cookie = getCookie()
+        const regex = /(^|;)\s*bili_jct\s*=\s*([^;]+)/
+        const match = cookie.match(regex)
+        if (!match || !match[2]) {
+          throw new CsrfError(
+            'batchDeleteFavoriteListContents: 获取 csrf 失败，请检查 cookie',
+            { cookie, favoriteId, bvids },
+          )
+        }
+        return match[2]
+      },
+      (e) =>
+        e instanceof CsrfError
+          ? e
+          : new Error(
+              `提取 CSRF 时发生未知错误: ${e instanceof Error ? e.message : String(e)}`,
+            ),
+    )()
 
-    const data = {
-      resources: resources.join(','),
-      media_id: String(favoriteId),
-      csrf: csrf[2],
-      platform: 'web',
-    }
-
-    await apiClient.post<void>(
-      '/x/v3/fav/resource/batch-del',
-      new URLSearchParams(data).toString(),
-      getCookie(),
+    return Result.combine([resourcesResult, csrfResult]).asyncAndThen(
+      ([resources, csrfToken]) => {
+        const data = {
+          resources: resources.join(','),
+          media_id: String(favoriteId),
+          csrf: csrfToken,
+          platform: 'web',
+        }
+        return apiClient.post<void>(
+          '/x/v3/fav/resource/batch-del',
+          new URLSearchParams(data),
+          getCookie(),
+        )
+      },
     )
-
-    return
   },
 
   /**
    * 获取用户追更的视频合集/收藏夹（非用户自己创建的）
    */
-  async getCollectionsList(
+  getCollectionsList(
     pageNumber: number,
     mid: number,
-  ): Promise<{ list: BilibiliCollection[]; count: number; hasMore: boolean }> {
-    const response = await apiClient.get<{
-      list: BilibiliCollection[]
-      count: number
-      has_more: boolean
-    }>(
-      '/x/v3/fav/folder/collected/list',
-      {
-        pn: pageNumber.toString(),
-        ps: '70',
-        up_mid: mid.toString(),
-        platform: 'web',
-      },
-      getCookie(),
-    )
-    return {
-      list: response.list,
-      count: response.count,
-      hasMore: response.has_more,
-    }
+  ): ResultAsync<
+    { list: BilibiliCollection[]; count: number; hasMore: boolean },
+    BilibiliApiError
+  > {
+    return apiClient
+      .get<{
+        list: BilibiliCollection[]
+        count: number
+        has_more: boolean
+      }>(
+        '/x/v3/fav/folder/collected/list',
+        {
+          pn: pageNumber.toString(),
+          ps: '70', // Page size
+          up_mid: mid.toString(),
+          platform: 'web',
+        },
+        getCookie(),
+      )
+      .map((response) => ({
+        list: response.list ?? [],
+        count: response.count,
+        hasMore: response.has_more,
+      }))
   },
-
-  /**
-   * 获取追更合集内容(分页)
-   */
-  // async getCollectionContents(collectionId: number, pageNumber: number): Promise<> {
-  //   const response = await apiClient.get<{
-  //     list: BilibiliCollection[]
-  //     count: number
-  //   }>(
-  //     '/x/space/fav/season/list',
-  //     {
-  //       pn: pageNumber.toString(),
-  //       ps: '40', // FIXME: 官网请求是 40，实际多少未知
-  //       season_id: collectionId.toString(),
-  //     },
-  //     getCookie(),
-  //   )
-  //   return {
-  //     list: response.list,
-  //     count: response.count,
-  //     hasMore: response.has_more,
-  //   }
-  // },
 })
+
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>

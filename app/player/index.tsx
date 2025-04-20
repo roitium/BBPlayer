@@ -84,9 +84,7 @@ function DragableProgressBar() {
       },
       onPanResponderRelease: (_, gestureState) => {
         // 处理点击事件（10px 真的够用吗）
-        console.log(gestureState.moveX)
         if (gestureState.moveX < 10) {
-          console.log('点击事件')
           setIsDragging(false)
           return
         }

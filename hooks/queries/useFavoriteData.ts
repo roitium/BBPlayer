@@ -1,6 +1,16 @@
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
-import Toast from 'react-native-toast-message'
+import { BilibiliApiError, CsrfError } from '@/utils/errors'
+import { showToast } from '@/utils/toast'
+import { throwResultAsync } from '@/utils/neverthrowUtils'
+import log from '@/utils/log'
+
+const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
 export const favoriteListQueryKeys = {
   all: ['favoriteList'] as const,
@@ -24,9 +34,11 @@ export const useInfiniteFavoriteList = (
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId),
     queryFn: ({ pageParam }) =>
-      bilibiliApi.getFavoriteListContents(favoriteId, pageParam),
+      throwResultAsync(
+        bilibiliApi.getFavoriteListContents(favoriteId, pageParam),
+      ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages, lastPageParam) =>
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
   })
@@ -43,9 +55,10 @@ export const useGetFavoritePlaylists = (
 ) => {
   return useQuery({
     queryKey: favoriteListQueryKeys.allFavoriteList(),
-    queryFn: () => bilibiliApi.getFavoritePlaylists(userMid as number), // 这里需要断言，因为下面的enabled依赖于userMid
-    staleTime: 5 * 60 * 1000,
-    enabled: !!userMid,
+    queryFn: () =>
+      throwResultAsync(bilibiliApi.getFavoritePlaylists(userMid as number)),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!userMid, // 依赖 userMid
   })
 }
 
@@ -55,23 +68,41 @@ export const useGetFavoritePlaylists = (
 export const useBatchDeleteFavoriteListContents = (
   bilibiliApi: BilibiliApi,
 ) => {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (params: { bvids: string[]; favoriteId: number }) =>
-      bilibiliApi.batchDeleteFavoriteListContents(
-        params.favoriteId,
-        params.bvids,
+      throwResultAsync(
+        bilibiliApi.batchDeleteFavoriteListContents(
+          params.favoriteId,
+          params.bvids,
+        ),
       ),
-    onSuccess: (data, variables) => {
-      Toast.show({
-        type: 'success',
-        text1: '删除成功',
+    onSuccess: (_data, variables) => {
+      showToast({
+        severity: 'success',
+        title: '删除成功',
       })
-      // 在 production 版本这行代码不生效，不知道什么原因，现在刷新逻辑直接放在 mutate 之后
-      // queryClient.refetchQueries({
-      //   queryKey: favoriteListQueryKeys.infiniteFavoriteList(
-      //     variables.favoriteId,
-      //   ), // 刷新收藏夹内容
-      // })
+      queryClient.invalidateQueries({
+        queryKey: favoriteListQueryKeys.infiniteFavoriteList(
+          variables.favoriteId,
+        ),
+      })
+    },
+    onError: (error) => {
+      let errorMessage = '删除失败，请稍后重试'
+      if (error instanceof CsrfError) {
+        errorMessage = '删除失败：安全验证过期，请检查 cookie 后重试'
+      } else if (error instanceof BilibiliApiError) {
+        errorMessage = `删除失败：${error.message} (${error.msgCode})`
+      }
+
+      showToast({
+        severity: 'error',
+        title: '操作失败',
+        message: errorMessage,
+      })
+      favoriteListLog.error('删除收藏夹内容失败:', error)
     },
   })
 }
@@ -85,11 +116,12 @@ export const useInfiniteCollectionsList = (
 ) => {
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteCollectionList(mid),
-    queryFn: ({ pageParam }) => bilibiliApi.getCollectionsList(pageParam, mid),
+    queryFn: ({ pageParam }) =>
+      throwResultAsync(bilibiliApi.getCollectionsList(pageParam, mid)),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages, lastPageParam) =>
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
-    enabled: !!mid,
+    enabled: !!mid, // 依赖 mid
   })
 }
