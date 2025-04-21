@@ -554,8 +554,14 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
     // 下一曲
     skipToNext: async () => {
-      const { queue, currentIndex, shuffleMode, repeatMode, shuffledQueue } =
-        get()
+      const {
+        queue,
+        currentIndex,
+        shuffleMode,
+        repeatMode,
+        shuffledQueue,
+        isPlaying,
+      } = get()
       logDetailedDebug('调用 skipToNext()', {
         queueLength: queue.length,
         currentIndex,
@@ -571,6 +577,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
         if (currentQueue.length <= 1) {
           logDetailedDebug('队列中没有（或只有一首）曲目，无法跳转')
+          await TrackPlayer.pause() // 停止播放
           set({ isPlaying: false })
           return
         }
