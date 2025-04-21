@@ -56,6 +56,14 @@ export default function CollectionPage() {
     [addToQueue],
   )
 
+  // 获取收藏夹数据
+  const {
+    data: collectionData,
+    isPending: isCollectionDataPending,
+    isError: isCollectionDataError,
+    refetch,
+  } = useCollectionAllContents(bilibiliApi, Number(id))
+
   // 播放全部
   const playAll = useCallback(
     async (startFromId?: string) => {
@@ -76,16 +84,8 @@ export default function CollectionPage() {
         playlistLog.sentry('播放全部失败', error)
       }
     },
-    [addToQueue],
+    [addToQueue, collectionData],
   )
-
-  // 获取收藏夹数据
-  const {
-    data: collectionData,
-    isPending: isCollectionDataPending,
-    isError: isCollectionDataError,
-    refetch,
-  } = useCollectionAllContents(bilibiliApi, Number(id))
 
   const renderItem = useCallback(
     ({ item, index }: { item: Track; index: number }) => {
