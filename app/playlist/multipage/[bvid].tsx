@@ -311,8 +311,7 @@ const TrackItem = memo(function TrackItem({
           </Text>
           <Image
             source={{ uri: item.cover }}
-            resizeMode='stretch'
-            style={{ width: 85, height: 48, borderRadius: 4 }}
+            style={{ width: 48, height: 48, borderRadius: 4 }}
           />
           <View className='ml-3 flex-1'>
             <Text variant='titleMedium'>{item.title}</Text>
