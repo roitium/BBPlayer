@@ -397,8 +397,27 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             logDetailedDebug('立即播放模式，插入到当前播放曲目之后')
             const insertIndex = state.currentIndex + 1
             state.queue.splice(insertIndex, 0, ...newTracks)
-
-            if (startFromId) {
+            if (startFromCid) {
+              let startFromIndex: number
+              playerLog.debug(
+                '指定了起始 cid，将 currentIndex 和 currentTrack 更新',
+              )
+              startFromIndex = state.queue.findIndex(
+                (t) => t.cid === startFromCid,
+              )
+              if (startFromIndex !== -1) {
+                logDetailedDebug(
+                  '指定了起始 cid，将 currentIndex 和 currentTrack 更新',
+                  {
+                    startFromIndex,
+                    startFromId,
+                    currentTrack: state.currentTrack?.title,
+                  },
+                )
+                state.currentIndex = startFromIndex
+                state.currentTrack = state.queue[startFromIndex]
+              }
+            } else if (startFromId) {
               let startFromIndex: number
               startFromIndex = state.queue.findIndex(
                 (t) => t.id === startFromId,
@@ -415,24 +434,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
                 state.currentIndex = startFromIndex
                 state.currentTrack = state.queue[startFromIndex]
               }
-              if (startFromCid) {
-                startFromIndex = state.queue.findIndex(
-                  (t) => t.cid === startFromCid,
-                )
-                if (startFromIndex !== -1) {
-                  logDetailedDebug(
-                    '指定了起始 cid，将 currentIndex 和 currentTrack 更新',
-                    {
-                      startFromIndex,
-                      startFromId,
-                      currentTrack: state.currentTrack?.title,
-                    },
-                  )
-                  state.currentIndex = startFromIndex
-                  state.currentTrack = state.queue[startFromIndex]
-                }
-              }
             } else {
+              playerLog.debug('更新当前索引和曲目')
               // 更新当前索引和曲目
               state.currentIndex = insertIndex
               state.currentTrack = newTracks[0]
@@ -846,14 +849,10 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             cid: metadata.value.cid,
             hasMetadata: true,
           }
-          playerLog.debug(updatedTrack)
-          playerLog.debug(get().queue)
 
           // 在这里立即更新当前曲目的信息，避免显示空白。
-          playerLog.debug(get())
           set(
             produce((state: PlayerState) => {
-              playerLog.debug('1111111', { state: state.queue })
               const queueIndex = state.queue.findIndex((t) =>
                 isTargetTrack(t, updatedTrack.id, updatedTrack.cid),
               )
@@ -904,12 +903,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             }),
           )
         }
-        playerLog.debug(get().queue)
         return ok({ track: finalTrack, needsUpdate: true })
       } catch (error) {
-        if (error instanceof Error) {
-          playerLog.error(error.stack)
-        }
         return err(error)
       }
     },

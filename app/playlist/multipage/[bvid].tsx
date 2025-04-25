@@ -84,6 +84,33 @@ export default function MultipagePage() {
     }
   }, [multipageData, videoData])
 
+  // 播放全部
+  const playAll = useCallback(
+    async (startFromCid?: number) => {
+      try {
+        if (!tracksData || tracksData.length === 0) {
+          showToast({
+            severity: 'error',
+            title: '未知错误，tracksData 为空',
+          })
+          playlistLog.error('未知错误，tracksData 为空', tracksData)
+          return
+        }
+        playlistLog.debug('开始播放全部', { startFromCid })
+        await addToQueue({
+          tracks: tracksData,
+          playNow: true,
+          clearQueue: true,
+          startFromCid,
+          playNext: false,
+        })
+      } catch (error) {
+        playlistLog.sentry('播放全部失败', error)
+      }
+    },
+    [addToQueue, tracksData],
+  )
+
   const renderItem = useCallback(
     ({ item, index }: { item: Track; index: number }) => {
       return (
@@ -97,34 +124,7 @@ export default function MultipagePage() {
         />
       )
     },
-    [menuVisible, playNext],
-  )
-
-  // 播放全部
-  const playAll = useCallback(
-    async (startFromId?: string) => {
-      try {
-        if (!tracksData || tracksData.length === 0) {
-          showToast({
-            severity: 'error',
-            title: '未知错误，tracksData 为空',
-          })
-          playlistLog.error('未知错误，tracksData 为空', tracksData)
-          return
-        }
-        playlistLog.debug('开始播放全部', { tracksData })
-        await addToQueue({
-          tracks: tracksData,
-          playNow: true,
-          clearQueue: true,
-          startFromId,
-          playNext: false,
-        })
-      } catch (error) {
-        playlistLog.sentry('播放全部失败', error)
-      }
-    },
-    [addToQueue, tracksData],
+    [menuVisible, playNext, playAll],
   )
 
   // 这里使用 cid
@@ -285,16 +285,15 @@ const TrackItem = memo(function TrackItem({
 }: {
   item: Track
   index: number
-  playAll: (startFromId?: string) => Promise<void>
+  playAll: (startFromCid?: number) => Promise<void>
   menuVisible: number | null
   setMenuVisible: Dispatch<SetStateAction<number | null>>
   playNext: (track: Track) => Promise<void>
 }) {
   return (
     <TouchableRipple
-      key={item.cid}
       style={{ paddingVertical: 5 }}
-      onPress={() => playAll(item.id)}
+      onPress={() => playAll(item.cid)}
     >
       <Surface
         className='overflow-hidden rounded-lg'
