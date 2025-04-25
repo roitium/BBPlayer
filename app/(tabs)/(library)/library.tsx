@@ -217,6 +217,10 @@ const FavoriteFolderListComponent = memo(
       )
     }
 
+    const filteredPlaylists = playlists?.filter(
+      (item) => !item.title.startsWith('[mp]'),
+    )
+
     return (
       <>
         <View className='mb-2 flex-row items-center justify-between'>
@@ -232,7 +236,7 @@ const FavoriteFolderListComponent = memo(
           className='flex-1'
           contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
-          data={playlists}
+          data={filteredPlaylists}
           renderItem={renderPlaylistItem}
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text className='text-center'>没有收藏夹</Text>}

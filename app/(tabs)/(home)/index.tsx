@@ -278,6 +278,8 @@ function FavoriteList({
     router.push('/library')
   }
 
+  const filteredData = data?.filter((item) => !item.title.startsWith('[mp]'))
+
   return (
     <>
       <View className='mb-2 flex-row items-center justify-between px-4'>
@@ -316,7 +318,7 @@ function FavoriteList({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
         >
-          {data.map((item) => (
+          {filteredData?.map((item) => (
             <PlaylistItem
               key={item.id.toString()}
               item={item}
