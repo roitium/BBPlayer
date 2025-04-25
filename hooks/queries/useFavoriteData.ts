@@ -35,18 +35,19 @@ export const favoriteListQueryKeys = {
  */
 export const useInfiniteFavoriteList = (
   bilibiliApi: BilibiliApi,
-  favoriteId: number,
+  favoriteId?: number,
 ) => {
   return useInfiniteQuery({
-    queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId),
+    queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId as number),
     queryFn: ({ pageParam }) =>
       throwResultAsync(
-        bilibiliApi.getFavoriteListContents(favoriteId, pageParam),
+        bilibiliApi.getFavoriteListContents(favoriteId as number, pageParam),
       ),
     initialPageParam: 1,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
+    enabled: !!favoriteId, // 依赖 favoriteId
   })
 }
 

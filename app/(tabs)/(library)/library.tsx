@@ -15,15 +15,17 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import useAppStore from '@/lib/store/useAppStore'
-import type { Playlist } from '@/types/core/media'
+import type { Playlist, Track } from '@/types/core/media'
 import { router } from 'expo-router'
 import {
   useGetFavoritePlaylists,
   useInfiniteCollectionsList,
+  useInfiniteFavoriteList,
 } from '@/hooks/queries/useFavoriteData'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import { usePersonalInformation } from '@/hooks/queries/useUserData'
 import FastImage from '@d11/react-native-fast-image'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 export default function LibraryScreen() {
   const { colors } = useTheme()
@@ -97,8 +99,9 @@ export default function LibraryScreen() {
           value={value}
           onValueChange={setValue}
           buttons={[
-            { value: 'favorite', label: '我的收藏夹', icon: 'folder-open' },
-            { value: 'collection', label: '合集追更', icon: 'book' },
+            { value: 'favorite', label: '收藏夹', icon: 'star' },
+            { value: 'collection', label: '合集', icon: 'book' },
+            { value: 'multipage', label: '分 p', icon: 'video' },
           ]}
           style={{ marginBottom: 16, width: '70%', marginHorizontal: 'auto' }}
         />
@@ -108,6 +111,7 @@ export default function LibraryScreen() {
       <View className='flex-1 px-4'>
         <FavoriteFolderListComponent isHidden={value !== 'favorite'} />
         <CollectionListComponent isHidden={value !== 'collection'} />
+        <MultiPageVideosListComponent isHidden={value !== 'multipage'} />
       </View>
 
       {/* 浮动操作按钮 */}
@@ -376,6 +380,164 @@ const CollectionListItem = memo(
                 <Text variant='bodySmall'>
                   {item.state === 0 ? item.upper.name : '已失效'} •{' '}
                   {item.media_count} 首歌曲
+                </Text>
+              </View>
+              <Icon
+                source='arrow-right'
+                size={24}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+        <Divider />
+      </View>
+    )
+  },
+)
+
+/**
+ * 渲染分 p 视频页面
+ */
+const MultiPageVideosListComponent = memo(
+  ({
+    isHidden,
+  }: {
+    isHidden: boolean
+  }) => {
+    const bilibiliApi = useAppStore((state) => state.bilibiliApi)
+    const {
+      data: playlists,
+      isPending: playlistsIsPending,
+      isError: playlistsIsError,
+    } = useGetFavoritePlaylists(bilibiliApi)
+    const {
+      data: favoriteData,
+      isPending: isFavoriteDataPending,
+      isError: isFavoriteDataError,
+      isLoading: isFavoriteDataLoading,
+      fetchNextPage,
+      refetch,
+      hasNextPage,
+    } = useInfiniteFavoriteList(
+      bilibiliApi,
+      playlists?.find((item) => item.title.startsWith('[mp]'))?.id,
+    )
+
+    // 渲染收藏夹项
+    const renderPlaylistItem = useCallback(
+      ({ item }: { item: Track }) => <MultiPageVideosItem item={item} />,
+      [],
+    )
+
+    const keyExtractor = useCallback((item: Track) => item.id.toString(), [])
+
+    if (isHidden) return null
+
+    // 不使用 isFavoriteDataPending，因为这个状态在 disable 时是 true，导致会一直显示 ActivityIndicator
+    if (playlistsIsPending || isFavoriteDataLoading) {
+      return (
+        <View className='flex-1 items-center justify-center'>
+          <ActivityIndicator size='large' />
+        </View>
+      )
+    }
+
+    if (playlistsIsError || isFavoriteDataError) {
+      return (
+        <View className='flex-1 items-center justify-center'>
+          <Text
+            variant='titleMedium'
+            className='text-center'
+          >
+            加载失败
+          </Text>
+        </View>
+      )
+    }
+
+    if (!playlists.find((item) => item.title.startsWith('[mp]'))) {
+      return (
+        <View className='flex-1 items-center justify-center'>
+          <Text
+            variant='titleMedium'
+            className='text-center'
+          >
+            未找到分 p 视频收藏夹，请先创建一个收藏夹，并以 [mp] 开头
+          </Text>
+        </View>
+      )
+    }
+
+    return (
+      <>
+        <View className='mb-2 flex-row items-center justify-between'>
+          <Text
+            variant='titleMedium'
+            style={{ fontWeight: 'bold' }}
+          >
+            分 p 视频
+          </Text>
+          <Text variant='bodyMedium'>
+            {favoriteData?.pages[0].favoriteMeta.media_count} 个分 p 视频
+          </Text>
+        </View>
+        <FlatList
+          className='flex-1'
+          contentContainerStyle={{ paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
+          data={favoriteData?.pages.flatMap((page) => page.tracks)}
+          renderItem={renderPlaylistItem}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={
+            <Text className='text-center'>没有分 p 视频</Text>
+          }
+          onEndReached={hasNextPage ? () => fetchNextPage() : null}
+          ListFooterComponent={
+            hasNextPage ? (
+              <View className='flex-row items-center justify-center p-4'>
+                <ActivityIndicator size='small' />
+              </View>
+            ) : null
+          }
+        />
+      </>
+    )
+  },
+)
+
+/**
+ * 渲染分 p 视频项
+ */
+const MultiPageVideosItem = memo(
+  ({
+    item,
+  }: {
+    item: Track
+  }) => {
+    return (
+      <View key={item.id}>
+        <View className='my-2 overflow-hidden'>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              router.push(`/playlist/multipage/${item.id}`)
+            }}
+          >
+            <View className='flex-row items-center p-2'>
+              <FastImage
+                source={{ uri: item.cover }}
+                style={{ width: 48, height: 48, borderRadius: 4 }}
+              />
+              <View className='ml-3 flex-1'>
+                <Text
+                  variant='titleMedium'
+                  className='pr-2'
+                >
+                  {item.title}
+                </Text>
+                <Text variant='bodySmall'>
+                  {item.artist} •{' '}
+                  {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
                 </Text>
               </View>
               <Icon
