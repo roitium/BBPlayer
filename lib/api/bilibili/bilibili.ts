@@ -16,6 +16,7 @@ import type {
   BilibiliCollectionAllContents,
   BilibiliMediaItem,
   BilibiliCollectionInfo,
+  BilibiliMultipageVideo,
 } from '@/types/apis/bilibili'
 import type { Track, Playlist } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/times'
@@ -192,6 +193,35 @@ const transformCollectionAllContentsToTracks = (
 }
 
 /**
+ * 将分 p 视频数据转换为 Track 数据
+ * @param videos 分 p 视频数据
+ * @param videoData 视频详细信息
+ * @returns
+ */
+const transformMultipageVideosToTracks = (
+  videos: BilibiliMultipageVideo[],
+  videoData: BilibiliVideoDetails,
+): Track[] => {
+  if (!videos) return []
+  try {
+    return videos.map((video) => ({
+      id: videoData.bvid,
+      cid: video.cid,
+      title: video.part,
+      artist: videoData.owner.name,
+      cover: video.first_frame,
+      source: 'bilibili' as const,
+      duration: video.duration,
+      createTime: videoData.pubdate,
+      hasMetadata: true,
+    }))
+  } catch (error) {
+    bilibiliApiLog.error('Error transforming multipage videos:', error)
+    return []
+  }
+}
+
+/**
  * 创建B站API客户端
  */
 export const createBilibiliApi = (getCookie: () => string) => ({
@@ -355,25 +385,10 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   /**
    * 获取视频分P列表
    */
-  getPageList(bvid: string): ResultAsync<
-    {
-      cid: number
-      page: number
-      part: string
-      duration: number
-      first_frame: string
-    }[],
-    BilibiliApiError
-  > {
-    return apiClient.get<
-      {
-        cid: number
-        page: number
-        part: string
-        duration: number
-        first_frame: string
-      }[]
-    >(
+  getPageList(
+    bvid: string,
+  ): ResultAsync<BilibiliMultipageVideo[], BilibiliApiError> {
+    return apiClient.get<BilibiliMultipageVideo[]>(
       '/x/player/pagelist',
       {
         bvid,
@@ -571,3 +586,4 @@ export const createBilibiliApi = (getCookie: () => string) => ({
 })
 
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>
+export { transformMultipageVideosToTracks }

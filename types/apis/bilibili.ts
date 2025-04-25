@@ -66,6 +66,7 @@ interface BilibiliVideoDetails {
   pic: string
   pubdate: number
   duration: number
+  desc: string
   owner: {
     name: string
   }
@@ -260,6 +261,17 @@ interface BilibiliCollectionAllContents {
   medias: BilibiliMediaItem[]
 }
 
+/**
+ * 分 p 视频数据
+ */
+interface BilibiliMultipageVideo {
+  cid: number
+  page: number
+  part: string
+  duration: number
+  first_frame: string
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -277,4 +289,5 @@ export type {
   BilibiliCollectionAllContents,
   BilibiliCollectionInfo,
   BilibiliMediaItem,
+  BilibiliMultipageVideo,
 }
