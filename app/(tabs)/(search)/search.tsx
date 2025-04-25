@@ -58,7 +58,12 @@ export default function SearchPage() {
   const playNext = useCallback(
     async (track: Track) => {
       try {
-        await addToQueue([track], false, false, undefined, true)
+        await addToQueue({
+          tracks: [track],
+          playNow: false,
+          clearQueue: false,
+          playNext: true,
+        })
       } catch (error) {
         searchLog.sentry('添加到队列失败', error)
       }
@@ -69,7 +74,12 @@ export default function SearchPage() {
   const playNow = useCallback(
     async (track: Track) => {
       try {
-        await addToQueue([track], true, false, undefined, false)
+        await addToQueue({
+          tracks: [track],
+          playNow: true,
+          clearQueue: false,
+          playNext: false,
+        })
       } catch (error) {
         searchLog.sentry('添加到队列失败', error)
       }

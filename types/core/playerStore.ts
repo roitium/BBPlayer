@@ -19,23 +19,33 @@ interface PlayerState {
   shuffledQueue: Track[]
 }
 
+interface addToQueueParams {
+  tracks: Track[]
+  playNow: boolean
+  clearQueue: boolean
+  startFromId?: string
+  startFromCid?: number
+  playNext: boolean
+}
+
 // 播放器操作接口
 interface PlayerActions {
   // 初始化
   initPlayer: () => Promise<void>
 
   // 队列操作
-  addToQueue: (
-    tracks: Track[],
-    playNow?: boolean,
-    clearQueue?: boolean,
-    startFromId?: string,
-    playNext?: boolean,
-  ) => Promise<void>
+  addToQueue: ({
+    tracks,
+    playNow,
+    clearQueue,
+    startFromId,
+    startFromCid,
+    playNext,
+  }: addToQueueParams) => Promise<void>
   clearQueue: () => Promise<void>
   skipToTrack: (index: number) => Promise<void>
   rntpQueue: () => Promise<RNTPTracker[]>
-  removeTrack: (id: string) => Promise<void>
+  removeTrack: (id: string, cid?: number) => Promise<void>
 
   // 播放控制
   togglePlay: () => Promise<void>
@@ -59,4 +69,4 @@ interface PlayerActions {
 // 完整的播放器存储类型
 type PlayerStore = PlayerState & PlayerActions
 
-export type { PlayerState, PlayerActions, PlayerStore }
+export type { PlayerState, PlayerActions, PlayerStore, addToQueueParams }

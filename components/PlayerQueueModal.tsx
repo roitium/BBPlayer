@@ -79,8 +79,10 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
   const switchTrackHandler = useCallback(
     (track: Track) => {
       const index = shuffleMode
-        ? shuffledQueue.findIndex((t) => t.id === track.id)
-        : queue.findIndex((t) => t.id === track.id)
+        ? shuffledQueue.findIndex(
+            (t) => t.id === track.id && t.cid === track.cid,
+          )
+        : queue.findIndex((t) => t.id === track.id && t.cid === track.cid)
       if (index === -1) return
       skipToTrack(index)
     },
@@ -89,12 +91,15 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
 
   const removeTrackHandler = useCallback(
     async (track: Track) => {
-      await removeTrack(track.id)
+      await removeTrack(track.id, track.cid)
     },
     [removeTrack],
   )
 
-  const keyExtractor = useCallback((item: Track) => item.id, [])
+  const keyExtractor = useCallback(
+    (item: Track) => `${item.id}-${item.cid}`,
+    [],
+  )
 
   const renderItem = useCallback(
     ({ item }: { item: Track }) => (
@@ -102,7 +107,11 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
         track={item}
         onSwitchTrack={switchTrackHandler}
         onRemoveTrack={removeTrackHandler}
-        isCurrentTrack={item.id === currentTrack?.id}
+        isCurrentTrack={
+          item.isMultiPage
+            ? item.cid === currentTrack?.cid
+            : item.id === currentTrack?.id
+        }
       />
     ),
     [switchTrackHandler, removeTrackHandler, currentTrack],

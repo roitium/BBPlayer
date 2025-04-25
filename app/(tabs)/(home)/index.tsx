@@ -444,7 +444,12 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 }) {
   const playSingleTrack = async (track: Track) => {
     try {
-      await usePlayerStore.getState().addToQueue([track], true, true)
+      await usePlayerStore.getState().addToQueue({
+        tracks: [track],
+        playNow: true,
+        clearQueue: true,
+        playNext: false,
+      })
     } catch (error) {
       homeLog.sentry('播放单曲失败', error)
     }
@@ -452,9 +457,12 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 
   const playNext = async (track: Track) => {
     try {
-      await usePlayerStore
-        .getState()
-        .addToQueue([track], false, false, undefined, true)
+      await usePlayerStore.getState().addToQueue({
+        tracks: [track],
+        playNow: false,
+        clearQueue: false,
+        playNext: true,
+      })
     } catch (error) {
       homeLog.sentry('添加到队列失败', error)
     }

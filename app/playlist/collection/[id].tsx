@@ -48,7 +48,12 @@ export default function CollectionPage() {
   const playNext = useCallback(
     async (track: Track) => {
       try {
-        await addToQueue([track], false, false, undefined, true)
+        await addToQueue({
+          tracks: [track],
+          playNow: false,
+          clearQueue: false,
+          playNext: true,
+        })
       } catch (error) {
         playlistLog.sentry('添加到队列失败', error)
       }
@@ -79,7 +84,13 @@ export default function CollectionPage() {
           )
           return
         }
-        await addToQueue(collectionData.medias, true, true, startFromId)
+        await addToQueue({
+          tracks: collectionData.medias,
+          playNow: true,
+          clearQueue: true,
+          startFromId,
+          playNext: false,
+        })
       } catch (error) {
         playlistLog.sentry('播放全部失败', error)
       }

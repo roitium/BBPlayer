@@ -52,7 +52,12 @@ export default function MultipagePage() {
   const playNext = useCallback(
     async (track: Track) => {
       try {
-        await addToQueue([track], false, false, undefined, true)
+        await addToQueue({
+          tracks: [track],
+          playNow: false,
+          clearQueue: false,
+          playNext: true,
+        })
       } catch (error) {
         playlistLog.sentry('添加到队列失败', error)
       }
@@ -108,7 +113,13 @@ export default function MultipagePage() {
           return
         }
         playlistLog.debug('开始播放全部', { tracksData })
-        await addToQueue(tracksData, true, true, startFromId, false, true)
+        await addToQueue({
+          tracks: tracksData,
+          playNow: true,
+          clearQueue: true,
+          startFromId,
+          playNext: false,
+        })
       } catch (error) {
         playlistLog.sentry('播放全部失败', error)
       }

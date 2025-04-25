@@ -50,7 +50,12 @@ export default function FavoritePage() {
   const playNext = useCallback(
     async (track: Track) => {
       try {
-        await addToQueue([track], false, false, undefined, true)
+        await addToQueue({
+          tracks: [track],
+          playNow: false,
+          clearQueue: false,
+          playNext: true,
+        })
       } catch (error) {
         playlistLog.sentry('添加到队列失败', error)
       }
@@ -74,12 +79,19 @@ export default function FavoritePage() {
           })
           return
         }
-        const allTracks = allContentIds.value.map((c) => ({
+        const allTracks: Track[] = allContentIds.value.map((c) => ({
           id: c.bvid,
           source: 'bilibili' as const,
           hasMetadata: false,
+          isMultiPage: false,
         }))
-        await addToQueue(allTracks, true, true, startFromId)
+        await addToQueue({
+          tracks: allTracks,
+          playNow: true,
+          clearQueue: true,
+          startFromId,
+          playNext: false,
+        })
       } catch (error) {
         playlistLog.sentry('播放全部失败', error)
       }

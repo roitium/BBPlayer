@@ -10,12 +10,17 @@ import TrackPlayer, {
 } from 'react-native-track-player'
 import type { Track } from '@/types/core/media'
 import { produce } from 'immer'
-import type { PlayerStore, PlayerState } from '@/types/core/playerStore'
+import type {
+  PlayerStore,
+  PlayerState,
+  addToQueueParams,
+} from '@/types/core/playerStore'
 import log from '@/utils/log'
 import {
   checkAndUpdateAudioStream,
   checkBilibiliAudioExpiry,
   convertToRNTPTrack,
+  isTargetTrack,
 } from '@/utils/player'
 import useAppStore from './useAppStore'
 import { PRELOAD_TRACKS } from '@/constants/player'
@@ -266,11 +271,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       return currentTrack ? [currentTrack] : []
     },
 
-    removeTrack: async (id: string) => {
-      logDetailedDebug('调用 removeTrack()', { id })
+    removeTrack: async (id: string, cid: number | undefined) => {
+      logDetailedDebug('调用 removeTrack()', { id, cid })
       const { queue, shuffledQueue, shuffleMode, currentTrack } = get()
       const currentQueue = shuffleMode ? shuffledQueue : queue
-      if (currentTrack?.id === id) {
+      if (currentTrack?.id === id && currentTrack?.cid === cid) {
         logDetailedDebug('当前正在播放的曲目被删除，判断是否是最后一首')
         if (currentQueue.length === 1) {
           logDetailedDebug('队列只有一首歌曲，清空队列并停止播放')
@@ -289,7 +294,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         }
         const lastTrack = currentQueue.at(-1)
         if (lastTrack) {
-          if (lastTrack.id === id) {
+          if (lastTrack.id === id && lastTrack.cid === cid) {
             logDetailedDebug('是最后一首，则跳转到上一首')
             await get().skipToPrevious()
           } else {
@@ -298,10 +303,10 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
           }
         }
       }
-      const queueIndex = queue.findIndex((t) => t.id === id)
+      const queueIndex = queue.findIndex((t) => t.id === id && t.cid === cid)
       if (queueIndex === -1) {
         logDetailedDebug(
-          '在队列中找不到该曲目，无法删除，已上报日志并重置播放器',
+          '在队列中找不到该曲目，无法删除，已记录日志并重置播放器',
         )
         showToast({
           message: '在播放列表中找不到该曲目，已重置播放器',
@@ -311,7 +316,9 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         await get().clearQueue()
         return
       }
-      const shuffledQueueIndex = shuffledQueue.findIndex((t) => t.id === id)
+      const shuffledQueueIndex = shuffledQueue.findIndex(
+        (t) => t.id === id && t.cid === cid,
+      )
       // 当没有开启过随机模式时，shuffledQueue 为空，所以在判断 shuffledQueueIndex 时还需要判断列表不为空
       if (shuffledQueueIndex === -1 && shuffledQueue.length > 0) {
         logDetailedDebug(
@@ -339,17 +346,19 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
      * @param tracks
      * @param playNow 是否立即播放（在 startFromId 为空时是播放新增队列的第一首歌曲）
      * @param clearQueue
-     * @param startFromId 从指定曲目（靠 id 索引）开始播放
+     * @param startFromId 从指定 id 开始播放
+     * @param startFromCid 从指定 cid 开始播放
      * @param playNext （仅在 playNow 为 false 时）是否把新曲目插入到当前播放曲目的后面
      * @returns
      */
-    addToQueue: async (
-      tracks: Track[],
-      playNow = true,
-      clearQueue = false,
-      startFromId?: string,
-      playNext = false,
-    ) => {
+    addToQueue: async ({
+      tracks,
+      playNow,
+      clearQueue,
+      startFromId,
+      startFromCid,
+      playNext,
+    }: addToQueueParams) => {
       logDetailedDebug('调用 addToQueue()', {
         tracksCount: tracks.length,
         tracks: tracks.map((t) => ({ id: t.id, title: t.title })),
@@ -374,7 +383,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
           // 过滤重复ID
           const newTracks = tracks.filter(
-            (track) => !state.queue.some((t) => t.id === track.id),
+            (track) =>
+              !state.queue.some((t) => isTargetTrack(t, track.id, track.cid)),
           )
 
           if (newTracks.length === 0) {
@@ -389,7 +399,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             state.queue.splice(insertIndex, 0, ...newTracks)
 
             if (startFromId) {
-              const startFromIndex = state.queue.findIndex(
+              let startFromIndex: number
+              startFromIndex = state.queue.findIndex(
                 (t) => t.id === startFromId,
               )
               if (startFromIndex !== -1) {
@@ -403,6 +414,23 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
                 )
                 state.currentIndex = startFromIndex
                 state.currentTrack = state.queue[startFromIndex]
+              }
+              if (startFromCid) {
+                startFromIndex = state.queue.findIndex(
+                  (t) => t.cid === startFromCid,
+                )
+                if (startFromIndex !== -1) {
+                  logDetailedDebug(
+                    '指定了起始 cid，将 currentIndex 和 currentTrack 更新',
+                    {
+                      startFromIndex,
+                      startFromId,
+                      currentTrack: state.currentTrack?.title,
+                    },
+                  )
+                  state.currentIndex = startFromIndex
+                  state.currentTrack = state.queue[startFromIndex]
+                }
               }
             } else {
               // 更新当前索引和曲目
@@ -712,8 +740,9 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             state.shuffleMode = false
             // 找到当前播放曲目在原始队列中的索引
             if (state.currentTrack) {
-              state.currentIndex = state.queue.findIndex(
-                (track) => track.id === state.currentTrack?.id,
+              const currentTrack = state.currentTrack
+              state.currentIndex = state.queue.findIndex((track) =>
+                isTargetTrack(track, currentTrack.id, currentTrack.cid),
               )
             }
             state.shuffledQueue = []
@@ -734,8 +763,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         }
 
         // 确保当前播放的歌曲在打乱后的队列中位置不变
-        const currentTrackIndex = shuffledQueue.findIndex(
-          (track) => track.id === queue[currentIndex].id,
+        const currentTrackIndex = shuffledQueue.findIndex((track) =>
+          isTargetTrack(track, queue[currentIndex].id, queue[currentIndex].cid),
         )
         if (currentTrackIndex !== -1) {
           ;[shuffledQueue[0], shuffledQueue[currentTrackIndex]] = [
@@ -799,6 +828,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         if (!track.hasMetadata) {
           logDetailedDebug('这个 track 没有元数据，先获取元数据', {
             trackId: track.id,
+            cid: track.cid,
           })
           const bilibiliApi = useAppStore.getState().bilibiliApi
           const metadata = await bilibiliApi.getVideoDetails(track.id)
@@ -816,17 +846,22 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             cid: metadata.value.cid,
             hasMetadata: true,
           }
+          playerLog.debug(updatedTrack)
+          playerLog.debug(get().queue)
+
           // 在这里立即更新当前曲目的信息，避免显示空白。
+          playerLog.debug(get())
           set(
             produce((state: PlayerState) => {
-              const queueIndex = state.queue.findIndex(
-                (t) => t.id === updatedTrack.id,
+              playerLog.debug('1111111', { state: state.queue })
+              const queueIndex = state.queue.findIndex((t) =>
+                isTargetTrack(t, updatedTrack.id, updatedTrack.cid),
               )
               if (queueIndex !== -1) {
                 state.queue[queueIndex] = updatedTrack
               }
-              const shuffledQueueIndex = state.shuffledQueue.findIndex(
-                (t) => t.id === updatedTrack.id,
+              const shuffledQueueIndex = state.shuffledQueue.findIndex((t) =>
+                isTargetTrack(t, updatedTrack.id, updatedTrack.cid),
               )
               if (shuffledQueueIndex !== -1) {
                 state.shuffledQueue[shuffledQueueIndex] = updatedTrack
@@ -854,14 +889,14 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
           })
           set(
             produce((state: PlayerState) => {
-              const queueIndex = state.queue.findIndex(
-                (t) => t.id === finalTrack.id,
+              const queueIndex = state.queue.findIndex((t) =>
+                isTargetTrack(t, finalTrack.id, finalTrack.cid),
               )
               if (queueIndex !== -1) {
                 state.queue[queueIndex] = finalTrack
               }
-              const shuffledQueueIndex = state.shuffledQueue.findIndex(
-                (t) => t.id === finalTrack.id,
+              const shuffledQueueIndex = state.shuffledQueue.findIndex((t) =>
+                isTargetTrack(t, finalTrack.id, finalTrack.cid),
               )
               if (shuffledQueueIndex !== -1) {
                 state.shuffledQueue[shuffledQueueIndex] = finalTrack
@@ -869,8 +904,12 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             }),
           )
         }
+        playerLog.debug(get().queue)
         return ok({ track: finalTrack, needsUpdate: true })
       } catch (error) {
+        if (error instanceof Error) {
+          playerLog.error(error.stack)
+        }
         return err(error)
       }
     },

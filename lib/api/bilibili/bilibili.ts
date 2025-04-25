@@ -63,6 +63,7 @@ const transformHistoryVideosToTracks = (
       duration: video.duration,
       createTime: 0,
       hasMetadata: true,
+      isMultiPage: false,
     }))
   } catch (error) {
     bilibiliApiLog.error('Error transforming history videos:', error)
@@ -83,6 +84,7 @@ const transformVideoDetailsToTracks = (
       duration: Number(video.duration),
       createTime: video.pubdate,
       hasMetadata: true,
+      isMultiPage: false,
     }))
   } catch (error) {
     bilibiliApiLog.error('Error transforming video details:', error)
@@ -123,6 +125,7 @@ const transformSearchResultsToTracks = (
       duration: formatMMSSToSeconds(video.duration),
       createTime: video.senddate,
       hasMetadata: true,
+      isMultiPage: false,
     }))
   } catch (error) {
     bilibiliApiLog.error('Error transforming search results:', error)
@@ -163,6 +166,7 @@ const transformFavoriteContentsToTracks = (
           duration: content.duration,
           createTime: content.pubdate,
           hasMetadata: true,
+          isMultiPage: false,
         }))
     )
   } catch (error) {
@@ -185,6 +189,7 @@ const transformCollectionAllContentsToTracks = (
       duration: content.duration,
       createTime: content.pubtime,
       hasMetadata: true,
+      isMultiPage: false,
     }))
   } catch (error) {
     bilibiliApiLog.error('Error transforming collection contents:', error)
@@ -214,6 +219,7 @@ const transformMultipageVideosToTracks = (
       duration: video.duration,
       createTime: videoData.pubdate,
       hasMetadata: true,
+      isMultiPage: true,
     }))
   } catch (error) {
     bilibiliApiLog.error('Error transforming multipage videos:', error)

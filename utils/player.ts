@@ -231,8 +231,20 @@ async function checkAndUpdateAudioStream(
   return err(unknownSourceError)
 }
 
+function isTargetTrack(
+  track: Track,
+  targetId: string,
+  targetCid: number | undefined,
+) {
+  if (track.isMultiPage) {
+    return track.cid === targetCid
+  }
+  return track.id === targetId
+}
+
 export {
   convertToRNTPTrack,
   checkAndUpdateAudioStream,
   checkBilibiliAudioExpiry,
+  isTargetTrack,
 }

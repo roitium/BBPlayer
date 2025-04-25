@@ -6,7 +6,6 @@ import { useRef, useState } from 'react'
 import * as Updates from 'expo-updates'
 import { showToast } from '@/utils/toast'
 import type BottomSheet from '@gorhom/bottom-sheet'
-import PlayerQueueModal from '@/components/PlayerQueueModal'
 import * as EXPOFS from 'expo-file-system'
 import FileViewer from 'react-native-file-viewer'
 
@@ -157,6 +156,14 @@ export default function TestPage() {
           >
             运行日志
           </Button>
+          <Button
+            mode='contained'
+            loading={loading}
+            className='mb-2'
+            onPress={() => router.push('/playlist/multipage/BV1re4y1a7zy')}
+          >
+            分 p 页面
+          </Button>
         </View>
 
         <Text
@@ -167,7 +174,7 @@ export default function TestPage() {
         </Text>
         {queue.map((track) => (
           <Card
-            key={track.id}
+            key={`${track.id}-${track.cid}`}
             className='mb-2'
           >
             <Card.Title
@@ -177,7 +184,6 @@ export default function TestPage() {
           </Card>
         ))}
       </ScrollView>
-      <PlayerQueueModal sheetRef={sheetRef} />
     </>
   )
 }
