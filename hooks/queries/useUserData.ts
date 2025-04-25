@@ -1,6 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 import { throwResultAsync } from '@/utils/neverthrowUtils'
-import { useQuery } from '@tanstack/react-query'
 
 const userQueryKeys = {
   all: ['user'] as const,

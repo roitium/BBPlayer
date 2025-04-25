@@ -6,9 +6,9 @@ import {
 } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
-import { showToast } from '@/utils/toast'
-import { throwResultAsync } from '@/utils/neverthrowUtils'
 import log from '@/utils/log'
+import { throwResultAsync } from '@/utils/neverthrowUtils'
+import { showToast } from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 

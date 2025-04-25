@@ -1,20 +1,24 @@
-import { create } from 'zustand'
+import { produce } from 'immer'
+import { err, ok, type Result } from 'neverthrow'
+import Toast from 'react-native-toast-message'
 import TrackPlayer, {
-  State as TrackPlayerState,
-  usePlaybackState,
-  useProgress,
+  AppKilledPlaybackBehavior,
   Capability,
   Event,
   RepeatMode,
-  AppKilledPlaybackBehavior,
+  State as TrackPlayerState,
+  usePlaybackState,
+  useProgress,
 } from 'react-native-track-player'
+import { create } from 'zustand'
+import { PRELOAD_TRACKS } from '@/constants/player'
 import type { Track } from '@/types/core/media'
-import { produce } from 'immer'
 import type {
-  PlayerStore,
-  PlayerState,
   addToQueueParams,
+  PlayerState,
+  PlayerStore,
 } from '@/types/core/playerStore'
+import type { BilibiliApiError } from '@/utils/errors'
 import log from '@/utils/log'
 import {
   checkAndUpdateAudioStream,
@@ -22,12 +26,8 @@ import {
   convertToRNTPTrack,
   isTargetTrack,
 } from '@/utils/player'
-import useAppStore from './useAppStore'
-import { PRELOAD_TRACKS } from '@/constants/player'
-import Toast from 'react-native-toast-message'
 import { showToast } from '@/utils/toast'
-import { err, ok, type Result } from 'neverthrow'
-import type { BilibiliApiError } from '@/utils/errors'
+import useAppStore from './useAppStore'
 
 const playerLog = log.extend('PLAYER')
 const logDetailedDebug = playerLog.debug

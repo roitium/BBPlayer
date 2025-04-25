@@ -1,13 +1,13 @@
-import { View, ScrollView } from 'react-native'
-import { Text, Button, Card } from 'react-native-paper'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import { router } from 'expo-router'
-import { useRef, useState } from 'react'
-import * as Updates from 'expo-updates'
-import { showToast } from '@/utils/toast'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import * as EXPOFS from 'expo-file-system'
+import { router } from 'expo-router'
+import * as Updates from 'expo-updates'
+import { useRef, useState } from 'react'
+import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
+import { Button, Card, Text } from 'react-native-paper'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import { showToast } from '@/utils/toast'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)

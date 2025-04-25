@@ -1,12 +1,12 @@
+import * as Sentry from '@sentry/react-native'
+import * as EXPOFS from 'expo-file-system'
+import { InteractionManager } from 'react-native'
 import {
   fileAsyncTransport,
   logger,
   mapConsoleTransport,
   sentryTransport,
 } from 'react-native-logs'
-import * as EXPOFS from 'expo-file-system'
-import { InteractionManager } from 'react-native'
-import * as Sentry from '@sentry/react-native'
 
 // 创建 Logger 实例
 const config = {

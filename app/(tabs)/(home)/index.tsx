@@ -1,40 +1,40 @@
-import NowPlayingBar from '@/components/NowPlayingBar'
+import Image from '@d11/react-native-fast-image'
+import { router } from 'expo-router'
+import { memo, useCallback, useState } from 'react'
 import {
-  // ScrollView, // Removed ScrollView
-  View,
-  TouchableOpacity,
   // RefreshControl, // Removed RefreshControl
   FlatList,
-  ScrollView,
   RefreshControl, // Keep FlatList
+  ScrollView,
+  TouchableOpacity,
+  // ScrollView, // Removed ScrollView
+  View,
 } from 'react-native'
-import Image from '@d11/react-native-fast-image'
 import {
-  Text,
-  useTheme,
-  Chip,
+  ActivityIndicator,
   Avatar,
-  Surface,
+  Button,
+  Chip,
+  Dialog,
   IconButton,
   Menu,
-  Dialog,
+  Surface,
+  Text,
   TextInput,
-  Button,
-  ActivityIndicator,
+  useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { memo, useCallback, useState } from 'react'
-import type { Track, Playlist } from '@/types/core/media'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import useAppStore from '@/lib/store/useAppStore'
-import { router } from 'expo-router'
-import { formatDurationToHHMMSS } from '@/utils/times'
+import NowPlayingBar from '@/components/NowPlayingBar'
+import { useGetFavoritePlaylists } from '@/hooks/queries/useFavoriteData'
 import {
   usePersonalInformation,
   useRecentlyPlayed,
 } from '@/hooks/queries/useUserData'
-import { useGetFavoritePlaylists } from '@/hooks/queries/useFavoriteData'
+import useAppStore from '@/lib/store/useAppStore'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 const homeLog = log.extend('HOME')
 

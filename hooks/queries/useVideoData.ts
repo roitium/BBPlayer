@@ -1,6 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 import { throwResultAsync } from '@/utils/neverthrowUtils'
-import { useQuery } from '@tanstack/react-query'
 
 export const videoDataQueryKeys = {
   all: ['videoData'] as const,

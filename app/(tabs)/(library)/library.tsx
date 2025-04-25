@@ -1,30 +1,30 @@
+import FastImage from '@d11/react-native-fast-image'
+import { router } from 'expo-router'
 import { memo, useCallback, useState } from 'react'
-import { View, TouchableOpacity, FlatList, RefreshControl } from 'react-native'
+import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native'
 import {
-  Text,
-  SegmentedButtons,
-  IconButton,
-  useTheme,
-  Searchbar,
-  FAB,
-  Menu,
   ActivityIndicator,
   Divider,
+  FAB,
   Icon,
+  IconButton,
+  Menu,
+  Searchbar,
+  SegmentedButtons,
+  Text,
+  useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import useAppStore from '@/lib/store/useAppStore'
-import type { Playlist, Track } from '@/types/core/media'
-import { router } from 'expo-router'
 import {
   useGetFavoritePlaylists,
   useInfiniteCollectionsList,
   useInfiniteFavoriteList,
 } from '@/hooks/queries/useFavoriteData'
-import type { BilibiliCollection } from '@/types/apis/bilibili'
 import { usePersonalInformation } from '@/hooks/queries/useUserData'
-import FastImage from '@d11/react-native-fast-image'
+import useAppStore from '@/lib/store/useAppStore'
+import type { BilibiliCollection } from '@/types/apis/bilibili'
+import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/times'
 
 export default function LibraryScreen() {
@@ -174,11 +174,7 @@ const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
  * 渲染收藏夹列表页
  */
 const FavoriteFolderListComponent = memo(
-  ({
-    isHidden,
-  }: {
-    isHidden: boolean
-  }) => {
+  ({ isHidden }: { isHidden: boolean }) => {
     const bilibiliApi = useAppStore((state) => state.bilibiliApi)
     const {
       data: playlists,
@@ -249,165 +245,149 @@ const FavoriteFolderListComponent = memo(
 /**
  * 渲染追更合集页
  */
-const CollectionListComponent = memo(
-  ({
-    isHidden,
-  }: {
-    isHidden: boolean
-  }) => {
-    const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-    const { data: userInfo } = usePersonalInformation(bilibiliApi)
-    const {
-      data: collections,
-      isPending: collectionsIsPending,
-      isError: collectionsIsError,
-      refetch,
-      hasNextPage,
-      fetchNextPage,
-    } = useInfiniteCollectionsList(bilibiliApi, Number(userInfo?.mid))
-    const [refreshing, setRefreshing] = useState(false)
-    const colors = useTheme().colors
+const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
+  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
+  const { data: userInfo } = usePersonalInformation(bilibiliApi)
+  const {
+    data: collections,
+    isPending: collectionsIsPending,
+    isError: collectionsIsError,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteCollectionsList(bilibiliApi, Number(userInfo?.mid))
+  const [refreshing, setRefreshing] = useState(false)
+  const colors = useTheme().colors
 
-    // 渲染追更合集项
-    const renderCollectionItem = useCallback(
-      ({ item }: { item: BilibiliCollection }) => (
-        <CollectionListItem item={item} />
-      ),
-      [],
-    )
+  // 渲染追更合集项
+  const renderCollectionItem = useCallback(
+    ({ item }: { item: BilibiliCollection }) => (
+      <CollectionListItem item={item} />
+    ),
+    [],
+  )
 
-    const keyExtractor = useCallback(
-      (item: BilibiliCollection) => item.id.toString(),
-      [],
-    )
+  const keyExtractor = useCallback(
+    (item: BilibiliCollection) => item.id.toString(),
+    [],
+  )
 
-    if (isHidden) return null
+  if (isHidden) return null
 
-    if (collectionsIsPending) {
-      return (
-        <View className='flex-1 items-center justify-center'>
-          <ActivityIndicator size='large' />
-        </View>
-      )
-    }
-
-    if (collectionsIsError) {
-      return (
-        <View className='flex-1 items-center justify-center'>
-          <Text
-            variant='titleMedium'
-            className='text-center'
-          >
-            加载失败
-          </Text>
-        </View>
-      )
-    }
-
+  if (collectionsIsPending) {
     return (
-      <>
-        <View className='mb-2 flex-row items-center justify-between'>
-          <Text
-            variant='titleMedium'
-            style={{ fontWeight: 'bold' }}
-          >
-            我的合集/收藏夹追更
-          </Text>
-          <Text variant='bodyMedium'>{collections.pages[0].count} 个追更</Text>
-        </View>
-        <FlatList
-          data={collections.pages.flatMap((page) => page.list)}
-          renderItem={renderCollectionItem}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={async () => {
-                setRefreshing(true)
-                await refetch()
-                setRefreshing(false)
-              }}
-              colors={[colors.primary]}
-              progressViewOffset={50}
-            />
-          }
-          keyExtractor={keyExtractor}
-          showsVerticalScrollIndicator={false}
-          onEndReached={hasNextPage ? () => fetchNextPage() : null}
-          ListFooterComponent={
-            hasNextPage ? (
-              <View className='flex-row items-center justify-center p-4'>
-                <ActivityIndicator size='small' />
-              </View>
-            ) : null
-          }
-        />
-      </>
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+      </View>
     )
-  },
-)
+  }
+
+  if (collectionsIsError) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <Text
+          variant='titleMedium'
+          className='text-center'
+        >
+          加载失败
+        </Text>
+      </View>
+    )
+  }
+
+  return (
+    <>
+      <View className='mb-2 flex-row items-center justify-between'>
+        <Text
+          variant='titleMedium'
+          style={{ fontWeight: 'bold' }}
+        >
+          我的合集/收藏夹追更
+        </Text>
+        <Text variant='bodyMedium'>{collections.pages[0].count} 个追更</Text>
+      </View>
+      <FlatList
+        data={collections.pages.flatMap((page) => page.list)}
+        renderItem={renderCollectionItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true)
+              await refetch()
+              setRefreshing(false)
+            }}
+            colors={[colors.primary]}
+            progressViewOffset={50}
+          />
+        }
+        keyExtractor={keyExtractor}
+        showsVerticalScrollIndicator={false}
+        onEndReached={hasNextPage ? () => fetchNextPage() : null}
+        ListFooterComponent={
+          hasNextPage ? (
+            <View className='flex-row items-center justify-center p-4'>
+              <ActivityIndicator size='small' />
+            </View>
+          ) : null
+        }
+      />
+    </>
+  )
+})
 
 /**
  * 渲染追更合集项
  */
-const CollectionListItem = memo(
-  ({
-    item,
-  }: {
-    item: BilibiliCollection
-  }) => {
-    return (
-      <View key={item.id}>
-        <View className='my-2 overflow-hidden'>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            disabled={item.state === 1}
-            onPress={() => {
-              router.push(
-                item.attr === 0
-                  ? `/playlist/collection/${item.id}`
-                  : `/playlist/favorite/${item.id}`,
-              )
-            }}
-          >
-            <View className='flex-row items-center p-2'>
-              <FastImage
-                source={{ uri: item.cover }}
-                style={{ width: 48, height: 48, borderRadius: 4 }}
-              />
-              <View className='ml-3 flex-1'>
-                <Text
-                  variant='titleMedium'
-                  className='pr-2'
-                >
-                  {item.title}
-                </Text>
-                <Text variant='bodySmall'>
-                  {item.state === 0 ? item.upper.name : '已失效'} •{' '}
-                  {item.media_count} 首歌曲
-                </Text>
-              </View>
-              <Icon
-                source='arrow-right'
-                size={24}
-              />
+const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
+  return (
+    <View key={item.id}>
+      <View className='my-2 overflow-hidden'>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={item.state === 1}
+          onPress={() => {
+            router.push(
+              item.attr === 0
+                ? `/playlist/collection/${item.id}`
+                : `/playlist/favorite/${item.id}`,
+            )
+          }}
+        >
+          <View className='flex-row items-center p-2'>
+            <FastImage
+              source={{ uri: item.cover }}
+              style={{ width: 48, height: 48, borderRadius: 4 }}
+            />
+            <View className='ml-3 flex-1'>
+              <Text
+                variant='titleMedium'
+                className='pr-2'
+              >
+                {item.title}
+              </Text>
+              <Text variant='bodySmall'>
+                {item.state === 0 ? item.upper.name : '已失效'} •{' '}
+                {item.media_count} 首歌曲
+              </Text>
             </View>
-          </TouchableOpacity>
-        </View>
-        <Divider />
+            <Icon
+              source='arrow-right'
+              size={24}
+            />
+          </View>
+        </TouchableOpacity>
       </View>
-    )
-  },
-)
+      <Divider />
+    </View>
+  )
+})
 
 /**
  * 渲染分 p 视频页面
  */
 const MultiPageVideosListComponent = memo(
-  ({
-    isHidden,
-  }: {
-    isHidden: boolean
-  }) => {
+  ({ isHidden }: { isHidden: boolean }) => {
     const bilibiliApi = useAppStore((state) => state.bilibiliApi)
     const {
       data: playlists,
@@ -512,47 +492,41 @@ const MultiPageVideosListComponent = memo(
 /**
  * 渲染分 p 视频项
  */
-const MultiPageVideosItem = memo(
-  ({
-    item,
-  }: {
-    item: Track
-  }) => {
-    return (
-      <View key={item.id}>
-        <View className='my-2 overflow-hidden'>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => {
-              router.push(`/playlist/multipage/${item.id}`)
-            }}
-          >
-            <View className='flex-row items-center p-2'>
-              <FastImage
-                source={{ uri: item.cover }}
-                style={{ width: 48, height: 48, borderRadius: 4 }}
-              />
-              <View className='ml-3 flex-1'>
-                <Text
-                  variant='titleMedium'
-                  className='pr-2'
-                >
-                  {item.title}
-                </Text>
-                <Text variant='bodySmall'>
-                  {item.artist} •{' '}
-                  {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
-                </Text>
-              </View>
-              <Icon
-                source='arrow-right'
-                size={24}
-              />
+const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
+  return (
+    <View key={item.id}>
+      <View className='my-2 overflow-hidden'>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => {
+            router.push(`/playlist/multipage/${item.id}`)
+          }}
+        >
+          <View className='flex-row items-center p-2'>
+            <FastImage
+              source={{ uri: item.cover }}
+              style={{ width: 48, height: 48, borderRadius: 4 }}
+            />
+            <View className='ml-3 flex-1'>
+              <Text
+                variant='titleMedium'
+                className='pr-2'
+              >
+                {item.title}
+              </Text>
+              <Text variant='bodySmall'>
+                {item.artist} •{' '}
+                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
+              </Text>
             </View>
-          </TouchableOpacity>
-        </View>
-        <Divider />
+            <Icon
+              source='arrow-right'
+              size={24}
+            />
+          </View>
+        </TouchableOpacity>
       </View>
-    )
-  },
-)
+      <Divider />
+    </View>
+  )
+})

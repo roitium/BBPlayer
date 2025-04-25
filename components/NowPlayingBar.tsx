@@ -1,14 +1,14 @@
-import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
 import { router } from 'expo-router'
 import { useEffect } from 'react'
-import { View, Image, TouchableOpacity } from 'react-native'
+import { Image, TouchableOpacity, View } from 'react-native'
 import {
   IconButton,
-  Text,
-  Surface,
-  useTheme,
   ProgressBar,
+  Surface,
+  Text,
+  useTheme,
 } from 'react-native-paper'
+import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
 
 export default function NowPlayingBar() {
   const { colors } = useTheme()

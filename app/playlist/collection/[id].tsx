@@ -1,5 +1,14 @@
+import Image from '@d11/react-native-fast-image'
 import { useLocalSearchParams } from 'expo-router'
-import { View, Image as RNImage, FlatList, RefreshControl } from 'react-native'
+import { router } from 'expo-router'
+import {
+  type Dispatch,
+  memo,
+  type SetStateAction,
+  useCallback,
+  useState,
+} from 'react'
+import { FlatList, RefreshControl, Image as RNImage, View } from 'react-native'
 import {
   ActivityIndicator,
   Appbar,
@@ -11,24 +20,14 @@ import {
   TouchableRipple,
   useTheme,
 } from 'react-native-paper'
-import { router } from 'expo-router'
-import Image from '@d11/react-native-fast-image'
-
-import log from '@/utils/log'
-import {
-  type Dispatch,
-  memo,
-  type SetStateAction,
-  useCallback,
-  useState,
-} from 'react'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import useAppStore from '@/lib/store/useAppStore'
-import type { Track } from '@/types/core/media'
-import { showToast } from '@/utils/toast'
-import { useCollectionAllContents } from '@/hooks/queries/useFavoriteData'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import { useCollectionAllContents } from '@/hooks/queries/useFavoriteData'
+import useAppStore from '@/lib/store/useAppStore'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import type { Track } from '@/types/core/media'
+import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import { showToast } from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 

@@ -1,6 +1,6 @@
 import TrackPlayer from 'react-native-track-player'
-import { usePlayerStore } from '../store/usePlayerStore'
 import log from '@/utils/log'
+import { usePlayerStore } from '../store/usePlayerStore'
 
 const setupPlayerLog = log.extend('SETUP_PLAYER')
 

@@ -1,32 +1,32 @@
-import { Result, type ResultAsync, okAsync, errAsync } from 'neverthrow'
-import { apiClient } from './client'
+import { errAsync, okAsync, Result, type ResultAsync } from 'neverthrow'
 import type {
-  BilibiliHistoryVideo,
-  BilibiliVideoDetails,
-  BilibiliPlaylist,
-  BilibiliSearchVideo,
-  BilibiliHotSearch,
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
-  BilibiliUserInfo,
-  BilibiliFavoriteListContents,
-  BilibiliFavoriteListContent,
-  BilibiliFavoriteListAllContents,
   BilibiliCollection,
   BilibiliCollectionAllContents,
-  BilibiliMediaItem,
   BilibiliCollectionInfo,
+  BilibiliFavoriteListAllContents,
+  BilibiliFavoriteListContent,
+  BilibiliFavoriteListContents,
+  BilibiliHistoryVideo,
+  BilibiliHotSearch,
+  BilibiliMediaItem,
   BilibiliMultipageVideo,
+  BilibiliPlaylist,
+  BilibiliSearchVideo,
+  BilibiliUserInfo,
+  BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
-import type { Track, Playlist } from '@/types/core/media'
-import { formatMMSSToSeconds } from '@/utils/times'
+import type { Playlist, Track } from '@/types/core/media'
 import {
   AudioStreamError,
-  CsrfError,
   type BilibiliApiError,
   type BilibiliApiMethodError,
+  CsrfError,
 } from '@/utils/errors'
 import log from '@/utils/log'
+import { formatMMSSToSeconds } from '@/utils/times'
+import { apiClient } from './client'
 
 const bilibiliApiLog = log.extend('BILIBILI_API')
 

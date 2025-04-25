@@ -1,29 +1,29 @@
-import { useState, useCallback } from 'react'
-import { View, ScrollView, TouchableOpacity } from 'react-native'
 import Image from '@d11/react-native-fast-image'
+import { useCallback, useState } from 'react'
+import { ScrollView, TouchableOpacity, View } from 'react-native'
+import { useMMKVObject } from 'react-native-mmkv'
 import {
-  Searchbar,
-  Text,
-  Chip,
-  Surface,
-  useTheme,
-  IconButton,
   ActivityIndicator,
   Button,
-  TouchableRipple,
+  Chip,
+  IconButton,
   Menu,
+  Searchbar,
+  Surface,
+  Text,
   TextInput,
+  TouchableRipple,
+  useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { useSearchResults, useHotSearches } from '@/hooks/queries/useSearchData'
-import type { Track } from '@/types/core/media'
+import { useHotSearches, useSearchResults } from '@/hooks/queries/useSearchData'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import type { Track } from '@/types/core/media'
+import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import { showToast } from '@/utils/toast'
-import log from '@/utils/log'
-import { useMMKVObject } from 'react-native-mmkv'
 
 const searchLog = log.extend('SEARCH')
 

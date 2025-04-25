@@ -1,37 +1,37 @@
-import { router, Stack } from 'expo-router'
-import { useState, useEffect, useRef } from 'react'
-import {
-  View,
-  TouchableOpacity,
-  Dimensions,
-  Animated,
-  PanResponder,
-  type LayoutChangeEvent,
-} from 'react-native'
 import Image from '@d11/react-native-fast-image'
+import type BottomSheet from '@gorhom/bottom-sheet'
+import { router, Stack } from 'expo-router'
+import { useEffect, useRef, useState } from 'react'
 import {
-  IconButton,
-  Text,
-  useTheme,
-  Surface,
-  Menu,
+  Animated,
+  Dimensions,
+  type LayoutChangeEvent,
+  PanResponder,
+  TouchableOpacity,
+  View,
+} from 'react-native'
+import {
   Divider,
+  IconButton,
+  Menu,
+  Surface,
+  Text,
   Tooltip,
+  useTheme,
 } from 'react-native-paper'
-import {
-  usePlayerStore,
-  usePlaybackProgress,
-  usePlaybackStateHook,
-} from '@/lib/store/usePlayerStore'
-import { RepeatMode, State } from 'react-native-track-player'
 import {
   type EdgeInsets,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
+import { RepeatMode, State } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
-import { formatDurationToHHMMSS } from '@/utils/times'
 import PlayerQueueModal from '@/components/PlayerQueueModal'
-import type BottomSheet from '@gorhom/bottom-sheet'
+import {
+  usePlaybackProgress,
+  usePlaybackStateHook,
+  usePlayerStore,
+} from '@/lib/store/usePlayerStore'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 function DragableProgressBar() {
   const seekTo = usePlayerStore((state) => state.seekTo)

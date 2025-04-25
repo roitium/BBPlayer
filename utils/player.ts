@@ -1,9 +1,9 @@
-import type { Track } from '@/types/core/media'
+import { err, ok, type Result } from 'neverthrow' // 导入 neverthrow
 import type { Track as RNTPTrack } from 'react-native-track-player'
 import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/lib/store/useAppStore'
+import type { Track } from '@/types/core/media'
 import log from './log'
-import { type Result, ok, err } from 'neverthrow' // 导入 neverthrow
 
 const playerLog = log.extend('PLAYER')
 const logDetailedDebug = playerLog.debug

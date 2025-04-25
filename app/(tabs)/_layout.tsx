@@ -1,6 +1,6 @@
-import { MaterialBottomTabs as Tab } from '@/components/MaterialBottomTabBar'
-import { useTheme } from 'react-native-paper'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { useTheme } from 'react-native-paper'
+import { MaterialBottomTabs as Tab } from '@/components/MaterialBottomTabBar'
 
 export default function TabLayout() {
   const theme = useTheme()

@@ -1,5 +1,5 @@
-import { storage } from '@/utils/mmkv'
 import { create } from 'zustand'
+import { storage } from '@/utils/mmkv'
 import { createBilibiliApi } from '../api/bilibili/bilibili'
 
 interface AppState {

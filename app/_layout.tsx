@@ -2,7 +2,8 @@ import '../css/global.css'
 import { Stack, useNavigationContainerRef } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
+import * as Sentry from '@sentry/react-native'
 import {
   focusManager,
   MutationCache,
@@ -11,31 +12,30 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
-import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
-import { useColorScheme } from '@/hooks/useColorScheme'
-import * as Network from 'expo-network'
-import * as Clipboard from 'expo-clipboard'
-import { DevToolsBubble } from 'react-native-react-query-devtools'
-import {
-  type AppStateStatus,
-  Platform,
-  AppState,
-  View,
-  InteractionManager,
-} from 'react-native'
-import * as SplashScreen from 'expo-splash-screen'
-import useAppStore from '@/lib/store/useAppStore'
-import Toast from 'react-native-toast-message'
-import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
-import { BilibiliApiError, CsrfError } from '@/utils/errors'
-import GlobalErrorFallback from '@/components/ErrorBoundary'
-import { setupPlayer } from '@/lib/services/setupPlayer'
-import { showToast } from '@/utils/toast'
+import * as Clipboard from 'expo-clipboard'
+import * as Network from 'expo-network'
+import * as SplashScreen from 'expo-splash-screen'
 import * as Updates from 'expo-updates'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  AppState,
+  type AppStateStatus,
+  InteractionManager,
+  Platform,
+  View,
+} from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
+import { DevToolsBubble } from 'react-native-react-query-devtools'
+import Toast from 'react-native-toast-message'
+import GlobalErrorFallback from '@/components/ErrorBoundary'
+import { useColorScheme } from '@/hooks/useColorScheme'
+import { setupPlayer } from '@/lib/services/setupPlayer'
+import useAppStore from '@/lib/store/useAppStore'
+import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
+import { showToast } from '@/utils/toast'
 
 const rootLog = log.extend('ROOT')
 

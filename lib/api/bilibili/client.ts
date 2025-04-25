@@ -1,4 +1,4 @@
-import { ResultAsync, okAsync, errAsync } from 'neverthrow'
+import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/utils/errors'
 
 type ReqResponse<T> = {

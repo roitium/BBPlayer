@@ -1,4 +1,5 @@
-import { useLocalSearchParams, router } from 'expo-router'
+import Image from '@d11/react-native-fast-image'
+import { router, useLocalSearchParams } from 'expo-router'
 import {
   type Dispatch,
   memo,
@@ -6,30 +7,29 @@ import {
   useCallback,
   useState,
 } from 'react'
-import { View, FlatList, RefreshControl, Image as RNImage } from 'react-native'
-import Image from '@d11/react-native-fast-image'
+import { FlatList, RefreshControl, Image as RNImage, View } from 'react-native'
 import {
-  Text,
-  useTheme,
-  Surface,
-  IconButton,
-  Menu,
   ActivityIndicator,
   Appbar,
   Divider,
+  IconButton,
+  Menu,
+  Surface,
+  Text,
   TouchableRipple,
+  useTheme,
 } from 'react-native-paper'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import useAppStore from '@/lib/store/useAppStore'
-import { formatDurationToHHMMSS } from '@/utils/times'
-import type { Track } from '@/types/core/media'
 import {
   useBatchDeleteFavoriteListContents,
   useInfiniteFavoriteList,
 } from '@/hooks/queries/useFavoriteData'
-import { showToast } from '@/utils/toast'
+import useAppStore from '@/lib/store/useAppStore'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
+import { formatDurationToHHMMSS } from '@/utils/times'
+import { showToast } from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 

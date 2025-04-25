@@ -5,7 +5,10 @@ const nativeIntentLog = log.extend('NATIVE_INTENT')
 export function redirectSystemPath({
   path,
   initial,
-}: { path: string; initial: boolean }) {
+}: {
+  path: string
+  initial: boolean
+}) {
   try {
     const url = new URL(path)
     if (initial) {

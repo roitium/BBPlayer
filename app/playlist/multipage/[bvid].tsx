@@ -1,8 +1,4 @@
-import {
-  useGetMultiPageList,
-  useGetVideoDetails,
-} from '@/hooks/queries/useVideoData'
-import useAppStore from '@/lib/store/useAppStore'
+import Image from '@d11/react-native-fast-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   type Dispatch,
@@ -12,26 +8,30 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { View, Image as RNImage, FlatList, RefreshControl } from 'react-native'
+import { FlatList, RefreshControl, Image as RNImage, View } from 'react-native'
 import {
   ActivityIndicator,
   Appbar,
-  useTheme,
-  Text,
-  IconButton,
   Divider,
+  IconButton,
   Menu,
   Surface,
+  Text,
   TouchableRipple,
+  useTheme,
 } from 'react-native-paper'
-import Image from '@d11/react-native-fast-image'
-import type { Track } from '@/types/core/media'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import log from '@/utils/log'
-import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { showToast } from '@/utils/toast'
+import {
+  useGetMultiPageList,
+  useGetVideoDetails,
+} from '@/hooks/queries/useVideoData'
+import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili'
+import useAppStore from '@/lib/store/useAppStore'
+import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import type { Track } from '@/types/core/media'
+import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import { showToast } from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 

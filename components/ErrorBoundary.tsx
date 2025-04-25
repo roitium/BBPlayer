@@ -1,10 +1,13 @@
-import { View, Text, TouchableOpacity } from 'react-native'
+import { Text, TouchableOpacity, View } from 'react-native'
 import { Button } from 'react-native-paper'
 
 export default function GlobalErrorFallback({
   error,
   resetError,
-}: { error: unknown; resetError: () => void }) {
+}: {
+  error: unknown
+  resetError: () => void
+}) {
   return (
     <View className='flex-1 items-center justify-center p-5'>
       <Text className='mb-2 font-bold text-xl'>出错了</Text>

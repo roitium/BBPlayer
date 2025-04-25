@@ -1,15 +1,15 @@
-import { memo, useCallback, type RefObject } from 'react'
-import { View } from 'react-native'
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet' // Import BottomSheetFlatList
+import { memo, type RefObject, useCallback } from 'react'
+import { View } from 'react-native'
+import {
+  IconButton,
+  Surface,
+  Text,
+  TouchableRipple,
+  useTheme,
+} from 'react-native-paper'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import {
-  Surface,
-  TouchableRipple,
-  Text,
-  useTheme,
-  IconButton,
-} from 'react-native-paper'
 
 const TrackItem = memo(
   ({
