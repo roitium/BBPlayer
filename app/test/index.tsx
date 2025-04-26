@@ -21,10 +21,6 @@ export default function TestPage() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
 
-  const showPlayerQueueModal = () => {
-    sheetRef.current?.snapToPosition('75%')
-  }
-
   const testCheckUpdate = async () => {
     const result = await Updates.checkForUpdateAsync()
     Toast.success('检查更新结果', {
@@ -133,25 +129,9 @@ export default function TestPage() {
             mode='contained'
             loading={loading}
             className='mb-2'
-            onPress={showPlayerQueueModal}
-          >
-            打开模态框
-          </Button>
-          <Button
-            mode='contained'
-            loading={loading}
-            className='mb-2'
-            onPress={() => sheetRef.current?.close()}
-          >
-            关闭模态框
-          </Button>
-          <Button
-            mode='contained'
-            loading={loading}
-            className='mb-2'
             onPress={openLogFile}
           >
-            运行日志
+            打开运行日志
           </Button>
           <Button
             mode='contained'
@@ -160,14 +140,6 @@ export default function TestPage() {
             onPress={() => router.push('/playlist/multipage/BV1re4y1a7zy')}
           >
             分 p 页面
-          </Button>
-          <Button
-            mode='contained'
-            loading={loading}
-            className='mb-2'
-            onPress={() => router.push('/')}
-          >
-            ceshi
           </Button>
         </View>
 
@@ -183,8 +155,10 @@ export default function TestPage() {
             className='mb-2'
           >
             <Card.Title
-              title={track.title}
-              subtitle={track.artist}
+              title={track.hasMetadata ? track.title : track.id}
+              subtitle={
+                track.hasMetadata ? track.artist : '该视频还未获取元数据'
+              }
             />
           </Card>
         ))}
