@@ -23,7 +23,7 @@ const config = {
     SENTRY: Sentry,
     errorLevels: 'sentry',
     FS: EXPOFS,
-    fileName: 'logs_{date-today}', // Create a new file every day
+    fileName: 'logs_{date-today}.log',
     fileNameDateType: 'iso',
     mapLevels: {
       debug: 'log',
