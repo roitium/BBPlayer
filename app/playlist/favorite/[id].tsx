@@ -29,7 +29,7 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
@@ -69,10 +69,8 @@ export default function FavoritePage() {
         )
         if (allContentIds.isErr()) {
           playlistLog.sentry('获取所有内容失败', allContentIds.error)
-          showToast({
-            severity: 'error',
-            title: '获取收藏夹所有内容失败，无法播放',
-            message: allContentIds.error.message,
+          Toast.error('播放全部失败', {
+            description: '获取收藏夹所有内容失败，无法播放',
           })
           return
         }

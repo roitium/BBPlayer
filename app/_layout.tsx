@@ -28,14 +28,14 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
-import Toast from 'react-native-toast-message'
+import { Toaster } from 'sonner-native'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import { useColorScheme } from '@/hooks/useColorScheme'
 import { setupPlayer } from '@/lib/services/setupPlayer'
 import useAppStore from '@/lib/store/useAppStore'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 const rootLog = log.extend('ROOT')
 
@@ -119,10 +119,9 @@ const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error, query) => {
-      showToast({
-        severity: 'error',
-        title: `请求 ${query.queryKey} 失败`,
-        message: error.message,
+      Toast.error(`请求 ${query.queryKey} 失败`, {
+        description: error.message,
+        duration: Number.POSITIVE_INFINITY,
       })
       rootLog.error(`请求 ${query.queryKey} 失败`, error)
 
@@ -146,10 +145,9 @@ const queryClient = new QueryClient({
 
   mutationCache: new MutationCache({
     onError: (error, variables, context, mutation) => {
-      showToast({
-        severity: 'error',
-        title: `请求 mutation: ${mutation.mutationId} 失败`,
-        message: error.message,
+      Toast.error(`请求 mutation: ${mutation.mutationId} 失败`, {
+        description: error.message,
+        duration: Number.POSITIVE_INFINITY,
       })
 
       rootLog.error(`请求 mutation: ${mutation.mutationId} 失败`, error)
@@ -304,7 +302,7 @@ export default Sentry.wrap(function RootLayout() {
             </PaperProvider>
             {developement && <DevToolsBubble onCopy={onCopy} />}
           </QueryClientProvider>
-          <Toast />
+          <Toaster />
         </GestureHandlerRootView>
       </Sentry.ErrorBoundary>
       <StatusBar style='auto' />

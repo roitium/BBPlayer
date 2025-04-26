@@ -1,6 +1,6 @@
 import { produce } from 'immer'
 import { err, ok, type Result } from 'neverthrow'
-import Toast from 'react-native-toast-message'
+import Toast from '@/utils/toast'
 import TrackPlayer, {
   AppKilledPlaybackBehavior,
   Capability,
@@ -26,7 +26,6 @@ import {
   convertToRNTPTrack,
   isTargetTrack,
 } from '@/utils/player'
-import { showToast } from '@/utils/toast'
 import useAppStore from './useAppStore'
 
 const playerLog = log.extend('PLAYER')
@@ -221,11 +220,7 @@ const PlayerLogic = {
 
 const checkPlayerReady = () => {
   if (!global.playerIsReady) {
-    Toast.show({
-      type: 'error',
-      text1: '播放器未初始化',
-      text2: '请稍后再试',
-    })
+    Toast.error('播放器未初始化', { description: '请稍后再试' })
     return false
   }
   return true
@@ -308,10 +303,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         logDetailedDebug(
           '在队列中找不到该曲目，无法删除，已记录日志并重置播放器',
         )
-        showToast({
-          message: '在播放列表中找不到该曲目，已重置播放器',
-          title: '播放器异常',
-          type: 'error',
+        Toast.error('播放器异常', {
+          description: '在播放列表中找不到该曲目，已重置播放器',
         })
         await get().clearQueue()
         return
@@ -324,10 +317,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         logDetailedDebug(
           '在随机队列中找不到该曲目，无法删除，已上报日志并重置播放器',
         )
-        showToast({
-          message: '在播放列表中找不到该曲目，已重置播放器',
-          title: '播放器异常',
-          type: 'error',
+        Toast.error('播放器异常', {
+          description: '在播放列表中找不到该曲目，已重置播放器',
         })
         await get().clearQueue()
         return

@@ -31,7 +31,7 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
@@ -90,9 +90,8 @@ export default function MultipagePage() {
     async (startFromCid?: number) => {
       try {
         if (!tracksData || tracksData.length === 0) {
-          showToast({
-            severity: 'error',
-            title: '未知错误，tracksData 为空',
+          Toast.error('播放全部失败', {
+            description: '未知错误，tracksData 为空',
           })
           playlistLog.error('未知错误，tracksData 为空', tracksData)
           return

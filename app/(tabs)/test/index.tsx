@@ -7,7 +7,7 @@ import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text } from 'react-native-paper'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -24,11 +24,9 @@ export default function TestPage() {
 
   const testCheckUpdate = async () => {
     const result = await Updates.checkForUpdateAsync()
-    showToast({
-      severity: 'success',
-      title: '检查更新结果',
-      message: `isAvailable: ${result.isAvailable}, whyNotAvailable: ${result.reason}, isRollbackToEmbedding: ${result.isRollBackToEmbedded}`,
-      length: 'long',
+    Toast.success('检查更新结果', {
+      description: `isAvailable: ${result.isAvailable}, whyNotAvailable: ${result.reason}, isRollbackToEmbedding: ${result.isRollBackToEmbedded}`,
+      duration: Number.POSITIVE_INFINITY,
     })
   }
 
@@ -39,19 +37,15 @@ export default function TestPage() {
     }
     const result = await Updates.checkForUpdateAsync()
     if (!result.isAvailable) {
-      showToast({
-        severity: 'error',
-        title: '没有可用的更新',
-        message: '当前已是最新版本',
+      Toast.error('没有可用的更新', {
+        description: '当前已是最新版本',
       })
       return
     }
     const updateResult = await Updates.fetchUpdateAsync()
     if (updateResult.isNew === true) {
-      showToast({
-        severity: 'info',
-        title: '有新版本可用',
-        message: '现在更新',
+      Toast.success('有新版本可用', {
+        description: '现在更新',
       })
       setTimeout(() => {
         Updates.reloadAsync()
@@ -67,17 +61,17 @@ export default function TestPage() {
     FileViewer.open(logFilePath)
       .then(() => {
         console.log('open file')
-        showToast({
-          severity: 'info',
-          title: '打开文件成功',
-        })
+        // showToast({
+        //   severity: 'info',
+        //   title: '打开文件成功',
+        // })
+        Toast.success('打开文件成功')
       })
       .catch((err) => {
         console.log('open file error', err)
-        showToast({
-          severity: 'error',
-          title: '打开文件失败',
-          message: err,
+        Toast.error('打开文件失败', {
+          description: err,
+          duration: Number.POSITIVE_INFINITY,
         })
       })
   }

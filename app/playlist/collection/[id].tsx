@@ -27,7 +27,7 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
@@ -70,9 +70,8 @@ export default function CollectionPage() {
     async (startFromId?: string) => {
       try {
         if (!collectionData) {
-          showToast({
-            severity: 'error',
-            title: '未知错误，collectionData.medias 为空',
+          Toast.error('播放全部失败', {
+            description: '未知错误，collectionData.medias 为空',
           })
           playlistLog.error(
             '未知错误，collectionData.medias 为空',

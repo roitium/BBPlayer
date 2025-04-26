@@ -1,61 +1,64 @@
-/**
- * Thanks to https://github.com/calintamas/react-native-toast-message/issues/474#issuecomment-2061715523
- */
+import { toast as sonnerToast } from 'sonner-native'
+import type { ToastProps } from 'sonner-native/src/types'
 
-import type { StyleProp, TextStyle } from 'react-native'
-import Toast, {
-  type BaseToastProps,
-  type ToastOptions,
-  type ToastType,
-} from 'react-native-toast-message'
-
-type Severity = 'success' | 'error' | 'info' | 'warning'
-
-interface CustomToastOptions extends ToastOptions, BaseToastProps {
-  title: string
-  message?: string
-  severity?: Severity
-  length?: 'short' | 'long'
-  text1Style?: StyleProp<TextStyle>
-  text2Style?: StyleProp<TextStyle>
+type ExternalToast = Omit<
+  ToastProps,
+  'id' | 'type' | 'title' | 'jsx' | 'promise' | 'variant'
+> & {
+  id?: string | number
 }
 
-/**
- *
- * @param length 持续时间
- */
-export function showToast({
-  title,
-  message,
-  severity = 'info',
-  length = 'short',
-  text1Style,
-  text2Style,
-  ...rest
-}: CustomToastOptions) {
-  const duration = length === 'long' ? 5000 : 3000
+type CustomToastOptions = ExternalToast & {}
 
-  let toastType: ToastType = severity
-  if (!['success', 'error', 'warning', 'info'].includes(toastType)) {
-    toastType = 'info'
-  }
-
-  const contentHeight = message ? 70 + message.length * 2 : 70
-
-  Toast.show({
-    type: toastType,
-    text1: title,
-    text2: message,
-    visibilityTime: duration,
-    text1Style: { fontSize: 18 },
-    text2Style: { fontSize: 14 },
-    topOffset: 15,
-    text2NumberOfLines: 5,
-    style: {
-      height: contentHeight,
-      paddingVertical: 10,
-      paddingHorizontal: 0,
-    },
-    ...rest,
-  })
+const show = (message: string, options?: CustomToastOptions) => {
+  return sonnerToast(message, options)
 }
+
+const success = (message: string, options?: CustomToastOptions) => {
+  return sonnerToast.success(message, options)
+}
+
+const error = (message: string, options?: CustomToastOptions) => {
+  return sonnerToast.error(message, options)
+}
+
+const warning = (message: string, options?: CustomToastOptions) => {
+  return sonnerToast.warning(message, options)
+}
+
+const loading = (message: string, options?: CustomToastOptions) => {
+  return sonnerToast.loading(message, options)
+}
+
+const promise = <T>(
+  promise: Promise<T>,
+  options: {
+    loading: string
+    success: (data: T) => string
+    error: (error: unknown) => string
+  } & CustomToastOptions,
+) => {
+  return sonnerToast.promise(promise, options)
+}
+
+const custom = (jsx: React.ReactElement, options?: CustomToastOptions) => {
+  return sonnerToast.custom(jsx, options)
+}
+
+const dismiss = (toastId?: number | string) => {
+  sonnerToast.dismiss(toastId)
+}
+
+const Toast = {
+  show,
+  success,
+  error,
+  warning,
+  loading,
+  promise,
+  custom,
+  dismiss,
+  wiggle: sonnerToast.wiggle,
+}
+
+export default Toast

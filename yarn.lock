@@ -3780,12 +3780,12 @@ __metadata:
     react-native-safe-area-context: "npm:4.12.0"
     react-native-screens: "npm:~4.4.0"
     react-native-svg: "npm:15.8.0"
-    react-native-toast-message: "npm:^2.2.1"
     react-native-track-player: "npm:^4.1.1"
     react-native-vector-icons: "npm:^10.2.0"
     react-native-web: "npm:~0.19.13"
     react-native-webview: "npm:13.12.5"
     react-test-renderer: "npm:18.3.1"
+    sonner-native: "npm:^0.19.0"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.3.3"
     zustand: "npm:^5.0.3"
@@ -9929,16 +9929,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-toast-message@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "react-native-toast-message@npm:2.2.1"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/03418b03ae345f5fe1c1747a98ae9c420a9ea37402d849920a14bfc6eb01541ad934266ae2656433604448d2fba1266ab6f6be649a49c9b22445e86444c1f6de
-  languageName: node
-  linkType: hard
-
 "react-native-track-player@npm:^4.1.1":
   version: 4.1.1
   resolution: "react-native-track-player@npm:4.1.1"
@@ -10851,6 +10841,21 @@ __metadata:
     ip-address: "npm:^9.0.5"
     smart-buffer: "npm:^4.2.0"
   checksum: 10c0/00c3271e233ccf1fb83a3dd2060b94cc37817e0f797a93c560b9a7a86c4a0ec2961fb31263bdd24a3c28945e24868b5f063cd98744171d9e942c513454b50ae5
+  languageName: node
+  linkType: hard
+
+"sonner-native@npm:^0.19.0":
+  version: 0.19.0
+  resolution: "sonner-native@npm:0.19.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: ">=2.16.1"
+    react-native-reanimated: ">=3.10.1"
+    react-native-safe-area-context: ">=4.10.5"
+    react-native-screens: ">=3.31.1"
+    react-native-svg: ">=15.6.0"
+  checksum: 10c0/5278e29d32a841ac9fda0dd391da94cfe9445d3626aa62f443b34e6bcbc20a4434e53abe75456c348c0600964b2c1a74816ca011c842ad80079beff8e9a6fd9f
   languageName: node
   linkType: hard
 

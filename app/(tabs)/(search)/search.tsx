@@ -23,7 +23,7 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 const searchLog = log.extend('SEARCH')
 
@@ -270,10 +270,7 @@ export default function SearchPage() {
             <Menu.Item
               leadingIcon='playlist-plus'
               onPress={() => {
-                showToast({
-                  severity: 'info',
-                  title: '开发中，敬请期待',
-                })
+                Toast.show('开发中，敬请期待')
               }}
               title='添加到收藏夹'
             />
