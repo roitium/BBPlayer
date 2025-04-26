@@ -1,25 +1,8 @@
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
-import {
-  type Dispatch,
-  memo,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
-import {
-  ActivityIndicator,
-  Appbar,
-  Divider,
-  IconButton,
-  Menu,
-  Surface,
-  Text,
-  TouchableRipple,
-  useTheme,
-} from 'react-native-paper'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import {
   useGetMultiPageList,
@@ -30,8 +13,9 @@ import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
+import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
@@ -43,7 +27,6 @@ export default function MultipagePage() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const [tracksData, setTracksData] = useState<Track[]>([])
   const addToQueue = usePlayerStore((state) => state.addToQueue)
-  const [menuVisible, setMenuVisible] = useState<number | null>(null)
 
   // @ts-ignore 故意定向到一个不存在的页面，触发 404
   if (typeof bvid !== 'string') return router.replace('/not-found')
@@ -111,20 +94,36 @@ export default function MultipagePage() {
     [addToQueue, tracksData],
   )
 
+  const trackMenuItems = useCallback(
+    () => [
+      {
+        title: '下一首播放',
+        leadingIcon: 'play-circle-outline',
+        onPress: playNext,
+      },
+    ],
+    [playNext],
+  )
+
+  const handleTrackPress = useCallback(
+    (track: Track) => {
+      playAll(track.cid)
+    },
+    [playAll],
+  )
+
   const renderItem = useCallback(
     ({ item, index }: { item: Track; index: number }) => {
       return (
-        <TrackItem
+        <TrackListItem
           item={item}
           index={index}
-          playAll={playAll}
-          menuVisible={menuVisible}
-          setMenuVisible={setMenuVisible}
-          playNext={playNext}
+          onTrackPress={handleTrackPress}
+          menuItems={trackMenuItems()}
         />
       )
     },
-    [menuVisible, playNext, playAll],
+    [handleTrackPress, trackMenuItems],
   )
 
   // 这里使用 cid
@@ -183,10 +182,12 @@ export default function MultipagePage() {
           data={tracksData}
           renderItem={renderItem}
           ListHeaderComponent={
-            <Header
-              videoData={videoData}
-              pn={multipageData?.length}
-              playAll={playAll}
+            <PlaylistHeader
+              coverUri={videoData.pic}
+              title={videoData.title}
+              subtitle={`${videoData.owner.name} • ${multipageData.length} 首歌曲`}
+              description={videoData.desc}
+              onPlayAll={() => playAll()}
             />
           }
           refreshControl={
@@ -213,141 +214,3 @@ export default function MultipagePage() {
     </View>
   )
 }
-
-const Header = memo(function Header({
-  videoData,
-  pn,
-  playAll,
-}: {
-  videoData: ReturnType<typeof useGetVideoDetails>['data']
-  pn: number // 总分 p 视频数量
-  playAll: () => Promise<void>
-}) {
-  if (!videoData) return null
-  return (
-    <View style={{ position: 'relative', flexDirection: 'column' }}>
-      {/* 收藏夹信息 */}
-      <View style={{ flexDirection: 'row', padding: 16 }}>
-        <Image
-          source={{ uri: videoData.pic }}
-          style={{ width: 120, height: 120, borderRadius: 8 }}
-        />
-        <View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
-          <Text
-            variant='titleLarge'
-            style={{ fontWeight: 'bold' }}
-            numberOfLines={2}
-          >
-            {videoData.title}
-          </Text>
-          <Text
-            variant='bodyMedium'
-            numberOfLines={1}
-          >
-            {videoData.owner.name} • {pn} 首歌曲
-          </Text>
-        </View>
-      </View>
-
-      {/* 描述和操作按钮 */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: 16,
-        }}
-      >
-        <Text
-          variant='bodyMedium'
-          style={{ maxWidth: 300 }}
-        >
-          {videoData.desc || '还没有简介哦~'}
-        </Text>
-
-        <IconButton
-          mode='contained'
-          icon='play'
-          onPress={() => playAll()}
-        />
-      </View>
-
-      <Divider />
-    </View>
-  )
-})
-
-const TrackItem = memo(function TrackItem({
-  item,
-  index,
-  menuVisible,
-  setMenuVisible,
-  playAll,
-  playNext,
-}: {
-  item: Track
-  index: number
-  playAll: (startFromCid?: number) => Promise<void>
-  menuVisible: number | null
-  setMenuVisible: Dispatch<SetStateAction<number | null>>
-  playNext: (track: Track) => Promise<void>
-}) {
-  return (
-    <TouchableRipple
-      style={{ paddingVertical: 5 }}
-      onPress={() => playAll(item.cid)}
-    >
-      <Surface
-        style={{ overflow: 'hidden', borderRadius: 8 }}
-        elevation={0}
-      >
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
-        >
-          <Text
-            variant='titleMedium'
-            style={{
-              width: 40,
-              textAlign: 'center',
-            }}
-          >
-            {index + 1}
-          </Text>
-          <Image
-            source={{ uri: item.cover }}
-            style={{ width: 48, height: 48, borderRadius: 4 }}
-          />
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <Text variant='titleMedium'>{item.title}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text variant='bodySmall'>
-                {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
-              </Text>
-            </View>
-          </View>
-          <Menu
-            visible={item.cid ? menuVisible === item.cid : false}
-            onDismiss={() => setMenuVisible(null)}
-            anchor={
-              <IconButton
-                icon='dots-vertical'
-                size={24}
-                onPress={() => item.cid && setMenuVisible(item.cid)}
-              />
-            }
-            anchorPosition='bottom'
-          >
-            <Menu.Item
-              leadingIcon='play-circle-outline'
-              onPress={() => {
-                playNext(item)
-                setMenuVisible(null)
-              }}
-              title='下一首播放'
-            />
-          </Menu>
-        </View>
-      </Surface>
-    </TouchableRipple>
-  )
-})
