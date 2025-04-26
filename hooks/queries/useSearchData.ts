@@ -21,7 +21,7 @@ export const useSearchResults = (
     queryFn: () =>
       throwResultAsync(bilibiliApi.searchVideos(query, page, page_size)),
     staleTime: 5 * 60 * 1000,
-    enabled: query.trim().length > 0, // 只有当查询不为空时才启用
+    enabled: query.trim().length > 0 && !!bilibiliApi.getCookie(), // 依赖 bilibiliApi，且搜索关键词不为空
   })
 }
 
@@ -31,5 +31,6 @@ export const useHotSearches = (bilibiliApi: BilibiliApi) => {
     queryKey: searchQueryKeys.hotSearches(),
     queryFn: () => throwResultAsync(bilibiliApi.getHotSearches()),
     staleTime: 15 * 60 * 1000,
+    enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })
 }

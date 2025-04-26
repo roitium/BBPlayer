@@ -8,7 +8,7 @@ import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
 import { throwResultAsync } from '@/utils/neverthrowUtils'
-import { showToast } from '@/utils/toast'
+import Toast from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
@@ -47,7 +47,7 @@ export const useInfiniteFavoriteList = (
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
-    enabled: !!favoriteId, // 依赖 favoriteId
+    enabled: !!favoriteId && !!bilibiliApi.getCookie(), // 依赖 favoriteId 和 bilibiliApi
   })
 }
 
@@ -65,7 +65,7 @@ export const useGetFavoritePlaylists = (
     queryFn: () =>
       throwResultAsync(bilibiliApi.getFavoritePlaylists(userMid as number)),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!userMid, // 依赖 userMid
+    enabled: !!userMid && !!bilibiliApi.getCookie(), // 依赖 userMid 和 bilibiliApi
   })
 }
 
@@ -86,10 +86,7 @@ export const useBatchDeleteFavoriteListContents = (
         ),
       ),
     onSuccess: (_data, variables) => {
-      showToast({
-        severity: 'success',
-        title: '删除成功',
-      })
+      Toast.success('删除成功')
       queryClient.invalidateQueries({
         queryKey: favoriteListQueryKeys.infiniteFavoriteList(
           variables.favoriteId,
@@ -104,10 +101,9 @@ export const useBatchDeleteFavoriteListContents = (
         errorMessage = `删除失败：${error.message} (${error.msgCode})`
       }
 
-      showToast({
-        severity: 'error',
-        title: '操作失败',
-        message: errorMessage,
+      Toast.error('操作失败', {
+        description: errorMessage,
+        duration: Number.POSITIVE_INFINITY,
       })
       favoriteListLog.error('删除收藏夹内容失败:', error)
     },
@@ -129,7 +125,7 @@ export const useInfiniteCollectionsList = (
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
-    enabled: !!mid, // 依赖 mid
+    enabled: !!mid && !!bilibiliApi.getCookie(), // 依赖 mid 和 bilibiliApi
   })
 }
 
@@ -145,5 +141,6 @@ export const useCollectionAllContents = (
     queryFn: () =>
       throwResultAsync(bilibiliApi.getCollectionAllContents(collectionId)),
     staleTime: 1,
+    enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })
 }

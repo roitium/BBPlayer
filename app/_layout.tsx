@@ -166,6 +166,10 @@ const queryClient = new QueryClient({
   }),
 })
 
+export const unstable_settings = {
+  initialRouteName: '/(tabs)/(home)/index',
+}
+
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== 'web') {
     focusManager.setFocused(status === 'active')
@@ -220,6 +224,47 @@ export default Sentry.wrap(function RootLayout() {
     }
 
     prepare()
+  }, [])
+
+  useEffect(() => {
+    if (developement) {
+      return
+    }
+    const update = () => {
+      Toast.loading('正在下载更新包', { id: 'update' })
+      Updates.fetchUpdateAsync()
+        .then(() => {
+          Toast.success('更新包下载完成，重载应用', { id: 'update' })
+        })
+        .then(() => {
+          Updates.reloadAsync()
+        })
+        .catch((error) => {
+          console.error('更新包下载失败', error)
+          Toast.error('更新包下载失败', {
+            description: error.message,
+            id: 'update',
+            duration: Number.POSITIVE_INFINITY,
+          })
+        })
+    }
+    Updates.checkForUpdateAsync()
+      .then((result) => {
+        if (result.isAvailable) {
+          Toast.show('检测到有新的热更新，是否更新？', {
+            action: { label: '更新', onClick: update },
+            duration: Number.POSITIVE_INFINITY,
+            id: 'update',
+          })
+        }
+      })
+      .catch((error) => {
+        console.error('检测更新失败', error)
+        Toast.error('检测更新失败', {
+          description: error.message,
+          duration: Number.POSITIVE_INFINITY,
+        })
+      })
   }, [])
 
   // 异步初始化播放器 (在 appIsReady 后执行)
@@ -295,6 +340,10 @@ export default Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen
                   name='player/index'
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name='test/index'
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen name='+not-found' />

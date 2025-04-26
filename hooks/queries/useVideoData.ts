@@ -18,6 +18,7 @@ export const useGetMultiPageList = (bvid: string, bilibiliApi: BilibiliApi) => {
     queryKey: videoDataQueryKeys.getMultiPageList(bvid),
     queryFn: () => throwResultAsync(bilibiliApi.getPageList(bvid)),
     staleTime: 1,
+    enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })
 }
 
@@ -29,5 +30,6 @@ export const useGetVideoDetails = (bvid: string, bilibiliApi: BilibiliApi) => {
     queryKey: videoDataQueryKeys.getVideoDetails(bvid),
     queryFn: () => throwResultAsync(bilibiliApi.getVideoDetails(bvid)),
     staleTime: 1,
+    enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })
 }

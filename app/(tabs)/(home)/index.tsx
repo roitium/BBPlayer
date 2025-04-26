@@ -80,6 +80,8 @@ function HomePage() {
     }
   }, [bilibiliCookie])
 
+  const limitedRecentlyPlayed = recentlyPlayed?.slice(0, 20)
+
   return (
     <View
       className='flex-1'
@@ -134,7 +136,7 @@ function HomePage() {
         {/* Recently Played (Uses FlatList) */}
         <View className='mb-6 px-4'>
           <RecentlyPlayed
-            data={recentlyPlayed}
+            data={limitedRecentlyPlayed}
             isPending={recentlyPlayedPending}
             isError={recentlyPlayedError}
             menuVisible={menuVisible}

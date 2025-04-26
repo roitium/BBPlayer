@@ -14,6 +14,7 @@ export const usePersonalInformation = (bilibiliApi: BilibiliApi) => {
     queryKey: ['user', 'personalInformation'],
     queryFn: () => throwResultAsync(bilibiliApi.getUserInfo()),
     staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
+    enabled: !!bilibiliApi.getCookie(),
   })
 }
 
@@ -22,5 +23,6 @@ export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
     queryKey: userQueryKeys.recentlyPlayed(),
     queryFn: () => throwResultAsync(bilibiliApi.getHistory()),
     staleTime: 1 * 60 * 1000,
+    enabled: !!bilibiliApi.getCookie(),
   })
 }

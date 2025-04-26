@@ -5,9 +5,10 @@ import * as Updates from 'expo-updates'
 import { useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
-import { Button, Card, Text } from 'react-native-paper'
+import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import Toast from '@/utils/toast'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function TestPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -17,6 +18,8 @@ export default function TestPage() {
   const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
     Updates.useUpdates()
   const sheetRef = useRef<BottomSheet>(null)
+  const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
 
   const showPlayerQueueModal = () => {
     sheetRef.current?.snapToPosition('75%')
@@ -61,10 +64,6 @@ export default function TestPage() {
     FileViewer.open(logFilePath)
       .then(() => {
         console.log('open file')
-        // showToast({
-        //   severity: 'info',
-        //   title: '打开文件成功',
-        // })
         Toast.success('打开文件成功')
       })
       .catch((err) => {
@@ -89,11 +88,15 @@ export default function TestPage() {
   }
 
   return (
-    <>
-      <ScrollView
-        className='flex-1 p-4 '
-        contentContainerStyle={{ paddingBottom: 80 }}
-      >
+    <View
+      className='flex-1'
+      style={{
+        paddingBottom: 80,
+        paddingTop: insets.top,
+        backgroundColor: colors.background,
+      }}
+    >
+      <ScrollView className='flex-1 p-4 '>
         <View className='mb-4'>
           <Button
             mode='outlined'
@@ -158,6 +161,14 @@ export default function TestPage() {
           >
             分 p 页面
           </Button>
+          <Button
+            mode='contained'
+            loading={loading}
+            className='mb-2'
+            onPress={() => router.push('/')}
+          >
+            ceshi
+          </Button>
         </View>
 
         <Text
@@ -178,6 +189,6 @@ export default function TestPage() {
           </Card>
         ))}
       </ScrollView>
-    </>
+    </View>
   )
 }

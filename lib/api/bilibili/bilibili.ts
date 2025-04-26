@@ -232,6 +232,11 @@ const transformMultipageVideosToTracks = (
  */
 export const createBilibiliApi = (getCookie: () => string) => ({
   /**
+   * 获取 cookie
+   */
+  getCookie: () => getCookie(),
+
+  /**
    * 获取用户观看历史记录
    */
   getHistory(): ResultAsync<Track[], BilibiliApiError> {

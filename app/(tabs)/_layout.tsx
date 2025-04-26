@@ -53,12 +53,12 @@ export default function TabLayout() {
         }}
       />
       <Tab.Screen
-        name='test/index'
+        name='(about)/index'
         options={{
-          title: '测试',
+          title: '关于',
           tabBarIcon: ({ color }: { color: string }) => (
             <MaterialCommunityIcons
-              name='wrench'
+              name='information'
               color={color}
               size={26}
             />
