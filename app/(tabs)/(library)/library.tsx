@@ -243,7 +243,7 @@ const FavoriteFolderListComponent = memo(
         />
         <FlatList
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 10 }}
+          contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
           data={filteredPlaylists}
           renderItem={renderPlaylistItem}
@@ -253,7 +253,7 @@ const FavoriteFolderListComponent = memo(
               variant='titleMedium'
               style={{ textAlign: 'center', paddingTop: 10 }}
             >
-              再怎么翻也没有了哦~
+              •
             </Text>
           }
           ListEmptyComponent={
@@ -353,7 +353,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
           />
         }
         keyExtractor={keyExtractor}
-        contentContainerStyle={{ paddingBottom: 10 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
         onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
         ListFooterComponent={
@@ -373,7 +373,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
               variant='titleMedium'
               style={{ textAlign: 'center', paddingTop: 10 }}
             >
-              再怎么翻也没有了哦~
+              •
             </Text>
           )
         }
@@ -526,7 +526,7 @@ const MultiPageVideosListComponent = memo(
         </View>
         <FlatList
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 10 }}
+          contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
           renderItem={renderPlaylistItem}
@@ -552,7 +552,7 @@ const MultiPageVideosListComponent = memo(
                 variant='titleMedium'
                 style={{ textAlign: 'center', paddingTop: 10 }}
               >
-                再怎么翻也没有了哦~
+                •
               </Text>
             )
           }

@@ -219,7 +219,14 @@ export default function FavoritePage() {
               >
                 <ActivityIndicator size='small' />
               </View>
-            ) : null
+            ) : (
+              <Text
+                variant='titleMedium'
+                style={{ textAlign: 'center', paddingTop: 10 }}
+              >
+                •
+              </Text>
+            )
           }
         />
       </View>

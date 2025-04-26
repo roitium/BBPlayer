@@ -204,6 +204,14 @@ export default function MultipagePage() {
           }
           keyExtractor={keyExtractor}
           showsVerticalScrollIndicator={false}
+          ListFooterComponent={
+            <Text
+              variant='titleMedium'
+              style={{ textAlign: 'center', paddingTop: 10 }}
+            >
+              •
+            </Text>
+          }
         />
       </View>
 

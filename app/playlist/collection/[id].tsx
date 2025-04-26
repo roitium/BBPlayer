@@ -211,6 +211,14 @@ export default function CollectionPage() {
               colors={[colors.primary]}
             />
           }
+          ListFooterComponent={
+            <Text
+              variant='titleMedium'
+              style={{ textAlign: 'center', paddingTop: 10 }}
+            >
+              •
+            </Text>
+          }
         />
       </View>
 
