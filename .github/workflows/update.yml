@@ -1,5 +1,4 @@
-on:
-  workflow_dispatch
+on: workflow_dispatch
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -11,7 +10,7 @@ jobs:
         run: corepack enable
 
       - name: 🏗 Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: yarn
