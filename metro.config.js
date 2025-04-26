@@ -1,4 +1,3 @@
-const { withNativeWind } = require('nativewind/metro')
 const { getSentryExpoConfig } = require('@sentry/react-native/metro')
 const {
   wrapWithReanimatedMetroConfig,
@@ -8,6 +7,4 @@ const config = getSentryExpoConfig(__dirname, {
   annotateReactComponents: true,
 })
 
-const config1 = withNativeWind(config, { input: './css/global.css' })
-
-module.exports = wrapWithReanimatedMetroConfig(config1)
+module.exports = wrapWithReanimatedMetroConfig(config)

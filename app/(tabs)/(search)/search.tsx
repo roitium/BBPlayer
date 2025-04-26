@@ -27,12 +27,9 @@ import Toast from '@/utils/toast'
 
 const searchLog = log.extend('SEARCH')
 
-// 搜索历史的存储键
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
-// 最大搜索历史数量
 const MAX_SEARCH_HISTORY = 10
 
-// 搜索历史项类型
 interface SearchHistoryItem {
   id: string
   text: string
@@ -46,7 +43,7 @@ export default function SearchPage() {
   const [finalQuery, setFinalQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(20) // 每页显示20条结果
+  const [pageSize] = useState(20)
   const [pageInputValue, setPageInputValue] = useState('1')
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
@@ -54,7 +51,6 @@ export default function SearchPage() {
   const [searchHistory, setSearchHistory] =
     useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
 
-  // 下一首播放
   const playNext = useCallback(
     async (track: Track) => {
       try {
@@ -104,7 +100,6 @@ export default function SearchPage() {
     async (query: string) => {
       if (!query.trim()) return
 
-      // 创建新的历史项
       const newItem: SearchHistoryItem = {
         id: `history_${Date.now()}`,
         text: query,
@@ -142,12 +137,11 @@ export default function SearchPage() {
       }
 
       setSearchHistory(newHistory)
-      await saveSearchHistory(newHistory)
+      saveSearchHistory(newHistory)
     },
     [searchHistory, saveSearchHistory, setSearchHistory],
   )
 
-  // 使用API查询 - 使用防抖后的查询
   const { data: searchData, isLoading: isLoadingResults } = useSearchResults(
     finalQuery,
     currentPage,
@@ -161,7 +155,6 @@ export default function SearchPage() {
   const { data: hotSearches = [], isLoading: isLoadingHotSearches } =
     useHotSearches(bilibiliApi)
 
-  // 处理搜索输入
   const handleSearchInput = (query: string) => {
     setSearchQuery(query)
     setCurrentPage(1) // 重置为第一页
@@ -179,7 +172,6 @@ export default function SearchPage() {
     addSearchHistory(query)
   }
 
-  // 清除搜索
   const clearSearch = () => {
     setSearchQuery('')
     setFinalQuery('')
@@ -193,19 +185,16 @@ export default function SearchPage() {
     if (searchQuery.trim()) {
       setIsSearching(true)
       setFinalQuery(searchQuery)
-      // 添加到搜索历史
       addSearchHistory(searchQuery)
     }
   }
 
-  // 处理页码变化
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return
     setCurrentPage(newPage)
     setPageInputValue(newPage.toString())
   }
 
-  // 处理页码输入
   const handlePageInputChange = (text: string) => {
     // 只允许输入数字
     if (/^\d*$/.test(text)) {
@@ -224,7 +213,6 @@ export default function SearchPage() {
     }
   }
 
-  // 渲染搜索结果项
   const renderSearchResultItem = (item: Track) => (
     <TouchableRipple
       key={item.id}
@@ -232,20 +220,22 @@ export default function SearchPage() {
       onPress={() => playNow(item)}
     >
       <Surface
-        className='overflow-hidden rounded-lg'
+        style={{ overflow: 'hidden', borderRadius: 8 }}
         elevation={0}
       >
-        <View className='flex-row items-center p-2'>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+        >
           <Image
             source={{ uri: item.cover }}
             style={{ width: 48, height: 48, borderRadius: 4 }}
           />
-          <View className='ml-3 flex-1'>
+          <View style={{ marginLeft: 12, flex: 1 }}>
             <Text variant='titleMedium'>{item.title}</Text>
-            <View className='flex-row items-center'>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text variant='bodySmall'>{item.artist}</Text>
               <Text
-                className='mx-1'
+                style={{ marginHorizontal: 4 }}
                 variant='bodySmall'
               >
                 •
@@ -288,10 +278,20 @@ export default function SearchPage() {
     </TouchableRipple>
   )
 
-  // 渲染分页控件
   const renderPagination = () => (
-    <View className='item-center flex flex-col'>
-      <View className='mt-4 mb-6 flex-row items-center justify-center gap-5'>
+    <View
+      style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}
+    >
+      <View
+        style={{
+          marginTop: 16,
+          marginBottom: 24,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 20,
+        }}
+      >
         <Button
           mode='outlined'
           onPress={() => handlePageChange(currentPage - 1)}
@@ -311,8 +311,16 @@ export default function SearchPage() {
           下一页
         </Button>
       </View>
-      <View className='mx-auto flex-row items-center'>
-        <View className='ml-2 flex-row items-center'>
+      <View
+        style={{
+          alignSelf: 'center',
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
+      >
+        <View
+          style={{ marginLeft: 8, flexDirection: 'row', alignItems: 'center' }}
+        >
           <TextInput
             value={pageInputValue}
             onChangeText={handlePageInputChange}
@@ -321,7 +329,11 @@ export default function SearchPage() {
             style={{
               width: 50,
               height: 30,
+              paddingVertical: 0,
+              marginVertical: 0,
+              textAlignVertical: 'center',
             }}
+            dense
           />
           <Text variant='bodyMedium'>
             {' / '}
@@ -340,15 +352,24 @@ export default function SearchPage() {
   )
 
   return (
-    <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
-    >
-      {/* 搜索栏 */}
+    <View style={{ flex: 1, paddingTop: insets.top + 8 }}>
       <View
-        style={{ paddingTop: insets.top + 8 }}
-        className='px-4 pb-2'
+        style={{
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
+        <Text
+          variant='headlineSmall'
+          style={{ fontWeight: 'bold' }}
+        >
+          搜索
+        </Text>
+      </View>
+      {/* 搜索栏 */}
+      <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 8 }}>
         <Searchbar
           placeholder='搜索歌曲、歌手、专辑'
           onChangeText={handleSearchInput}
@@ -357,21 +378,30 @@ export default function SearchPage() {
           onSubmitEditing={handleSearchSubmit}
           elevation={0}
           mode='bar'
-          className='rounded-full'
-          style={{ backgroundColor: colors.surfaceVariant }}
+          style={{
+            borderRadius: 9999,
+            backgroundColor: colors.surfaceVariant,
+          }}
         />
       </View>
 
       {/* 内容区域 */}
       <ScrollView
-        className='flex-1 px-4'
-        contentContainerStyle={{ paddingBottom: 80 }}
+        style={{ flex: 1, paddingHorizontal: 16 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
         {!isSearching ? (
           <>
             {/* 搜索历史 */}
-            <View className='mt-4 mb-6'>
-              <View className='mb-2 flex-row items-center justify-between'>
+            <View style={{ marginTop: 16, marginBottom: 24 }}>
+              <View
+                style={{
+                  marginBottom: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Text
                   variant='titleMedium'
                   style={{ fontWeight: 'bold' }}
@@ -390,7 +420,7 @@ export default function SearchPage() {
                 )}
               </View>
               {searchHistory && searchHistory.length > 0 ? (
-                <View className='flex-row flex-wrap'>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {searchHistory.map((item) => (
                     <Chip
                       key={item.id}
@@ -404,8 +434,11 @@ export default function SearchPage() {
                 </View>
               ) : (
                 <Text
-                  className='py-2 text-center'
-                  style={{ color: colors.onSurfaceVariant }}
+                  style={{
+                    paddingVertical: 8,
+                    textAlign: 'center',
+                    color: colors.onSurfaceVariant,
+                  }}
                 >
                   暂无搜索历史
                 </Text>
@@ -413,18 +446,17 @@ export default function SearchPage() {
             </View>
 
             {/* 热门搜索 */}
-            <View className='mb-6'>
+            <View style={{ marginBottom: 24 }}>
               <Text
                 variant='titleMedium'
-                className='mb-2'
-                style={{ fontWeight: 'bold' }}
+                style={{ marginBottom: 8, fontWeight: 'bold' }}
               >
                 热门搜索
               </Text>
               {isLoadingHotSearches ? (
                 <ActivityIndicator size='small' />
               ) : (
-                <View className='flex-row flex-wrap'>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {hotSearches.map((item) => (
                     <Chip
                       key={item.id}
@@ -442,11 +474,10 @@ export default function SearchPage() {
         ) : (
           <>
             {/* 搜索结果 */}
-            <View className='mt-4'>
+            <View style={{ marginTop: 16 }}>
               <Text
                 variant='titleMedium'
-                className='mb-2'
-                style={{ fontWeight: 'bold' }}
+                style={{ marginBottom: 8, fontWeight: 'bold' }}
               >
                 搜索结果
               </Text>
@@ -459,8 +490,11 @@ export default function SearchPage() {
                 </>
               ) : (
                 <Text
-                  className='py-4 text-center'
-                  style={{ color: colors.onSurfaceVariant }}
+                  style={{
+                    paddingVertical: 16,
+                    textAlign: 'center',
+                    color: colors.onSurfaceVariant,
+                  }}
                 >
                   没有找到相关结果
                 </Text>

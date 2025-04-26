@@ -9,18 +9,39 @@ export default function GlobalErrorFallback({
   resetError: () => void
 }) {
   return (
-    <View className='flex-1 items-center justify-center p-5'>
-      <Text className='mb-2 font-bold text-xl'>出错了</Text>
-      <Text className='mb-5 text-center'>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <Text style={{ marginBottom: 8, fontWeight: 'bold', fontSize: 20 }}>
+        出错了
+      </Text>
+      <Text style={{ marginBottom: 20, textAlign: 'center' }}>
         {error instanceof Error && error.message
           ? error.message
           : JSON.stringify(error)}
       </Text>
       <TouchableOpacity
-        className='rounded bg-blue-500 px-5 py-2'
+        style={{
+          borderRadius: 4,
+          backgroundColor: '#3b82f6',
+          paddingLeft: 20,
+          paddingRight: 20,
+          paddingTop: 8,
+          paddingBottom: 8,
+        }}
         onPress={resetError}
       >
-        <Button className='font-bold text-white'>重试</Button>
+        <Button
+          labelStyle={{ fontWeight: 'bold' }}
+          buttonColor='white'
+        >
+          重试
+        </Button>
       </TouchableOpacity>
     </View>
   )

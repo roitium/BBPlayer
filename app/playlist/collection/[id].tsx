@@ -12,6 +12,7 @@ import { FlatList, RefreshControl, View } from 'react-native'
 import {
   ActivityIndicator,
   Appbar,
+  Button,
   Divider,
   IconButton,
   Menu,
@@ -111,12 +112,18 @@ export default function CollectionPage() {
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
 
-  // @ts-ignore 故意定向到一个不存在的页面，触发 404
+  // @ts-expect-error
   if (typeof id !== 'string') return router.replace('/not-found')
 
   if (isCollectionDataPending) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <ActivityIndicator size='large' />
       </View>
     )
@@ -124,22 +131,31 @@ export default function CollectionPage() {
 
   if (isCollectionDataError) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Text
           variant='titleMedium'
-          className='text-center'
+          style={{ textAlign: 'center' }}
         >
           加载失败
         </Text>
+        <Button
+          onPress={() => refetch()}
+          style={{ marginTop: 16 }}
+        >
+          重试
+        </Button>
       </View>
     )
   }
 
   return (
-    <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
         <Appbar.BackAction
           onPress={() => {
@@ -148,8 +164,7 @@ export default function CollectionPage() {
         />
       </Appbar.Header>
 
-      {/* 顶部背景图 */}
-      <View className='absolute h-full w-full'>
+      <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
         <Image
           source={{ uri: collectionData.info.cover }}
           style={{
@@ -161,10 +176,7 @@ export default function CollectionPage() {
         />
       </View>
 
-      <View
-        className='flex-1'
-        style={{ paddingBottom: currentTrack ? 80 : 0 }}
-      >
+      <View style={{ flex: 1, paddingBottom: currentTrack ? 80 : 0 }}>
         <FlatList
           data={collectionData.medias}
           renderItem={renderItem}
@@ -191,8 +203,7 @@ export default function CollectionPage() {
         />
       </View>
 
-      {/* 当前播放栏 */}
-      <View className='absolute right-0 bottom-0 left-0'>
+      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
         <NowPlayingBar />
       </View>
     </View>
@@ -204,20 +215,24 @@ const Header = memo(function Header({
   playAll,
 }: {
   collectionData: ReturnType<typeof useCollectionAllContents>['data']
-  playAll: () => Promise<void>
+  playAll: (startFromId?: string) => Promise<void>
 }) {
   if (!collectionData) return null
   return (
     <>
-      {/* 顶部收藏夹信息 */}
-      <View className='relative flex flex-col'>
-        {/* 收藏夹信息 */}
-        <View className='flex flex-row p-4'>
+      <View
+        style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <View style={{ display: 'flex', flexDirection: 'row', padding: 16 }}>
           <Image
             source={{ uri: collectionData.info.cover }}
             style={{ width: 120, height: 120, borderRadius: 8 }}
           />
-          <View className='ml-4 flex-1 justify-center'>
+          <View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
             <Text
               variant='titleLarge'
               style={{ fontWeight: 'bold' }}
@@ -228,6 +243,7 @@ const Header = memo(function Header({
             <Text
               variant='bodyMedium'
               numberOfLines={1}
+              style={{ marginTop: 4 }}
             >
               {collectionData.info.upper.name} •{' '}
               {collectionData.info.media_count} 首歌曲
@@ -235,11 +251,18 @@ const Header = memo(function Header({
           </View>
         </View>
 
-        {/* 描述和操作按钮 */}
-        <View className='flex flex-row items-center justify-between p-4'>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 16,
+          }}
+        >
           <Text
             variant='bodyMedium'
-            style={{ maxWidth: 300 }}
+            style={{ maxWidth: '75%' }}
           >
             {collectionData.info.intro || '还没有简介哦~'}
           </Text>
@@ -280,10 +303,16 @@ const TrackItem = memo(function TrackItem({
       onPress={() => playAll(item.id)}
     >
       <Surface
-        className='overflow-hidden rounded-lg'
+        style={{
+          overflow: 'hidden',
+          borderRadius: 8,
+          backgroundColor: 'transparent',
+        }}
         elevation={0}
       >
-        <View className='flex-row items-center p-2'>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+        >
           <Text
             variant='titleMedium'
             style={{
@@ -295,14 +324,30 @@ const TrackItem = memo(function TrackItem({
           </Text>
           <Image
             source={{ uri: item.cover }}
-            style={{ width: 48, height: 48, borderRadius: 4 }}
+            style={{ width: 48, height: 48, borderRadius: 4, marginLeft: 8 }}
           />
-          <View className='ml-3 flex-1'>
-            <Text variant='titleMedium'>{item.title}</Text>
-            <View className='flex-row items-center'>
-              <Text variant='bodySmall'>{item.artist}</Text>
+          <View style={{ marginLeft: 12, flex: 1 }}>
+            <Text
+              variant='titleMedium'
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 2,
+              }}
+            >
               <Text
-                className='mx-1'
+                variant='bodySmall'
+                numberOfLines={1}
+              >
+                {item.artist}
+              </Text>
+              <Text
+                style={{ marginHorizontal: 4 }}
                 variant='bodySmall'
               >
                 •

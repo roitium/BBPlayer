@@ -509,6 +509,10 @@ export const createBilibiliApi = (getCookie: () => string) => ({
             { cookie, favoriteId, bvids },
           )
         }
+        bilibiliApiLog.debug(
+          'batchDeleteFavoriteListContents: 获取 csrf 成功',
+          { csrf: match[2] },
+        )
         return match[2]
       },
       (e) =>

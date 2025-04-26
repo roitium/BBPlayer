@@ -117,7 +117,6 @@ export default function FavoritePage() {
           refetch={refetch}
           playNext={playNext}
           mutate={mutate}
-          // 我们在下面做了检查
           favoriteId={id as string}
         />
       )
@@ -127,12 +126,12 @@ export default function FavoritePage() {
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
 
-  // @ts-ignore 故意定向到一个不存在的页面，触发 404
+  // @ts-expect-error
   if (typeof id !== 'string') return router.replace('/not-found')
 
   if (isFavoriteDataPending) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size='large' />
       </View>
     )
@@ -140,10 +139,10 @@ export default function FavoritePage() {
 
   if (isFavoriteDataError) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Text
           variant='titleMedium'
-          className='text-center'
+          style={{ textAlign: 'center' }}
         >
           加载失败
         </Text>
@@ -152,10 +151,7 @@ export default function FavoritePage() {
   }
 
   return (
-    <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
         <Appbar.BackAction
           onPress={() => {
@@ -165,7 +161,7 @@ export default function FavoritePage() {
       </Appbar.Header>
 
       {/* 顶部背景图 */}
-      <View className='absolute h-full w-full'>
+      <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
         <Image
           source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
           style={{
@@ -177,10 +173,7 @@ export default function FavoritePage() {
         />
       </View>
 
-      <View
-        className='flex-1'
-        style={{ paddingBottom: currentTrack ? 80 : 0 }}
-      >
+      <View style={{ flex: 1, paddingBottom: currentTrack ? 80 : 0 }}>
         <FlatList
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
           renderItem={renderItem}
@@ -207,7 +200,14 @@ export default function FavoritePage() {
           onEndReached={hasNextPage ? () => fetchNextPage() : null}
           ListFooterComponent={
             hasNextPage ? (
-              <View className='flex-row items-center justify-center p-4'>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 16,
+                }}
+              >
                 <ActivityIndicator size='small' />
               </View>
             ) : null
@@ -215,8 +215,7 @@ export default function FavoritePage() {
         />
       </View>
 
-      {/* 当前播放栏 */}
-      <View className='absolute right-0 bottom-0 left-0'>
+      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
         <NowPlayingBar />
       </View>
     </View>
@@ -232,14 +231,14 @@ const Header = memo(function Header({
 }) {
   if (!favoriteData) return null
   return (
-    <View className='relative flex flex-col'>
+    <View style={{ position: 'relative', flexDirection: 'column' }}>
       {/* 收藏夹信息 */}
-      <View className='flex flex-row p-4'>
+      <View style={{ flexDirection: 'row', padding: 16 }}>
         <Image
           source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
           style={{ width: 120, height: 120, borderRadius: 8 }}
         />
-        <View className='ml-4 flex-1 justify-center'>
+        <View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
           <Text
             variant='titleLarge'
             style={{ fontWeight: 'bold' }}
@@ -258,7 +257,14 @@ const Header = memo(function Header({
       </View>
 
       {/* 描述和操作按钮 */}
-      <View className='flex flex-row items-center justify-between p-4'>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: 16,
+        }}
+      >
         <Text
           variant='bodyMedium'
           style={{ maxWidth: 300 }}
@@ -308,10 +314,12 @@ const TrackItem = memo(function TrackItem({
       onPress={() => playAll(item.id)}
     >
       <Surface
-        className='overflow-hidden rounded-lg'
+        style={{ overflow: 'hidden', borderRadius: 8 }}
         elevation={0}
       >
-        <View className='flex-row items-center p-2'>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+        >
           <Text
             variant='titleMedium'
             style={{
@@ -325,12 +333,12 @@ const TrackItem = memo(function TrackItem({
             source={{ uri: item.cover }}
             style={{ width: 48, height: 48, borderRadius: 4 }}
           />
-          <View className='ml-3 flex-1'>
+          <View style={{ marginLeft: 12, flex: 1 }}>
             <Text variant='titleMedium'>{item.title}</Text>
-            <View className='flex-row items-center'>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text variant='bodySmall'>{item.artist}</Text>
               <Text
-                className='mx-1'
+                style={{ marginHorizontal: 4 }}
                 variant='bodySmall'
               >
                 •

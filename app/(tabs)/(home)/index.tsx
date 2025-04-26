@@ -83,17 +83,23 @@ function HomePage() {
   const limitedRecentlyPlayed = recentlyPlayed?.slice(0, 20)
 
   return (
-    <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
-    >
-      <View className='flex-1 pb-[80px]'>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, paddingBottom: 80 }}>
         {/*顶部欢迎区域*/}
         <View
-          className='px-4 pt-2 pb-4'
-          style={{ paddingTop: insets.top + 8 }}
+          style={{
+            paddingHorizontal: 16,
+            paddingTop: insets.top + 8,
+            paddingBottom: 16,
+          }}
         >
-          <View className='flex-row items-center justify-between'>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
             <View>
               <Text
                 variant='headlineSmall'
@@ -126,7 +132,7 @@ function HomePage() {
           </View>
         </View>
 
-        <View className='mt-4 mb-6'>
+        <View style={{ marginTop: 16, marginBottom: 24 }}>
           <FavoriteList
             data={playlists}
             isPending={playlistsPending}
@@ -134,7 +140,7 @@ function HomePage() {
           />
         </View>
         {/* Recently Played (Uses FlatList) */}
-        <View className='mb-6 px-4'>
+        <View style={{ marginBottom: 24, paddingHorizontal: 16 }}>
           <RecentlyPlayed
             data={limitedRecentlyPlayed}
             isPending={recentlyPlayedPending}
@@ -146,7 +152,14 @@ function HomePage() {
         </View>
       </View>
 
-      <View className='absolute right-0 bottom-0 left-0'>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }}
+      >
         <NowPlayingBar />
       </View>
 
@@ -218,9 +231,15 @@ function PlaylistItem({ item }: { item: Playlist }) {
 
   return (
     <Surface
-      className='my-2 mr-4 w-40 overflow-hidden'
+      style={{
+        marginVertical: 8,
+        marginRight: 16,
+        width: 160,
+        overflow: 'hidden',
+        borderRadius: 8,
+        padding: 8,
+      }}
       elevation={1}
-      style={{ borderRadius: 8, padding: 8 }}
     >
       <TouchableOpacity
         key={item.id}
@@ -258,7 +277,15 @@ function FavoriteList({
 
   return (
     <>
-      <View className='mb-2 flex-row items-center justify-between px-4'>
+      <View
+        style={{
+          // marginBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+        }}
+      >
         <Text
           variant='titleLarge'
           style={{ fontWeight: 'bold' }}
@@ -345,7 +372,14 @@ function RecentlyPlayed({
   return (
     <>
       {/* Header */}
-      <View className='mb-2 flex-row items-center justify-between'>
+      <View
+        style={{
+          marginBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Text
           variant='titleLarge'
           style={{ fontWeight: 'bold' }}
@@ -452,32 +486,34 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
   return (
     <TouchableOpacity
       key={item.id}
-      className='mb-2'
+      style={{ marginBottom: 8 }}
       activeOpacity={0.7}
       onPress={() => playSingleTrack(item)}
     >
       <Surface
-        className='overflow-hidden rounded-lg'
+        style={{ overflow: 'hidden', borderRadius: 8 }}
         elevation={0}
       >
-        <View className='flex-row items-center p-2'>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+        >
           <Image
             source={{ uri: item.cover }}
             style={{ width: 48, height: 48, borderRadius: 4 }}
           />
-          <View className='ml-3 flex-1'>
+          <View style={{ marginLeft: 12, flex: 1 }}>
             <Text
               variant='titleMedium'
               numberOfLines={1}
             >
               {item.title}
             </Text>
-            <View className='flex-row items-center'>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text variant='bodySmall'>{item.artist}</Text>
               {item.duration != null && item.duration > 0 && (
                 <>
                   <Text
-                    className='mx-1'
+                    style={{ marginHorizontal: 4 }}
                     variant='bodySmall'
                   >
                     •

@@ -25,64 +25,86 @@ export default function NowPlayingBar() {
 
   return (
     <Surface
-      className='mx-2 overflow-hidden rounded-xl shadow-lg'
+      style={{
+        overflow: 'hidden',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.elevation.level5,
+      }}
       elevation={2}
     >
       <TouchableOpacity
-        className='relative'
+        style={{ position: 'relative' }}
         onPress={() => {
           router.push('/player')
         }}
         activeOpacity={0.9}
       >
-        {/* 进度条 */}
         <ProgressBar
           animatedValue={progress.position / progress.duration}
           color={colors.primary}
           style={{ height: 2 }}
         />
 
-        <View className='flex-row items-center p-2'>
-          {/* 封面 */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 8,
+          }}
+        >
           <Image
             source={{ uri: currentTrack.cover }}
             style={{ height: 48, width: 48, borderRadius: 6 }}
           />
 
-          {/* 歌曲信息 */}
-          <View className='ml-3 flex-1 justify-center'>
+          <View
+            style={{
+              marginLeft: 12,
+              flex: 1,
+              justifyContent: 'center',
+              marginRight: 8,
+            }}
+          >
             <Text
               variant='titleMedium'
               numberOfLines={1}
+              style={{ color: colors.onSurface }}
             >
               {currentTrack?.title}
             </Text>
             <Text
               variant='bodySmall'
               numberOfLines={1}
+              style={{ color: colors.onSurfaceVariant }}
             >
               {currentTrack?.artist}
             </Text>
           </View>
 
-          {/* 控制按钮 */}
-          <View className='flex-row items-center'>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
             <IconButton
               icon='skip-previous'
               size={24}
               onPress={usePlayerStore.getState().skipToPrevious}
+              iconColor={colors.onSurface}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={24}
               onPress={usePlayerStore.getState().togglePlay}
               iconColor={colors.primary}
-              style={{ margin: 0 }}
+              style={{ marginHorizontal: 0 }}
             />
             <IconButton
               icon='skip-next'
               size={24}
               onPress={usePlayerStore.getState().skipToNext}
+              iconColor={colors.onSurface}
             />
           </View>
         </View>

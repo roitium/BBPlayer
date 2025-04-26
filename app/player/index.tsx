@@ -71,16 +71,22 @@ function DragableProgressBar() {
       // 当手势开始时，更新一遍进度，防止进度条闪烁到开头
       onPanResponderGrant: (_, gestureState) => {
         setIsDragging(true)
-        setLocalProgress(cachedPosition.current / cachedDuration.current)
+        if (cachedDuration.current > 0) {
+          setLocalProgress(cachedPosition.current / cachedDuration.current)
+        } else {
+          setLocalProgress(0)
+        }
       },
       // 在滑动时实时更新进度，保证进度条实时更新
       onPanResponderMove: (_, gestureState) => {
-        // 计算新的进度值（0-1之间）
-        const newProgress = Math.max(
-          0,
-          Math.min(1, gestureState.moveX / progressBarWidth.current),
-        )
-        setLocalProgress(newProgress)
+        if (progressBarWidth.current > 0) {
+          // 计算新的进度值（0-1之间）
+          const newProgress = Math.max(
+            0,
+            Math.min(1, gestureState.moveX / progressBarWidth.current),
+          )
+          setLocalProgress(newProgress)
+        }
       },
       onPanResponderRelease: (_, gestureState) => {
         // 处理点击事件（10px 真的够用吗）
@@ -88,19 +94,27 @@ function DragableProgressBar() {
           setIsDragging(false)
           return
         }
-        // 计算最终进度值并应用
-        const finalProgress = Math.max(
-          0,
-          Math.min(1, gestureState.moveX / progressBarWidth.current),
-        )
-        setLocalProgress(finalProgress)
-        seekTo(finalProgress * cachedDuration.current)
+        if (progressBarWidth.current > 0) {
+          // 计算最终进度值并应用
+          const finalProgress = Math.max(
+            0,
+            Math.min(1, gestureState.moveX / progressBarWidth.current),
+          )
+          setLocalProgress(finalProgress)
+          if (cachedDuration.current > 0) {
+            seekTo(finalProgress * cachedDuration.current)
+          }
+        }
         setIsDragging(false)
       },
       onPanResponderTerminate: () => {
         // 如果手势被中断，恢复到当前播放位置
         setIsDragging(false)
-        setLocalProgress(cachedPosition.current / cachedDuration.current)
+        if (cachedDuration.current > 0) {
+          setLocalProgress(cachedPosition.current / cachedDuration.current)
+        } else {
+          setLocalProgress(0)
+        }
       },
     }),
   ).current
@@ -114,6 +128,8 @@ function DragableProgressBar() {
       playbackState.state !== State.Buffering
     ) {
       setLocalProgress(position / duration)
+    } else if (duration === 0) {
+      setLocalProgress(0)
     }
   }, [position, duration, isDragging, playbackState.state])
 
@@ -123,23 +139,33 @@ function DragableProgressBar() {
   }
 
   return (
-    <View className='mt-4'>
+    <View style={{ marginTop: 16 }}>
       {/* 进度条主容器 */}
       <View
-        className='h-8 w-full justify-center'
+        style={{
+          height: 32,
+          width: '100%',
+          justifyContent: 'center',
+        }}
         ref={progressBarRef}
         onLayout={onLayout}
         {...panResponder.panHandlers}
       >
         {/* 进度条背景 */}
         <View
-          className='h-1.5 w-full overflow-hidden rounded-full'
-          style={{ backgroundColor: colors.surfaceVariant }}
+          style={{
+            height: 6,
+            width: '100%',
+            overflow: 'hidden',
+            borderRadius: 9999,
+            backgroundColor: colors.surfaceVariant,
+          }}
         >
           {/* 进度条填充部分 */}
           <View
-            className='h-full rounded-full'
             style={{
+              height: '100%',
+              borderRadius: 9999,
               backgroundColor: colors.primary,
               width: `${localProgress * 100}%`,
             }}
@@ -149,14 +175,17 @@ function DragableProgressBar() {
         {/* 拖动手柄 */}
         <TouchableOpacity
           activeOpacity={1}
-          className='absolute size-4 rounded-full'
           style={{
+            position: 'absolute',
+            width: 16,
+            height: 16,
+            borderRadius: 9999,
+            borderWidth: 2,
             backgroundColor: colors.primary,
             // -0.01 是为了与进度条对齐
             left: `${(localProgress - 0.01) * 100}%`,
             // 同样是为了对齐
             top: 6,
-            borderWidth: 2,
             borderColor: 'white',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
@@ -168,18 +197,24 @@ function DragableProgressBar() {
       </View>
 
       {/* 时间显示 */}
-      <View className='mt-1 flex-row justify-between'>
+      <View
+        style={{
+          marginTop: 4,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
         <Text
           variant='bodySmall'
           style={{ color: colors.onSurfaceVariant }}
         >
-          {formatDurationToHHMMSS(Math.trunc(localProgress * duration))}
+          {formatDurationToHHMMSS(Math.trunc(localProgress * (duration || 0)))}
         </Text>
         <Text
           variant='bodySmall'
           style={{ color: colors.onSurfaceVariant }}
         >
-          {formatDurationToHHMMSS(Math.trunc(duration))}
+          {formatDurationToHHMMSS(Math.trunc(duration || 0))}
         </Text>
       </View>
     </View>
@@ -226,8 +261,15 @@ export default function PlayerPage() {
   // 如果没有当前曲目，显示空状态
   if (!currentTrack) {
     return (
-      <View className='flex-1 items-center justify-center'>
-        <Text>没有正在播放的曲目</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
+        <Text style={{ color: colors.onBackground }}>没有正在播放的曲目</Text>
         <IconButton
           icon='arrow-left'
           onPress={() => router.back()}
@@ -237,12 +279,13 @@ export default function PlayerPage() {
   }
 
   // 当前歌词索引 - 暂不支持歌词功能
-  const currentLyricIndex = 0
+  // const currentLyricIndex = 0 // currentLyricIndex is unused
 
   return (
     <View
-      className='h-full w-full'
       style={{
+        height: '100%',
+        width: '100%',
         backgroundColor: colors.background,
         paddingTop: insets.top,
       }}
@@ -257,15 +300,24 @@ export default function PlayerPage() {
 
       {/* 顶部导航栏 */}
       <Animated.View
-        className='absolute right-0 left-0 z-10'
         style={{
+          position: 'absolute',
+          right: 0,
+          left: 0,
+          zIndex: 10,
           paddingTop: insets.top,
           paddingBottom: 8,
           opacity: headerOpacity,
-          backgroundColor: colors.background,
         }}
       >
-        <View className='flex-row items-center justify-between px-4'>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+          }}
+        >
           <IconButton
             icon='chevron-down'
             size={24}
@@ -274,7 +326,10 @@ export default function PlayerPage() {
           <Text
             variant='titleMedium'
             numberOfLines={1}
-            className='flex-1 text-center'
+            style={{
+              flex: 1,
+              textAlign: 'center',
+            }}
           >
             {currentTrack.title}
           </Text>
@@ -287,11 +342,24 @@ export default function PlayerPage() {
       </Animated.View>
 
       {/* 主内容区域 */}
-      <View className='flex flex-1 justify-between'>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'space-between',
+        }}
+      >
         {/* 上半部分：顶部操作栏、封面和歌曲信息 */}
         <View>
           {/* 顶部操作栏 */}
-          <View className='flex-row items-center justify-between px-4 py-2'>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            }}
+          >
             <IconButton
               icon='chevron-down'
               size={24}
@@ -299,7 +367,10 @@ export default function PlayerPage() {
             />
             <Text
               variant='titleMedium'
-              className='flex-1 text-center'
+              style={{
+                flex: 1,
+                textAlign: 'center',
+              }}
             >
               正在播放
             </Text>
@@ -311,15 +382,19 @@ export default function PlayerPage() {
           </View>
 
           {/* 封面区域 */}
-          <View className='items-center px-8 py-6'>
+          <View
+            style={{
+              alignItems: 'center',
+              paddingHorizontal: 32,
+              paddingVertical: 24,
+            }}
+          >
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={toggleViewMode}
-              className='rounded-full'
             >
               <Surface
                 elevation={5}
-                // 我不理解，为什么这里无法通过 className 设置
                 style={{ borderRadius: 16 }}
               >
                 <Image
@@ -335,9 +410,15 @@ export default function PlayerPage() {
           </View>
 
           {/* 歌曲信息 */}
-          <View className='px-6'>
-            <View className='flex-row items-center justify-between'>
-              <View className='flex-1'>
+          <View style={{ paddingHorizontal: 24 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ flex: 1, marginRight: 8 }}>
                 <Text
                   variant='titleLarge'
                   style={{ fontWeight: 'bold' }}
@@ -364,12 +445,25 @@ export default function PlayerPage() {
         </View>
 
         {/* 下半部分：进度条和控制栏 */}
-        <View className='px-6 pb-5'>
+        <View
+          style={{
+            paddingHorizontal: 24,
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 20,
+          }}
+        >
           {/* 进度条 */}
           <DragableProgressBar />
 
           {/* 播放控制 */}
-          <View className='mt-6 flex-row items-center justify-center gap-10'>
+          <View
+            style={{
+              marginTop: 24,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 40,
+            }}
+          >
             <IconButton
               icon='skip-previous'
               size={32}
@@ -378,7 +472,7 @@ export default function PlayerPage() {
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={48}
-              iconColor={colors.primary}
+              // iconColor={colors.primary}
               onPress={usePlayerStore.getState().togglePlay}
               mode='contained'
             />
@@ -389,7 +483,15 @@ export default function PlayerPage() {
             />
           </View>
           {/* 控制按钮部分 */}
-          <View className='mt-3 flex-row items-center justify-center gap-8'>
+          <View
+            style={{
+              marginTop: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 32,
+            }}
+          >
             <Tooltip title='切换随机播放模式'>
               <IconButton
                 icon={shuffleMode ? 'shuffle-variant' : 'shuffle-disabled'}
@@ -422,6 +524,7 @@ export default function PlayerPage() {
               <IconButton
                 icon='format-list-bulleted'
                 size={24}
+                iconColor={colors.onSurfaceVariant}
                 onPress={() => sheetRef.current?.snapToPosition('75%')}
               />
             </Tooltip>

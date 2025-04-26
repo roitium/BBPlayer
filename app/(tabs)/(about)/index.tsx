@@ -28,10 +28,22 @@ export default function AboutPage() {
   }, [clickTimes])
 
   return (
-    <View
-      className='flex-1'
-      style={{ paddingTop: insets.top }}
-    >
+    <View style={{ paddingTop: insets.top + 8, flex: 1 }}>
+      <View
+        style={{
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Text
+          variant='headlineSmall'
+          style={{ fontWeight: 'bold' }}
+        >
+          关于
+        </Text>
+      </View>
       <Image
         source={require('@/assets/images/icon.png')}
         style={{

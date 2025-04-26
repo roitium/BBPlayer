@@ -5,10 +5,7 @@ import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native'
 import {
   ActivityIndicator,
   Divider,
-  FAB,
   Icon,
-  IconButton,
-  Menu,
   Searchbar,
   SegmentedButtons,
   Text,
@@ -35,23 +32,30 @@ export default function LibraryScreen() {
   const [sortMenuVisible, setSortMenuVisible] = useState(false)
 
   return (
-    <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
-    >
+    <View style={{ flex: 1 }}>
       {/* 顶部区域 */}
       <View
-        style={{ paddingTop: insets.top + 8 }}
-        className='px-4 pb-2'
+        style={{
+          paddingTop: insets.top + 8,
+          paddingHorizontal: 16,
+          paddingBottom: 8,
+        }}
       >
-        <View className='mb-4 flex-row items-center justify-between'>
+        <View
+          style={{
+            marginBottom: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Text
             variant='headlineSmall'
             style={{ fontWeight: 'bold' }}
           >
             音乐库
           </Text>
-          <Menu
+          {/* <Menu
             visible={sortMenuVisible}
             onDismiss={() => setSortMenuVisible(false)}
             anchor={
@@ -78,20 +82,7 @@ export default function LibraryScreen() {
               title='按艺术家排序'
               leadingIcon='sort-alphabetical-ascending'
             />
-          </Menu>
-        </View>
-
-        {/* 搜索栏 */}
-        <View className='mb-4'>
-          <Searchbar
-            placeholder='搜索我的音乐库'
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            elevation={0}
-            mode='bar'
-            className='rounded-full'
-            style={{ backgroundColor: colors.surfaceVariant }}
-          />
+          </Menu> */}
         </View>
 
         {/* 分段按钮 */}
@@ -103,35 +94,30 @@ export default function LibraryScreen() {
             { value: 'collection', label: '合集', icon: 'book' },
             { value: 'multipage', label: '分 p', icon: 'video' },
           ]}
-          style={{ marginBottom: 16, width: '70%', marginHorizontal: 'auto' }}
+          style={{
+            marginBottom: 16,
+            width: '100%',
+            alignSelf: 'center',
+          }}
         />
       </View>
 
       {/* 内容区域 */}
-      <View className='flex-1 px-4'>
+      <View style={{ flex: 1, paddingHorizontal: 16 }}>
         <FavoriteFolderListComponent isHidden={value !== 'favorite'} />
         <CollectionListComponent isHidden={value !== 'collection'} />
         <MultiPageVideosListComponent isHidden={value !== 'multipage'} />
       </View>
 
-      {/* 浮动操作按钮 */}
-      {value === 'playlists' && (
-        <FAB
-          icon='playlist-plus'
-          style={{
-            position: 'absolute',
-            margin: 16,
-            right: 0,
-            bottom: 80,
-            backgroundColor: colors.primary,
-          }}
-          color={colors.onPrimary}
-          onPress={() => {}}
-        />
-      )}
-
       {/* 当前播放栏 */}
-      <View className='absolute right-0 bottom-0 left-0'>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }}
+      >
         <NowPlayingBar />
       </View>
     </View>
@@ -141,15 +127,17 @@ export default function LibraryScreen() {
 const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
   return (
     <View key={item.id}>
-      <View className='my-2 overflow-hidden'>
+      <View style={{ marginVertical: 8, overflow: 'hidden' }}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
             router.push(`/playlist/favorite/${item.id}`)
           }}
         >
-          <View className='flex-row items-center p-2'>
-            <View className='ml-3 flex-1'>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+          >
+            <View style={{ marginLeft: 12, flex: 1 }}>
               <Text
                 variant='titleMedium'
                 numberOfLines={1}
@@ -182,7 +170,6 @@ const FavoriteFolderListComponent = memo(
       isError: playlistsIsError,
     } = useGetFavoritePlaylists(bilibiliApi)
 
-    // 渲染收藏夹项
     const renderPlaylistItem = useCallback(
       ({ item }: { item: Playlist }) => <FavoriteFolderListItem item={item} />,
       [],
@@ -194,7 +181,9 @@ const FavoriteFolderListComponent = memo(
 
     if (playlistsIsPending) {
       return (
-        <View className='flex-1 items-center justify-center'>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        >
           <ActivityIndicator size='large' />
         </View>
       )
@@ -202,10 +191,12 @@ const FavoriteFolderListComponent = memo(
 
     if (playlistsIsError) {
       return (
-        <View className='flex-1 items-center justify-center'>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        >
           <Text
             variant='titleMedium'
-            className='text-center'
+            style={{ textAlign: 'center' }}
           >
             加载失败
           </Text>
@@ -218,26 +209,58 @@ const FavoriteFolderListComponent = memo(
     )
 
     return (
-      <>
-        <View className='mb-2 flex-row items-center justify-between'>
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            marginBottom: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Text
             variant='titleMedium'
             style={{ fontWeight: 'bold' }}
           >
             我的收藏夹
           </Text>
-          <Text variant='bodyMedium'>{playlists.length} 个收藏夹</Text>
+          <Text variant='bodyMedium'>{playlists?.length ?? 0} 个收藏夹</Text>
         </View>
+        <Searchbar
+          placeholder='搜索我的收藏夹 (开发中)'
+          value={''}
+          mode='bar'
+          inputStyle={{
+            alignSelf: 'center',
+          }}
+          style={{
+            borderRadius: 9999,
+            textAlign: 'center',
+            height: 45,
+            marginBottom: 20,
+            marginTop: 10,
+          }}
+        />
         <FlatList
-          className='flex-1'
-          contentContainerStyle={{ paddingBottom: 80 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
           showsVerticalScrollIndicator={false}
           data={filteredPlaylists}
           renderItem={renderPlaylistItem}
           keyExtractor={keyExtractor}
-          ListEmptyComponent={<Text className='text-center'>没有收藏夹</Text>}
+          ListFooterComponent={
+            <Text
+              variant='titleMedium'
+              style={{ textAlign: 'center', paddingTop: 10 }}
+            >
+              再怎么翻也没有了哦~
+            </Text>
+          }
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center' }}>没有收藏夹</Text>
+          }
         />
-      </>
+      </View>
     )
   },
 )
@@ -259,7 +282,6 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
   const [refreshing, setRefreshing] = useState(false)
   const colors = useTheme().colors
 
-  // 渲染追更合集项
   const renderCollectionItem = useCallback(
     ({ item }: { item: BilibiliCollection }) => (
       <CollectionListItem item={item} />
@@ -276,7 +298,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 
   if (collectionsIsPending) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size='large' />
       </View>
     )
@@ -284,10 +306,10 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 
   if (collectionsIsError) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Text
           variant='titleMedium'
-          className='text-center'
+          style={{ textAlign: 'center' }}
         >
           加载失败
         </Text>
@@ -296,18 +318,27 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
   }
 
   return (
-    <>
-      <View className='mb-2 flex-row items-center justify-between'>
+    <View style={{ flex: 1 }}>
+      <View
+        style={{
+          marginBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Text
           variant='titleMedium'
           style={{ fontWeight: 'bold' }}
         >
           我的合集/收藏夹追更
         </Text>
-        <Text variant='bodyMedium'>{collections.pages[0].count} 个追更</Text>
+        <Text variant='bodyMedium'>
+          {collections?.pages[0]?.count ?? 0} 个追更
+        </Text>
       </View>
       <FlatList
-        data={collections.pages.flatMap((page) => page.list)}
+        data={collections?.pages.flatMap((page) => page.list)}
         renderItem={renderCollectionItem}
         refreshControl={
           <RefreshControl
@@ -322,17 +353,32 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
           />
         }
         keyExtractor={keyExtractor}
+        contentContainerStyle={{ paddingBottom: 10 }}
         showsVerticalScrollIndicator={false}
-        onEndReached={hasNextPage ? () => fetchNextPage() : null}
+        onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
         ListFooterComponent={
           hasNextPage ? (
-            <View className='flex-row items-center justify-center p-4'>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 16,
+              }}
+            >
               <ActivityIndicator size='small' />
             </View>
-          ) : null
+          ) : (
+            <Text
+              variant='titleMedium'
+              style={{ textAlign: 'center', paddingTop: 10 }}
+            >
+              再怎么翻也没有了哦~
+            </Text>
+          )
         }
       />
-    </>
+    </View>
   )
 })
 
@@ -342,7 +388,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
   return (
     <View key={item.id}>
-      <View className='my-2 overflow-hidden'>
+      <View style={{ marginVertical: 8, overflow: 'hidden' }}>
         <TouchableOpacity
           activeOpacity={0.7}
           disabled={item.state === 1}
@@ -354,15 +400,17 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
             )
           }}
         >
-          <View className='flex-row items-center p-2'>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+          >
             <Image
               source={{ uri: item.cover }}
               style={{ width: 48, height: 48, borderRadius: 4 }}
             />
-            <View className='ml-3 flex-1'>
+            <View style={{ marginLeft: 12, flex: 1 }}>
               <Text
                 variant='titleMedium'
-                className='pr-2'
+                style={{ paddingRight: 8 }}
               >
                 {item.title}
               </Text>
@@ -407,7 +455,6 @@ const MultiPageVideosListComponent = memo(
       playlists?.find((item) => item.title.startsWith('[mp]'))?.id,
     )
 
-    // 渲染收藏夹项
     const renderPlaylistItem = useCallback(
       ({ item }: { item: Track }) => <MultiPageVideosItem item={item} />,
       [],
@@ -417,10 +464,11 @@ const MultiPageVideosListComponent = memo(
 
     if (isHidden) return null
 
-    // 不使用 isFavoriteDataPending，因为这个状态在 disable 时是 true，导致会一直显示 ActivityIndicator
     if (playlistsIsPending || isFavoriteDataLoading) {
       return (
-        <View className='flex-1 items-center justify-center'>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        >
           <ActivityIndicator size='large' />
         </View>
       )
@@ -428,10 +476,12 @@ const MultiPageVideosListComponent = memo(
 
     if (playlistsIsError || isFavoriteDataError) {
       return (
-        <View className='flex-1 items-center justify-center'>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        >
           <Text
             variant='titleMedium'
-            className='text-center'
+            style={{ textAlign: 'center' }}
           >
             加载失败
           </Text>
@@ -439,12 +489,14 @@ const MultiPageVideosListComponent = memo(
       )
     }
 
-    if (!playlists.find((item) => item.title.startsWith('[mp]'))) {
+    if (!playlists?.find((item) => item.title.startsWith('[mp]'))) {
       return (
-        <View className='flex-1 items-center justify-center'>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        >
           <Text
             variant='titleMedium'
-            className='text-center'
+            style={{ textAlign: 'center' }}
           >
             未找到分 p 视频收藏夹，请先创建一个收藏夹，并以 [mp] 开头
           </Text>
@@ -453,38 +505,59 @@ const MultiPageVideosListComponent = memo(
     }
 
     return (
-      <>
-        <View className='mb-2 flex-row items-center justify-between'>
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            marginBottom: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Text
             variant='titleMedium'
             style={{ fontWeight: 'bold' }}
           >
-            分 p 视频
+            分P视频
           </Text>
           <Text variant='bodyMedium'>
-            {favoriteData?.pages[0].favoriteMeta.media_count} 个分 p 视频
+            {favoriteData?.pages[0]?.favoriteMeta?.media_count ?? 0} 个分P视频
           </Text>
         </View>
         <FlatList
-          className='flex-1'
-          contentContainerStyle={{ paddingBottom: 80 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
           showsVerticalScrollIndicator={false}
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
           renderItem={renderPlaylistItem}
           keyExtractor={keyExtractor}
           ListEmptyComponent={
-            <Text className='text-center'>没有分 p 视频</Text>
+            <Text style={{ textAlign: 'center' }}>没有分P视频</Text>
           }
-          onEndReached={hasNextPage ? () => fetchNextPage() : null}
+          onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
           ListFooterComponent={
             hasNextPage ? (
-              <View className='flex-row items-center justify-center p-4'>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 16,
+                }}
+              >
                 <ActivityIndicator size='small' />
               </View>
-            ) : null
+            ) : (
+              <Text
+                variant='titleMedium'
+                style={{ textAlign: 'center', paddingTop: 10 }}
+              >
+                再怎么翻也没有了哦~
+              </Text>
+            )
           }
         />
-      </>
+      </View>
     )
   },
 )
@@ -495,22 +568,24 @@ const MultiPageVideosListComponent = memo(
 const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
   return (
     <View key={item.id}>
-      <View className='my-2 overflow-hidden'>
+      <View style={{ marginVertical: 8, overflow: 'hidden' }}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
             router.push(`/playlist/multipage/${item.id}`)
           }}
         >
-          <View className='flex-row items-center p-2'>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+          >
             <Image
               source={{ uri: item.cover }}
               style={{ width: 48, height: 48, borderRadius: 4 }}
             />
-            <View className='ml-3 flex-1'>
+            <View style={{ marginLeft: 12, flex: 1 }}>
               <Text
                 variant='titleMedium'
-                className='pr-2'
+                style={{ paddingRight: 8 }}
               >
                 {item.title}
               </Text>

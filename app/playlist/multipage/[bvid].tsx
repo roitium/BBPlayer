@@ -136,7 +136,7 @@ export default function MultipagePage() {
 
   if (isMultipageDataPending || isVideoDataPending) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size='large' />
       </View>
     )
@@ -144,10 +144,10 @@ export default function MultipagePage() {
 
   if (isMultipageDataError || isVideoDataError) {
     return (
-      <View className='flex-1 items-center justify-center'>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Text
           variant='titleMedium'
-          className='text-center'
+          style={{ textAlign: 'center' }}
         >
           加载失败
         </Text>
@@ -156,10 +156,7 @@ export default function MultipagePage() {
   }
 
   return (
-    <View
-      className='flex-1'
-      style={{ backgroundColor: colors.background }}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
         <Appbar.BackAction
           onPress={() => {
@@ -169,7 +166,7 @@ export default function MultipagePage() {
       </Appbar.Header>
 
       {/* 顶部背景图 */}
-      <View className='absolute h-full w-full'>
+      <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
         <Image
           source={{ uri: videoData.pic }}
           style={{
@@ -181,10 +178,7 @@ export default function MultipagePage() {
         />
       </View>
 
-      <View
-        className='flex-1'
-        style={{ paddingBottom: currentTrack ? 80 : 0 }}
-      >
+      <View style={{ flex: 1, paddingBottom: currentTrack ? 80 : 0 }}>
         <FlatList
           data={tracksData}
           renderItem={renderItem}
@@ -213,7 +207,7 @@ export default function MultipagePage() {
       </View>
 
       {/* 当前播放栏 */}
-      <View className='absolute right-0 bottom-0 left-0'>
+      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
         <NowPlayingBar />
       </View>
     </View>
@@ -231,14 +225,14 @@ const Header = memo(function Header({
 }) {
   if (!videoData) return null
   return (
-    <View className='relative flex flex-col'>
+    <View style={{ position: 'relative', flexDirection: 'column' }}>
       {/* 收藏夹信息 */}
-      <View className='flex flex-row p-4'>
+      <View style={{ flexDirection: 'row', padding: 16 }}>
         <Image
           source={{ uri: videoData.pic }}
           style={{ width: 120, height: 120, borderRadius: 8 }}
         />
-        <View className='ml-4 flex-1 justify-center'>
+        <View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
           <Text
             variant='titleLarge'
             style={{ fontWeight: 'bold' }}
@@ -256,7 +250,14 @@ const Header = memo(function Header({
       </View>
 
       {/* 描述和操作按钮 */}
-      <View className='flex flex-row items-center justify-between p-4'>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: 16,
+        }}
+      >
         <Text
           variant='bodyMedium'
           style={{ maxWidth: 300 }}
@@ -297,10 +298,12 @@ const TrackItem = memo(function TrackItem({
       onPress={() => playAll(item.cid)}
     >
       <Surface
-        className='overflow-hidden rounded-lg'
+        style={{ overflow: 'hidden', borderRadius: 8 }}
         elevation={0}
       >
-        <View className='flex-row items-center p-2'>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+        >
           <Text
             variant='titleMedium'
             style={{
@@ -314,9 +317,9 @@ const TrackItem = memo(function TrackItem({
             source={{ uri: item.cover }}
             style={{ width: 48, height: 48, borderRadius: 4 }}
           />
-          <View className='ml-3 flex-1'>
+          <View style={{ marginLeft: 12, flex: 1 }}>
             <Text variant='titleMedium'>{item.title}</Text>
-            <View className='flex-row items-center'>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text variant='bodySmall'>
                 {item.duration ? formatDurationToHHMMSS(item.duration) : ''}
               </Text>

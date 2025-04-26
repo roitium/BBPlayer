@@ -1,4 +1,3 @@
-import '../css/global.css'
 import { Stack, useNavigationContainerRef } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
@@ -320,7 +319,7 @@ export default Sentry.wrap(function RootLayout() {
   return (
     <View
       onLayout={onLayoutRootView}
-      className='flex-1'
+      style={{ flex: 1 }}
     >
       <Sentry.ErrorBoundary
         fallback={({ error, resetError }) => (

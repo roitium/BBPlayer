@@ -27,18 +27,31 @@ const TrackItem = memo(
     return (
       <TouchableRipple onPress={() => onSwitchTrack(track)}>
         <Surface
-          className='overflow-hidden rounded-lg'
           style={{
             backgroundColor: isCurrentTrack
               ? colors.elevation.level5
               : undefined,
+            overflow: 'hidden',
+            borderRadius: 8,
           }}
           elevation={0}
         >
-          <View className='flex-row items-center justify-between p-2'>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: 8,
+              flex: 1,
+            }}
+          >
             <View
-              className='ml-3 flex-col'
-              style={{ paddingRight: 0, flex: 1 }}
+              style={{
+                paddingRight: 0,
+                flex: 1,
+                marginLeft: 12,
+                flexDirection: 'column',
+              }}
             >
               <Text
                 variant='bodyMedium'
