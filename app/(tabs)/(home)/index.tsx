@@ -1,6 +1,6 @@
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import {
   FlatList,
   RefreshControl,
@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Avatar,
   Button,
-  Chip,
   Dialog,
   IconButton,
   Menu,
@@ -33,16 +32,9 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import Toast from '@/utils/toast'
 
 const homeLog = log.extend('HOME')
-
-const mockCategories = [
-  { id: '1', name: '翻唱', icon: 'music-note' },
-  { id: '2', name: 'VOCALOID', icon: 'music-note' },
-  { id: '3', name: '人力音MAD', icon: 'music-note' },
-  { id: '4', name: '原创', icon: 'music-note' },
-  { id: '5', name: 'OST', icon: 'music-note' },
-]
 
 function HomePage() {
   const { colors } = useTheme()
@@ -72,8 +64,6 @@ function HomePage() {
     isError: playlistsError,
   } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
-  // Removed onRefresh handler
-
   const getGreetingMsg = () => {
     const hour = new Date().getHours()
     if (hour >= 0 && hour < 6) return '凌晨好'
@@ -82,6 +72,13 @@ function HomePage() {
     if (hour >= 18 && hour < 24) return '晚上好'
     return '你好'
   }
+
+  useEffect(() => {
+    if (!bilibiliCookie) {
+      Toast.warning('看起来你还没设置 Cookie，请先设置一下吧！')
+      setSetCookieDialogVisible(true)
+    }
+  }, [bilibiliCookie])
 
   return (
     <View
@@ -127,28 +124,7 @@ function HomePage() {
           </View>
         </View>
 
-        <View className='mb-4 px-4'>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 16 }}
-          >
-            {mockCategories.map((category) => (
-              <Chip
-                key={category.id}
-                icon={category.icon}
-                onPress={() => {
-                  homeLog.info(`Category pressed: ${category.name}`)
-                }}
-                style={{ marginRight: 8 }}
-                mode='outlined'
-              >
-                {category.name}
-              </Chip>
-            ))}
-          </ScrollView>
-        </View>
-        <View className='mb-6'>
+        <View className='mt-4 mb-6'>
           <FavoriteList
             data={playlists}
             isPending={playlistsPending}
