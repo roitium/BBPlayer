@@ -1,4 +1,4 @@
-import FastImage from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { memo, useCallback, useState } from 'react'
 import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native'
@@ -355,7 +355,7 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
           }}
         >
           <View className='flex-row items-center p-2'>
-            <FastImage
+            <Image
               source={{ uri: item.cover }}
               style={{ width: 48, height: 48, borderRadius: 4 }}
             />
@@ -503,7 +503,7 @@ const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
           }}
         >
           <View className='flex-row items-center p-2'>
-            <FastImage
+            <Image
               source={{ uri: item.cover }}
               style={{ width: 48, height: 48, borderRadius: 4 }}
             />

@@ -1,4 +1,4 @@
-import Image from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   type Dispatch,
@@ -7,7 +7,7 @@ import {
   useCallback,
   useState,
 } from 'react'
-import { FlatList, RefreshControl, Image as RNImage, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import {
   ActivityIndicator,
   Appbar,
@@ -42,9 +42,6 @@ export default function FavoritePage() {
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const { mutate } = useBatchDeleteFavoriteListContents(bilibiliApi)
-
-  // @ts-ignore 故意定向到一个不存在的页面，触发 404
-  if (typeof id !== 'string') return router.replace('/not-found')
 
   // 下一首播放
   const playNext = useCallback(
@@ -122,7 +119,8 @@ export default function FavoritePage() {
           refetch={refetch}
           playNext={playNext}
           mutate={mutate}
-          favoriteId={id}
+          // 我们在下面做了检查
+          favoriteId={id as string}
         />
       )
     },
@@ -130,6 +128,9 @@ export default function FavoritePage() {
   )
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
+
+  // @ts-ignore 故意定向到一个不存在的页面，触发 404
+  if (typeof id !== 'string') return router.replace('/not-found')
 
   if (isFavoriteDataPending) {
     return (
@@ -167,8 +168,7 @@ export default function FavoritePage() {
 
       {/* 顶部背景图 */}
       <View className='absolute h-full w-full'>
-        {/* TODO: 如何在 react-native-fast-image 中实现模糊效果 */}
-        <RNImage
+        <Image
           source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
           style={{
             width: '100%',

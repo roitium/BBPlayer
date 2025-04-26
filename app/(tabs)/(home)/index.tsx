@@ -1,13 +1,11 @@
-import Image from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { memo, useCallback, useState } from 'react'
 import {
-  // RefreshControl, // Removed RefreshControl
   FlatList,
-  RefreshControl, // Keep FlatList
+  RefreshControl,
   ScrollView,
   TouchableOpacity,
-  // ScrollView, // Removed ScrollView
   View,
 } from 'react-native'
 import {

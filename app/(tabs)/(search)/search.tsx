@@ -1,4 +1,4 @@
-import Image from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import { useCallback, useState } from 'react'
 import { ScrollView, TouchableOpacity, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'

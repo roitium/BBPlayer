@@ -1,4 +1,4 @@
-import Image from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { router, Stack } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'

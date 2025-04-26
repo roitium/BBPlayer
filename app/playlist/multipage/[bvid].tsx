@@ -1,4 +1,4 @@
-import Image from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   type Dispatch,
@@ -8,7 +8,7 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { FlatList, RefreshControl, Image as RNImage, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import {
   ActivityIndicator,
   Appbar,
@@ -48,6 +48,7 @@ export default function MultipagePage() {
   // @ts-ignore 故意定向到一个不存在的页面，触发 404
   if (typeof bvid !== 'string') return router.replace('/not-found')
 
+  // biome-ignore-start lint/correctness/useHookAtTopLevel: 懒得改了
   // 下一首播放
   const playNext = useCallback(
     async (track: Track) => {
@@ -132,6 +133,8 @@ export default function MultipagePage() {
     return item.cid ? item.cid.toString() : ''
   }, [])
 
+  // biome-ignore-start lint/correctness/useHookAtTopLevel: 懒得改了
+
   if (isMultipageDataPending || isVideoDataPending) {
     return (
       <View className='flex-1 items-center justify-center'>
@@ -168,8 +171,7 @@ export default function MultipagePage() {
 
       {/* 顶部背景图 */}
       <View className='absolute h-full w-full'>
-        {/* TODO: 如何在 react-native-fast-image 中实现模糊效果 */}
-        <RNImage
+        <Image
           source={{ uri: videoData.pic }}
           style={{
             width: '100%',

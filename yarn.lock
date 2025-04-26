@@ -1187,16 +1187,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@d11/react-native-fast-image@npm:^8.9.2":
-  version: 8.9.2
-  resolution: "@d11/react-native-fast-image@npm:8.9.2"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/c3c17ef85244ec0a034dc936fd7c8cd14140e0b143d3d52cbe5bc4e9f37f9d62223c7d1f4f7315f562de62e07e29e8c7ec1810f06a8f184a4cb7322105cb65c6
-  languageName: node
-  linkType: hard
-
 "@egjs/hammerjs@npm:^2.0.17":
   version: 2.0.17
   resolution: "@egjs/hammerjs@npm:2.0.17"
@@ -3738,7 +3728,6 @@ __metadata:
   resolution: "bbplayer@workspace:."
   dependencies:
     "@babel/core": "npm:^7.25.2"
-    "@d11/react-native-fast-image": "npm:^8.9.2"
     "@expo/vector-icons": "npm:^14.0.2"
     "@gorhom/bottom-sheet": "npm:^5"
     "@pchmn/expo-material3-theme": "npm:^1.3.2"
@@ -3761,6 +3750,7 @@ __metadata:
     expo-file-system: "npm:18.0.12"
     expo-font: "npm:~13.0.4"
     expo-haptics: "npm:~14.0.1"
+    expo-image: "npm:~2.0.7"
     expo-linking: "npm:~7.0.5"
     expo-network: "npm:~7.0.5"
     expo-router: "npm:~4.0.20"
@@ -5533,6 +5523,21 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10c0/31a77f7fb2f9a3db586ca34e9fb80b9b03f29ed93aa045eeba3facec31bd71537c7a10c10c90b54cadec2334aad44df4a3cc5f99af1ca33f63f349b5547fdb43
+  languageName: node
+  linkType: hard
+
+"expo-image@npm:~2.0.7":
+  version: 2.0.7
+  resolution: "expo-image@npm:2.0.7"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 10c0/b817b733e1bbf2bc04a227f7e8b95603a50824f9c9eaa9ea5ebc32e9232514283a81c37e7fc3fd313e4f9f7a362ef40ade3c74d3bbe905e5784647c104411ede
   languageName: node
   linkType: hard
 

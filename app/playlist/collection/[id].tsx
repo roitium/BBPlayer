@@ -1,4 +1,4 @@
-import Image from '@d11/react-native-fast-image'
+import { Image } from 'expo-image'
 import { useLocalSearchParams } from 'expo-router'
 import { router } from 'expo-router'
 import {
@@ -8,7 +8,7 @@ import {
   useCallback,
   useState,
 } from 'react'
-import { FlatList, RefreshControl, Image as RNImage, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import {
   ActivityIndicator,
   Appbar,
@@ -39,9 +39,6 @@ export default function CollectionPage() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
-
-  // @ts-ignore 故意定向到一个不存在的页面，触发 404
-  if (typeof id !== 'string') return router.replace('/not-found')
 
   // 下一首播放
   const playNext = useCallback(
@@ -115,6 +112,9 @@ export default function CollectionPage() {
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
 
+  // @ts-ignore 故意定向到一个不存在的页面，触发 404
+  if (typeof id !== 'string') return router.replace('/not-found')
+
   if (isCollectionDataPending) {
     return (
       <View className='flex-1 items-center justify-center'>
@@ -151,8 +151,7 @@ export default function CollectionPage() {
 
       {/* 顶部背景图 */}
       <View className='absolute h-full w-full'>
-        {/* TODO: 如何在 react-native-fast-image 中实现模糊效果 */}
-        <RNImage
+        <Image
           source={{ uri: collectionData.info.cover }}
           style={{
             width: '100%',
