@@ -72,6 +72,7 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
+    "shaka-player": "^4.14.10",
     "sonner-native": "^0.19.0",
     "zustand": "^5.0.3",
     "zustand-expo-devtools": "^0.1.2"

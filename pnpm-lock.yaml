@@ -172,7 +172,7 @@ importers:
         version: 15.8.0(react-native@0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1))(react@18.3.1)
       react-native-track-player:
         specifier: ^4.1.1
-        version: 4.1.1(react-native@0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1))(react@18.3.1)
+        version: 4.1.1(react-native@0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1))(react@18.3.1)(shaka-player@4.14.10)
       react-native-vector-icons:
         specifier: ^10.2.0
         version: 10.2.0
@@ -182,6 +182,9 @@ importers:
       react-native-webview:
         specifier: 13.12.5
         version: 13.12.5(react-native@0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1))(react@18.3.1)
+      shaka-player:
+        specifier: ^4.14.10
+        version: 4.14.10
       sonner-native:
         specifier: ^0.19.0
         version: 0.19.0(70d8d9015d2b48973c1bf87af78e7e40)
@@ -2354,6 +2357,9 @@ packages:
   electron-to-chromium@1.5.109:
     resolution: {integrity: sha512-AidaH9JETVRr9DIPGfp1kAarm/W6hRJTPuCnkF+2MqhF4KaAgRIcBc8nvjk+YMXZhwfISof/7WG29eS4iGxQLQ==}
 
+  eme-encryption-scheme-polyfill@2.2.1:
+    resolution: {integrity: sha512-GzgrLuZPYGijd8oaKuBqYv3Tc2oruDZM3V2982KOuy/PA1N3zwMe+/oIXJYfZ3BH3PwW5nONdBBE+VY6jlwbrw==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -4156,6 +4162,10 @@ packages:
   sf-symbols-typescript@2.1.0:
     resolution: {integrity: sha512-ezT7gu/SHTPIOEEoG6TF+O0m5eewl0ZDAO4AtdBi5HjsrUI6JdCG17+Q8+aKp0heM06wZKApRCn5olNbs0Wb/A==}
     engines: {node: '>=10'}
+
+  shaka-player@4.14.10:
+    resolution: {integrity: sha512-IwUaYjCI92JLD9qj1vs/2AD6syb0dWkh6p8tD/nQj1+yir94sPKFUqvQSG3bmvWk6A4y35GAhX1fJ59rjD8SyA==}
+    engines: {node: '>=18'}
 
   shallow-clone@3.0.1:
     resolution: {integrity: sha512-/6KqX+GVUdqPuPPd2LxDDxzX6CAbjJehAAOKlNpqqUpAqPM6HeL8f+o3a+JsyGjn2lv0WY8UsTgUJjU9Ok55NA==}
@@ -7617,6 +7627,8 @@ snapshots:
 
   electron-to-chromium@1.5.109: {}
 
+  eme-encryption-scheme-polyfill@2.2.1: {}
+
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -9349,10 +9361,12 @@ snapshots:
       react-native: 0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1)
       warn-once: 0.1.1
 
-  react-native-track-player@4.1.1(react-native@0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1))(react@18.3.1):
+  react-native-track-player@4.1.1(react-native@0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1))(react@18.3.1)(shaka-player@4.14.10):
     dependencies:
       react: 18.3.1
       react-native: 0.76.9(@babel/core@7.26.9)(@babel/preset-env@7.27.1(@babel/core@7.26.9))(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@18.3.18)(react@18.3.1)
+    optionalDependencies:
+      shaka-player: 4.14.10
 
   react-native-vector-icons@10.2.0:
     dependencies:
@@ -9625,6 +9639,10 @@ snapshots:
   setprototypeof@1.2.0: {}
 
   sf-symbols-typescript@2.1.0: {}
+
+  shaka-player@4.14.10:
+    dependencies:
+      eme-encryption-scheme-polyfill: 2.2.1
 
   shallow-clone@3.0.1:
     dependencies:

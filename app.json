@@ -8,13 +8,6 @@
     "scheme": "bbplayer",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.roitium.BBPlayer",
-      "runtimeVersion": {
-        "policy": "appVersion"
-      }
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -24,10 +17,6 @@
       "package": "com.roitium.BBPlayer",
       "versionCode": 33,
       "runtimeVersion": "0.0.1"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static"
     },
     "plugins": [
       [
