@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@babel/runtime':
+        specifier: ^7.27.1
+        version: 7.27.1
       '@expo/config-plugins':
         specifier: ^10.0.1
         version: 10.0.1

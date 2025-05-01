@@ -14,6 +14,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@babel/runtime": "^7.27.1",
     "@expo/config-plugins": "^10.0.1",
     "@expo/vector-icons": "^14.0.2",
     "@gorhom/bottom-sheet": "^5",
