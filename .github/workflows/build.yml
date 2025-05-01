@@ -41,7 +41,7 @@ jobs:
         run: eas build --platform android --profile ${{ github.event.inputs.buildType }} --local --non-interactive --no-wait --output=./dist/app.apk
 
       - name: 🚀 Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bbplayer-${{ github.event.inputs.buildType }}.apk
           path: ./dist/app.apk
