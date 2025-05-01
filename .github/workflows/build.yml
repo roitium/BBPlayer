@@ -39,11 +39,20 @@ jobs:
         run: pnpm install
 
       - name: 🚀 Build ${{ github.event.inputs.buildType }} APK
-        run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} eas build --platform android --profile ${{ github.event.inputs.buildType }} --local --non-interactive --no-wait --output=./dist/app.apk
+        run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} eas build --platform android --profile ${{ github.event.inputs.buildType }} --local --non-interactive --no-wait --output= ${{runner.temp}}/app.apk
 
       - name: 🚀 Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: bbplayer-${{ github.event.inputs.buildType }}.apk
-          path: ./dist/app.apk
+          path: ${{runner.temp}}/app.apk
           if-no-files-found: error
+
+      - name: 🚀 Bump version number
+        uses: EndBug/add-and-commit@v9
+        if: github.event.inputs.buildType == 'prod-v8a' || github.event.inputs.buildType == 'prod-universal'
+        with:
+          # 更新应用版本号
+          message: "chore: bump version number"
+          committer_name: GitHub Actions
+          committer_email: 41898282+github-actions[bot]@users.noreply.github.com
