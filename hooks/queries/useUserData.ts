@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
+import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 const userQueryKeys = {

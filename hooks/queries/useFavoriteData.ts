@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
+import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'

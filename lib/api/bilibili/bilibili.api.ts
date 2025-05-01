@@ -6,11 +6,9 @@ import type {
   BilibiliCollectionAllContents,
   BilibiliCollectionInfo,
   BilibiliFavoriteListAllContents,
-  BilibiliFavoriteListContent,
   BilibiliFavoriteListContents,
   BilibiliHistoryVideo,
   BilibiliHotSearch,
-  BilibiliMediaItem,
   BilibiliMultipageVideo,
   BilibiliPlaylist,
   BilibiliSearchVideo,
@@ -25,207 +23,19 @@ import {
   CsrfError,
 } from '@/utils/errors'
 import log from '@/utils/log'
-import { formatMMSSToSeconds } from '@/utils/times'
+import {
+  bv2av,
+  transformCollectionAllContentsToTracks,
+  transformFavoriteContentsToTracks,
+  transformFavoriteListsToPlaylists,
+  transformHistoryVideosToTracks,
+  transformHotSearches,
+  transformSearchResultsToTracks,
+  transformVideoDetailsToTracks,
+} from './bilibili.transformers'
 import { apiClient } from './client'
 
 const bilibiliApiLog = log.extend('BILIBILI_API')
-
-/**
- * 转换B站bvid为avid (同步操作，保持不变)
- */
-function bv2av(bvid: string): number {
-  const XOR_CODE = 23442827791579n
-  const MASK_CODE = 2251799813685247n
-  const BASE = 58n
-
-  const data = 'FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf'
-  const bvidArr = Array.from(bvid)
-  ;[bvidArr[3], bvidArr[9]] = [bvidArr[9], bvidArr[3]]
-  ;[bvidArr[4], bvidArr[7]] = [bvidArr[7], bvidArr[4]]
-  bvidArr.splice(0, 3)
-  const tmp = bvidArr.reduce(
-    (pre, bvidChar) => pre * BASE + BigInt(data.indexOf(bvidChar)),
-    0n,
-  )
-  return Number((tmp & MASK_CODE) ^ XOR_CODE)
-}
-
-const transformHistoryVideosToTracks = (
-  videos: BilibiliHistoryVideo[],
-): Track[] => {
-  try {
-    return videos.map((video) => ({
-      id: video.bvid,
-      title: video.title,
-      artist: video.owner.name,
-      cover: video.pic,
-      source: 'bilibili' as const,
-      duration: video.duration,
-      createTime: 0,
-      hasMetadata: true,
-      isMultiPage: false,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming history videos:', error)
-    return []
-  }
-}
-
-const transformVideoDetailsToTracks = (
-  videos: BilibiliVideoDetails[],
-): Track[] => {
-  try {
-    return videos.map((video) => ({
-      id: video.bvid,
-      title: video.title,
-      artist: video.owner.name,
-      cover: video.pic,
-      source: 'bilibili' as const,
-      duration: Number(video.duration),
-      createTime: video.pubdate,
-      hasMetadata: true,
-      isMultiPage: false,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming video details:', error)
-    return []
-  }
-}
-
-const transformFavoriteListsToPlaylists = (
-  playlists: BilibiliPlaylist[] | null,
-): Playlist[] => {
-  if (!playlists) return []
-  try {
-    return playlists.map((playlist) => ({
-      id: playlist.id,
-      title: playlist.title,
-      count: playlist.media_count,
-      cover: '',
-      source: 'bilibili' as const,
-      biliType: 'favorite' as const,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming favorite lists:', error)
-    return []
-  }
-}
-
-const transformSearchResultsToTracks = (
-  videos: BilibiliSearchVideo[],
-): Track[] => {
-  if (!videos) return []
-  try {
-    return videos.map((video) => ({
-      id: video.bvid,
-      title: video.title.replace(/<em[^>]*>|<\/em>/g, ''),
-      artist: video.author,
-      cover: `https:${video.pic}`,
-      source: 'bilibili' as const,
-      duration: formatMMSSToSeconds(video.duration),
-      createTime: video.senddate,
-      hasMetadata: true,
-      isMultiPage: false,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming search results:', error)
-    return []
-  }
-}
-
-const transformHotSearches = (
-  hotSearches: BilibiliHotSearch[],
-): { id: string; text: string }[] => {
-  if (!hotSearches) return []
-  try {
-    return hotSearches.map((item) => ({
-      id: `hot_${item.keyword}`,
-      text: item.keyword,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming hot searches:', error)
-    return []
-  }
-}
-
-const transformFavoriteContentsToTracks = (
-  contents: BilibiliFavoriteListContent[] | null,
-): Track[] => {
-  if (!contents) return []
-  try {
-    return (
-      contents
-        // 去除已失效和非视频稿件
-        .filter((content) => content.type === 2 && content.attr === 0)
-        .map((content) => ({
-          id: content.bvid,
-          title: content.title,
-          artist: content.upper.name,
-          cover: content.cover,
-          source: 'bilibili' as const,
-          duration: content.duration,
-          createTime: content.pubdate,
-          hasMetadata: true,
-          isMultiPage: false,
-        }))
-    )
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming favorite contents:', error)
-    return []
-  }
-}
-
-const transformCollectionAllContentsToTracks = (
-  contents: BilibiliMediaItem[],
-): Track[] => {
-  if (!contents) return []
-  try {
-    return contents.map((content) => ({
-      id: content.bvid,
-      title: content.title,
-      artist: content.upper.name,
-      cover: content.cover,
-      source: 'bilibili' as const,
-      duration: content.duration,
-      createTime: content.pubtime,
-      hasMetadata: true,
-      isMultiPage: false,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming collection contents:', error)
-    return []
-  }
-}
-
-/**
- * 将分 p 视频数据转换为 Track 数据
- * @param videos 分 p 视频数据
- * @param videoData 视频详细信息
- * @returns
- */
-const transformMultipageVideosToTracks = (
-  videos: BilibiliMultipageVideo[],
-  videoData: BilibiliVideoDetails,
-): Track[] => {
-  if (!videos) return []
-  try {
-    return videos.map((video) => ({
-      id: videoData.bvid,
-      cid: video.cid,
-      title: video.part,
-      artist: videoData.owner.name,
-      cover: video.first_frame,
-      source: 'bilibili' as const,
-      duration: video.duration,
-      createTime: videoData.pubdate,
-      hasMetadata: true,
-      isMultiPage: true,
-    }))
-  } catch (error) {
-    bilibiliApiLog.error('Error transforming multipage videos:', error)
-    return []
-  }
-}
 
 /**
  * 创建B站API客户端
@@ -335,61 +145,87 @@ export const createBilibiliApi = (getCookie: () => string) => ({
           bvid,
           cid: String(cid),
           fnval: '16', // 16 表示 dash 格式
+          fnver: '0',
+          fourk: '1',
+          qlt: String(audioQuality),
         },
         getCookie(),
       )
       .andThen((response) => {
         const { dash } = response
 
+        if (enableHiRes && dash?.hiRes?.audio) {
+          bilibiliApiLog.debug('优先使用 Hi-Res 音频流')
+          return okAsync({
+            url: dash.hiRes.audio.baseUrl,
+            quality: dash.hiRes.audio.id,
+            getTime: Date.now() + 60 * 1000, // Add 60s buffer
+            type: 'dash' as const,
+          })
+        }
+
+        if (enableDolby && dash?.dolby?.audio && dash.dolby.audio.length > 0) {
+          bilibiliApiLog.debug('优先使用 Dolby 音频流')
+          return okAsync({
+            url: dash.dolby.audio[0].baseUrl,
+            quality: dash.dolby.audio[0].id,
+            getTime: Date.now() + 60 * 1000, // Add 60s buffer
+            type: 'dash' as const,
+          })
+        }
+
         if (!dash?.audio || dash.audio.length === 0) {
+          bilibiliApiLog.error('未找到有效的音频流数据', { response })
           return errAsync(new AudioStreamError('未找到有效的音频流数据'))
         }
 
         let stream: Track['biliStreamUrl'] | null = null
         const getTime = Date.now() + 60 * 1000 // 加 60s 提前量
 
-        // Dolby
-        if (enableDolby && dash.dolby?.audio && dash.dolby.audio.length > 0) {
+        // 尝试找到指定质量的音频流
+        const targetAudio = dash.audio.find(
+          (audio) => audio.id === audioQuality,
+        )
+
+        if (targetAudio) {
           stream = {
-            url: dash.dolby.audio[0].baseUrl,
-            quality: dash.dolby.audio[0].id,
+            url: targetAudio.baseUrl,
+            quality: targetAudio.id,
             getTime,
             type: 'dash',
           }
-          // Hi-Res
-        } else if (enableHiRes && dash.hiRes?.audio) {
-          stream = {
-            url: dash.hiRes.audio.baseUrl,
-            quality: dash.hiRes.audio.id,
-            getTime,
-            type: 'dash',
-          }
-          // 筛选指定质量
+          bilibiliApiLog.debug('找到指定质量音频流', { quality: audioQuality })
         } else {
-          const targetAudio = dash.audio.find(
-            (audio) => audio.id === audioQuality,
-          )
-          if (targetAudio) {
+          // Fallback: 使用最高质量如果未找到指定质量
+          bilibiliApiLog.warn('未找到指定质量音频流，使用最高质量', {
+            requestedQuality: audioQuality,
+            availableQualities: dash.audio.map((a) => a.id),
+          })
+          const highestQualityAudio = dash.audio[0]
+          if (highestQualityAudio) {
             stream = {
-              url: targetAudio.baseUrl,
-              quality: targetAudio.id,
+              url: highestQualityAudio.baseUrl,
+              quality: highestQualityAudio.id,
               getTime,
               type: 'dash',
             }
           }
         }
 
-        // 如果没有找到匹配的流，则使用第一个可用流（最高质量）
         if (!stream) {
-          stream = {
-            url: dash.audio[0].baseUrl,
-            quality: dash.audio[0].id,
-            getTime,
-            type: 'dash',
-          }
+          bilibiliApiLog.error('未能确定任何可用的音频流', { response })
+          return errAsync(new AudioStreamError('未能确定任何可用的音频流'))
         }
 
         return okAsync(stream)
+      })
+      .mapErr((e) => {
+        if (e instanceof AudioStreamError) {
+          return e
+        }
+        return new AudioStreamError(
+          `获取音频流失败: ${e instanceof Error ? e.message : String(e)}`,
+        )
       })
   },
 
@@ -452,6 +288,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
 
   /**
    * 获取收藏夹所有视频内容（仅bvid和类型）
+   * 此接口用于获取收藏夹内所有视频的bvid，常用于批量操作前获取所有目标ID
    */
   getFavoriteListAllContents(
     favoriteId: number,
@@ -464,7 +301,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         },
         getCookie(),
       )
-      .map((response) => response.filter((item) => item.type === 2)) // 过滤非视频稿件
+      .map((response) => response.filter((item) => item.type === 2)) // 过滤非视频稿件 (type 2 is video)
   },
 
   /**
@@ -473,7 +310,6 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   getVideoDetails(
     bvid: string,
   ): ResultAsync<BilibiliVideoDetails, BilibiliApiError> {
-    // Direct pass-through
     return apiClient.get<BilibiliVideoDetails>(
       '/x/web-interface/view',
       {
@@ -491,7 +327,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     bvids: string[],
   ): ResultAsync<void, BilibiliApiMethodError> {
     const resourcesResult = Result.fromThrowable(
-      () => bvids.map((bvid) => `${bv2av(bvid)}:2`), // bv2av could throw if bvid is invalid format, though unlikely here
+      () => bvids.map((bvid) => `${bv2av(bvid)}:2`), // Convert bvid to avid and format
       (e) =>
         new Error(
           `转换 bvid 到 avid 失败: ${e instanceof Error ? e.message : String(e)}`,
@@ -529,7 +365,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
           resources: resources.join(','),
           media_id: String(favoriteId),
           csrf: csrfToken,
-          platform: 'web',
+          platform: 'web', // Specify platform as web
         }
         return apiClient.post<void>(
           '/x/v3/fav/resource/batch-del',
@@ -541,7 +377,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   },
 
   /**
-   * 获取用户追更的视频合集/收藏夹（非用户自己创建的）
+   * 获取用户追更的视频合集/收藏夹（非用户自己创建的）列表
    */
   getCollectionsList(
     pageNumber: number,
@@ -566,7 +402,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         getCookie(),
       )
       .map((response) => ({
-        list: response.list ?? [],
+        list: response.list ?? [], // Ensure list is always an array
         count: response.count,
         hasMore: response.has_more,
       }))
@@ -586,8 +422,8 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         '/x/space/fav/season/list',
         {
           season_id: collectionId.toString(),
-          ps: '20',
-          pn: '1',
+          ps: '20', // Page size, adjust if needed
+          pn: '1', // Start from page 1
         },
         getCookie(),
       )
@@ -601,4 +437,3 @@ export const createBilibiliApi = (getCookie: () => string) => ({
 })
 
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>
-export { transformMultipageVideosToTracks }
