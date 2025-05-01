@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.roitium.BBPlayer",
-      "versionCode": 32,
+      "versionCode": 33,
       "runtimeVersion": "0.0.1"
     },
     "web": {
