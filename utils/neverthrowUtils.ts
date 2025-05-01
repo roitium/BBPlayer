@@ -6,7 +6,7 @@ import type { ResultAsync } from 'neverthrow'
  * @param resultAsync The ResultAsync instance from the API call.
  * @returns Promise<T> which resolves with value T or rejects with error E.
  */
-export async function throwResultAsync<T, E>(
+export async function returnOrThrowAsync<T, E>(
   resultAsync: ResultAsync<T, E>,
 ): Promise<T> {
   const result = await resultAsync

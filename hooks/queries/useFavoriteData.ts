@@ -7,7 +7,7 @@ import {
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
-import { throwResultAsync } from '@/utils/neverthrowUtils'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import Toast from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
@@ -40,7 +40,7 @@ export const useInfiniteFavoriteList = (
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId as number),
     queryFn: ({ pageParam }) =>
-      throwResultAsync(
+      returnOrThrowAsync(
         bilibiliApi.getFavoriteListContents(favoriteId as number, pageParam),
       ),
     initialPageParam: 1,
@@ -63,7 +63,7 @@ export const useGetFavoritePlaylists = (
   return useQuery({
     queryKey: favoriteListQueryKeys.allFavoriteList(),
     queryFn: () =>
-      throwResultAsync(bilibiliApi.getFavoritePlaylists(userMid as number)),
+      returnOrThrowAsync(bilibiliApi.getFavoritePlaylists(userMid as number)),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!userMid && !!bilibiliApi.getCookie(), // 依赖 userMid 和 bilibiliApi
   })
@@ -79,7 +79,7 @@ export const useBatchDeleteFavoriteListContents = (
 
   return useMutation({
     mutationFn: (params: { bvids: string[]; favoriteId: number }) =>
-      throwResultAsync(
+      returnOrThrowAsync(
         bilibiliApi.batchDeleteFavoriteListContents(
           params.favoriteId,
           params.bvids,
@@ -120,7 +120,7 @@ export const useInfiniteCollectionsList = (
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteCollectionList(mid),
     queryFn: ({ pageParam }) =>
-      throwResultAsync(bilibiliApi.getCollectionsList(pageParam, mid)),
+      returnOrThrowAsync(bilibiliApi.getCollectionsList(pageParam, mid)),
     initialPageParam: 1,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
@@ -139,7 +139,7 @@ export const useCollectionAllContents = (
   return useQuery({
     queryKey: favoriteListQueryKeys.collectionAllContents(collectionId),
     queryFn: () =>
-      throwResultAsync(bilibiliApi.getCollectionAllContents(collectionId)),
+      returnOrThrowAsync(bilibiliApi.getCollectionAllContents(collectionId)),
     staleTime: 1,
     enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
-import { throwResultAsync } from '@/utils/neverthrowUtils'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 export const videoDataQueryKeys = {
   all: ['videoData'] as const,
@@ -16,7 +16,7 @@ export const videoDataQueryKeys = {
 export const useGetMultiPageList = (bvid: string, bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: videoDataQueryKeys.getMultiPageList(bvid),
-    queryFn: () => throwResultAsync(bilibiliApi.getPageList(bvid)),
+    queryFn: () => returnOrThrowAsync(bilibiliApi.getPageList(bvid)),
     staleTime: 1,
     enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })
@@ -28,7 +28,7 @@ export const useGetMultiPageList = (bvid: string, bilibiliApi: BilibiliApi) => {
 export const useGetVideoDetails = (bvid: string, bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: videoDataQueryKeys.getVideoDetails(bvid),
-    queryFn: () => throwResultAsync(bilibiliApi.getVideoDetails(bvid)),
+    queryFn: () => returnOrThrowAsync(bilibiliApi.getVideoDetails(bvid)),
     staleTime: 1,
     enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })

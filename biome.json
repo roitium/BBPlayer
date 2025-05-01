@@ -46,14 +46,7 @@
         "noUnusedImports": "error"
       },
       "nursery": {
-        "useSortedClasses": {
-          "level": "warn",
-          "fix": "safe",
-          "options": {
-            "attributes": ["className"],
-            "functions": ["clsx", "cva", "cn"]
-          }
-        }
+        "noFloatingPromises": "error"
       },
       "complexity": {
         "noForEach": "warn"

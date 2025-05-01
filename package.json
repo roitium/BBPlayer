@@ -73,6 +73,5 @@
     "@types/react": "~18.3.12",
     "typescript": "^5.3.3"
   },
-  "private": true,
-  "packageManager": "yarn@4.8.0"
+  "private": true
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { BilibiliApi } from '@/lib/api/bilibili/bilibili'
-import { throwResultAsync } from '@/utils/neverthrowUtils'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 export const searchQueryKeys = {
   all: ['search'] as const,
@@ -19,7 +19,7 @@ export const useSearchResults = (
   return useQuery({
     queryKey: searchQueryKeys.results(query, page, page_size),
     queryFn: () =>
-      throwResultAsync(bilibiliApi.searchVideos(query, page, page_size)),
+      returnOrThrowAsync(bilibiliApi.searchVideos(query, page, page_size)),
     staleTime: 5 * 60 * 1000,
     enabled: query.trim().length > 0 && !!bilibiliApi.getCookie(), // 依赖 bilibiliApi，且搜索关键词不为空
   })
@@ -29,7 +29,7 @@ export const useSearchResults = (
 export const useHotSearches = (bilibiliApi: BilibiliApi) => {
   return useQuery({
     queryKey: searchQueryKeys.hotSearches(),
-    queryFn: () => throwResultAsync(bilibiliApi.getHotSearches()),
+    queryFn: () => returnOrThrowAsync(bilibiliApi.getHotSearches()),
     staleTime: 15 * 60 * 1000,
     enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
   })
