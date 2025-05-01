@@ -60,6 +60,12 @@
             "usesCleartextTraffic": true
           }
         }
+      ],
+      [
+        "expo-asset",
+        {
+          "assets": []
+        }
       ]
     ],
     "experiments": {
