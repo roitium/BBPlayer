@@ -17,8 +17,8 @@ import {
   useGetFavoritePlaylists,
   useInfiniteCollectionsList,
   useInfiniteFavoriteList,
-} from '@/hooks/queries/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/useUserData'
+} from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import useAppStore from '@/lib/store/useAppStore'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
@@ -406,6 +406,7 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
             <Image
               source={{ uri: item.cover }}
               style={{ width: 48, height: 48, borderRadius: 4 }}
+              transition={300}
             />
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text
@@ -581,6 +582,7 @@ const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
             <Image
               source={{ uri: item.cover }}
               style={{ width: 48, height: 48, borderRadius: 4 }}
+              transition={300}
             />
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text

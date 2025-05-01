@@ -7,7 +7,7 @@ import NowPlayingBar from '@/components/NowPlayingBar'
 import {
   useBatchDeleteFavoriteListContents,
   useInfiniteFavoriteList,
-} from '@/hooks/queries/useFavoriteData'
+} from '@/hooks/queries/bilibili/useFavoriteData'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'

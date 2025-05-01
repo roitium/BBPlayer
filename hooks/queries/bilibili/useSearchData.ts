@@ -3,7 +3,7 @@ import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 export const searchQueryKeys = {
-  all: ['search'] as const,
+  all: ['search', 'bilibili'] as const,
   results: (query: string, page: number, pageSize: number) =>
     [...searchQueryKeys.all, 'results', query, page, pageSize] as const,
   hotSearches: () => [...searchQueryKeys.all, 'hotSearches'] as const,

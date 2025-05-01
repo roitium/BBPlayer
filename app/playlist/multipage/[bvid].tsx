@@ -7,7 +7,7 @@ import NowPlayingBar from '@/components/NowPlayingBar'
 import {
   useGetMultiPageList,
   useGetVideoDetails,
-} from '@/hooks/queries/useVideoData'
+} from '@/hooks/queries/bilibili/useVideoData'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'

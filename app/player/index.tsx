@@ -404,6 +404,7 @@ export default function PlayerPage() {
                     height: screenWidth - 80,
                     borderRadius: 16,
                   }}
+                  transition={300}
                 />
               </Surface>
             </TouchableOpacity>

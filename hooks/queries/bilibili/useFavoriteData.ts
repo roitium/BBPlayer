@@ -13,7 +13,7 @@ import Toast from '@/utils/toast'
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
 export const favoriteListQueryKeys = {
-  all: ['favoriteList'] as const,
+  all: ['favoriteList', 'bilibili'] as const,
   infiniteFavoriteList: (favoriteId: number) =>
     [...favoriteListQueryKeys.all, 'infiniteFavoriteList', favoriteId] as const,
   allFavoriteList: () =>

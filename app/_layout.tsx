@@ -348,6 +348,10 @@ export default Sentry.wrap(function RootLayout() {
                   name='test/index'
                   options={{ headerShown: false }}
                 />
+                <Stack.Screen
+                  name='search-result/[query]'
+                  options={{ headerShown: false }}
+                />
                 <Stack.Screen name='+not-found' />
               </Stack>
             </PaperProvider>

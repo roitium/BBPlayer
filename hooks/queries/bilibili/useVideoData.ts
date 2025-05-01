@@ -3,7 +3,7 @@ import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 export const videoDataQueryKeys = {
-  all: ['videoData'] as const,
+  all: ['videoData', 'bilibili'] as const,
   getMultiPageList: (bvid: string) =>
     [...videoDataQueryKeys.all, 'getMultiPageList', bvid] as const,
   getVideoDetails: (bvid: string) =>

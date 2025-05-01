@@ -118,17 +118,23 @@ export const transformSearchResultsToTracks = (
 ): Track[] => {
   if (!videos) return []
   try {
-    return videos.map((video) => ({
-      id: video.bvid,
-      title: video.title.replace(/<em[^>]*>|<\/em>/g, ''), // 去除关键字标签
-      artist: video.author,
-      cover: `https:${video.pic}`,
-      source: 'bilibili' as const,
-      duration: formatMMSSToSeconds(video.duration),
-      createTime: video.senddate,
-      hasMetadata: true,
-      isMultiPage: false, // 搜索结果API不指定是否是分 p 视频
-    }))
+    const tracks: Track[] = []
+    for (const video of videos) {
+      // 视频中可能会混入「课程」等其他类型资源，他们没有 bvid，筛选掉
+      if (video.bvid === '') continue
+      tracks.push({
+        id: video.bvid,
+        title: video.title.replace(/<em[^>]*>|<\/em>/g, ''), // 去除关键字标签
+        artist: video.author,
+        cover: `https:${video.pic}`,
+        source: 'bilibili' as const,
+        duration: formatMMSSToSeconds(video.duration),
+        createTime: video.senddate,
+        hasMetadata: true,
+        isMultiPage: false, // 搜索结果API不指定是否是分 p 视频
+      })
+    }
+    return tracks
   } catch (error) {
     bilibiliApiLog.error(
       '将搜索结果视频列表转换为通用的 Track 格式失败:',

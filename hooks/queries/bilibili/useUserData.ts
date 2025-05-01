@@ -3,7 +3,7 @@ import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 const userQueryKeys = {
-  all: ['user'] as const,
+  all: ['user', 'bilibili'] as const,
   personalInformation: () =>
     [...userQueryKeys.all, 'personalInformation'] as const,
   recentlyPlayed: () => [...userQueryKeys.all, 'recentlyPlayed'] as const,

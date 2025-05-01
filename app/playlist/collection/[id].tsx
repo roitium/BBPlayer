@@ -11,7 +11,7 @@ import {
 } from 'react-native-paper'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { useCollectionAllContents } from '@/hooks/queries/useFavoriteData'
+import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'

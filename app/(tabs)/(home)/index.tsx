@@ -22,17 +22,18 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { useGetFavoritePlaylists } from '@/hooks/queries/useFavoriteData'
+import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
 import {
   usePersonalInformation,
   useRecentlyPlayed,
-} from '@/hooks/queries/useUserData'
+} from '@/hooks/queries/bilibili/useUserData'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
+import { useQueryClient } from '@tanstack/react-query'
 
 const homeLog = log.extend('HOME')
 
@@ -44,6 +45,7 @@ function HomePage() {
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [cookie, setCookie] = useState(bilibiliCookie)
+  const [greeting, setGreeting] = useState('')
 
   const {
     data: personalInfo,
@@ -72,6 +74,10 @@ function HomePage() {
     if (hour >= 18 && hour < 24) return '晚上好'
     return '你好'
   }
+
+  useEffect(() => {
+    setGreeting(getGreetingMsg())
+  }, [])
 
   useEffect(() => {
     if (!bilibiliCookie) {
@@ -185,11 +191,14 @@ function SetCookieDialog({
   setVisible: (visible: boolean) => void
   setCookie: (cookie: string) => void
   cookie: string
-  setBilibiliCookie: (cookie: string) => void
+  setBilibiliCookie: (cookie: string) => void,
 }) {
+  const queryClient = useQueryClient()
   const handleConfirm = () => {
     setBilibiliCookie(cookie)
     setVisible(false)
+    // 刷新所有 b 站相关请求
+    queryClient.refetchQueries({queryKey: ['bilibili']})
   }
 
   return (
@@ -500,6 +509,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
           <Image
             source={{ uri: item.cover }}
             style={{ width: 48, height: 48, borderRadius: 4 }}
+            transition={300}
           />
           <View style={{ marginLeft: 12, flex: 1 }}>
             <Text
