@@ -222,7 +222,10 @@ export default Sentry.wrap(function RootLayout() {
       }
     }
 
-    prepare()
+    prepare().catch((error) => {
+      console.error('Initial preparation error:', error)
+      Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })
+    })
   }, [])
 
   useEffect(() => {

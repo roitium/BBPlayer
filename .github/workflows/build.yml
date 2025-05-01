@@ -1,0 +1,48 @@
+on:
+  workflow_dispatch:
+    inputs:
+      buildType:
+        description: "构建类型"
+        required: true
+        default: "prod-v8a"
+        type: choice
+        options:
+          - prod-v8a
+          - prod-universal
+          - dev
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+
+      - name: 🤖 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: pnpm install
+
+      - name: 🚀 Build ${{ github.event.inputs.buildType }} APK
+        run: eas build --platform android --profile ${{ github.event.inputs.buildType }} --local --non-interactive --no-wait --output=./dist/app.apk
+
+      - name: 🚀 Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: bbplayer-${{ github.event.inputs.buildType }}.apk
+          path: ./dist/app.apk
+          if-no-files-found: error

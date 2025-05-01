@@ -540,7 +540,9 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
             <Menu.Item
               leadingIcon='play-circle-outline'
               onPress={() => {
-                playSingleTrack(item)
+                playSingleTrack(item).catch((error) => {
+                  homeLog.sentry('播放单曲失败', error)
+                })
                 handleDismissMenu()
               }}
               title='立即播放'
@@ -548,7 +550,9 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
             <Menu.Item
               leadingIcon='playlist-play'
               onPress={() => {
-                playNext(item)
+                playNext(item).catch((error) => {
+                  homeLog.sentry('添加到队列失败', error)
+                })
                 handleDismissMenu()
               }}
               title='下一首播放'
