@@ -16,7 +16,8 @@
       },
       "package": "com.roitium.BBPlayer",
       "versionCode": 33,
-      "runtimeVersion": "0.0.1"
+      "runtimeVersion": "0.0.1",
+      "edgeToEdgeEnabled": true
     },
     "plugins": [
       [
@@ -55,10 +56,12 @@
         {
           "assets": []
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
+      // "reactCompiler": true
     },
     "extra": {
       "router": {
@@ -71,6 +74,9 @@
     "owner": "roitium",
     "updates": {
       "url": "https://u.expo.dev/1cbd8d50-e322-4ead-98b6-4ee8b6f2a707"
+    },
+    "ios": {
+      "bundleIdentifier": "com.roitium.BBPlayer"
     }
   }
 }

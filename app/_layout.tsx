@@ -26,7 +26,6 @@ import {
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
-import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { Toaster } from 'sonner-native'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import { useColorScheme } from '@/hooks/useColorScheme'
@@ -188,7 +187,6 @@ export default Sentry.wrap(function RootLayout() {
         : { ...MD3LightTheme, colors: theme.light },
     [colorScheme, theme],
   )
-
   useEffect(() => {
     onlineManager.setEventListener((setOnline) => {
       const eventSubscription = Network.addNetworkStateListener((state) => {
@@ -355,7 +353,6 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name='+not-found' />
               </Stack>
             </PaperProvider>
-            {developement && <DevToolsBubble onCopy={onCopy} />}
           </QueryClientProvider>
           <Toaster />
         </GestureHandlerRootView>
