@@ -1,2 +1,5 @@
 onlyBuiltDependencies:
   - '@sentry/cli'
+
+patchedDependencies:
+  react-native-track-player: patches/react-native-track-player.patch

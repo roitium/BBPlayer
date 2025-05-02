@@ -28,7 +28,6 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="bbplayer"/>
-        <data android:scheme="com.roitium.BBPlayer"/>
         <data android:scheme="exp+bbplayer"/>
       </intent-filter>
     </activity>
