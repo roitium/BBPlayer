@@ -107,7 +107,13 @@ export default function SearchPage() {
   }
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top + 8 }}>
+    <View
+      style={{
+        flex: 1,
+        paddingTop: insets.top + 8,
+        backgroundColor: colors.background,
+      }}
+    >
       <View
         style={{
           paddingHorizontal: 16,

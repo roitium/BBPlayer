@@ -32,7 +32,7 @@ export default function LibraryScreen() {
   const [sortMenuVisible, setSortMenuVisible] = useState(false)
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* 顶部区域 */}
       <View
         style={{
@@ -55,34 +55,6 @@ export default function LibraryScreen() {
           >
             音乐库
           </Text>
-          {/* <Menu
-            visible={sortMenuVisible}
-            onDismiss={() => setSortMenuVisible(false)}
-            anchor={
-              <IconButton
-                icon='sort'
-                iconColor={colors.onBackground}
-                size={24}
-                onPress={() => setSortMenuVisible(true)}
-              />
-            }
-          >
-            <Menu.Item
-              onPress={() => {}}
-              title='按名称排序'
-              leadingIcon='sort-alphabetical-ascending'
-            />
-            <Menu.Item
-              onPress={() => {}}
-              title='按添加时间排序'
-              leadingIcon='sort-calendar-descending'
-            />
-            <Menu.Item
-              onPress={() => {}}
-              title='按艺术家排序'
-              leadingIcon='sort-alphabetical-ascending'
-            />
-          </Menu> */}
         </View>
 
         {/* 分段按钮 */}

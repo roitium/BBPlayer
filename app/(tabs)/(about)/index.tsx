@@ -1,6 +1,6 @@
 import { Image } from 'expo-image'
 import { View } from 'react-native'
-import { Text } from 'react-native-paper'
+import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback, useState } from 'react'
@@ -12,6 +12,7 @@ const CLICK_TOAST_ID = 'click-toast-enter-test-page'
 
 export default function AboutPage() {
   const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
   const [clickTimes, setClickTimes] = useState(0)
 
   const handlePress = useCallback(() => {
@@ -28,7 +29,13 @@ export default function AboutPage() {
   }, [clickTimes])
 
   return (
-    <View style={{ paddingTop: insets.top + 8, flex: 1 }}>
+    <View
+      style={{
+        paddingTop: insets.top + 8,
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <View
         style={{
           paddingHorizontal: 16,

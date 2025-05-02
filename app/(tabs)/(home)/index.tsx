@@ -66,18 +66,18 @@ function HomePage() {
     isError: playlistsError,
   } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
-  const getGreetingMsg = () => {
+  const getGreetingMsg = useCallback(() => {
     const hour = new Date().getHours()
     if (hour >= 0 && hour < 6) return '凌晨好'
     if (hour >= 6 && hour < 12) return '早上好'
     if (hour >= 12 && hour < 18) return '下午好'
     if (hour >= 18 && hour < 24) return '晚上好'
     return '你好'
-  }
+  }, [])
 
   useEffect(() => {
     setGreeting(getGreetingMsg())
-  }, [])
+  }, [getGreetingMsg])
 
   useEffect(() => {
     if (!bilibiliCookie) {
@@ -191,14 +191,14 @@ function SetCookieDialog({
   setVisible: (visible: boolean) => void
   setCookie: (cookie: string) => void
   cookie: string
-  setBilibiliCookie: (cookie: string) => void,
+  setBilibiliCookie: (cookie: string) => void
 }) {
   const queryClient = useQueryClient()
   const handleConfirm = () => {
     setBilibiliCookie(cookie)
     setVisible(false)
     // 刷新所有 b 站相关请求
-    queryClient.refetchQueries({queryKey: ['bilibili']})
+    queryClient.refetchQueries({ queryKey: ['bilibili'] })
   }
 
   return (
