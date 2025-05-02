@@ -18,14 +18,14 @@
     "@expo/config-plugins": "^10.0.2",
     "@expo/metro-runtime": "~5.0.4",
     "@expo/vector-icons": "^14.1.0",
-    "@gorhom/bottom-sheet": "^5",
+    "@gorhom/bottom-sheet": "^5.1.2",
     "@pchmn/expo-material3-theme": "^1.3.2",
     "@react-native-community/slider": "4.5.6",
-    "@react-navigation/bottom-tabs": "^7.2.0",
-    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/bottom-tabs": "^7.3.10",
+    "@react-navigation/native": "^7.1.6",
     "@sentry/cli": "^2.43.1",
     "@sentry/react-native": "~6.10.0",
-    "@tanstack/react-query": "^5.67.2",
+    "@tanstack/react-query": "^5.75.0",
     "babel-plugin-react-compiler": "19.0.0-beta-af1b7da-20250417",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "babel-preset-expo": "~13.0.0",
@@ -74,11 +74,10 @@
     "react-native-webview": "13.13.5",
     "shaka-player": "^4.14.10",
     "sonner-native": "^0.19.0",
-    "zustand": "^5.0.3",
-    "zustand-expo-devtools": "^0.1.2"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^7.27.1",
     "@react-native-community/cli": "latest",
     "@types/react": "~19.0.14",
     "typescript": "^5.8.3"

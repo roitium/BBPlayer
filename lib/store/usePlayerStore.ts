@@ -966,8 +966,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
   return store
 })
 
-// middleware(usePlayerStore)
-
 // 导出一些有用的hooks
 export const usePlaybackProgress = useProgress
 export const usePlaybackStateHook = usePlaybackState
