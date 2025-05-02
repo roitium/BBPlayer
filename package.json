@@ -26,6 +26,7 @@
     "@sentry/cli": "^2.43.1",
     "@sentry/react-native": "~6.10.0",
     "@tanstack/react-query": "^5.67.2",
+    "babel-plugin-react-compiler": "19.0.0-beta-af1b7da-20250417",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "babel-preset-expo": "~13.0.0",
     "expo": "~53.0.5",
