@@ -37,7 +37,7 @@ const config = {
   async: true,
 }
 
-// @ts-ignore 忽略 TS 报错
+// @ts-expect-error 忽略 TS 报错
 const log = logger.createLogger(config)
 
 export default log

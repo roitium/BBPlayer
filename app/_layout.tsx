@@ -12,7 +12,6 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 import { isRunningInExpoGo } from 'expo'
-import * as Clipboard from 'expo-clipboard'
 import * as Network from 'expo-network'
 import * as SplashScreen from 'expo-splash-screen'
 import * as Updates from 'expo-updates'
@@ -306,15 +305,6 @@ export default Sentry.wrap(function RootLayout() {
 
   if (!appIsReady) {
     return null
-  }
-
-  const onCopy = async (text: string) => {
-    try {
-      await Clipboard.setStringAsync(text)
-      return true
-    } catch {
-      return false
-    }
   }
 
   return (

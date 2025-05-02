@@ -1,4 +1,5 @@
 import {
+  skipToken,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -14,11 +15,11 @@ const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
 export const favoriteListQueryKeys = {
   all: ['favoriteList', 'bilibili'] as const,
-  infiniteFavoriteList: (favoriteId: number) =>
+  infiniteFavoriteList: (favoriteId?: number) =>
     [...favoriteListQueryKeys.all, 'infiniteFavoriteList', favoriteId] as const,
-  allFavoriteList: () =>
-    [...favoriteListQueryKeys.all, 'allFavoriteList'] as const,
-  infiniteCollectionList: (mid: number) =>
+  allFavoriteList: (userMid?: number) =>
+    [...favoriteListQueryKeys.all, 'allFavoriteList', userMid] as const,
+  infiniteCollectionList: (mid?: number) =>
     [...favoriteListQueryKeys.all, 'infiniteCollectionList', mid] as const,
   collectionAllContents: (collectionId: number) =>
     [
@@ -38,11 +39,16 @@ export const useInfiniteFavoriteList = (
   favoriteId?: number,
 ) => {
   return useInfiniteQuery({
-    queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId as number),
-    queryFn: ({ pageParam }) =>
-      returnOrThrowAsync(
-        bilibiliApi.getFavoriteListContents(favoriteId as number, pageParam),
-      ),
+    queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId),
+    queryFn: favoriteId
+      ? ({ pageParam }) =>
+          returnOrThrowAsync(
+            bilibiliApi.getFavoriteListContents(
+              favoriteId as number,
+              pageParam,
+            ),
+          )
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
@@ -61,9 +67,13 @@ export const useGetFavoritePlaylists = (
   userMid?: number,
 ) => {
   return useQuery({
-    queryKey: favoriteListQueryKeys.allFavoriteList(),
-    queryFn: () =>
-      returnOrThrowAsync(bilibiliApi.getFavoritePlaylists(userMid as number)),
+    queryKey: favoriteListQueryKeys.allFavoriteList(userMid),
+    queryFn: userMid
+      ? () =>
+          returnOrThrowAsync(
+            bilibiliApi.getFavoritePlaylists(userMid as number),
+          )
+      : skipToken,
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!userMid && !!bilibiliApi.getCookie(), // 依赖 userMid 和 bilibiliApi
   })
@@ -115,12 +125,14 @@ export const useBatchDeleteFavoriteListContents = (
  */
 export const useInfiniteCollectionsList = (
   bilibiliApi: BilibiliApi,
-  mid: number,
+  mid?: number,
 ) => {
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteCollectionList(mid),
-    queryFn: ({ pageParam }) =>
-      returnOrThrowAsync(bilibiliApi.getCollectionsList(pageParam, mid)),
+    queryFn: mid
+      ? ({ pageParam }) =>
+          returnOrThrowAsync(bilibiliApi.getCollectionsList(pageParam, mid))
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,

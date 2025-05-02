@@ -1,11 +1,11 @@
 import { Image } from 'expo-image'
+import { router } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
+import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as WebBrowser from 'expo-web-browser'
-import { useCallback, useState } from 'react'
 import Toast from '@/utils/toast'
-import { router } from 'expo-router'
 
 const CLICK_TIMES = 3
 const CLICK_TOAST_ID = 'click-toast-enter-test-page'
@@ -52,6 +52,7 @@ export default function AboutPage() {
         </Text>
       </View>
       <Image
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         source={require('@/assets/images/icon.png')}
         style={{
           width: 300,

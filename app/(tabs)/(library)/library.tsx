@@ -28,8 +28,6 @@ export default function LibraryScreen() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const [value, setValue] = useState('favorite')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortMenuVisible, setSortMenuVisible] = useState(false)
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -129,6 +127,8 @@ const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
     </View>
   )
 })
+
+FavoriteFolderListItem.displayName = 'FavoriteFolderListItem'
 
 /**
  * 渲染收藏夹列表页
@@ -236,6 +236,8 @@ const FavoriteFolderListComponent = memo(
     )
   },
 )
+
+FavoriteFolderListComponent.displayName = 'FavoriteFolderListComponent'
 
 /**
  * 渲染追更合集页
@@ -354,6 +356,8 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
   )
 })
 
+CollectionListComponent.displayName = 'CollectionListComponent'
+
 /**
  * 渲染追更合集项
  */
@@ -404,6 +408,8 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
   )
 })
 
+CollectionListItem.displayName = 'CollectionListItem'
+
 /**
  * 渲染分 p 视频页面
  */
@@ -417,11 +423,9 @@ const MultiPageVideosListComponent = memo(
     } = useGetFavoritePlaylists(bilibiliApi)
     const {
       data: favoriteData,
-      isPending: isFavoriteDataPending,
       isError: isFavoriteDataError,
       isLoading: isFavoriteDataLoading,
       fetchNextPage,
-      refetch,
       hasNextPage,
     } = useInfiniteFavoriteList(
       bilibiliApi,
@@ -535,6 +539,8 @@ const MultiPageVideosListComponent = memo(
   },
 )
 
+MultiPageVideosListComponent.displayName = 'MultiPageVideosListComponent'
+
 /**
  * 渲染分 p 视频项
  */
@@ -579,3 +585,5 @@ const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
     </View>
   )
 })
+
+MultiPageVideosItem.displayName = 'MultiPageVideosItem'

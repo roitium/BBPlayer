@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { BottomNavigation } from 'react-native-paper'
-import { Tabs } from 'expo-router'
 import { CommonActions } from '@react-navigation/native'
+import { Tabs } from 'expo-router'
+import { BottomNavigation } from 'react-native-paper'
 
 export default function TabLayout() {
   return (

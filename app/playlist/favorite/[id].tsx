@@ -1,9 +1,11 @@
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useCallback, useState } from 'react'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import {
   useBatchDeleteFavoriteListContents,
   useInfiniteFavoriteList,
@@ -13,14 +15,13 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
 export default function FavoritePage() {
   const { id } = useLocalSearchParams()
   const { colors } = useTheme()
+  const router = useRouter()
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
@@ -132,8 +133,16 @@ export default function FavoritePage() {
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
 
-  // @ts-expect-error
-  if (typeof id !== 'string') return router.replace('/not-found')
+  useEffect(() => {
+    if (typeof id !== 'string') {
+      // @ts-expect-error: 触发 404
+      router.replace('/not-found')
+    }
+  }, [id, router])
+
+  if (typeof id !== 'string') {
+    return
+  }
 
   if (isFavoriteDataPending) {
     return (

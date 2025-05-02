@@ -1,24 +1,25 @@
 // --- 2. Search Results Page (e.g., app/search/results.tsx) ---
-import { useCallback, useState, useEffect } from 'react'
+
+import { router, useLocalSearchParams } from 'expo-router'
+import { useCallback, useEffect, useState } from 'react'
 import { FlatList, View } from 'react-native'
 import {
   ActivityIndicator,
+  Appbar,
   Button,
   Text,
   TextInput,
   useTheme,
-  Appbar,
 } from 'react-native-paper'
-import { useLocalSearchParams, router } from 'expo-router'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
-import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 
 const searchLog = log.extend('SEARCH_RESULTS')
 
@@ -292,7 +293,7 @@ export default function SearchResultsPage() {
                 color: colors.onSurfaceVariant,
               }}
             >
-              没有找到与 "{searchQuery}" 相关的内容
+              没有找到与 &quot;{searchQuery}&rdquo; 相关的内容
             </Text>
           }
         />

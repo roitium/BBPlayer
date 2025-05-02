@@ -8,7 +8,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "format:check": "biome check . && eslint .",
+    "format": "biome check --write --unsafe . && eslint --fix ."
   },
   "jest": {
     "preset": "jest-expo"
@@ -28,6 +30,7 @@
     "@tanstack/react-query": "^5.75.0",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "babel-preset-expo": "~13.0.0",
+    "eslint-config-biome": "^1.9.4",
     "expo": "~53.0.5",
     "expo-asset": "~11.1.4",
     "expo-blur": "~14.1.4",
@@ -77,10 +80,18 @@
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",
+    "@eslint/js": "^9.25.1",
     "@react-native-community/cli": "latest",
+    "@tanstack/eslint-plugin-query": "^5.74.7",
     "@types/react": "~19.0.14",
     "babel-plugin-react-compiler": "19.1.0-rc.1",
-    "typescript": "^5.8.3"
+    "eslint": "^9.25.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-compiler": "19.1.0-rc.1",
+    "eslint-plugin-react-hooks": "6.0.0-rc1",
+    "globals": "^16.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.1"
   },
   "private": true
 }

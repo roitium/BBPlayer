@@ -1,6 +1,5 @@
 import { produce } from 'immer'
 import { err, ok, type Result } from 'neverthrow'
-import Toast from '@/utils/toast'
 import TrackPlayer, {
   AppKilledPlaybackBehavior,
   Capability,
@@ -26,6 +25,7 @@ import {
   convertToRNTPTrack,
   isTargetTrack,
 } from '@/utils/player'
+import Toast from '@/utils/toast'
 import useAppStore from './useAppStore'
 
 const playerLog = log.extend('PLAYER')
@@ -79,6 +79,7 @@ const PlayerLogic = {
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
         },
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         icon: require('../../assets/images/icon.png'),
       })
       logDetailedDebug('播放器能力设置完成')
@@ -582,7 +583,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         shuffleMode,
         repeatMode,
         shuffledQueue,
-        isPlaying,
       } = get()
       logDetailedDebug('调用 skipToNext()', {
         queueLength: queue.length,

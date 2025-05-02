@@ -5,9 +5,9 @@ import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import Toast from '@/utils/toast'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function TestPage() {
   const clearQueue = usePlayerStore((state) => state.clearQueue)

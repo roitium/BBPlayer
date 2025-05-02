@@ -1,6 +1,6 @@
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useCallback, useState } from 'react'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
   ActivityIndicator,
@@ -9,20 +9,21 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import useAppStore from '@/lib/store/useAppStore'
 import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 export default function CollectionPage() {
   const { id } = useLocalSearchParams()
+  const router = useRouter()
   const { colors } = useTheme()
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
@@ -116,10 +117,15 @@ export default function CollectionPage() {
 
   const keyExtractor = useCallback((item: Track) => item.id, [])
 
+  useEffect(() => {
+    if (typeof id !== 'string') {
+      // @ts-expect-error: 触发 404
+      router.replace('/not-found')
+    }
+  }, [id, router])
+
   if (typeof id !== 'string') {
-    // @ts-expect-error
-    router.replace('/not-found')
-    return null
+    return
   }
 
   if (isCollectionDataPending) {

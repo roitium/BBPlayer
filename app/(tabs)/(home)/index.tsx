@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { memo, useCallback, useEffect, useState } from 'react'
@@ -33,7 +34,6 @@ import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
-import { useQueryClient } from '@tanstack/react-query'
 
 const homeLog = log.extend('HOME')
 
@@ -46,6 +46,7 @@ function HomePage() {
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [cookie, setCookie] = useState(bilibiliCookie)
   const [greeting, setGreeting] = useState('')
+  const setBilibiliCookie = useAppStore((store) => store.setBilibiliCookie)
 
   const {
     data: personalInfo,
@@ -59,12 +60,6 @@ function HomePage() {
     isError: recentlyPlayedError,
     refetch: recentlyPlayedRefetch,
   } = useRecentlyPlayed(bilibiliApi)
-
-  const {
-    data: playlists,
-    isPending: playlistsPending,
-    isError: playlistsError,
-  } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
   const getGreetingMsg = useCallback(() => {
     const hour = new Date().getHours()
@@ -117,7 +112,7 @@ function HomePage() {
                 variant='bodyMedium'
                 style={{ color: colors.onSurfaceVariant }}
               >
-                {getGreetingMsg()}，
+                {greeting}，
                 {personalInfoPending || personalInfoError || !personalInfo
                   ? '陌生人'
                   : personalInfo.name}
@@ -131,7 +126,8 @@ function HomePage() {
                   !personalInfoError &&
                   personalInfo?.face
                     ? { uri: personalInfo.face }
-                    : require('@/assets/images/bilibili-default-avatar.jpg')
+                    : // eslint-disable-next-line @typescript-eslint/no-require-imports
+                      require('@/assets/images/bilibili-default-avatar.jpg')
                 }
               />
             </TouchableOpacity>
@@ -139,11 +135,7 @@ function HomePage() {
         </View>
 
         <View style={{ marginTop: 16, marginBottom: 24 }}>
-          <FavoriteList
-            data={playlists}
-            isPending={playlistsPending}
-            isError={playlistsError}
-          />
+          <FavoriteList />
         </View>
         {/* Recently Played (Uses FlatList) */}
         <View style={{ marginBottom: 24, paddingHorizontal: 16 }}>
@@ -174,7 +166,7 @@ function HomePage() {
         setVisible={setSetCookieDialogVisible}
         setCookie={setCookie}
         cookie={cookie}
-        setBilibiliCookie={useAppStore.getState().setBilibiliCookie}
+        setBilibiliCookie={setBilibiliCookie}
       />
     </View>
   )
@@ -267,22 +259,23 @@ function PlaylistItem({ item }: { item: Playlist }) {
   )
 }
 
-function FavoriteList({
-  data,
-  isPending,
-  isError,
-}: {
-  data?: Playlist[]
-  isPending: boolean
-  isError: boolean
-}) {
+function FavoriteList() {
   const { colors } = useTheme()
+  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
+  const { data: personalInfo } = usePersonalInformation(bilibiliApi)
+  const {
+    data: playlists,
+    isPending: playlistsPending,
+    isError: playlistsError,
+  } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
 
   const handleViewAll = () => {
     router.push('/library')
   }
 
-  const filteredData = data?.filter((item) => !item.title.startsWith('[mp]'))
+  const filteredData = playlists?.filter(
+    (item) => !item.title.startsWith('[mp]'),
+  )
 
   return (
     <>
@@ -310,15 +303,15 @@ function FavoriteList({
           </Text>
         </TouchableOpacity>
       </View>
-      {isPending ? (
+      {playlistsPending ? (
         <ActivityIndicator style={{ marginTop: 10, marginBottom: 10 }} />
-      ) : isError ? (
+      ) : playlistsError ? (
         <Text
           style={{ textAlign: 'center', color: 'red', paddingHorizontal: 16 }}
         >
           加载收藏夹失败
         </Text>
-      ) : !data || data.length === 0 ? (
+      ) : !playlists || playlists.length === 0 ? (
         <Text
           style={{ textAlign: 'center', color: 'grey', paddingHorizontal: 16 }}
         >

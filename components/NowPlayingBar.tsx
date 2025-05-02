@@ -1,5 +1,5 @@
 import { router } from 'expo-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Image, TouchableOpacity, View } from 'react-native'
 import {
   IconButton,
@@ -15,11 +15,22 @@ export default function NowPlayingBar() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const isPlaying = usePlayerStore((state) => state.isPlaying)
   const progress = usePlaybackProgress(100)
+  const [internalProgressPosition, setInternalProgressPosition] = useState(0)
+  const [internalProgressDuration, setInternalProgressDuration] = useState(1) // 避免除零
+  const togglePlay = usePlayerStore((state) => state.togglePlay)
+  const skipToNext = usePlayerStore((state) => state.skipToNext)
+  const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条，不需要 progress 作为 dep
   useEffect(() => {
-    progress.position = 0
+    setInternalProgressPosition(0)
+    setInternalProgressDuration(1)
   }, [currentTrack])
+
+  useEffect(() => {
+    setInternalProgressPosition(progress.position)
+    setInternalProgressDuration(progress.duration)
+  }, [progress.position, progress.duration])
 
   if (!currentTrack) return null
 
@@ -40,7 +51,7 @@ export default function NowPlayingBar() {
         activeOpacity={0.9}
       >
         <ProgressBar
-          animatedValue={progress.position / progress.duration}
+          animatedValue={internalProgressPosition / internalProgressDuration}
           color={colors.primary}
           style={{ height: 2 }}
         />
@@ -90,20 +101,20 @@ export default function NowPlayingBar() {
             <IconButton
               icon='skip-previous'
               size={24}
-              onPress={usePlayerStore.getState().skipToPrevious}
+              onPress={skipToPrevious}
               iconColor={colors.onSurface}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={24}
-              onPress={usePlayerStore.getState().togglePlay}
+              onPress={togglePlay}
               iconColor={colors.primary}
               style={{ marginHorizontal: 0 }}
             />
             <IconButton
               icon='skip-next'
               size={24}
-              onPress={usePlayerStore.getState().skipToNext}
+              onPress={skipToNext}
               iconColor={colors.onSurface}
             />
           </View>

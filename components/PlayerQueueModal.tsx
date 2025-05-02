@@ -80,6 +80,8 @@ const TrackItem = memo(
   },
 )
 
+TrackItem.displayName = 'TrackItem'
+
 function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
   const shuffleMode = usePlayerStore((state) => state.shuffleMode)
   const queue = usePlayerStore((state) => state.queue)

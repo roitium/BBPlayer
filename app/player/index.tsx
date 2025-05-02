@@ -1,5 +1,5 @@
-import { Image } from 'expo-image'
 import type BottomSheet from '@gorhom/bottom-sheet'
+import { Image } from 'expo-image'
 import { router, Stack } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -69,7 +69,7 @@ function DragableProgressBar() {
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       // 当手势开始时，更新一遍进度，防止进度条闪烁到开头
-      onPanResponderGrant: (_, gestureState) => {
+      onPanResponderGrant: () => {
         setIsDragging(true)
         if (cachedDuration.current > 0) {
           setLocalProgress(cachedPosition.current / cachedDuration.current)
@@ -226,6 +226,11 @@ export default function PlayerPage() {
   const insets = useSafeAreaInsets()
   const { width: screenWidth } = Dimensions.get('window')
   const sheetRef = useRef<BottomSheet>(null)
+  const togglePlay = usePlayerStore((state) => state.togglePlay)
+  const toggleShuffleMode = usePlayerStore((state) => state.toggleShuffleMode)
+  const toggleRepeatMode = usePlayerStore((state) => state.toggleRepeatMode)
+  const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
+  const skipToNext = usePlayerStore((state) => state.skipToNext)
 
   // 从播放器store获取状态和方法
   const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
@@ -243,7 +248,7 @@ export default function PlayerPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [viewMode, setViewMode] = useState('cover') // 'cover' or 'lyrics'
   const [menuVisible, setMenuVisible] = useState(false)
-  const [sliderValue, setSliderValue] = useState(0)
+  // const [sliderValue, setSliderValue] = useState(0)
 
   // 动画值
   const scrollY = useRef(new Animated.Value(0)).current
@@ -468,19 +473,18 @@ export default function PlayerPage() {
             <IconButton
               icon='skip-previous'
               size={32}
-              onPress={usePlayerStore.getState().skipToPrevious}
+              onPress={skipToPrevious}
             />
             <IconButton
               icon={isPlaying ? 'pause' : 'play'}
               size={48}
-              // iconColor={colors.primary}
-              onPress={usePlayerStore.getState().togglePlay}
+              onPress={togglePlay}
               mode='contained'
             />
             <IconButton
               icon='skip-next'
               size={32}
-              onPress={usePlayerStore.getState().skipToNext}
+              onPress={skipToNext}
             />
           </View>
           {/* 控制按钮部分 */}
@@ -500,7 +504,7 @@ export default function PlayerPage() {
                 iconColor={
                   shuffleMode ? colors.primary : colors.onSurfaceVariant
                 }
-                onPress={usePlayerStore.getState().toggleShuffleMode}
+                onPress={toggleShuffleMode}
               />
             </Tooltip>
             <Tooltip title='切换循环播放模式'>
@@ -518,7 +522,7 @@ export default function PlayerPage() {
                     ? colors.primary
                     : colors.onSurfaceVariant
                 }
-                onPress={usePlayerStore.getState().toggleRepeatMode}
+                onPress={toggleRepeatMode}
               />
             </Tooltip>
             <Tooltip title='打开播放列表'>
@@ -544,6 +548,7 @@ export default function PlayerPage() {
       />
 
       {/* 播放列表 */}
+      {/* @ts-expect-error 忽略 BottomSheet 类型错误 */}
       <PlayerQueueModal sheetRef={sheetRef} />
     </View>
   )

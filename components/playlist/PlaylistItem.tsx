@@ -1,15 +1,15 @@
-import type { Track } from '@/types/core/media'
-import { formatDurationToHHMMSS } from '@/utils/times'
+import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
-import { Image } from 'expo-image'
 import {
-  TouchableRipple,
-  Surface,
-  Menu,
   IconButton,
+  Menu,
+  Surface,
   Text,
+  TouchableRipple,
 } from 'react-native-paper'
+import type { Track } from '@/types/core/media'
+import { formatDurationToHHMMSS } from '@/utils/times'
 
 export interface TrackMenuItem {
   title: string

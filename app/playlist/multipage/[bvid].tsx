@@ -1,9 +1,16 @@
-import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  View,
+} from 'react-native'
+import { Appbar, Text, useTheme } from 'react-native-paper'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import {
   useGetMultiPageList,
   useGetVideoDetails,
@@ -14,13 +21,12 @@ import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
 export default function MultipagePage() {
-  const { bvid } = useLocalSearchParams()
+  const { bvid } = useLocalSearchParams<{ bvid?: string }>()
+  const router = useRouter()
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const colors = useTheme().colors
@@ -28,11 +34,20 @@ export default function MultipagePage() {
   const [tracksData, setTracksData] = useState<Track[]>([])
   const addToQueue = usePlayerStore((state) => state.addToQueue)
 
-  // @ts-ignore 故意定向到一个不存在的页面，触发 404
-  if (typeof bvid !== 'string') return router.replace('/not-found')
+  const {
+    data: multipageData,
+    isPending: isMultipageDataPending,
+    isError: isMultipageDataError,
+    refetch,
+  } = useGetMultiPageList(bvid, bilibiliApi)
 
-  // biome-ignore-start lint/correctness/useHookAtTopLevel: 懒得改了
-  // 下一首播放
+  const {
+    data: videoData,
+    isError: isVideoDataError,
+    isPending: isVideoDataPending,
+  } = useGetVideoDetails(bvid, bilibiliApi)
+
+  // 其他 Hooks
   const playNext = useCallback(
     async (track: Track) => {
       try {
@@ -49,26 +64,6 @@ export default function MultipagePage() {
     [addToQueue],
   )
 
-  const {
-    data: multipageData,
-    isPending: isMultipageDataPending,
-    isError: isMultipageDataError,
-    refetch,
-  } = useGetMultiPageList(bvid, bilibiliApi)
-
-  const {
-    data: videoData,
-    isError: isVideoDataError,
-    isPending: isVideoDataPending,
-  } = useGetVideoDetails(bvid, bilibiliApi)
-
-  useEffect(() => {
-    if (multipageData && videoData) {
-      setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
-    }
-  }, [multipageData, videoData])
-
-  // 播放全部
   const playAll = useCallback(
     async (startFromCid?: number) => {
       try {
@@ -126,12 +121,26 @@ export default function MultipagePage() {
     [handleTrackPress, trackMenuItems],
   )
 
-  // 这里使用 cid
   const keyExtractor = useCallback((item: Track) => {
     return item.cid ? item.cid.toString() : ''
   }, [])
 
-  // biome-ignore-start lint/correctness/useHookAtTopLevel: 懒得改了
+  useEffect(() => {
+    if (multipageData && videoData) {
+      setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
+    }
+  }, [multipageData, videoData])
+
+  useEffect(() => {
+    if (typeof bvid !== 'string') {
+      // @ts-expect-error: 触发 404
+      router.replace('/not-found')
+    }
+  }, [bvid, router])
+
+  if (typeof bvid !== 'string') {
+    return
+  }
 
   if (isMultipageDataPending || isVideoDataPending) {
     return (
