@@ -70,9 +70,7 @@
     "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "on",
-        "useSortedKeys": "on",
-        "useSortedAttributes": "on"
+        "organizeImports": "on"
       }
     }
   },
