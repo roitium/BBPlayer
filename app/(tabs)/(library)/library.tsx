@@ -136,11 +136,12 @@ FavoriteFolderListItem.displayName = 'FavoriteFolderListItem'
 const FavoriteFolderListComponent = memo(
   ({ isHidden }: { isHidden: boolean }) => {
     const bilibiliApi = useAppStore((state) => state.bilibiliApi)
+    const { data: userInfo } = usePersonalInformation(bilibiliApi)
     const {
       data: playlists,
       isPending: playlistsIsPending,
       isError: playlistsIsError,
-    } = useGetFavoritePlaylists(bilibiliApi)
+    } = useGetFavoritePlaylists(bilibiliApi, userInfo?.mid)
 
     const renderPlaylistItem = useCallback(
       ({ item }: { item: Playlist }) => <FavoriteFolderListItem item={item} />,
@@ -416,11 +417,12 @@ CollectionListItem.displayName = 'CollectionListItem'
 const MultiPageVideosListComponent = memo(
   ({ isHidden }: { isHidden: boolean }) => {
     const bilibiliApi = useAppStore((state) => state.bilibiliApi)
+    const { data: userInfo } = usePersonalInformation(bilibiliApi)
     const {
       data: playlists,
       isPending: playlistsIsPending,
       isError: playlistsIsError,
-    } = useGetFavoritePlaylists(bilibiliApi)
+    } = useGetFavoritePlaylists(bilibiliApi, userInfo?.mid)
     const {
       data: favoriteData,
       isError: isFavoriteDataError,

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0-beta/schema.json",
+  "$schema": "https://next.biomejs.dev/schemas/2.0.0-beta.2/schema.json",
   "files": {
     "ignoreUnknown": false,
     "includes": ["**"]
@@ -67,9 +67,12 @@
     "useEditorconfig": false
   },
   "assist": {
+    "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": "on",
+        "useSortedKeys": "on",
+        "useSortedAttributes": "on"
       }
     }
   },
