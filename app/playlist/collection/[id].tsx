@@ -9,6 +9,7 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -29,6 +30,7 @@ export default function CollectionPage() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
+  const inserts = useSafeAreaInsets()
 
   const {
     data: collectionData,
@@ -135,6 +137,7 @@ export default function CollectionPage() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
+          backgroundColor: colors.background,
         }}
       >
         <ActivityIndicator size='large' />
@@ -150,6 +153,7 @@ export default function CollectionPage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: 16,
+          backgroundColor: colors.background,
         }}
       >
         <Text
@@ -190,7 +194,9 @@ export default function CollectionPage() {
       </View>
 
       {/* Content Area */}
-      <View style={{ flex: 1, paddingBottom: currentTrack ? 80 : 0 }}>
+      <View
+        style={{ flex: 1, paddingBottom: currentTrack ? 80 : inserts.bottom }}
+      >
         <FlatList
           data={collectionData.medias}
           renderItem={renderItem}

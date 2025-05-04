@@ -12,8 +12,6 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "index.js",
-    "plugins/add_rntp_channel/app.config.js",
-    "plugins/add_rntp_channel/withRNTPChannel.js"
+    "index.js"
   ]
 }

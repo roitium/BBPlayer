@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native'
 import { Appbar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -33,6 +34,7 @@ export default function MultipagePage() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const [tracksData, setTracksData] = useState<Track[]>([])
   const addToQueue = usePlayerStore((state) => state.addToQueue)
+  const inserts = useSafeAreaInsets()
 
   const {
     data: multipageData,
@@ -144,7 +146,14 @@ export default function MultipagePage() {
 
   if (isMultipageDataPending || isVideoDataPending) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
         <ActivityIndicator size='large' />
       </View>
     )
@@ -152,7 +161,14 @@ export default function MultipagePage() {
 
   if (isMultipageDataError || isVideoDataError) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
         <Text
           variant='titleMedium'
           style={{ textAlign: 'center' }}
@@ -186,7 +202,9 @@ export default function MultipagePage() {
         />
       </View>
 
-      <View style={{ flex: 1, paddingBottom: currentTrack ? 80 : 0 }}>
+      <View
+        style={{ flex: 1, paddingBottom: currentTrack ? 80 : inserts.bottom }}
+      >
         <FlatList
           data={tracksData}
           renderItem={renderItem}

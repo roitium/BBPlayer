@@ -18,11 +18,11 @@ export default defineConfig([
   pluginReact.configs.flat['jsx-runtime'],
   ...pluginQuery.configs['flat/recommended'],
   reactHooks.configs['recommended-latest'],
-  {            
-    "files": ["*.ts", "*.js"],
-    "rules": {
-        "no-undef": "off"
-    }
+  {
+    files: ['*.ts', '*.js'],
+    rules: {
+      'no-undef': 'off',
+    },
   },
   reactCompiler.configs.recommended,
   biome,

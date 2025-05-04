@@ -1,6 +1,8 @@
 import type { Result } from 'neverthrow'
-import type { RepeatMode } from 'react-native-track-player'
-import type { Track as RNTPTracker } from 'react-native-track-player'
+import type {
+  RepeatMode,
+  Track as RNTPTracker,
+} from 'react-native-track-player'
 import type { BilibiliApiError } from '@/utils/errors'
 import type { Track } from './media'
 

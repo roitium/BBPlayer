@@ -1,0 +1,5 @@
+pre-push:
+  commands:
+    check:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: biome check --no-errors-on-unmatched --files-ignore-unknown=true --colors=off --write {push_files}

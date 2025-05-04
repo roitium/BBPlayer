@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -27,6 +28,7 @@ export default function FavoritePage() {
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const { mutate } = useBatchDeleteFavoriteListContents(bilibiliApi)
+  const inserts = useSafeAreaInsets()
 
   // 下一首播放
   const playNext = useCallback(
@@ -146,7 +148,14 @@ export default function FavoritePage() {
 
   if (isFavoriteDataPending) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
         <ActivityIndicator size='large' />
       </View>
     )
@@ -154,7 +163,14 @@ export default function FavoritePage() {
 
   if (isFavoriteDataError) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
         <Text
           variant='titleMedium'
           style={{ textAlign: 'center' }}
@@ -188,7 +204,9 @@ export default function FavoritePage() {
         />
       </View>
 
-      <View style={{ flex: 1, paddingBottom: currentTrack ? 80 : 0 }}>
+      <View
+        style={{ flex: 1, paddingBottom: currentTrack ? 80 : inserts.bottom }}
+      >
         <FlatList
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
           renderItem={renderItem}

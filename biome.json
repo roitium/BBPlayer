@@ -11,7 +11,12 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "react": "all",
+      "project": "all"
+    },
     "rules": {
+      "recommended": true,
       "style": {
         "useLiteralEnumMembers": "error",
         "noCommaOperator": "error",
@@ -36,23 +41,17 @@
         "noUselessElse": "error",
         "useShorthandFunctionType": "error"
       },
-      "a11y": {
-        "useSemanticElements": "off",
-        "useKeyWithClickEvents": "off",
-        "useButtonType": "off",
-        "noSvgWithoutTitle": "off"
-      },
+      "a11y": "off",
       "correctness": {
-        "noUnusedImports": "error"
+        "noUnusedImports": "error",
+        "useImportExtensions": "off"
       },
       "nursery": {
-        "noFloatingPromises": "error"
+        "noFloatingPromises": "error",
+        "noUnresolvedImports": "off"
       },
       "complexity": {
-        "noForEach": "warn"
-      },
-      "suspicious": {
-        "noDebugger": "off"
+        "noForEach": "error"
       }
     }
   },

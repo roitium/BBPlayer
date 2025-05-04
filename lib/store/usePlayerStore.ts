@@ -577,13 +577,8 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
     // 下一曲
     skipToNext: async () => {
-      const {
-        queue,
-        currentIndex,
-        shuffleMode,
-        repeatMode,
-        shuffledQueue,
-      } = get()
+      const { queue, currentIndex, shuffleMode, repeatMode, shuffledQueue } =
+        get()
       logDetailedDebug('调用 skipToNext()', {
         queueLength: queue.length,
         currentIndex,
