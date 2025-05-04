@@ -101,6 +101,7 @@ const PlayerLogic = {
       async (data: { state: TrackPlayerState }) => {
         const { state } = data
         const store = usePlayerStore.getState()
+        const setter = usePlayerStore.setState
 
         // 获取状态名称用于日志
         const stateName =
@@ -120,8 +121,7 @@ const PlayerLogic = {
             trackId: store.currentTrack?.id,
             title: store.currentTrack?.title,
           })
-          store.isPlaying = true
-          store.isBuffering = false
+          setter((state) => ({ ...state, isPlaying: true, isBuffering: false }))
         } else if (
           state === TrackPlayerState.Paused ||
           state === TrackPlayerState.Stopped
@@ -131,8 +131,11 @@ const PlayerLogic = {
             trackId: store.currentTrack?.id,
             title: store.currentTrack?.title,
           })
-          store.isPlaying = false
-          store.isBuffering = false
+          setter((state) => ({
+            ...state,
+            isPlaying: false,
+            isBuffering: false,
+          }))
         } else if (
           state === TrackPlayerState.Buffering ||
           state === TrackPlayerState.Loading
@@ -142,13 +145,13 @@ const PlayerLogic = {
             trackId: store.currentTrack?.id,
             title: store.currentTrack?.title,
           })
-          store.isBuffering = true
+          setter((state) => ({ ...state, isBuffering: true }))
         } else if (state === TrackPlayerState.Ready) {
           logDetailedDebug('播放状态: 就绪', {
             trackId: store.currentTrack?.id,
             title: store.currentTrack?.title,
           })
-          store.isBuffering = false
+          setter((state) => ({ ...state, isBuffering: false }))
         }
       },
     )
@@ -157,7 +160,7 @@ const PlayerLogic = {
     // 监听播放完成
     logDetailedDebug('设置播放完成监听器')
     TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async () => {
-      const store = usePlayerStore.getState() // 获取最新的 store 状态
+      const store = usePlayerStore.getState()
       const { repeatMode } = store
 
       logDetailedDebug('播放队列结束（即单曲结束）', {
