@@ -203,7 +203,10 @@ export default function MultipagePage() {
       </View>
 
       <View
-        style={{ flex: 1, paddingBottom: currentTrack ? 80 : inserts.bottom }}
+        style={{
+          flex: 1,
+          paddingBottom: currentTrack ? 80 + inserts.bottom : inserts.bottom,
+        }}
       >
         <FlatList
           data={tracksData}
@@ -243,7 +246,14 @@ export default function MultipagePage() {
       </View>
 
       {/* 当前播放栏 */}
-      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: inserts.bottom,
+          left: 0,
+        }}
+      >
         <NowPlayingBar />
       </View>
     </View>

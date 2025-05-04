@@ -205,7 +205,10 @@ export default function FavoritePage() {
       </View>
 
       <View
-        style={{ flex: 1, paddingBottom: currentTrack ? 80 : inserts.bottom }}
+        style={{
+          flex: 1,
+          paddingBottom: currentTrack ? 80 + inserts.bottom : inserts.bottom,
+        }}
       >
         <FlatList
           data={favoriteData?.pages.flatMap((page) => page.tracks)}
@@ -258,7 +261,14 @@ export default function FavoritePage() {
         />
       </View>
 
-      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: inserts.bottom,
+          left: 0,
+        }}
+      >
         <NowPlayingBar />
       </View>
     </View>

@@ -173,13 +173,17 @@ export default function CollectionPage() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       {/* App Bar */}
       <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 10 }}>
         <Appbar.BackAction onPress={() => router.back()} />
       </Appbar.Header>
 
-      {/* Background Image */}
       {/* 顶部背景图 */}
       <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
         <Image
@@ -195,7 +199,10 @@ export default function CollectionPage() {
 
       {/* Content Area */}
       <View
-        style={{ flex: 1, paddingBottom: currentTrack ? 80 : inserts.bottom }}
+        style={{
+          flex: 1,
+          paddingBottom: currentTrack ? 80 + inserts.bottom : inserts.bottom,
+        }}
       >
         <FlatList
           data={collectionData.medias}
@@ -235,7 +242,14 @@ export default function CollectionPage() {
       </View>
 
       {/* Now Playing Bar */}
-      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: inserts.bottom,
+          left: 0,
+        }}
+      >
         <NowPlayingBar />
       </View>
     </View>
