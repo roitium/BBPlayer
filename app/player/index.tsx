@@ -1,15 +1,9 @@
 import type BottomSheet from '@gorhom/bottom-sheet'
+import Slider from '@react-native-community/slider'
 import { Image } from 'expo-image'
 import { router, Stack } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
-import {
-  Animated,
-  Dimensions,
-  type LayoutChangeEvent,
-  PanResponder,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { useCallback, useRef, useState } from 'react'
+import { Animated, Dimensions, TouchableOpacity, View } from 'react-native'
 import {
   Divider,
   IconButton,
@@ -23,203 +17,11 @@ import {
   type EdgeInsets,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
-import { RepeatMode, State } from 'react-native-track-player'
+import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
 import PlayerQueueModal from '@/components/PlayerQueueModal'
-import {
-  usePlaybackProgress,
-  usePlaybackStateHook,
-  usePlayerStore,
-} from '@/lib/store/usePlayerStore'
+import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
-
-function DragableProgressBar() {
-  const seekTo = usePlayerStore((state) => state.seekTo)
-  const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const { position, duration } = usePlaybackProgress(300)
-  const { colors } = useTheme()
-  const [isDragging, setIsDragging] = useState(false)
-  const [localProgress, setLocalProgress] = useState(0) // 始终是一个 0-1 的值
-  const progressBarRef = useRef(null)
-  const progressBarWidth = useRef(0)
-  const playbackState = usePlaybackStateHook()
-  // 我不懂为什么，但是在 panResponder 内获取到的 duration 和 position 永远是 0，只能靠这种方法 hack 一下
-  const cachedDuration = useRef(duration)
-  const cachedPosition = useRef(position)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条
-  useEffect(() => {
-    setLocalProgress(0)
-    cachedPosition.current = 0
-  }, [currentTrack])
-
-  // 当 duration 和 position 变动时更新缓存
-  useEffect(() => {
-    if (duration > 0) {
-      cachedDuration.current = duration
-    }
-    if (position > 0) {
-      cachedPosition.current = position
-    }
-  }, [duration, position])
-
-  // 处理拖动事件和进度条更新
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      // 当手势开始时，更新一遍进度，防止进度条闪烁到开头
-      onPanResponderGrant: () => {
-        setIsDragging(true)
-        if (cachedDuration.current > 0) {
-          setLocalProgress(cachedPosition.current / cachedDuration.current)
-        } else {
-          setLocalProgress(0)
-        }
-      },
-      // 在滑动时实时更新进度，保证进度条实时更新
-      onPanResponderMove: (_, gestureState) => {
-        if (progressBarWidth.current > 0) {
-          // 计算新的进度值（0-1之间）
-          const newProgress = Math.max(
-            0,
-            Math.min(1, gestureState.moveX / progressBarWidth.current),
-          )
-          setLocalProgress(newProgress)
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        // 处理点击事件（10px 真的够用吗）
-        if (gestureState.moveX < 10) {
-          setIsDragging(false)
-          return
-        }
-        if (progressBarWidth.current > 0) {
-          // 计算最终进度值并应用
-          const finalProgress = Math.max(
-            0,
-            Math.min(1, gestureState.moveX / progressBarWidth.current),
-          )
-          setLocalProgress(finalProgress)
-          if (cachedDuration.current > 0) {
-            seekTo(finalProgress * cachedDuration.current)
-          }
-        }
-        setIsDragging(false)
-      },
-      onPanResponderTerminate: () => {
-        // 如果手势被中断，恢复到当前播放位置
-        setIsDragging(false)
-        if (cachedDuration.current > 0) {
-          setLocalProgress(cachedPosition.current / cachedDuration.current)
-        } else {
-          setLocalProgress(0)
-        }
-      },
-    }),
-  ).current
-
-  // 当播放位置更新且不在拖动状态，且不是缓冲状态时（缓冲状态不更新，避免闪烁），更新本地进度
-  // 这里不使用 cachedDuration 是因为在 useEffect 可以正确获取到 duration
-  useEffect(() => {
-    if (
-      !isDragging &&
-      duration > 0 &&
-      playbackState.state !== State.Buffering
-    ) {
-      setLocalProgress(position / duration)
-    } else if (duration === 0) {
-      setLocalProgress(0)
-    }
-  }, [position, duration, isDragging, playbackState.state])
-
-  // 测量进度条宽度
-  const onLayout = (event: LayoutChangeEvent) => {
-    progressBarWidth.current = event.nativeEvent.layout.width
-  }
-
-  return (
-    <View style={{ marginTop: 16 }}>
-      {/* 进度条主容器 */}
-      <View
-        style={{
-          height: 32,
-          width: '100%',
-          justifyContent: 'center',
-        }}
-        ref={progressBarRef}
-        onLayout={onLayout}
-        {...panResponder.panHandlers}
-      >
-        {/* 进度条背景 */}
-        <View
-          style={{
-            height: 6,
-            width: '100%',
-            overflow: 'hidden',
-            borderRadius: 9999,
-            backgroundColor: colors.surfaceVariant,
-          }}
-        >
-          {/* 进度条填充部分 */}
-          <View
-            style={{
-              height: '100%',
-              borderRadius: 9999,
-              backgroundColor: colors.primary,
-              width: `${localProgress * 100}%`,
-            }}
-          />
-        </View>
-
-        {/* 拖动手柄 */}
-        <TouchableOpacity
-          activeOpacity={1}
-          style={{
-            position: 'absolute',
-            width: 16,
-            height: 16,
-            borderRadius: 9999,
-            borderWidth: 2,
-            backgroundColor: colors.primary,
-            // -0.01 是为了与进度条对齐
-            left: `${(localProgress - 0.01) * 100}%`,
-            // 同样是为了对齐
-            top: 6,
-            borderColor: 'white',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.2,
-            shadowRadius: 1.5,
-            elevation: 2,
-          }}
-        />
-      </View>
-
-      {/* 时间显示 */}
-      <View
-        style={{
-          marginTop: 4,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Text
-          variant='bodySmall'
-          style={{ color: colors.onSurfaceVariant }}
-        >
-          {formatDurationToHHMMSS(Math.trunc(localProgress * (duration || 0)))}
-        </Text>
-        <Text
-          variant='bodySmall'
-          style={{ color: colors.onSurfaceVariant }}
-        >
-          {formatDurationToHHMMSS(Math.trunc(duration || 0))}
-        </Text>
-      </View>
-    </View>
-  )
-}
 
 export default function PlayerPage() {
   const { colors } = useTheme()
@@ -231,8 +33,9 @@ export default function PlayerPage() {
   const toggleRepeatMode = usePlayerStore((state) => state.toggleRepeatMode)
   const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
   const skipToNext = usePlayerStore((state) => state.skipToNext)
+  const seekTo = usePlayerStore((state) => state.seekTo)
+  const { position, duration } = usePlaybackProgress(100)
 
-  // 从播放器store获取状态和方法
   const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
     useShallow((state) => {
       return {
@@ -244,13 +47,43 @@ export default function PlayerPage() {
     }),
   )
 
-  // 本地状态
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [viewMode, setViewMode] = useState('cover') // 'cover' or 'lyrics'
-  const [menuVisible, setMenuVisible] = useState(false)
-  // const [sliderValue, setSliderValue] = useState(0)
+  const [isSeeking, setIsSeeking] = useState(false)
+  const [seekValue, setSeekValue] = useState(0)
 
-  // 动画值
+  const handleSlidingStart = useCallback(() => {
+    if (duration > 0) {
+      setIsSeeking(true)
+      setSeekValue(position)
+    }
+  }, [position, duration])
+
+  const handleSlidingChange = useCallback((value: number) => {
+    setSeekValue(value)
+  }, [])
+
+  const handleSlidingComplete = useCallback(
+    (value: number) => {
+      setIsSeeking(false)
+      if (duration > 0) {
+        seekTo(value)
+      }
+    },
+    [seekTo, duration],
+  )
+
+  const isSliderEnabled =
+    currentTrack != null && duration > 0 && !Number.isNaN(duration)
+  const currentSliderPosition = isSeeking
+    ? seekValue
+    : isSliderEnabled
+      ? Math.min(position, duration)
+      : 0
+  const maxSliderValue = isSliderEnabled ? duration : 1
+
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover')
+  const [menuVisible, setMenuVisible] = useState(false)
+
   const scrollY = useRef(new Animated.Value(0)).current
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, 100],
@@ -258,12 +91,10 @@ export default function PlayerPage() {
     extrapolate: 'clamp',
   })
 
-  // 切换视图模式 - 暂时只支持封面模式
   const toggleViewMode = () => {
-    setViewMode('cover') // 暂时只支持封面模式
+    setViewMode('cover')
   }
 
-  // 如果没有当前曲目，显示空状态
   if (!currentTrack) {
     return (
       <View
@@ -282,9 +113,6 @@ export default function PlayerPage() {
       </View>
     )
   }
-
-  // 当前歌词索引 - 暂不支持歌词功能
-  // const currentLyricIndex = 0 // currentLyricIndex is unused
 
   return (
     <View
@@ -450,17 +278,51 @@ export default function PlayerPage() {
           </View>
         </View>
 
-        {/* 下半部分：进度条和控制栏 */}
         <View
           style={{
             paddingHorizontal: 24,
             paddingBottom: insets.bottom > 0 ? insets.bottom : 20,
           }}
         >
-          {/* 进度条 */}
-          <DragableProgressBar />
+          <View>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={0}
+              maximumValue={maxSliderValue}
+              value={currentSliderPosition}
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.surfaceVariant}
+              thumbTintColor={colors.primary}
+              disabled={!isSliderEnabled}
+              onSlidingStart={handleSlidingStart}
+              onValueChange={handleSlidingChange}
+              onSlidingComplete={handleSlidingComplete}
+            />
+            <View
+              style={{
+                marginTop: -8,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                paddingHorizontal: 4,
+              }}
+            >
+              <Text
+                variant='bodySmall'
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {formatDurationToHHMMSS(Math.trunc(currentSliderPosition))}
+              </Text>
+              <Text
+                variant='bodySmall'
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {formatDurationToHHMMSS(
+                  Math.trunc(isSliderEnabled ? duration : 0),
+                )}
+              </Text>
+            </View>
+          </View>
 
-          {/* 播放控制 */}
           <View
             style={{
               marginTop: 24,
@@ -487,7 +349,6 @@ export default function PlayerPage() {
               onPress={skipToNext}
             />
           </View>
-          {/* 控制按钮部分 */}
           <View
             style={{
               marginTop: 12,
@@ -537,7 +398,6 @@ export default function PlayerPage() {
         </View>
       </View>
 
-      {/* 菜单 */}
       <FunctionalMenu
         menuVisible={menuVisible}
         setMenuVisible={setMenuVisible}
@@ -547,7 +407,6 @@ export default function PlayerPage() {
         insets={insets}
       />
 
-      {/* 播放列表 */}
       {/* @ts-expect-error 忽略 BottomSheet 类型错误 */}
       <PlayerQueueModal sheetRef={sheetRef} />
     </View>
