@@ -28,8 +28,8 @@ import {
   usePersonalInformation,
   useRecentlyPlayed,
 } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/lib/store/useAppStore'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import useAppStore from '@/hooks/stores/useAppStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'

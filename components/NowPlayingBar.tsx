@@ -8,7 +8,10 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper'
-import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
+import {
+  usePlaybackProgress,
+  usePlayerStore,
+} from '@/hooks/stores/usePlayerStore'
 
 export default function NowPlayingBar() {
   const { colors } = useTheme()

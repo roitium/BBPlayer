@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
-import useAppStore from '@/lib/store/useAppStore'
+import useAppStore from '@/hooks/stores/useAppStore'
 import log from '@/utils/log'
 
 const searchLog = log.extend('SEARCH')

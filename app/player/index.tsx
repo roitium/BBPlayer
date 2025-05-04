@@ -20,7 +20,10 @@ import {
 import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
 import PlayerQueueModal from '@/components/PlayerQueueModal'
-import { usePlaybackProgress, usePlayerStore } from '@/lib/store/usePlayerStore'
+import {
+  usePlaybackProgress,
+  usePlayerStore,
+} from '@/hooks/stores/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
 
 export default function PlayerPage() {

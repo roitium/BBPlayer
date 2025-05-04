@@ -16,9 +16,9 @@ import {
   useGetMultiPageList,
   useGetVideoDetails,
 } from '@/hooks/queries/bilibili/useVideoData'
+import useAppStore from '@/hooks/stores/useAppStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
-import useAppStore from '@/lib/store/useAppStore'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
+import { createBilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { storage } from '@/utils/mmkv'
-import { createBilibiliApi } from '../api/bilibili/bilibili.api'
 
 interface AppState {
   bilibiliCookie: string

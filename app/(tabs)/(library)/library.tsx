@@ -19,7 +19,7 @@ import {
   useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/lib/store/useAppStore'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/times'

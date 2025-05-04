@@ -6,7 +6,7 @@ import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import Toast from '@/utils/toast'
 
 export default function TestPage() {

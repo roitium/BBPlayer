@@ -8,7 +8,7 @@ import {
   TouchableRipple,
   useTheme,
 } from 'react-native-paper'
-import { usePlayerStore } from '@/lib/store/usePlayerStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 
 const TrackItem = memo(
