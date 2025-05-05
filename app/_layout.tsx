@@ -21,13 +21,13 @@ import {
   type AppStateStatus,
   InteractionManager,
   Platform,
+  useColorScheme,
   View,
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import { Toaster } from 'sonner-native'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
-import { useColorScheme } from '@/hooks/useColorScheme'
 import { setupPlayer } from '@/lib/services/setupPlayer'
 import useAppStore from '@/lib/store/useAppStore'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
