@@ -361,15 +361,25 @@ export const createBilibiliApi = (getCookie: () => string) => ({
 
     return Result.combine([resourcesResult, csrfResult]).asyncAndThen(
       ([resources, csrfToken]) => {
-        const data = {
+        const data: { [key: string]: string } = {
           resources: resources.join(','),
           media_id: String(favoriteId),
+          platform: 'web',
           csrf: csrfToken,
-          platform: 'web', // Specify platform as web
         }
+        bilibiliApiLog.debug(
+          '批量删除收藏',
+          new URLSearchParams(data).toString(),
+        )
+        const formBody = Object.keys(data)
+          .map(
+            (key) =>
+              `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`,
+          )
+          .join('&')
         return apiClient.post<void>(
           '/x/v3/fav/resource/batch-del',
-          new URLSearchParams(data),
+          formBody,
           getCookie(),
         )
       },

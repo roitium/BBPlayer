@@ -104,22 +104,15 @@ class ApiClient {
    * @param endpoint API 端点
    * @param data 请求体数据
    * @param cookie Cookie 字符串
-   * @param headers 额外的请求头
+   * @param headers 请求头（默认请求类型为 application/x-www-form-urlencoded）
    * @returns ResultAsync 包含成功数据或错误
    */
   post<T>(
     endpoint: string,
-    data?: unknown,
+    data?: BodyInit,
     cookie = '',
     headers?: Record<string, string>,
   ): ResultAsync<T, BilibiliApiError> {
-    const body =
-      data instanceof URLSearchParams
-        ? data
-        : data && typeof data === 'object'
-          ? new URLSearchParams(data as Record<string, string>)
-          : undefined
-
     return this.request<T>(
       endpoint,
       {
@@ -128,7 +121,7 @@ class ApiClient {
           'Content-Type': 'application/x-www-form-urlencoded',
           ...headers,
         },
-        body: body,
+        body: data,
       },
       cookie,
     )
