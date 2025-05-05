@@ -1,13 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  View,
-} from 'react-native'
-import { Appbar, Text, useTheme } from 'react-native-paper'
+import { FlatList, Image, RefreshControl, View } from 'react-native'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
