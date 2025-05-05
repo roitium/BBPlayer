@@ -14,7 +14,7 @@ import Toast from '@/utils/toast'
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
 export const favoriteListQueryKeys = {
-  all: ['favoriteList', 'bilibili'] as const,
+  all: ['bilibili', 'favoriteList'] as const,
   infiniteFavoriteList: (favoriteId?: number) =>
     [...favoriteListQueryKeys.all, 'infiniteFavoriteList', favoriteId] as const,
   allFavoriteList: (userMid?: number) =>
@@ -26,6 +26,13 @@ export const favoriteListQueryKeys = {
       ...favoriteListQueryKeys.all,
       'collectionAllContents',
       collectionId,
+    ] as const,
+  favoriteForOneVideo: (bvid: string, userMid?: number) =>
+    [
+      ...favoriteListQueryKeys.all,
+      'favoriteForOneVideo',
+      bvid,
+      userMid,
     ] as const,
 } as const
 
@@ -69,10 +76,7 @@ export const useGetFavoritePlaylists = (
   return useQuery({
     queryKey: favoriteListQueryKeys.allFavoriteList(userMid),
     queryFn: userMid
-      ? () =>
-          returnOrThrowAsync(
-            bilibiliApi.getFavoritePlaylists(userMid as number),
-          )
+      ? () => returnOrThrowAsync(bilibiliApi.getFavoritePlaylists(userMid))
       : skipToken,
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!userMid && !!bilibiliApi.getCookie(), // 依赖 userMid 和 bilibiliApi
@@ -97,7 +101,7 @@ export const useBatchDeleteFavoriteListContents = (
       ),
     onSuccess: (_data, variables) => {
       Toast.success('删除成功')
-      queryClient.invalidateQueries({
+      queryClient.refetchQueries({
         queryKey: favoriteListQueryKeys.infiniteFavoriteList(
           variables.favoriteId,
         ),
@@ -154,5 +158,75 @@ export const useCollectionAllContents = (
       returnOrThrowAsync(bilibiliApi.getCollectionAllContents(collectionId)),
     staleTime: 1,
     enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
+  })
+}
+
+/**
+ * 获取包含指定视频的收藏夹列表
+ */
+export const useGetFavoriteForOneVideo = (
+  bilibiliApi: BilibiliApi,
+  bvid: string,
+  userMid?: number,
+) => {
+  return useQuery({
+    queryKey: favoriteListQueryKeys.favoriteForOneVideo(bvid, userMid),
+    queryFn: userMid
+      ? () =>
+          returnOrThrowAsync(
+            bilibiliApi.getTargetVideoFavoriteStatus(userMid, bvid),
+          )
+      : skipToken,
+    staleTime: 1,
+    enabled: !!bilibiliApi.getCookie() && !!userMid, // 依赖 bilibiliApi 和 userMid
+  })
+}
+
+/**
+ * 单个视频添加/删除到多个收藏夹
+ */
+export const useDealFavoriteForOneVideo = (bilibiliApi: BilibiliApi) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (params: {
+      bvid: string
+      addToFavoriteIds: string[]
+      delInFavoriteIds: string[]
+    }) =>
+      await returnOrThrowAsync(
+        bilibiliApi.dealFavoriteForOneVideo(
+          params.bvid,
+          params.addToFavoriteIds,
+          params.delInFavoriteIds,
+        ),
+      ),
+    onSuccess: (_data, _value) => {
+      Toast.success('操作成功', {
+        description:
+          _data.toast_msg.length > 0
+            ? `api 返回消息：${_data.toast_msg}`
+            : undefined,
+      })
+      // 只刷新当前显示的收藏夹
+      queryClient.refetchQueries({
+        queryKey: ['favoriteList', 'bilibili', 'infiniteFavoriteList'],
+        type: 'active',
+      })
+    },
+    onError: (error) => {
+      let errorMessage = '删除失败，请稍后重试'
+      if (error instanceof CsrfError) {
+        errorMessage = '删除失败：安全验证过期，请检查 cookie 后重试'
+      } else if (error instanceof BilibiliApiError) {
+        errorMessage = `删除失败：${error.message} (${error.msgCode})`
+      }
+
+      Toast.error('操作失败', {
+        description: errorMessage,
+        duration: Number.POSITIVE_INFINITY,
+      })
+      favoriteListLog.error('删除收藏夹内容失败:', error)
+    },
   })
 }

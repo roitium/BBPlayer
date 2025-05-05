@@ -10,6 +10,7 @@ import {
   useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -31,6 +32,8 @@ export default function CollectionPage() {
   const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const inserts = useSafeAreaInsets()
+  const [modalVisible, setModalVisible] = useState(false)
+  const [currentModalBvid, setCurrentModalBvid] = useState('')
 
   const {
     data: collectionData,
@@ -86,11 +89,19 @@ export default function CollectionPage() {
   )
 
   const trackMenuItems = useCallback(
-    () => [
+    (item: Track) => [
       {
         title: '下一首播放',
         leadingIcon: 'play-circle-outline',
         onPress: playNext,
+      },
+      {
+        title: '添加到收藏夹',
+        leadingIcon: 'plus',
+        onPress: () => {
+          setCurrentModalBvid(item.id)
+          setModalVisible(true)
+        },
       },
     ],
     [playNext],
@@ -110,7 +121,7 @@ export default function CollectionPage() {
           item={item}
           index={index}
           onTrackPress={handleTrackPress}
-          menuItems={trackMenuItems()}
+          menuItems={trackMenuItems(item)}
         />
       )
     },
@@ -240,6 +251,12 @@ export default function CollectionPage() {
           }
         />
       </View>
+
+      <AddToFavoriteListsModal
+        visible={modalVisible}
+        bvid={currentModalBvid}
+        setVisible={setModalVisible}
+      />
 
       {/* Now Playing Bar */}
       <View

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -29,6 +30,8 @@ export default function FavoritePage() {
   const [refreshing, setRefreshing] = useState(false)
   const { mutate } = useBatchDeleteFavoriteListContents(bilibiliApi)
   const inserts = useSafeAreaInsets()
+  const [modalVisible, setModalVisible] = useState(false)
+  const [currentModalBvid, setCurrentModalBvid] = useState('')
 
   // 下一首播放
   const playNext = useCallback(
@@ -106,6 +109,14 @@ export default function FavoritePage() {
           setRefreshing(true)
           await refetch()
           setRefreshing(false)
+        },
+      },
+      {
+        title: '添加到收藏夹',
+        leadingIcon: 'plus',
+        onPress: () => {
+          setCurrentModalBvid(item.id)
+          setModalVisible(true)
         },
       },
     ],
@@ -260,6 +271,12 @@ export default function FavoritePage() {
           }
         />
       </View>
+
+      <AddToFavoriteListsModal
+        visible={modalVisible}
+        bvid={currentModalBvid}
+        setVisible={setModalVisible}
+      />
 
       <View
         style={{

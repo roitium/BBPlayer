@@ -80,6 +80,7 @@ interface BilibiliPlaylist {
   id: number
   title: string
   media_count: number
+  fav_state: number // 目标 id 是否存在于收藏夹中：0：不存在；1：存在（当未提供 rid 时始终为 0）
 }
 
 /**
@@ -272,6 +273,16 @@ interface BilibiliMultipageVideo {
   first_frame: string
 }
 
+/**
+ * 添加/删除一个视频到收藏夹的响应
+ */
+interface BilibiliDealFavoriteForOneVideoResponse {
+  prompt: boolean
+  ga_data: unknown
+  toast_msg: string
+  success_num: number
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -290,4 +301,5 @@ export type {
   BilibiliCollectionInfo,
   BilibiliMediaItem,
   BilibiliMultipageVideo,
+  BilibiliDealFavoriteForOneVideoResponse,
 }

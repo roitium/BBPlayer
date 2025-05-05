@@ -19,6 +19,22 @@ export default defineConfig([
   ...pluginQuery.configs['flat/recommended'],
   reactHooks.configs['recommended-latest'],
   {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
+  {
     files: ['*.ts', '*.js'],
     rules: {
       'no-undef': 'off',

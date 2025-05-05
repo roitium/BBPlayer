@@ -5,7 +5,6 @@ import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import * as Sentry from '@sentry/react-native'
 import {
   focusManager,
-  MutationCache,
   onlineManager,
   QueryCache,
   QueryClient,
@@ -135,28 +134,6 @@ const queryClient = new QueryClient({
         extra: {
           queryHash: query.queryHash,
           retry: query.options.retry,
-        },
-      })
-    },
-  }),
-
-  mutationCache: new MutationCache({
-    onError: (error, variables, context, mutation) => {
-      Toast.error(`请求 mutation: ${mutation.mutationId} 失败`, {
-        description: error.message,
-        duration: Number.POSITIVE_INFINITY,
-      })
-
-      rootLog.error(`请求 mutation: ${mutation.mutationId} 失败`, error)
-
-      if (error instanceof BilibiliApiError || error instanceof CsrfError) {
-        return
-      }
-
-      Sentry.captureException(error, {
-        tags: {
-          scope: 'MutationCache',
-          mutationId: mutation.mutationId,
         },
       })
     },

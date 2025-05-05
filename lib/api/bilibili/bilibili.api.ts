@@ -5,6 +5,7 @@ import type {
   BilibiliCollection,
   BilibiliCollectionAllContents,
   BilibiliCollectionInfo,
+  BilibiliDealFavoriteForOneVideoResponse,
   BilibiliFavoriteListAllContents,
   BilibiliFavoriteListContents,
   BilibiliHistoryVideo,
@@ -20,11 +21,9 @@ import {
   AudioStreamError,
   type BilibiliApiError,
   type BilibiliApiMethodError,
-  CsrfError,
 } from '@/utils/errors'
 import log from '@/utils/log'
 import {
-  bv2av,
   transformCollectionAllContentsToTracks,
   transformFavoriteContentsToTracks,
   transformFavoriteListsToPlaylists,
@@ -33,9 +32,14 @@ import {
   transformSearchResultsToTracks,
   transformVideoDetailsToTracks,
 } from './bilibili.transformers'
+import {
+  bv2av,
+  convertToFormDataString,
+  extractCsrfToken,
+} from './bilibili.utils'
 import { apiClient } from './client'
 
-const bilibiliApiLog = log.extend('BILIBILI_API')
+const bilibiliApiLog = log.extend('BILIBILI_API/API')
 
 /**
  * 创建B站API客户端
@@ -325,43 +329,20 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   batchDeleteFavoriteListContents(
     favoriteId: number,
     bvids: string[],
-  ): ResultAsync<void, BilibiliApiMethodError> {
+  ): ResultAsync<0, BilibiliApiMethodError> {
     const resourcesResult = Result.fromThrowable(
-      () => bvids.map((bvid) => `${bv2av(bvid)}:2`), // Convert bvid to avid and format
+      () => bvids.map((bvid) => `${bv2av(bvid)}:2`),
       (e) =>
         new Error(
           `转换 bvid 到 avid 失败: ${e instanceof Error ? e.message : String(e)}`,
         ),
     )()
 
-    const csrfResult = Result.fromThrowable(
-      () => {
-        const cookie = getCookie()
-        const regex = /(^|;)\s*bili_jct\s*=\s*([^;]+)/
-        const match = cookie.match(regex)
-        if (!match || !match[2]) {
-          throw new CsrfError(
-            'batchDeleteFavoriteListContents: 获取 csrf 失败，请检查 cookie',
-            { cookie, favoriteId, bvids },
-          )
-        }
-        bilibiliApiLog.debug(
-          'batchDeleteFavoriteListContents: 获取 csrf 成功',
-          { csrf: match[2] },
-        )
-        return match[2]
-      },
-      (e) =>
-        e instanceof CsrfError
-          ? e
-          : new Error(
-              `提取 CSRF 时发生未知错误: ${e instanceof Error ? e.message : String(e)}`,
-            ),
-    )()
+    const csrfResult = extractCsrfToken(getCookie())
 
     return Result.combine([resourcesResult, csrfResult]).asyncAndThen(
       ([resources, csrfToken]) => {
-        const data: { [key: string]: string } = {
+        const data = {
           resources: resources.join(','),
           media_id: String(favoriteId),
           platform: 'web',
@@ -371,15 +352,9 @@ export const createBilibiliApi = (getCookie: () => string) => ({
           '批量删除收藏',
           new URLSearchParams(data).toString(),
         )
-        const formBody = Object.keys(data)
-          .map(
-            (key) =>
-              `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`,
-          )
-          .join('&')
-        return apiClient.post<void>(
+        return apiClient.post<0>(
           '/x/v3/fav/resource/batch-del',
-          formBody,
+          convertToFormDataString(data),
           getCookie(),
         )
       },
@@ -442,6 +417,64 @@ export const createBilibiliApi = (getCookie: () => string) => ({
           info: response.info,
           medias: transformCollectionAllContentsToTracks(response.medias),
         }
+      })
+  },
+
+  /**
+   * 单个视频添加/删除到多个收藏夹
+   */
+  dealFavoriteForOneVideo: (
+    bvid: string,
+    addToFavoriteIds: string[],
+    delInFavoriteIds: string[],
+  ): ResultAsync<
+    BilibiliDealFavoriteForOneVideoResponse,
+    BilibiliApiMethodError
+  > => {
+    const avid = bv2av(bvid)
+    const addToFavoriteIdsCombined = addToFavoriteIds.join(',')
+    const delInFavoriteIdsCombined = delInFavoriteIds.join(',')
+    const csrfResult = extractCsrfToken(getCookie())
+    if (csrfResult.isErr()) {
+      return errAsync(csrfResult.error)
+    }
+    const data = {
+      rid: String(avid),
+      add_media_ids: addToFavoriteIdsCombined,
+      del_media_ids: delInFavoriteIdsCombined,
+      csrf: csrfResult.value,
+      type: '2',
+    }
+    return apiClient.post<BilibiliDealFavoriteForOneVideoResponse>(
+      '/x/v3/fav/resource/deal',
+      convertToFormDataString(data),
+      getCookie(),
+    )
+  },
+
+  /**
+   * 获取目标视频的收藏情况
+   */
+  getTargetVideoFavoriteStatus(
+    userMid: number,
+    bvid: string,
+  ): ResultAsync<BilibiliPlaylist[], BilibiliApiError> {
+    const avid = bv2av(bvid)
+    return apiClient
+      .get<{ list: BilibiliPlaylist[] | null }>(
+        '/x/v3/fav/folder/created/list-all',
+        {
+          up_mid: userMid.toString(),
+          rid: String(avid),
+          type: '2',
+        },
+        getCookie(),
+      )
+      .map((response) => {
+        if (!response.list) {
+          return []
+        }
+        return response.list
       })
   },
 })

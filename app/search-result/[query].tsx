@@ -1,5 +1,3 @@
-// --- 2. Search Results Page (e.g., app/search/results.tsx) ---
-
 import { router, useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, View } from 'react-native'
@@ -11,6 +9,7 @@ import {
   TextInput,
   useTheme,
 } from 'react-native-paper'
+import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
@@ -34,6 +33,8 @@ export default function SearchResultsPage() {
   const [pageInputValue, setPageInputValue] = useState('1')
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
+  const [modalVisible, setModalVisible] = useState(false)
+  const [currentModalBvid, setCurrentModalBvid] = useState('')
 
   useEffect(() => {
     if (query) {
@@ -134,16 +135,17 @@ export default function SearchResultsPage() {
       },
       {
         title: '作为分P视频展示',
-        leadingIcon: 'playlist-plus',
+        leadingIcon: 'eye-outline',
         onPress: async () => {
           router.push(`/playlist/multipage/${item.id}`)
         },
       },
       {
-        title: '从收藏夹中删除',
-        leadingIcon: 'playlist-remove',
-        onPress: async () => {
-          Toast.show('开发中')
+        title: '添加到收藏夹',
+        leadingIcon: 'plus',
+        onPress: () => {
+          setCurrentModalBvid(item.id)
+          setModalVisible(true)
         },
       },
     ],
@@ -298,6 +300,12 @@ export default function SearchResultsPage() {
           }
         />
       )}
+
+      <AddToFavoriteListsModal
+        bvid={currentModalBvid}
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
 
       <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
         <NowPlayingBar />

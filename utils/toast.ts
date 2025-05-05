@@ -1,5 +1,70 @@
+import type { TextStyle, ViewStyle } from 'react-native'
 import { toast as sonnerToast } from 'sonner-native'
-import type { ToastProps } from 'sonner-native/src/types'
+
+type StyleProps = {
+  unstyled?: boolean
+  style?: ViewStyle
+  styles?: {
+    toastContainer?: ViewStyle
+    toast?: ViewStyle
+    toastContent?: ViewStyle
+    title?: TextStyle
+    description?: TextStyle
+    buttons?: ViewStyle
+    closeButton?: ViewStyle
+    closeButtonIcon?: ViewStyle
+  }
+}
+
+type PromiseOptions = {
+  promise: Promise<unknown>
+  // biome-ignore lint/suspicious/noExplicitAny: 来自库
+  success: (result: any) => string
+  error: ((error: unknown) => string) | string
+  loading: string
+}
+
+export type ToastPosition = 'top-center' | 'bottom-center' | 'center'
+
+export type ToastTheme = 'light' | 'dark' | 'system'
+
+export type ToastSwipeDirection = 'left' | 'up'
+
+export type ToastVariant = 'success' | 'error' | 'warning' | 'info' | 'loading'
+
+export type AutoWiggle = 'never' | 'toast-change' | 'always'
+
+export type ToastAction = {
+  label: string
+  onClick: () => void
+}
+
+export type ToastProps = StyleProps & {
+  id: string | number
+  title: string
+  variant: ToastVariant
+  jsx?: React.ReactNode
+  description?: string
+  invert?: boolean
+  important?: boolean
+  duration?: number
+  position?: ToastPosition
+  dismissible?: boolean
+  icon?: React.ReactNode
+  action?: ToastAction | React.ReactNode
+  cancel?: ToastAction | React.ReactNode
+  close?: React.ReactNode
+  closeButton?: boolean
+  richColors?: boolean
+  onDismiss?: (id: string | number) => void
+  onAutoClose?: (id: string | number) => void
+  promiseOptions?: PromiseOptions
+  actionButtonStyle?: ViewStyle
+  actionButtonTextStyle?: TextStyle
+  cancelButtonStyle?: ViewStyle
+  cancelButtonTextStyle?: TextStyle
+  onPress?: () => void
+}
 
 type ExternalToast = Omit<
   ToastProps,
