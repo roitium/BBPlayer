@@ -364,6 +364,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
       if (!checkPlayerReady()) return
 
+      if (playNow && playNext) {
+        playerLog.error('李在干神魔？？？？')
+        return
+      }
+
       if (clearQueue) {
         await get().clearQueue()
       }
@@ -644,29 +649,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
           return
         }
 
-        let previousIndex: number
+        // 由于在切换 shuffle 模式时已经包含了重新定位当前曲目的逻辑，所以这里不需要再把目标索引同步到另一个 queue 中
+        const previousIndex =
+          currentIndex === 0 ? currentQueue.length - 1 : currentIndex - 1
 
-        if (shuffleMode) {
-          // 随机模式下随机选择一首（不重复当前曲目）
-          logDetailedDebug('随机模式：随机选择上一曲')
-          do {
-            previousIndex = Math.floor(Math.random() * currentQueue.length)
-          } while (previousIndex === currentIndex && currentQueue.length > 1)
-
-          logDetailedDebug('随机选择的索引', {
-            previousIndex,
-            trackId: currentQueue[previousIndex].id,
-            title: currentQueue[previousIndex].title,
-          })
-        } else {
-          // 顺序模式
-          logDetailedDebug('顺序模式：跳转到上一曲')
-          // 如果当前曲目是第一首，则跳转到最后一首
-          previousIndex =
-            currentIndex === 0 ? currentQueue.length - 1 : currentIndex - 1
-        }
-
-        await get().skipToTrack(previousIndex) // 切换到上一首
+        await get().skipToTrack(previousIndex)
       } catch (error) {
         logError('跳转到上一曲失败', error)
       }

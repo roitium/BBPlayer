@@ -12,6 +12,8 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "index.js"
+    "index.js",
+    "jest.config.js",
+    "hooks/stores/__mocks__/PlayerStore.mock.js"
   ]
 }
