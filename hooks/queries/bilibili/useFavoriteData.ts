@@ -210,7 +210,7 @@ export const useDealFavoriteForOneVideo = (bilibiliApi: BilibiliApi) => {
       })
       // 只刷新当前显示的收藏夹
       queryClient.refetchQueries({
-        queryKey: ['favoriteList', 'bilibili', 'infiniteFavoriteList'],
+        queryKey: ['bilibili', 'favoriteList', 'infiniteFavoriteList'],
         type: 'active',
       })
     },
