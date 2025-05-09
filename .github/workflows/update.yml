@@ -28,7 +28,7 @@ jobs:
         run: pnpm install
 
       - name: 🚀 Create update
-        run: eas update --auto --non-interactive
+        run: eas update --auto --platform=android
 
       - name: 🚀 Submit source map
         run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} npx sentry-expo-upload-sourcemaps dist

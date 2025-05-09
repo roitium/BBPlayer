@@ -39,7 +39,7 @@ jobs:
         run: pnpm install
 
       - name: 🚀 Build ${{ github.event.inputs.buildType }} APK
-        run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} eas build --platform android --profile ${{ github.event.inputs.buildType }} --local --non-interactive --no-wait --output=${{runner.temp}}/app.apk
+        run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} eas build --platform android --profile ${{ github.event.inputs.buildType }} --local --no-wait --output=${{runner.temp}}/app.apk
 
       - name: 🚀 Upload APK
         uses: actions/upload-artifact@v4
