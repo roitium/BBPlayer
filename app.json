@@ -2,7 +2,7 @@
   "expo": {
     "name": "BBPlayer",
     "slug": "bbplayer",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bbplayer",
@@ -16,7 +16,7 @@
       },
       "package": "com.roitium.BBPlayer",
       "versionCode": 36,
-      "runtimeVersion": "0.0.1",
+      "runtimeVersion": "0.0.2",
       "edgeToEdgeEnabled": true
     },
     "plugins": [
