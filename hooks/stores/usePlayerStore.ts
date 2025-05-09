@@ -24,6 +24,7 @@ import {
   checkBilibiliAudioExpiry,
   convertToRNTPTrack,
   isTargetTrack,
+  reportPlaybackHistory,
 } from '@/utils/player'
 import Toast from '@/utils/toast'
 import useAppStore from './useAppStore'
@@ -929,6 +930,12 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         return
       }
       await TrackPlayer.load(rntpTrack.value)
+      reportPlaybackHistory(updatedTrack.value.track).catch((error) =>
+        playerLog.error(
+          'wtf??? 捕获到了 reportPlaybackHistory 的错误，但这本不应该发生',
+          error,
+        ),
+      )
 
       // 更新状态 (在 load 之后，确保状态是最新的）
       set(

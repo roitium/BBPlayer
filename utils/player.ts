@@ -1,4 +1,4 @@
-import { err, ok, type Result } from 'neverthrow' // 导入 neverthrow
+import { err, ok, type Result } from 'neverthrow'
 import type { Track as RNTPTrack } from 'react-native-track-player'
 import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/hooks/stores/useAppStore'
@@ -242,9 +242,37 @@ function isTargetTrack(
   return track.id === targetId
 }
 
+/**
+ * 上报播放记录
+ * 由于这只是一个非常边缘的功能，所以发生报错时只写个 log，返回 void
+ */
+async function reportPlaybackHistory(track: Track): Promise<void> {
+  if (!useAppStore.getState().settings.sendPlayHistory) return
+  const bilibiliApi = useAppStore.getState().bilibiliApi
+  if (!track.cid || !track.id || !(track.source === 'bilibili')) {
+    return
+  }
+  playerLog.debug('上报播放记录', {
+    bvid: track.id,
+    cid: track.cid,
+  })
+  const result = await bilibiliApi.reportPlaybackHistory(track.id, track.cid)
+  if (result.isErr()) {
+    playerLog.warn('上报播放记录到 bilibili 失败', {
+      params: {
+        bvid: track.id,
+        cid: track.cid,
+      },
+      error: result.error,
+    })
+  }
+  return
+}
+
 export {
   convertToRNTPTrack,
   checkAndUpdateAudioStream,
   checkBilibiliAudioExpiry,
   isTargetTrack,
+  reportPlaybackHistory,
 }

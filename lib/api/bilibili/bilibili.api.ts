@@ -513,6 +513,31 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         return response.list
       })
   },
+
+  /*
+   * 上报观看记录
+   */
+  reportPlaybackHistory: (
+    bvid: string,
+    cid: number,
+  ): ResultAsync<0, BilibiliApiMethodError> => {
+    const avid = bv2av(bvid)
+    const csrfResult = extractCsrfToken(getCookie())
+    if (csrfResult.isErr()) {
+      return errAsync(csrfResult.error)
+    }
+    const data = {
+      aid: String(avid),
+      cid: String(cid),
+      progress: '0', // 咱们只是为了上报播放记录，而非具体进度
+      csrf: csrfResult.value,
+    }
+    return apiClient.post<0>(
+      '/x/v2/history/report',
+      convertToFormDataString(data),
+      getCookie(),
+    )
+  },
 })
 
 export type BilibiliApi = ReturnType<typeof createBilibiliApi>

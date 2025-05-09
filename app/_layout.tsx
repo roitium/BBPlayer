@@ -187,7 +187,7 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        await useAppStore.getState().setBilibiliCookie(null)
+        useAppStore.getState()
       } catch (error) {
         console.error('Initial preparation error:', error)
         Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })

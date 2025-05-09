@@ -14,9 +14,11 @@ import {
   Avatar,
   Button,
   Dialog,
+  Divider,
   IconButton,
   Menu,
   Surface,
+  Switch,
   Text,
   TextInput,
   useTheme,
@@ -44,9 +46,7 @@ function HomePage() {
   const bilibiliCookie = useAppStore((state) => state.bilibiliCookie)
   const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
-  const [cookie, setCookie] = useState(bilibiliCookie)
   const [greeting, setGreeting] = useState('')
-  const setBilibiliCookie = useAppStore((store) => store.setBilibiliCookie)
 
   const {
     data: personalInfo,
@@ -164,9 +164,6 @@ function HomePage() {
       <SetCookieDialog
         visible={setCookieDialogVisible}
         setVisible={setSetCookieDialogVisible}
-        setCookie={setCookie}
-        cookie={cookie}
-        setBilibiliCookie={setBilibiliCookie}
       />
     </View>
   )
@@ -175,19 +172,25 @@ function HomePage() {
 function SetCookieDialog({
   visible,
   setVisible,
-  setCookie,
-  cookie,
-  setBilibiliCookie,
 }: {
   visible: boolean
   setVisible: (visible: boolean) => void
-  setCookie: (cookie: string) => void
-  cookie: string
-  setBilibiliCookie: (cookie: string) => void
 }) {
   const queryClient = useQueryClient()
+  const cookie = useAppStore((state) => state.bilibiliCookie)
+  const [inputCookie, setInputCookie] = useState(cookie)
+  const setBilibiliCookie = useAppStore((state) => state.setBilibiliCookie)
+  const sendPlayHistory = useAppStore((state) => state.settings.sendPlayHistory)
+  const setSendPlayHistory = useAppStore((state) => state.setSendPlayHistory)
+  const [inputPlayHistory, setInputPlayHistory] = useState(sendPlayHistory)
   const handleConfirm = () => {
-    setBilibiliCookie(cookie)
+    if (inputCookie === cookie) {
+      setVisible(false)
+      setSendPlayHistory(inputPlayHistory)
+      return
+    }
+    setSendPlayHistory(inputPlayHistory)
+    setBilibiliCookie(inputCookie)
     setVisible(false)
     // 刷新所有 b 站相关请求
     queryClient.refetchQueries({ queryKey: ['bilibili'] })
@@ -202,8 +205,8 @@ function SetCookieDialog({
       <Dialog.Content>
         <TextInput
           label='Cookie'
-          value={cookie}
-          onChangeText={setCookie}
+          value={inputCookie}
+          onChangeText={setInputCookie}
           mode='outlined'
           numberOfLines={5}
           multiline
@@ -216,6 +219,14 @@ function SetCookieDialog({
         >
           请在此处粘贴您的 Bilibili Cookie 以获取个人数据。
         </Text>
+        <Divider style={{ marginTop: 16, marginBottom: 16 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text>向 bilibili 上报观看进度</Text>
+          <Switch
+            value={inputPlayHistory}
+            onValueChange={setInputPlayHistory}
+          />
+        </View>
       </Dialog.Content>
       <Dialog.Actions>
         <Button onPress={() => setVisible(false)}>取消</Button>
