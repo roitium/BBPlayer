@@ -9,6 +9,7 @@ import {
   TextInput,
   useTheme,
 } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -20,7 +21,7 @@ import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
-const searchLog = log.extend('SEARCH_RESULTS')
+const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 
 export default function SearchResultsPage() {
   const { colors } = useTheme()
@@ -35,6 +36,7 @@ export default function SearchResultsPage() {
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const [modalVisible, setModalVisible] = useState(false)
   const [currentModalBvid, setCurrentModalBvid] = useState('')
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     if (query) {
@@ -307,7 +309,14 @@ export default function SearchResultsPage() {
         setVisible={setModalVisible}
       />
 
-      <View style={{ position: 'absolute', right: 0, bottom: 0, left: 0 }}>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: insets.bottom,
+          left: 0,
+        }}
+      >
         <NowPlayingBar />
       </View>
     </View>

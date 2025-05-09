@@ -314,7 +314,7 @@ export default Sentry.wrap(function RootLayout() {
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen
-                  name='search-result/[query]'
+                  name='search-result/global/[query]'
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen name='+not-found' />

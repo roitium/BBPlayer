@@ -135,6 +135,7 @@ FavoriteFolderListItem.displayName = 'FavoriteFolderListItem'
  */
 const FavoriteFolderListComponent = memo(
   ({ isHidden }: { isHidden: boolean }) => {
+    const [query, setQuery] = useState('')
     const bilibiliApi = useAppStore((state) => state.bilibiliApi)
     const { data: userInfo } = usePersonalInformation(bilibiliApi)
     const {
@@ -200,18 +201,23 @@ const FavoriteFolderListComponent = memo(
           <Text variant='bodyMedium'>{playlists?.length ?? 0} 个收藏夹</Text>
         </View>
         <Searchbar
-          placeholder='搜索我的收藏夹 (开发中)'
-          value={''}
+          placeholder='搜索我的收藏夹内容'
+          value={query}
           mode='bar'
           inputStyle={{
             alignSelf: 'center',
           }}
+          onChangeText={setQuery}
           style={{
             borderRadius: 9999,
             textAlign: 'center',
             height: 45,
             marginBottom: 20,
             marginTop: 10,
+          }}
+          onSubmitEditing={() => {
+            setQuery('')
+            router.push(`/search-result/fav/${query}`)
           }}
         />
         <FlatList

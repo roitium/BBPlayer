@@ -34,6 +34,27 @@ export const favoriteListQueryKeys = {
       bvid,
       userMid,
     ] as const,
+  infiniteSearchFavoriteItems: (
+    scope: 'all' | 'this',
+    keyword?: string,
+    favoriteId?: number,
+  ) => {
+    switch (scope) {
+      case 'all':
+        return [
+          ...favoriteListQueryKeys.all,
+          'infiniteSearchFavoriteItems',
+          keyword,
+        ] as const
+      case 'this':
+        return [
+          ...favoriteListQueryKeys.all,
+          'infiniteSearchFavoriteItems',
+          keyword,
+          favoriteId,
+        ] as const
+    }
+  },
 } as const
 
 /**
@@ -228,5 +249,44 @@ export const useDealFavoriteForOneVideo = (bilibiliApi: BilibiliApi) => {
       })
       favoriteListLog.error('删除收藏夹内容失败:', error)
     },
+  })
+}
+
+/**
+ * 在所有收藏夹中搜索关键字
+ */
+export const useInfiniteSearchFavoriteItems = (
+  bilibiliApi: BilibiliApi,
+  scope: 'all' | 'this',
+  keyword?: string,
+  favoriteId?: number,
+) => {
+  return useInfiniteQuery({
+    queryKey: favoriteListQueryKeys.infiniteSearchFavoriteItems(
+      scope,
+      keyword,
+      favoriteId,
+    ),
+    queryFn:
+      keyword && favoriteId
+        ? ({ pageParam }) =>
+            returnOrThrowAsync(
+              bilibiliApi.searchFavoriteListContents(
+                favoriteId,
+                scope,
+                pageParam,
+                keyword,
+              ),
+            )
+        : skipToken,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.hasMore ? lastPageParam + 1 : undefined,
+    staleTime: 1,
+    enabled:
+      !!keyword &&
+      keyword.trim().length > 0 &&
+      !!bilibiliApi.getCookie() &&
+      !!favoriteId,
   })
 }

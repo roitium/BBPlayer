@@ -1,12 +1,8 @@
 {
   "diagnostics": {
-    "include_warnings": true,
     "inline": {
       "enabled": true
-    },
-    "update_with_cursor": false,
-    "primary_only": false,
-    "use_rendered": false
+    }
   },
   "format_on_save": "off"
 }

@@ -97,7 +97,7 @@ export default function SearchPage() {
     if (!query.trim()) return
     addSearchHistory(query)
     setSearchQuery('')
-    router.push(`/search-result/${query}`)
+    router.push(`/search-result/global/${query}`)
   }
 
   // 处理搜索历史或热门搜索项点击

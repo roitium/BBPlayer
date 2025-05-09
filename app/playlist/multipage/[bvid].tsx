@@ -29,7 +29,7 @@ export default function MultipagePage() {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const [tracksData, setTracksData] = useState<Track[]>([])
   const addToQueue = usePlayerStore((state) => state.addToQueue)
-  const inserts = useSafeAreaInsets()
+  const insets = useSafeAreaInsets()
   const [modalVisible, setModalVisible] = useState(false)
   const [currentModalBvid, setCurrentModalBvid] = useState('')
 
@@ -210,7 +210,7 @@ export default function MultipagePage() {
       <View
         style={{
           flex: 1,
-          paddingBottom: currentTrack ? 80 + inserts.bottom : inserts.bottom,
+          paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
         }}
       >
         <FlatList
@@ -261,7 +261,7 @@ export default function MultipagePage() {
         style={{
           position: 'absolute',
           right: 0,
-          bottom: inserts.bottom,
+          bottom: insets.bottom,
           left: 0,
         }}
       >

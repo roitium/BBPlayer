@@ -279,7 +279,43 @@ export const createBilibiliApi = (getCookie: () => string) => ({
         {
           media_id: favoriteId.toString(),
           pn: pn.toString(),
-          ps: '20', // Page size
+          ps: '40',
+        },
+        getCookie(),
+      )
+      .map((response) => ({
+        tracks: transformFavoriteContentsToTracks(response.medias),
+        hasMore: response.has_more,
+        favoriteMeta: response.info,
+      }))
+  },
+
+  /**
+   * 搜索收藏夹内容
+   * @param favoriteId 如果是全局搜索，随意提供一个**有效**的收藏夹 ID 即可
+   */
+  searchFavoriteListContents(
+    favoriteId: number,
+    scope: 'all' | 'this',
+    pn: number,
+    keyword: string,
+  ): ResultAsync<
+    {
+      tracks: Track[]
+      hasMore: boolean
+      favoriteMeta: BilibiliFavoriteListContents['info']
+    },
+    BilibiliApiError
+  > {
+    return apiClient
+      .get<BilibiliFavoriteListContents>(
+        '/x/v3/fav/resource/list',
+        {
+          media_id: favoriteId.toString(),
+          pn: pn.toString(),
+          ps: '40',
+          keyword,
+          type: scope === 'this' ? '0' : '1',
         },
         getCookie(),
       )
