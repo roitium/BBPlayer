@@ -80,7 +80,7 @@ export const useInfiniteFavoriteList = (
     initialPageParam: 1,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
-    staleTime: 1,
+    staleTime: 5*60*1000,
     enabled: !!favoriteId && !!bilibiliApi.getCookie(), // 依赖 favoriteId 和 bilibiliApi
   })
 }
