@@ -23,6 +23,7 @@ import {
   type BilibiliApiMethodError,
 } from '@/utils/errors'
 import log from '@/utils/log'
+import { apiClient } from './bilibili.client'
 import {
   transformCollectionAllContentsToTracks,
   transformFavoriteContentsToTracks,
@@ -37,7 +38,6 @@ import {
   convertToFormDataString,
   extractCsrfToken,
 } from './bilibili.utils'
-import { apiClient } from './client'
 
 const bilibiliApiLog = log.extend('BILIBILI_API/API')
 

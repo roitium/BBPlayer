@@ -64,6 +64,9 @@ importers:
       babel-preset-expo:
         specifier: ~13.0.0
         version: 13.0.0(@babel/core@7.27.1)(babel-plugin-react-compiler@19.1.0-rc.1)
+      bottleneck:
+        specifier: ^2.19.5
+        version: 2.19.5
       eslint-config-biome:
         specifier: ^1.9.4
         version: 1.9.4
@@ -1926,6 +1929,9 @@ packages:
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+
+  bottleneck@2.19.5:
+    resolution: {integrity: sha512-VHiNCbI1lKdl44tGrhNfU3lup0Tj/ZBMJB5/2ZbNXRCPuRCO7ed2mgcK4r17y+KB2EfuYuRaVlwNbAeaWGSpbw==}
 
   bplist-creator@0.1.0:
     resolution: {integrity: sha512-sXaHZicyEEmY86WyueLTQesbeoH/mquvarJaQNbjuOQO+7gbFcDEWqKmcWA4cOTLzFlfgvkiVxolk1k5bBIpmg==}
@@ -7837,6 +7843,8 @@ snapshots:
       - supports-color
 
   boolbase@1.0.0: {}
+
+  bottleneck@2.19.5: {}
 
   bplist-creator@0.1.0:
     dependencies:

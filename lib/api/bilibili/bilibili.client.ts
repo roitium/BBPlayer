@@ -1,5 +1,7 @@
+import Bottleneck from 'bottleneck'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/utils/errors'
+import { wrapResultAsyncFunction } from '@/utils/neverthrowUtils'
 
 type ReqResponse<T> = {
   code: number
@@ -9,6 +11,11 @@ type ReqResponse<T> = {
 
 class ApiClient {
   private baseUrl = 'https://api.bilibili.com'
+  private throttle = new Bottleneck({
+    minTime: 200,
+    maxConcurrent: 5,
+    trackDoneStatus: true,
+  })
 
   /**
    * 核心请求方法，使用 neverthrow 进行封装
@@ -17,11 +24,11 @@ class ApiClient {
    * @param cookie Cookie 字符串
    * @returns ResultAsync 包含成功数据或错误
    */
-  private request<T>(
+  private request = <T>(
     endpoint: string,
     options: RequestInit = {},
     cookie = '',
-  ): ResultAsync<T, BilibiliApiError> {
+  ): ResultAsync<T, BilibiliApiError> => {
     const url = `${this.baseUrl}${endpoint}`
 
     const headers = {
@@ -96,7 +103,11 @@ class ApiClient {
     const url = params
       ? `${endpoint}?${new URLSearchParams(params).toString()}`
       : endpoint
-    return this.request<T>(url, { method: 'GET' }, cookie)
+    return wrapResultAsyncFunction(() =>
+      this.throttle.schedule(() =>
+        this.request<T>(url, { method: 'GET' }, cookie),
+      ),
+    )()
   }
 
   /**
@@ -113,18 +124,22 @@ class ApiClient {
     cookie = '',
     headers?: Record<string, string>,
   ): ResultAsync<T, BilibiliApiError> {
-    return this.request<T>(
-      endpoint,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          ...headers,
-        },
-        body: data,
-      },
-      cookie,
-    )
+    return wrapResultAsyncFunction(() =>
+      this.throttle.schedule(() =>
+        this.request<T>(
+          endpoint,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              ...headers,
+            },
+            body: data,
+          },
+          cookie,
+        ),
+      ),
+    )()
   }
 }
 
