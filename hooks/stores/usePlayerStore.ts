@@ -176,13 +176,76 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
       if (!checkPlayerReady()) return
 
+      if (tracks.length === 0) {
+        playerLog.debug('无曲目需要添加')
+        return
+      }
+
       if (playNow && playNext) {
         playerLog.error('playNow 和 playNext 不能同时为 true')
         return
       }
 
+      if (startFromCid && startFromId) {
+        playerLog.error('startFromCid 和 startFromId 不能同时填写')
+        return
+      }
+
       if (clearQueue) {
         await get().clearQueue()
+      }
+
+      const newTracks = tracks.filter(
+        (track) =>
+          !get().queue.some((t) => isTargetTrack(t, track.id, track.cid)),
+      )
+
+      if (newTracks.length === 0) {
+        const switchTrackPipe = async (targetIndex: number) => {
+          set(
+            produce((state: PlayerState) => {
+              state.currentIndex = targetIndex
+              const queue = state.shuffleMode
+                ? state.shuffledQueue
+                : state.queue
+              state.currentTrack = queue[targetIndex]
+            }),
+          )
+          await get().skipToTrack(targetIndex)
+          await TrackPlayer.play()
+          set({ isPlaying: true })
+        }
+
+        playerLog.debug('无新曲目需要添加')
+        if (playNow && (startFromId || startFromCid)) {
+          if (get().shuffleMode) {
+            const targetIndex = get().shuffledQueue.findIndex((t) =>
+              isTargetTrack(t, startFromId, startFromCid),
+            )
+            if (targetIndex !== -1) {
+              await switchTrackPipe(targetIndex)
+            }
+          } else {
+            const targetIndex = get().queue.findIndex((t) =>
+              isTargetTrack(t, startFromId, startFromCid),
+            )
+            if (targetIndex !== -1) {
+              await switchTrackPipe(targetIndex)
+            }
+          }
+        } else if (playNow) {
+          // 如果没有指定播放新曲目，则播放新队列的第一首(在现有队列中寻找)
+          const targetIndex = get().queue.findIndex((t) =>
+            isTargetTrack(t, tracks[0].id, tracks[0].cid),
+          )
+          playerLog.debug('没有指定播放新曲目，则播放新队列的第一首', {
+            targetIndex,
+          })
+          if (targetIndex !== -1) {
+            await switchTrackPipe(targetIndex)
+          }
+        }
+        return
       }
 
       set(
@@ -192,16 +255,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             currentIndex: state.currentIndex,
             currentTrack: state.currentTrack?.title,
           })
-
-          const newTracks = tracks.filter(
-            (track) =>
-              !state.queue.some((t) => isTargetTrack(t, track.id, track.cid)),
-          )
-
-          if (newTracks.length === 0) {
-            playerLog.debug('无新曲目需要添加')
-            return
-          }
 
           let insertIndexForQueue = state.queue.length // 默认为队列末尾
           if (playNext && state.currentIndex !== -1) {

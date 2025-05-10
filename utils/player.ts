@@ -231,7 +231,7 @@ async function checkAndUpdateAudioStream(
 
 function isTargetTrack(
   track: Track,
-  targetId: string,
+  targetId: string | undefined,
   targetCid: number | undefined,
 ) {
   if (track.isMultiPage) {

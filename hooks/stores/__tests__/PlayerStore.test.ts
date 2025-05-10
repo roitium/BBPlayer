@@ -444,6 +444,53 @@ describe('usePlayerStore 测试', () => {
       expect(state.queue.length).toBe(1)
       expect(state.queue[0]).toMatchObject(track1)
     })
+
+    it('当新曲目被完全过滤后应播放新队列的第一首（未提供 startFromX 时）', async () => {
+      const addToQueue = usePlayerStore.getState().addToQueue
+      // 先添加一些曲目到队列
+      await addToQueue({
+        tracks: [track1, track2],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+      })
+      // 再次添加
+      await addToQueue({
+        tracks: [track2, track1],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+      })
+      const state = usePlayerStore.getState()
+      expect(state.queue.length).toBe(2)
+      expect(state.currentIndex).toBe(1) // 队列顺序不改变，但是会播放新队列的第一首（即 track2）
+      expect(state.currentTrack).toMatchObject(track2)
+      expect(state.isPlaying).toBe(true)
+    })
+
+    it('当新曲目被完全过滤后应按照提供的 startFromX 播放（提供 startFromCid 时）', async () => {
+      const addToQueue = usePlayerStore.getState().addToQueue
+      // 先添加一些曲目到队列
+      await addToQueue({
+        tracks: [track1, track2, track3],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+      })
+      // 再次添加
+      await addToQueue({
+        tracks: [track2, track3, track1],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+        startFromId: '3',
+      })
+      const state = usePlayerStore.getState()
+      expect(state.queue.length).toBe(3)
+      expect(state.currentIndex).toBe(2)
+      expect(state.currentTrack).toMatchObject(track3)
+      expect(state.isPlaying).toBe(true)
+    })
   })
 
   describe('preloadTracks', () => {
