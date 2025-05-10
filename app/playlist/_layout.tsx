@@ -15,6 +15,10 @@ export default function PlaylistLayout() {
         name='multipage/[bvid]'
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name='uploader/[mid]'
+        options={{ headerShown: false }}
+      />
     </Stack>
   )
 }

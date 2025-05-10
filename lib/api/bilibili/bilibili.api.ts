@@ -14,6 +14,7 @@ import type {
   BilibiliPlaylist,
   BilibiliSearchVideo,
   BilibiliUserInfo,
+  BilibiliUserUploadedVideosResponse,
   BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
@@ -23,7 +24,7 @@ import {
   type BilibiliApiMethodError,
 } from '@/utils/errors'
 import log from '@/utils/log'
-import { apiClient } from './bilibili.client'
+import { bilibiliApiClient } from './bilibili.client'
 import {
   transformCollectionAllContentsToTracks,
   transformFavoriteContentsToTracks,
@@ -38,6 +39,7 @@ import {
   convertToFormDataString,
   extractCsrfToken,
 } from './bilibili.utils'
+import getWbiEncodedParams from './bilibili.wbi'
 
 const bilibiliApiLog = log.extend('BILIBILI_API/API')
 
@@ -54,7 +56,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
    * 获取用户观看历史记录
    */
   getHistory(): ResultAsync<Track[], BilibiliApiError> {
-    return apiClient
+    return bilibiliApiClient
       .get<BilibiliHistoryVideo[]>('/x/v2/history', undefined, getCookie())
       .map(transformHistoryVideosToTracks)
   },
@@ -63,7 +65,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
    * 获取分区热门视频
    */
   getPopularVideos(partition: string): ResultAsync<Track[], BilibiliApiError> {
-    return apiClient
+    return bilibiliApiClient
       .get<{ list: BilibiliVideoDetails[] }>(
         `/x/web-interface/ranking/v2?rid=${partition}`,
         undefined,
@@ -78,7 +80,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   getFavoritePlaylists(
     userMid: number,
   ): ResultAsync<Playlist[], BilibiliApiError> {
-    return apiClient
+    return bilibiliApiClient
       .get<{ list: BilibiliPlaylist[] | null }>(
         `/x/v3/fav/folder/created/list-all?up_mid=${userMid}`,
         undefined,
@@ -95,7 +97,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     page: number,
     page_size: number,
   ): ResultAsync<{ tracks: Track[]; numPages: number }, BilibiliApiError> {
-    return apiClient
+    return bilibiliApiClient
       .get<{
         result: BilibiliSearchVideo[]
         numPages: number
@@ -122,7 +124,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     { id: string; text: string }[],
     BilibiliApiError
   > {
-    return apiClient
+    return bilibiliApiClient
       .get<{
         trending: { list: BilibiliHotSearch[] }
       }>(
@@ -142,7 +144,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     params: BilibiliAudioStreamParams,
   ): ResultAsync<Track['biliStreamUrl'], BilibiliApiMethodError> {
     const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params
-    return apiClient
+    return bilibiliApiClient
       .get<BilibiliAudioStreamResponse>(
         '/x/player/wbi/playurl',
         {
@@ -239,7 +241,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   getPageList(
     bvid: string,
   ): ResultAsync<BilibiliMultipageVideo[], BilibiliApiError> {
-    return apiClient.get<BilibiliMultipageVideo[]>(
+    return bilibiliApiClient.get<BilibiliMultipageVideo[]>(
       '/x/player/pagelist',
       {
         bvid,
@@ -249,14 +251,36 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   },
 
   /**
-   * 获取用户信息
+   * 获取登录本人信息
    */
   getUserInfo(): ResultAsync<BilibiliUserInfo, BilibiliApiError> {
-    return apiClient.get<BilibiliUserInfo>(
+    return bilibiliApiClient.get<BilibiliUserInfo>(
       '/x/space/myinfo',
       undefined,
       getCookie(),
     )
+  },
+
+  /**
+   * 获取别人用户信息
+   * （目前采用请求「用户名片信息」接口实现，因为获取个人信息的接口需要 Wbi 鉴权，我还没实现）
+   */
+  getOtherUserInfo(
+    mid: number,
+  ): ResultAsync<BilibiliUserInfo, BilibiliApiError> {
+    const params = getWbiEncodedParams(
+      {
+        mid: mid.toString(),
+      },
+      getCookie(),
+    )
+    return params.andThen((params) => {
+      return bilibiliApiClient.get<BilibiliUserInfo>(
+        '/x/space/wbi/acc/info',
+        params,
+        getCookie(),
+      )
+    })
   },
 
   /**
@@ -273,7 +297,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     },
     BilibiliApiError
   > {
-    return apiClient
+    return bilibiliApiClient
       .get<BilibiliFavoriteListContents>(
         '/x/v3/fav/resource/list',
         {
@@ -307,7 +331,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     },
     BilibiliApiError
   > {
-    return apiClient
+    return bilibiliApiClient
       .get<BilibiliFavoriteListContents>(
         '/x/v3/fav/resource/list',
         {
@@ -333,7 +357,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   getFavoriteListAllContents(
     favoriteId: number,
   ): ResultAsync<BilibiliFavoriteListAllContents, BilibiliApiError> {
-    return apiClient
+    return bilibiliApiClient
       .get<BilibiliFavoriteListAllContents>(
         '/x/v3/fav/resource/ids',
         {
@@ -350,7 +374,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   getVideoDetails(
     bvid: string,
   ): ResultAsync<BilibiliVideoDetails, BilibiliApiError> {
-    return apiClient.get<BilibiliVideoDetails>(
+    return bilibiliApiClient.get<BilibiliVideoDetails>(
       '/x/web-interface/view',
       {
         bvid,
@@ -388,7 +412,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
           '批量删除收藏',
           new URLSearchParams(data).toString(),
         )
-        return apiClient.post<0>(
+        return bilibiliApiClient.post<0>(
           '/x/v3/fav/resource/batch-del',
           convertToFormDataString(data),
           getCookie(),
@@ -407,7 +431,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     { list: BilibiliCollection[]; count: number; hasMore: boolean },
     BilibiliApiError
   > {
-    return apiClient
+    return bilibiliApiClient
       .get<{
         list: BilibiliCollection[]
         count: number
@@ -438,7 +462,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     { info: BilibiliCollectionInfo; medias: Track[] },
     BilibiliApiError
   > {
-    return apiClient
+    return bilibiliApiClient
       .get<BilibiliCollectionAllContents>(
         '/x/space/fav/season/list',
         {
@@ -481,7 +505,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       csrf: csrfResult.value,
       type: '2',
     }
-    return apiClient.post<BilibiliDealFavoriteForOneVideoResponse>(
+    return bilibiliApiClient.post<BilibiliDealFavoriteForOneVideoResponse>(
       '/x/v3/fav/resource/deal',
       convertToFormDataString(data),
       getCookie(),
@@ -496,7 +520,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     bvid: string,
   ): ResultAsync<BilibiliPlaylist[], BilibiliApiError> {
     const avid = bv2av(bvid)
-    return apiClient
+    return bilibiliApiClient
       .get<{ list: BilibiliPlaylist[] | null }>(
         '/x/v3/fav/folder/created/list-all',
         {
@@ -532,11 +556,39 @@ export const createBilibiliApi = (getCookie: () => string) => ({
       progress: '0', // 咱们只是为了上报播放记录，而非具体进度
       csrf: csrfResult.value,
     }
-    return apiClient.post<0>(
+    return bilibiliApiClient.post<0>(
       '/x/v2/history/report',
       convertToFormDataString(data),
       getCookie(),
     )
+  },
+
+  /*
+   * 查询用户投稿视频明细
+   */
+  getUserUploadedVideos: (
+    mid: number,
+    pn: number,
+  ): ResultAsync<
+    BilibiliUserUploadedVideosResponse,
+    BilibiliApiMethodError
+  > => {
+    const params = getWbiEncodedParams(
+      {
+        mid: mid.toString(),
+        pn: pn.toString(),
+        ps: '30',
+      },
+      getCookie(),
+    )
+
+    return params.andThen((params) => {
+      return bilibiliApiClient.get<BilibiliUserUploadedVideosResponse>(
+        '/x/space/wbi/arc/search',
+        params,
+        getCookie(),
+      )
+    })
   },
 })
 

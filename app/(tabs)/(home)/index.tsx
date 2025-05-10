@@ -25,10 +25,14 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
+import {
+  favoriteListQueryKeys,
+  useGetFavoritePlaylists,
+} from '@/hooks/queries/bilibili/useFavoriteData'
 import {
   usePersonalInformation,
   useRecentlyPlayed,
+  userQueryKeys,
 } from '@/hooks/queries/bilibili/useUserData'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
@@ -192,8 +196,9 @@ function SetCookieDialog({
     setSendPlayHistory(inputPlayHistory)
     setBilibiliCookie(inputCookie)
     setVisible(false)
-    // 刷新所有 b 站相关请求
-    queryClient.refetchQueries({ queryKey: ['bilibili'] })
+    // 刷新所有 b 站个人和收藏夹相关请求
+    queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all })
+    queryClient.refetchQueries({ queryKey: userQueryKeys.all })
   }
 
   return (

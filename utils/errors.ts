@@ -1,7 +1,7 @@
 export enum BilibiliApiErrorType {
-  // 请求过程出错（状态码非 2xx）
+  // 请求过程出错（http 状态码非 2xx）
   RequestFailed = 'RequestFailed',
-  // 返回非 0 状态码
+  // bilibili 返回非 0 状态码
   ResponseFailed = 'ResponseFailed',
 }
 

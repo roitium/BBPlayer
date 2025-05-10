@@ -39,7 +39,7 @@ export const useGetVideoDetails = (
     queryFn: bvid
       ? () => returnOrThrowAsync(bilibiliApi.getVideoDetails(bvid))
       : skipToken,
-    staleTime: 1,
+    staleTime: 60 * 60 * 1000, // 我们不需要获取实时的视频详细信息
     enabled: !!bilibiliApi.getCookie() && !!bvid, // 依赖 bilibiliApi 和 bvid
   })
 }

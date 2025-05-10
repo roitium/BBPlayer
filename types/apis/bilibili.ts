@@ -69,6 +69,7 @@ interface BilibiliVideoDetails {
   desc: string
   owner: {
     name: string
+    mid: number
   }
   cid: number
 }
@@ -111,6 +112,7 @@ interface BilibiliUserInfo {
   mid: number
   name: string
   face: string
+  sign: string
 }
 
 /**
@@ -283,6 +285,28 @@ interface BilibiliDealFavoriteForOneVideoResponse {
   success_num: number
 }
 
+/**
+ * 用户上传内容接口返回
+ */
+interface BilibiliUserUploadedVideosResponse {
+  page: {
+    pn: number
+    ps: number
+    count: number
+  }
+  list: {
+    vlist: {
+      aid: number
+      bvid: string
+      title: string
+      pic: string
+      created: number
+      length: string // MM:SS
+      author: string // 不一定是所查询的 up 主本人，因为存在合作视频
+    }[]
+  }
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -302,4 +326,5 @@ export type {
   BilibiliMediaItem,
   BilibiliMultipageVideo,
   BilibiliDealFavoriteForOneVideoResponse,
+  BilibiliUserUploadedVideosResponse,
 }

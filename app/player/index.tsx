@@ -20,11 +20,14 @@ import {
 import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
 import PlayerQueueModal from '@/components/PlayerQueueModal'
+import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
+import useAppStore from '@/hooks/stores/useAppStore'
 import {
   usePlaybackProgress,
   usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import Toast from '@/utils/toast'
 
 export default function PlayerPage() {
   const { colors } = useTheme()
@@ -38,6 +41,7 @@ export default function PlayerPage() {
   const skipToNext = usePlayerStore((state) => state.skipToNext)
   const seekTo = usePlayerStore((state) => state.seekTo)
   const { position, duration } = usePlaybackProgress(100)
+  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
 
   const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
     useShallow((state) => {
@@ -48,6 +52,11 @@ export default function PlayerPage() {
         shuffleMode: state.shuffleMode,
       }
     }),
+  )
+
+  const { data: videoDetails } = useGetVideoDetails(
+    currentTrack?.id,
+    bilibiliApi,
   )
 
   const [isSeeking, setIsSeeking] = useState(false)
@@ -408,6 +417,7 @@ export default function PlayerPage() {
         toggleViewMode={toggleViewMode}
         viewMode={viewMode}
         insets={insets}
+        uploaderMid={videoDetails?.owner.mid}
       />
 
       {/* @ts-expect-error 忽略 BottomSheet 类型错误 */}
@@ -423,6 +433,7 @@ function FunctionalMenu({
   toggleViewMode,
   viewMode,
   insets,
+  uploaderMid,
 }: {
   menuVisible: boolean
   setMenuVisible: (visible: boolean) => void
@@ -430,6 +441,7 @@ function FunctionalMenu({
   toggleViewMode: () => void
   viewMode: string
   insets: EdgeInsets
+  uploaderMid: number | undefined
 }) {
   return (
     <Menu
@@ -441,22 +453,20 @@ function FunctionalMenu({
         onPress={() => {
           setMenuVisible(false)
         }}
-        title='添加到播放列表'
+        title='添加到收藏夹'
         leadingIcon='playlist-plus'
       />
       <Menu.Item
         onPress={() => {
+          if (!uploaderMid) {
+            Toast.error('获取视频详细信息失败')
+          } else {
+            router.push(`/playlist/uploader/${uploaderMid}`)
+          }
           setMenuVisible(false)
         }}
-        title='查看艺术家'
+        title='查看作者'
         leadingIcon='account-music'
-      />
-      <Menu.Item
-        onPress={() => {
-          setMenuVisible(false)
-        }}
-        title='查看专辑'
-        leadingIcon='album'
       />
       <Divider />
       <Menu.Item

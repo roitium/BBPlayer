@@ -6,6 +6,7 @@ import type {
   BilibiliMultipageVideo,
   BilibiliPlaylist,
   BilibiliSearchVideo,
+  BilibiliUserUploadedVideosResponse,
   BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
@@ -221,6 +222,34 @@ export const transformMultipageVideosToTracks = (
     }))
   } catch (error) {
     bilibiliApiLog.error('将分 p 视频列表转换为通用的 Track 格式失败:', error)
+    return []
+  }
+}
+
+/**
+ * 将用户上传的视频列表转换为通用的 Track 格式
+ */
+export const transformUserUploadedVideosToTracks = (
+  videos: BilibiliUserUploadedVideosResponse['list']['vlist'],
+): Track[] => {
+  if (!videos) return []
+  try {
+    return videos.map((video) => ({
+      id: video.bvid,
+      title: video.title,
+      artist: video.author,
+      cover: video.pic,
+      source: 'bilibili' as const,
+      duration: formatMMSSToSeconds(video.length),
+      createTime: video.created,
+      hasMetadata: true,
+      isMultiPage: false, // 直接假设是单个视频
+    }))
+  } catch (error) {
+    bilibiliApiLog.error(
+      '将用户上传的视频列表转换为通用的 Track 格式失败:',
+      error,
+    )
     return []
   }
 }

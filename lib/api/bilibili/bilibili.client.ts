@@ -97,12 +97,15 @@ class ApiClient {
    */
   get<T>(
     endpoint: string,
-    params?: Record<string, string>,
+    params?: Record<string, string> | string,
     cookie = '',
   ): ResultAsync<T, BilibiliApiError> {
-    const url = params
-      ? `${endpoint}?${new URLSearchParams(params).toString()}`
-      : endpoint
+    let url = endpoint
+    if (typeof params === 'string') {
+      url = `${endpoint}?${params}`
+    } else if (params) {
+      url = `${endpoint}?${new URLSearchParams(params).toString()}`
+    }
     return wrapResultAsyncFunction(() =>
       this.throttle.schedule(() =>
         this.request<T>(url, { method: 'GET' }, cookie),
@@ -143,4 +146,4 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient()
+export const bilibiliApiClient = new ApiClient()

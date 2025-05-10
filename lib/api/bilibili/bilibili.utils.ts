@@ -1,8 +1,5 @@
 import { err, ok, type Result } from 'neverthrow'
 import { CsrfError } from '@/utils/errors'
-import log from '@/utils/log'
-
-const bilibiliApiLog = log.extend('BILIBILI_API/UTILS')
 
 /**
  * 转换B站bvid为avid
@@ -35,7 +32,6 @@ export function extractCsrfToken(cookie: string): Result<string, CsrfError> {
       }),
     )
   }
-  bilibiliApiLog.debug('extractCsrfToken: 获取 csrf 成功', { csrf: match[2] })
   return ok(match[2])
 }
 

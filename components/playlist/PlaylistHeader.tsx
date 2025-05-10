@@ -8,7 +8,7 @@ interface PlaylistHeaderProps {
   title: string | undefined
   subtitle: string | undefined // 通常格式： "Author • n Tracks"
   description: string | undefined
-  onPlayAll: () => void
+  onPlayAll: (() => void) | undefined
 }
 
 /**
@@ -63,11 +63,13 @@ export const PlaylistHeader = memo(function PlaylistHeader({
           {description || '还没有简介哦~'}
         </Text>
 
-        <IconButton
-          mode='contained'
-          icon='play'
-          onPress={() => onPlayAll()}
-        />
+        {onPlayAll && (
+          <IconButton
+            mode='contained'
+            icon='play'
+            onPress={() => onPlayAll()}
+          />
+        )}
       </View>
 
       <Divider />
