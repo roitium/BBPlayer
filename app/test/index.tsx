@@ -64,12 +64,6 @@ export default function TestPage() {
     date = new Date(date.getTime() - offset * 60 * 1000)
     const logFilePath = `${EXPOFS.documentDirectory}logs_${date.toISOString().split('T')[0]}.log`
 
-    const fileInfo = await EXPOFS.getInfoAsync(logFilePath)
-    if (!fileInfo.exists) {
-      Toast.error('日志文件不存在', { description: `路径: ${logFilePath}` })
-      return
-    }
-
     FileViewer.open(logFilePath)
       .then(() => {
         console.log('open file')

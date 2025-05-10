@@ -2,7 +2,8 @@ import type BottomSheet from '@gorhom/bottom-sheet'
 import Slider from '@react-native-community/slider'
 import { Image } from 'expo-image'
 import { router, Stack } from 'expo-router'
-import { useCallback, useRef, useState } from 'react'
+import * as WebBrowser from 'expo-web-browser'
+import { memo, useCallback, useRef, useState } from 'react'
 import { Animated, Dimensions, TouchableOpacity, View } from 'react-native'
 import {
   Divider,
@@ -414,7 +415,6 @@ export default function PlayerPage() {
         menuVisible={menuVisible}
         setMenuVisible={setMenuVisible}
         screenWidth={screenWidth}
-        toggleViewMode={toggleViewMode}
         viewMode={viewMode}
         insets={insets}
         uploaderMid={videoDetails?.owner.mid}
@@ -426,11 +426,10 @@ export default function PlayerPage() {
   )
 }
 
-function FunctionalMenu({
+const FunctionalMenu = memo(function FunctionalMenu({
   menuVisible,
   setMenuVisible,
   screenWidth,
-  toggleViewMode,
   viewMode,
   insets,
   uploaderMid,
@@ -438,11 +437,12 @@ function FunctionalMenu({
   menuVisible: boolean
   setMenuVisible: (visible: boolean) => void
   screenWidth: number
-  toggleViewMode: () => void
   viewMode: string
   insets: EdgeInsets
   uploaderMid: number | undefined
 }) {
+  const currentTrack = usePlayerStore((state) => state.currentTrack)
+
   return (
     <Menu
       visible={menuVisible}
@@ -470,20 +470,27 @@ function FunctionalMenu({
       />
       <Divider />
       <Menu.Item
-        onPress={() => {
+        onPress={async () => {
+          if (!currentTrack) return
+          await WebBrowser.openBrowserAsync(
+            `https://www.bilibili.com/video/${currentTrack.id}`,
+          )
           setMenuVisible(false)
         }}
-        title='分享'
+        title='查看原视频'
         leadingIcon='share-variant'
       />
       <Menu.Item
         onPress={() => {
+          Toast.show('暂未实现')
           setMenuVisible(false)
-          toggleViewMode()
+          // toggleViewMode()
         }}
         title={viewMode === 'cover' ? '显示歌词' : '显示封面'}
         leadingIcon={viewMode === 'cover' ? 'text' : 'image'}
       />
     </Menu>
   )
-}
+})
+
+FunctionalMenu.displayName = 'FunctionalMenu'
