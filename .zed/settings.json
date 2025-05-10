@@ -1,8 +1,0 @@
-{
-  "diagnostics": {
-    "inline": {
-      "enabled": true
-    }
-  },
-  "format_on_save": "off"
-}
