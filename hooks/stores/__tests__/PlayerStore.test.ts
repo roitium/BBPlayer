@@ -1,5 +1,6 @@
 import TrackPlayer, { RepeatMode } from 'react-native-track-player'
 import { PRELOAD_TRACKS } from '@/constants/player'
+import { initPlayer } from '@/lib/player/playerLogic'
 import type { Track } from '@/types/core/media'
 import { usePlayerStore } from '../usePlayerStore'
 
@@ -184,7 +185,7 @@ beforeEach(() => {
 describe('usePlayerStore 测试', () => {
   describe('addToQueue', () => {
     it('添加到队列末尾 playNow=false & clearQueue=false & playNext=false 测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加一些曲目到队列
       await addToQueue({
@@ -210,7 +211,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('清空队列并添加到队列末尾 clearQueue=true 测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加一些曲目到队列
       await addToQueue({
@@ -234,7 +235,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('清空队列并立即播放新增队列的第一首 playNow=true & clearQueue=true测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加一些曲目到队列
       await addToQueue({
@@ -259,7 +260,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('添加到当前播放曲目之后并立即播放新增队列的第一首 playNow=true & clearQueue=false 测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加并播放 track1
       await addToQueue({
@@ -286,7 +287,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('添加到当前播放曲目之后并立即播放指定 startFromId 的曲目 playNow=true & startFromId 测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加并播放 track1
       await addToQueue({
@@ -310,7 +311,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('添加到当前播放曲目之后并立即播放指定 startFromCid 的曲目 playNow=true & startFromCid 测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加并播放 track1
       await addToQueue({
@@ -334,7 +335,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('添加到当前播放曲目之后 playNow=false & playNext=true 测试', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加并播放 track1
       await addToQueue({
@@ -359,7 +360,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('添加已存在于队列中的曲目应被过滤', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加 track1, track2
       await addToQueue({
@@ -383,7 +384,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('当 startFromCid 无法匹配到项目时应默认为 playNow=true 行为', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       await addToQueue({
         tracks: [track3],
@@ -403,7 +404,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('当 startFromId 无法匹配到项目时应默认为 playNow=true 行为', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       await addToQueue({
         tracks: [track3],
@@ -423,7 +424,7 @@ describe('usePlayerStore 测试', () => {
     })
 
     it('添加空数组曲目应无效果', async () => {
-      await usePlayerStore.getState().initPlayer()
+      await initPlayer()
       const addToQueue = usePlayerStore.getState().addToQueue
       // 先添加 track1
       await addToQueue({

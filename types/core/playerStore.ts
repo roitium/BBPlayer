@@ -32,8 +32,8 @@ interface addToQueueParams {
 
 // 播放器操作接口
 interface PlayerActions {
-  // 初始化
-  initPlayer: () => Promise<void>
+  // 重置
+  resetPlayer: () => Promise<void>
 
   // 队列操作
   addToQueue: ({

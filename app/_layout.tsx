@@ -28,7 +28,7 @@ import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import { Toaster } from 'sonner-native'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import useAppStore from '@/hooks/stores/useAppStore'
-import { setupPlayer } from '@/lib/services/setupPlayer'
+import { initPlayer } from '@/lib/player/playerLogic'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
@@ -249,9 +249,8 @@ export default Sentry.wrap(function RootLayout() {
       const initializePlayer = async () => {
         if (!global.playerIsReady) {
           try {
-            await setupPlayer()
+            await initPlayer()
             console.log('Deferred player setup complete.')
-            global.playerIsReady = true
           } catch (error) {
             console.error('Deferred player setup failed:', error)
             Sentry.captureException(error, {

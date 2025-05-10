@@ -5,9 +5,7 @@ import useAppStore from '@/hooks/stores/useAppStore'
 import type { Track } from '@/types/core/media'
 import log from './log'
 
-const playerLog = log.extend('PLAYER')
-const logDetailedDebug = playerLog.debug
-const logError = playerLog.error
+const playerLog = log.extend('PLAYER/UTILS')
 
 /**
  * 将内部 Track 类型转换为 react-native-track-player 的 Track 类型。
@@ -15,7 +13,7 @@ const logError = playerLog.error
  * @returns 一个 Result 对象，成功时包含 RNTPTrack，失败时包含 Error。
  */
 function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
-  logDetailedDebug('转换 Track 为 RNTPTrack', {
+  playerLog.debug('转换 Track 为 RNTPTrack', {
     trackId: track.id,
     title: track.title,
     artist: track.artist,
@@ -24,18 +22,18 @@ function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
   let url = ''
   if (track.source === 'bilibili' && track.biliStreamUrl) {
     url = track.biliStreamUrl.url
-    logDetailedDebug('使用 B 站音频流 URL', {
+    playerLog.debug('使用 B 站音频流 URL', {
       quality: track.biliStreamUrl.quality,
     })
   } else if (track.source === 'local' && track.localStreamUrl) {
     url = track.localStreamUrl
-    logDetailedDebug('使用本地音频流 URL', { url })
+    playerLog.debug('使用本地音频流 URL', { url })
   }
 
   // 如果没有有效的 URL，返回错误
   if (!url) {
     const errorMsg = '没有找到有效的音频流 URL'
-    logDetailedDebug(`警告：${errorMsg}`, { source: track.source })
+    playerLog.debug(`警告：${errorMsg}`, { source: track.source })
     return err(new Error(errorMsg)) // 使用 err 包装错误
   }
 
@@ -53,7 +51,7 @@ function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
     },
   }
 
-  logDetailedDebug('RNTPTrack 转换完成', {
+  playerLog.debug('RNTPTrack 转换完成', {
     title: rnTrack.title,
     id: rnTrack.id,
   })
@@ -70,7 +68,7 @@ function checkBilibiliAudioExpiry(track: Track): boolean {
   const isExpired =
     !track.biliStreamUrl ||
     now - track.biliStreamUrl.getTime > STREAM_EXPIRY_TIME
-  logDetailedDebug('检查 B 站音频流过期状态', {
+  playerLog.debug('检查 B 站音频流过期状态', {
     trackId: track.id,
     hasStream: !!track.biliStreamUrl,
     streamAge: track.biliStreamUrl ? now - track.biliStreamUrl.getTime : 'N/A',
@@ -90,14 +88,14 @@ function checkBilibiliAudioExpiry(track: Track): boolean {
 async function checkAndUpdateAudioStream(
   track: Track,
 ): Promise<Result<{ track: Track; needsUpdate: boolean }, Error>> {
-  logDetailedDebug('开始检查并更新音频流', {
+  playerLog.debug('开始检查并更新音频流', {
     trackId: track.id,
     title: track.title,
   })
 
   // 1. 处理本地音频
   if (track.source === 'local') {
-    logDetailedDebug('本地音频，无需更新流', { trackId: track.id })
+    playerLog.debug('本地音频，无需更新流', { trackId: track.id })
     return ok({ track, needsUpdate: false }) // 本地音频总是 ok
   }
 
@@ -106,7 +104,7 @@ async function checkAndUpdateAudioStream(
     const needsUpdate = checkBilibiliAudioExpiry(track)
 
     if (!needsUpdate) {
-      logDetailedDebug('B 站音频流仍然有效，无需更新', {
+      playerLog.debug('B 站音频流仍然有效，无需更新', {
         trackId: track.id,
         getTime: track.biliStreamUrl
           ? new Date(track.biliStreamUrl.getTime).toISOString()
@@ -116,7 +114,7 @@ async function checkAndUpdateAudioStream(
     }
 
     // 3. 需要更新 Bilibili 音频流
-    logDetailedDebug('需要更新 B 站音频流', { trackId: track.id })
+    playerLog.debug('需要更新 B 站音频流', { trackId: track.id })
     try {
       const bilibiliApi = useAppStore.getState().bilibiliApi
       const bvid = track.id
@@ -124,7 +122,7 @@ async function checkAndUpdateAudioStream(
 
       // 3.1 获取 CID (如果需要)
       if (!cid) {
-        logDetailedDebug('尝试获取视频分 P 列表以确定 CID', { bvid })
+        playerLog.debug('尝试获取视频分 P 列表以确定 CID', { bvid })
         const pageListResult = await bilibiliApi.getPageList(bvid)
 
         // 使用 match 处理 Result
@@ -132,19 +130,19 @@ async function checkAndUpdateAudioStream(
           (pages) => {
             if (pages.length > 0) {
               const firstPageCid = pages[0].cid
-              logDetailedDebug('使用第一个分 P 的 CID', {
+              playerLog.debug('使用第一个分 P 的 CID', {
                 bvid,
                 cid: firstPageCid,
               })
               return ok(firstPageCid)
             }
-            logDetailedDebug('警告：视频没有分 P 信息，无法获取 CID', {
+            playerLog.debug('警告：视频没有分 P 信息，无法获取 CID', {
               bvid,
             })
             return err(new Error(`视频 ${bvid} 没有分 P 信息`))
           },
           (error) => {
-            // logError('获取视频分 P 列表失败', error)
+            // playerLog.sentry('获取视频分 P 列表失败', error)
             error.message = `获取视频分 P 列表失败: ${error.message}`
             return err(error)
           },
@@ -156,11 +154,11 @@ async function checkAndUpdateAudioStream(
         }
         cid = cidResult.value // 获取 CID 成功
       } else {
-        logDetailedDebug('使用已有的 CID', { bvid, cid })
+        playerLog.debug('使用已有的 CID', { bvid, cid })
       }
 
       // 3.2 获取新的音频流
-      logDetailedDebug('开始获取新的音频流', { bvid, cid })
+      playerLog.debug('开始获取新的音频流', { bvid, cid })
       const streamUrlResult = await bilibiliApi.getAudioStream({
         bvid,
         cid: cid as number, // cid 此时一定有值
@@ -176,11 +174,11 @@ async function checkAndUpdateAudioStream(
         (streamInfo) => {
           if (!streamInfo || !streamInfo.url) {
             const errorMsg = '获取音频流成功但没有有效的 URL'
-            // logError(errorMsg, { streamInfo, bvid, cid })
+            // playerLog.sentry(errorMsg, { streamInfo, bvid, cid })
             return err(new Error(errorMsg)) // 返回错误
           }
 
-          logDetailedDebug('音频流获取成功', {
+          playerLog.debug('音频流获取成功', {
             bvid,
             cid,
             url: streamInfo.url,
@@ -200,7 +198,7 @@ async function checkAndUpdateAudioStream(
             },
           }
 
-          logDetailedDebug('Track 对象已更新音频流信息', {
+          playerLog.debug('Track 对象已更新音频流信息', {
             trackId: updatedTrack.id,
             title: updatedTrack.title,
             streamUrl: updatedTrack.biliStreamUrl.url,
@@ -210,13 +208,13 @@ async function checkAndUpdateAudioStream(
           return ok({ track: updatedTrack, needsUpdate: true })
         },
         (error) => {
-          // logError('获取音频流失败', error)
+          // playerLog.sentry('获取音频流失败', error)
           error.message = `获取音频流失败: ${error.message}`
           return err(error)
         },
       )
     } catch (error: unknown) {
-      logError('更新音频流过程中发生意外错误', error)
+      playerLog.sentry('更新音频流过程中发生意外错误', error)
       const wrappedError =
         error instanceof Error ? error : new Error(String(error))
       return err(wrappedError)
@@ -224,7 +222,7 @@ async function checkAndUpdateAudioStream(
   }
 
   const unknownSourceError = new Error(`未知的 Track source: ${track.source}`)
-  // logError(unknownSourceError.message, {
+  // playerLog.sentry(unknownSourceError.message, {
   //   trackId: track.id,
   //   source: track.source,
   // })
