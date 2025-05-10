@@ -41,3 +41,4 @@ temp-builds
 .env.local
 .yarn/install-state.gz
 .vscode
+.zed
