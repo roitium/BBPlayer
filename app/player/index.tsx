@@ -20,6 +20,7 @@ import {
 } from 'react-native-safe-area-context'
 import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
+import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
 import PlayerQueueModal from '@/components/PlayerQueueModal'
 import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
 import useAppStore from '@/hooks/stores/useAppStore'
@@ -96,6 +97,7 @@ export default function PlayerPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover')
   const [menuVisible, setMenuVisible] = useState(false)
+  const [favModalVisible, setFavModalVisible] = useState(false)
 
   const scrollY = useRef(new Animated.Value(0)).current
   const headerOpacity = scrollY.interpolate({
@@ -418,6 +420,13 @@ export default function PlayerPage() {
         viewMode={viewMode}
         insets={insets}
         uploaderMid={videoDetails?.owner.mid}
+        setFavModalVisible={setFavModalVisible}
+      />
+
+      <AddToFavoriteListsModal
+        visible={favModalVisible}
+        setVisible={setFavModalVisible}
+        bvid={currentTrack.id}
       />
 
       {/* @ts-expect-error 忽略 BottomSheet 类型错误 */}
@@ -433,6 +442,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
   viewMode,
   insets,
   uploaderMid,
+  setFavModalVisible,
 }: {
   menuVisible: boolean
   setMenuVisible: (visible: boolean) => void
@@ -440,6 +450,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
   viewMode: string
   insets: EdgeInsets
   uploaderMid: number | undefined
+  setFavModalVisible: (visible: boolean) => void
 }) {
   const currentTrack = usePlayerStore((state) => state.currentTrack)
 
@@ -451,6 +462,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
     >
       <Menu.Item
         onPress={() => {
+          setFavModalVisible(true)
           setMenuVisible(false)
         }}
         title='添加到收藏夹'
