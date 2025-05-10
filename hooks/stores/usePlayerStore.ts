@@ -370,6 +370,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
         return
       }
 
+      if (startFromId && startFromCid) {
+        playerLog.error('试图激怒我')
+        return
+      }
+
       if (clearQueue) {
         await get().clearQueue()
       }
@@ -382,7 +387,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             currentTrack: state.currentTrack?.title,
           })
 
-          // 过滤重复ID
+          // 过滤重复ID（不考虑新添加的列表中有自身重复，否则去重性能过差）
           const newTracks = tracks.filter(
             (track) =>
               !state.queue.some((t) => isTargetTrack(t, track.id, track.cid)),
@@ -406,7 +411,18 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
               startFromIndex = state.queue.findIndex(
                 (t) => t.cid === startFromCid,
               )
-              if (startFromIndex !== -1) {
+              if (startFromIndex === -1) {
+                playerLog.error(
+                  '找不到 startFromCid 对应的列表项，这通常不应该发生，回滚到第一首',
+                  {
+                    startFromIndex,
+                    startFromId,
+                    currentTrack: state.currentTrack?.title,
+                  },
+                )
+                state.currentIndex = insertIndex
+                state.currentTrack = newTracks[0]
+              } else {
                 logDetailedDebug(
                   '指定了起始 cid，将 currentIndex 和 currentTrack 更新',
                   {
@@ -423,9 +439,20 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
               startFromIndex = state.queue.findIndex(
                 (t) => t.id === startFromId,
               )
-              if (startFromIndex !== -1) {
+              if (startFromIndex === -1) {
+                playerLog.error(
+                  '找不到 startFromId 对应的列表项，这通常不应该发生，回滚到第一首',
+                  {
+                    startFromIndex,
+                    startFromId,
+                    currentTrack: state.currentTrack?.title,
+                  },
+                )
+                state.currentIndex = insertIndex
+                state.currentTrack = newTracks[0]
+              } else {
                 logDetailedDebug(
-                  '指定了起始曲目，将 currentIndex 和 currentTrack 更新',
+                  '指定了起始曲目 id，将 currentIndex 和 currentTrack 更新',
                   {
                     startFromIndex,
                     startFromId,
@@ -920,6 +947,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       const updatedTrack = await get().patchMetadataAndAudio(track)
       if (updatedTrack.isErr()) {
         logError('更新音频流失败', updatedTrack.error)
+        TrackPlayer.pause()
+        Toast.error('播放失败: 更新音频流失败', {
+          description: `id: ${track.id}，错误：${updatedTrack.error}`,
+          duration: Number.POSITIVE_INFINITY,
+        })
         return
       }
 
@@ -927,6 +959,11 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
       const rntpTrack = convertToRNTPTrack(updatedTrack.value.track)
       if (rntpTrack.isErr()) {
         logError('更新音频流失败', rntpTrack.error)
+        TrackPlayer.pause()
+        Toast.error('播放失败: 转换为 RNTP 对象失败', {
+          description: `id: ${updatedTrack.value.track.id}，错误：${rntpTrack.error}`,
+          duration: Number.POSITIVE_INFINITY,
+        })
         return
       }
       await TrackPlayer.load(rntpTrack.value)

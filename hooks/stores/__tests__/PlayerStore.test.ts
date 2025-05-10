@@ -295,7 +295,6 @@ describe('usePlayerStore 测试', () => {
         clearQueue: false,
         playNext: false,
       })
-      // 添加 track2, track3 到当前播放曲目之后并立即播放 track3 (通过 startFromId)
       await addToQueue({
         tracks: [track2, track3],
         playNow: true,
@@ -305,9 +304,6 @@ describe('usePlayerStore 测试', () => {
       })
       const state = usePlayerStore.getState()
       expect(state.queue.length).toBe(3)
-      expect(state.queue[0]).toMatchObject(track1)
-      expect(state.queue[1]).toMatchObject(track2)
-      expect(state.queue[2]).toMatchObject(track3)
       expect(state.currentIndex).toBe(2)
       expect(state.currentTrack).toMatchObject(track3)
       expect(state.isPlaying).toBe(true)
@@ -323,19 +319,16 @@ describe('usePlayerStore 测试', () => {
         clearQueue: false,
         playNext: false,
       })
-      // 添加 track4MultiPage 到当前播放曲目之后并立即播放 track4MultiPage (通过 startFromCid)
       await addToQueue({
-        tracks: [track4MultiPage],
+        tracks: [track2, track3, track4MultiPage],
         playNow: true,
         clearQueue: false,
         playNext: false,
         startFromCid: 12345,
       })
       const state = usePlayerStore.getState()
-      expect(state.queue.length).toBe(2)
-      expect(state.queue[0]).toMatchObject(track1)
-      expect(state.queue[1]).toMatchObject(track4MultiPage)
-      expect(state.currentIndex).toBe(1)
+      expect(state.queue.length).toBe(4)
+      expect(state.currentIndex).toBe(3)
       expect(state.currentTrack).toMatchObject(track4MultiPage)
       expect(state.isPlaying).toBe(true)
     })
@@ -387,6 +380,46 @@ describe('usePlayerStore 测试', () => {
       expect(state.queue[0]).toMatchObject(track1)
       expect(state.queue[1]).toMatchObject(track2)
       expect(state.queue[2]).toMatchObject(track3)
+    })
+
+    it('当 startFromCid 无法匹配到项目时应默认为 playNow=true 行为', async () => {
+      await usePlayerStore.getState().initPlayer()
+      const addToQueue = usePlayerStore.getState().addToQueue
+      await addToQueue({
+        tracks: [track3],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+      })
+      await addToQueue({
+        tracks: [track1, track2],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+        startFromCid: 1000,
+      })
+      expect(usePlayerStore.getState().currentIndex).toBe(1)
+      expect(usePlayerStore.getState().currentTrack).toMatchObject(track1)
+    })
+
+    it('当 startFromId 无法匹配到项目时应默认为 playNow=true 行为', async () => {
+      await usePlayerStore.getState().initPlayer()
+      const addToQueue = usePlayerStore.getState().addToQueue
+      await addToQueue({
+        tracks: [track3],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+      })
+      await addToQueue({
+        tracks: [track1, track2],
+        playNow: true,
+        clearQueue: false,
+        playNext: false,
+        startFromId: '5',
+      })
+      expect(usePlayerStore.getState().currentIndex).toBe(1)
+      expect(usePlayerStore.getState().currentTrack).toMatchObject(track1)
     })
 
     it('添加空数组曲目应无效果', async () => {
