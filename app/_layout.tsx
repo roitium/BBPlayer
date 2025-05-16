@@ -29,7 +29,7 @@ import { Toaster } from 'sonner-native'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { initPlayer } from '@/lib/player/playerLogic'
-import { BilibiliApiError, CsrfError } from '@/utils/errors'
+import { ApiCallingError } from '@/utils/errors'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
@@ -121,8 +121,8 @@ const queryClient = new QueryClient({
       })
       rootLog.error(`请求 ${query.queryKey} 失败`, error)
 
-      // 这两个错误属于三方依赖的错误，不应该报告到 Sentry
-      if (error instanceof BilibiliApiError || error instanceof CsrfError) {
+      // 这个错误属于三方依赖的错误，不应该报告到 Sentry
+      if (error instanceof ApiCallingError) {
         return
       }
 

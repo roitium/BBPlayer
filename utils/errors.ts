@@ -5,7 +5,19 @@ export enum BilibiliApiErrorType {
   ResponseFailed = 'ResponseFailed',
 }
 
-class BilibiliApiError extends Error {
+// 三方 API 调用错误类，遇到这种类型错误，直接抛给用户
+class ApiCallingError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ApiCallingError'
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiCallingError)
+    }
+  }
+}
+
+class BilibiliApiError extends ApiCallingError {
   msgCode: number
   type: BilibiliApiErrorType
   rawData: unknown
@@ -26,28 +38,47 @@ class BilibiliApiError extends Error {
   }
 }
 
-class CsrfError extends Error {
+class NeteaseApiError extends ApiCallingError {
+  msgCode: number
+  rawData: unknown
+  constructor(message: string, msgCode: number, rawData: unknown) {
+    super(`请求网易云 API 失败: ${message}`)
+    this.name = 'NeteaseApiError'
+    this.msgCode = msgCode
+    this.rawData = rawData
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, NeteaseApiError)
+    }
+  }
+}
+
+class CsrfError extends ApiCallingError {
   constructor(
     message: string,
     public context?: unknown,
   ) {
     super(message)
     this.name = 'CsrfError'
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, CsrfError)
+    }
   }
 }
 
-class AudioStreamError extends Error {
+class AudioStreamError extends ApiCallingError {
   constructor(message: string) {
     super(message)
     this.name = 'AudioStreamError'
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, AudioStreamError)
+    }
   }
 }
-
-type BilibiliApiMethodError = BilibiliApiError | CsrfError | AudioStreamError
 
 export {
   BilibiliApiError,
   CsrfError,
   AudioStreamError,
-  type BilibiliApiMethodError,
+  NeteaseApiError,
+  ApiCallingError,
 }

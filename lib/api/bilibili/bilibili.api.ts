@@ -19,9 +19,9 @@ import type {
 } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
 import {
+  type ApiCallingError,
   AudioStreamError,
   type BilibiliApiError,
-  type BilibiliApiMethodError,
 } from '@/utils/errors'
 import log from '@/utils/log'
 import { bilibiliApiClient } from './bilibili.client'
@@ -142,7 +142,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
    */
   getAudioStream(
     params: BilibiliAudioStreamParams,
-  ): ResultAsync<Track['biliStreamUrl'], BilibiliApiMethodError> {
+  ): ResultAsync<Track['biliStreamUrl'], ApiCallingError> {
     const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params
     return bilibiliApiClient
       .get<BilibiliAudioStreamResponse>(
@@ -389,7 +389,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   batchDeleteFavoriteListContents(
     favoriteId: number,
     bvids: string[],
-  ): ResultAsync<0, BilibiliApiMethodError> {
+  ): ResultAsync<0, ApiCallingError> {
     const resourcesResult = Result.fromThrowable(
       () => bvids.map((bvid) => `${bv2av(bvid)}:2`),
       (e) =>
@@ -487,10 +487,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
     bvid: string,
     addToFavoriteIds: string[],
     delInFavoriteIds: string[],
-  ): ResultAsync<
-    BilibiliDealFavoriteForOneVideoResponse,
-    BilibiliApiMethodError
-  > => {
+  ): ResultAsync<BilibiliDealFavoriteForOneVideoResponse, ApiCallingError> => {
     const avid = bv2av(bvid)
     const addToFavoriteIdsCombined = addToFavoriteIds.join(',')
     const delInFavoriteIdsCombined = delInFavoriteIds.join(',')
@@ -544,7 +541,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   reportPlaybackHistory: (
     bvid: string,
     cid: number,
-  ): ResultAsync<0, BilibiliApiMethodError> => {
+  ): ResultAsync<0, ApiCallingError> => {
     const avid = bv2av(bvid)
     const csrfResult = extractCsrfToken(getCookie())
     if (csrfResult.isErr()) {
@@ -569,10 +566,7 @@ export const createBilibiliApi = (getCookie: () => string) => ({
   getUserUploadedVideos: (
     mid: number,
     pn: number,
-  ): ResultAsync<
-    BilibiliUserUploadedVideosResponse,
-    BilibiliApiMethodError
-  > => {
+  ): ResultAsync<BilibiliUserUploadedVideosResponse, ApiCallingError> => {
     const params = getWbiEncodedParams(
       {
         mid: mid.toString(),
