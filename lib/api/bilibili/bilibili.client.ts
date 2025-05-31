@@ -14,7 +14,6 @@ class ApiClient {
   private throttle = new Bottleneck({
     minTime: 200,
     maxConcurrent: 5,
-    trackDoneStatus: true,
   })
 
   /**
