@@ -12,8 +12,8 @@ type ReqResponse<T> = {
 class ApiClient {
   private baseUrl = 'https://api.bilibili.com'
   private throttle = new Bottleneck({
-    minTime: 100,
-    maxConcurrent: 10,
+    minTime: 1,
+    maxConcurrent: 100,
   })
 
   /**
