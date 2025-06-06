@@ -10,12 +10,11 @@ import {
   useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
@@ -32,7 +31,6 @@ export default function SearchResultsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(20)
   const [pageInputValue, setPageInputValue] = useState('1')
-  const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const [modalVisible, setModalVisible] = useState(false)
   const [currentModalBvid, setCurrentModalBvid] = useState('')
@@ -50,7 +48,6 @@ export default function SearchResultsPage() {
     searchQuery,
     currentPage,
     pageSize,
-    bilibiliApi,
   )
 
   const searchResults = searchData?.tracks || []

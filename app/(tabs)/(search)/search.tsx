@@ -12,7 +12,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import log from '@/utils/log'
 
 const searchLog = log.extend('SEARCH')
@@ -30,12 +29,11 @@ export default function SearchPage() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
-  const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const [searchHistory, setSearchHistory] =
     useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
 
   const { data: hotSearches = [], isLoading: isLoadingHotSearches } =
-    useHotSearches(bilibiliApi)
+    useHotSearches()
 
   // 保存搜索历史到本地存储
   const saveSearchHistory = useCallback(

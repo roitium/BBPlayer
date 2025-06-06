@@ -1,8 +1,16 @@
 export enum BilibiliApiErrorType {
-  // 请求过程出错（http 状态码非 2xx）
+  /**
+   * 请求过程出错（http 状态码非 2xx）
+   */
   RequestFailed = 'RequestFailed',
-  // bilibili 返回非 0 状态码
+  /**
+   * bilibili 返回内容解析失败或返回非 0 状态码
+   */
   ResponseFailed = 'ResponseFailed',
+  /**
+   * 没设置 cookie
+   */
+  NoCookie = 'NoCookie',
 }
 
 // 三方 API 调用错误类，遇到这种类型错误，直接抛给用户

@@ -307,6 +307,13 @@ interface BilibiliUserUploadedVideosResponse {
   }
 }
 
+enum BilibiliQrCodeLoginStatus {
+  QRCODE_LOGIN_STATUS_WAIT = 86101, // 等待扫码
+  QRCODE_LOGIN_STATUS_SCANNED_BUT_NOT_CONFIRMED = 86090, // 扫码但未确认
+  QRCODE_LOGIN_STATUS_SUCCESS = 0, // 扫码成功
+  QRCODE_LOGIN_STATUS_QRCODE_EXPIRED = 86038, // 二维码已过期
+}
+
 export type {
   BilibiliAudioStreamParams,
   BilibiliAudioStreamResponse,
@@ -328,3 +335,5 @@ export type {
   BilibiliDealFavoriteForOneVideoResponse,
   BilibiliUserUploadedVideosResponse,
 }
+
+export { BilibiliQrCodeLoginStatus }

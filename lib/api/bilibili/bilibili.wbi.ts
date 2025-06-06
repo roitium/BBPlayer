@@ -1,5 +1,6 @@
 import md5 from 'md5'
 import { fromSafePromise, type ResultAsync } from 'neverthrow'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliApiError } from '@/utils/errors'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
@@ -121,12 +122,13 @@ function getWbiKeys(cookie: string): ResultAsync<
   })
 }
 
-export default function getWbiEncodedParams(
-  params: {
-    [key: string]: string | number | object
-  },
-  cookie: string,
-) {
+export default function getWbiEncodedParams(params: {
+  [key: string]: string | number | object
+}) {
+  const cookie = useAppStore.getState().bilibiliCookieString
+  if (!cookie) {
+    return undefined
+  }
   const result = getWbiKeys(cookie)
   return result.map(({ img_key, sub_key }) => encWbi(params, img_key, sub_key))
 }

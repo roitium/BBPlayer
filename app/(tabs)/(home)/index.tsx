@@ -47,8 +47,7 @@ function HomePage() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const [menuVisible, setMenuVisible] = useState<string | null>(null)
-  const bilibiliCookie = useAppStore((state) => state.bilibiliCookie)
-  const bilibiliApi = useAppStore((store) => store.bilibiliApi)
+  const bilibiliCookie = useAppStore((state) => state.bilibiliCookieString)
   const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
   const [greeting, setGreeting] = useState('')
 
@@ -56,14 +55,14 @@ function HomePage() {
     data: personalInfo,
     isPending: personalInfoPending,
     isError: personalInfoError,
-  } = usePersonalInformation(bilibiliApi)
+  } = usePersonalInformation()
 
   const {
     data: recentlyPlayed,
     isPending: recentlyPlayedPending,
     isError: recentlyPlayedError,
     refetch: recentlyPlayedRefetch,
-  } = useRecentlyPlayed(bilibiliApi)
+  } = useRecentlyPlayed()
 
   const getGreetingMsg = useCallback(() => {
     const hour = new Date().getHours()
@@ -181,16 +180,24 @@ function SetCookieDialog({
   setVisible: (visible: boolean) => void
 }) {
   const queryClient = useQueryClient()
-  const cookie = useAppStore((state) => state.bilibiliCookie)
+  const cookie = useAppStore((state) => state.bilibiliCookieString)
   const [inputCookie, setInputCookie] = useState(cookie)
-  const setBilibiliCookie = useAppStore((state) => state.setBilibiliCookie)
+  const setBilibiliCookie = useAppStore(
+    (state) => state.setBilibiliCookieString,
+  )
   const sendPlayHistory = useAppStore((state) => state.settings.sendPlayHistory)
-  const setSendPlayHistory = useAppStore((state) => state.setSendPlayHistory)
+  const setSendPlayHistory = useAppStore(
+    (state) => state.setEnableSendPlayHistory,
+  )
   const [inputPlayHistory, setInputPlayHistory] = useState(sendPlayHistory)
   const handleConfirm = () => {
     if (inputCookie === cookie) {
       setVisible(false)
       setSendPlayHistory(inputPlayHistory)
+      return
+    }
+    if (!inputCookie) {
+      Toast.error('Cookie 不能为空')
       return
     }
     setSendPlayHistory(inputPlayHistory)
@@ -277,13 +284,12 @@ function PlaylistItem({ item }: { item: Playlist }) {
 
 function FavoriteList() {
   const { colors } = useTheme()
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-  const { data: personalInfo } = usePersonalInformation(bilibiliApi)
+  const { data: personalInfo } = usePersonalInformation()
   const {
     data: playlists,
     isPending: playlistsPending,
     isError: playlistsError,
-  } = useGetFavoritePlaylists(bilibiliApi, personalInfo?.mid)
+  } = useGetFavoritePlaylists(personalInfo?.mid)
 
   const handleViewAll = () => {
     router.push('/library')

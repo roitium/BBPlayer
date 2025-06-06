@@ -10,12 +10,11 @@ import {
   useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
@@ -29,7 +28,6 @@ export default function CollectionPage() {
   const { colors } = useTheme()
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const insets = useSafeAreaInsets()
   const [modalVisible, setModalVisible] = useState(false)
@@ -40,7 +38,7 @@ export default function CollectionPage() {
     isPending: isCollectionDataPending,
     isError: isCollectionDataError,
     refetch,
-  } = useCollectionAllContents(bilibiliApi, Number(id))
+  } = useCollectionAllContents(Number(id))
 
   const playAll = useCallback(
     async (startFromId?: string) => {

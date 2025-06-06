@@ -1,6 +1,3 @@
-import { err, ok, type Result } from 'neverthrow'
-import { CsrfError } from '@/utils/errors'
-
 /**
  * 转换B站bvid为avid
  * 这种基础函数报错的可能性很小，不做处理
@@ -20,19 +17,6 @@ export function bv2av(bvid: string): number {
     0n,
   )
   return Number((tmp & MASK_CODE) ^ XOR_CODE)
-}
-
-export function extractCsrfToken(cookie: string): Result<string, CsrfError> {
-  const regex = /(^|;)\s*bili_jct\s*=\s*([^;]+)/
-  const match = cookie.match(regex)
-  if (!match || !match[2]) {
-    return err(
-      new CsrfError('extractCsrfToken: 获取 csrf 失败，请检查 cookie', {
-        cookie,
-      }),
-    )
-  }
-  return ok(match[2])
 }
 
 export function convertToFormDataString(data: Record<string, string>): string {

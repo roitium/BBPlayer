@@ -19,7 +19,6 @@ import {
   useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/times'
@@ -136,13 +135,12 @@ FavoriteFolderListItem.displayName = 'FavoriteFolderListItem'
 const FavoriteFolderListComponent = memo(
   ({ isHidden }: { isHidden: boolean }) => {
     const [query, setQuery] = useState('')
-    const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-    const { data: userInfo } = usePersonalInformation(bilibiliApi)
+    const { data: userInfo } = usePersonalInformation()
     const {
       data: playlists,
       isPending: playlistsIsPending,
       isError: playlistsIsError,
-    } = useGetFavoritePlaylists(bilibiliApi, userInfo?.mid)
+    } = useGetFavoritePlaylists(userInfo?.mid)
 
     const renderPlaylistItem = useCallback(
       ({ item }: { item: Playlist }) => <FavoriteFolderListItem item={item} />,
@@ -250,8 +248,7 @@ FavoriteFolderListComponent.displayName = 'FavoriteFolderListComponent'
  * 渲染追更合集页
  */
 const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-  const { data: userInfo } = usePersonalInformation(bilibiliApi)
+  const { data: userInfo } = usePersonalInformation()
   const {
     data: collections,
     isPending: collectionsIsPending,
@@ -259,7 +256,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
     refetch,
     hasNextPage,
     fetchNextPage,
-  } = useInfiniteCollectionsList(bilibiliApi, Number(userInfo?.mid))
+  } = useInfiniteCollectionsList(Number(userInfo?.mid))
   const [refreshing, setRefreshing] = useState(false)
   const colors = useTheme().colors
 
@@ -422,13 +419,12 @@ CollectionListItem.displayName = 'CollectionListItem'
  */
 const MultiPageVideosListComponent = memo(
   ({ isHidden }: { isHidden: boolean }) => {
-    const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-    const { data: userInfo } = usePersonalInformation(bilibiliApi)
+    const { data: userInfo } = usePersonalInformation()
     const {
       data: playlists,
       isPending: playlistsIsPending,
       isError: playlistsIsError,
-    } = useGetFavoritePlaylists(bilibiliApi, userInfo?.mid)
+    } = useGetFavoritePlaylists(userInfo?.mid)
     const {
       data: favoriteData,
       isError: isFavoriteDataError,
@@ -436,7 +432,6 @@ const MultiPageVideosListComponent = memo(
       fetchNextPage,
       hasNextPage,
     } = useInfiniteFavoriteList(
-      bilibiliApi,
       playlists?.find((item) => item.title.startsWith('[mp]'))?.id,
     )
 

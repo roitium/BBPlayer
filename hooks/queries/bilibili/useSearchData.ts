@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import appStore from '@/hooks/stores/appStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 export const searchQueryKeys = {
@@ -14,23 +15,25 @@ export const useSearchResults = (
   query: string,
   page: number,
   page_size: number,
-  bilibiliApi: BilibiliApi,
 ) => {
+  const enabled =
+    query.trim().length > 0 && !!appStore.getState().bilibiliCookieString
   return useQuery({
     queryKey: searchQueryKeys.results(query, page, page_size),
     queryFn: () =>
       returnOrThrowAsync(bilibiliApi.searchVideos(query, page, page_size)),
     staleTime: 5 * 60 * 1000,
-    enabled: query.trim().length > 0 && !!bilibiliApi.getCookie(), // 依赖 bilibiliApi，且搜索关键词不为空
+    enabled: enabled,
   })
 }
 
 // 热门搜索查询
-export const useHotSearches = (bilibiliApi: BilibiliApi) => {
+export const useHotSearches = () => {
+  const enabled = !!appStore.getState().bilibiliCookieString
   return useQuery({
     queryKey: searchQueryKeys.hotSearches(),
     queryFn: () => returnOrThrowAsync(bilibiliApi.getHotSearches()),
     staleTime: 15 * 60 * 1000,
-    enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
+    enabled: enabled,
   })
 }

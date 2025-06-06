@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import appStore from '@/hooks/stores/appStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 
 export const userQueryKeys = {
@@ -13,28 +14,28 @@ export const userQueryKeys = {
     [...userQueryKeys.all, 'otherUserInfo', mid] as const,
 }
 
-export const usePersonalInformation = (bilibiliApi: BilibiliApi) => {
+export const usePersonalInformation = () => {
+  const enabled = !!appStore.getState().bilibiliCookieString
   return useQuery({
     queryKey: userQueryKeys.personalInformation(),
     queryFn: () => returnOrThrowAsync(bilibiliApi.getUserInfo()),
     staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
-    enabled: !!bilibiliApi.getCookie(),
+    enabled: enabled,
   })
 }
 
-export const useRecentlyPlayed = (bilibiliApi: BilibiliApi) => {
+export const useRecentlyPlayed = () => {
+  const enabled = !!appStore.getState().bilibiliCookieString
   return useQuery({
     queryKey: userQueryKeys.recentlyPlayed(),
     queryFn: () => returnOrThrowAsync(bilibiliApi.getHistory()),
     staleTime: 1 * 60 * 1000,
-    enabled: !!bilibiliApi.getCookie(),
+    enabled: enabled,
   })
 }
 
-export const useInfiniteGetUserUploadedVideos = (
-  bilibiliApi: BilibiliApi,
-  mid: number,
-) => {
+export const useInfiniteGetUserUploadedVideos = (mid: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString && !!mid
   return useInfiniteQuery({
     queryKey: userQueryKeys.uploadedVideos(mid),
     queryFn: ({ pageParam }) =>
@@ -48,15 +49,16 @@ export const useInfiniteGetUserUploadedVideos = (
     },
     initialPageParam: 1,
     staleTime: 1,
-    enabled: !!bilibiliApi.getCookie() && !!mid, // 依赖 bilibiliApi 和 mid
+    enabled: enabled,
   })
 }
 
-export const useOtherUserInfo = (bilibiliApi: BilibiliApi, mid: number) => {
+export const useOtherUserInfo = (mid: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString && !!mid
   return useQuery({
     queryKey: userQueryKeys.otherUserInfo(mid),
     queryFn: () => returnOrThrowAsync(bilibiliApi.getOtherUserInfo(mid)),
     staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
-    enabled: !!bilibiliApi.getCookie() && !!mid, // 依赖 bilibiliApi 和 mid
+    enabled: enabled,
   })
 }

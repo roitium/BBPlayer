@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -11,7 +11,6 @@ import {
   useGetMultiPageList,
   useGetVideoDetails,
 } from '@/hooks/queries/bilibili/useVideoData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
@@ -23,7 +22,6 @@ const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 export default function MultipagePage() {
   const { bvid } = useLocalSearchParams<{ bvid?: string }>()
   const router = useRouter()
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const colors = useTheme().colors
   const currentTrack = usePlayerStore((state) => state.currentTrack)
@@ -38,13 +36,13 @@ export default function MultipagePage() {
     isPending: isMultipageDataPending,
     isError: isMultipageDataError,
     refetch,
-  } = useGetMultiPageList(bvid, bilibiliApi)
+  } = useGetMultiPageList(bvid)
 
   const {
     data: videoData,
     isError: isVideoDataError,
     isPending: isVideoDataPending,
-  } = useGetVideoDetails(bvid, bilibiliApi)
+  } = useGetVideoDetails(bvid)
 
   // 其他 Hooks
   const playNext = useCallback(

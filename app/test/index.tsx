@@ -6,6 +6,7 @@ import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import Toast from '@/utils/toast'
 
@@ -16,6 +17,8 @@ export default function TestPage() {
   const { isUpdatePending } = Updates.useUpdates()
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
+    useState(false)
 
   const testCheckUpdate = async () => {
     try {
@@ -141,6 +144,15 @@ export default function TestPage() {
           >
             打开运行日志
           </Button>
+          <Button
+            mode='outlined'
+            onPress={() => {
+              setIsQrCodeLoginDialogVisible(true)
+            }}
+            style={{ marginBottom: 8 }}
+          >
+            测试扫码登录
+          </Button>
         </View>
 
         <Text
@@ -163,6 +175,11 @@ export default function TestPage() {
           </Card>
         ))}
       </ScrollView>
+
+      <QrCodeLoginModal
+        visible={isQrCodeLoginDialogVisible}
+        setVisible={setIsQrCodeLoginDialogVisible}
+      />
     </View>
   )
 }

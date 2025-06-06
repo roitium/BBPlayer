@@ -7,7 +7,6 @@ import {
   useGetFavoriteForOneVideo,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import log from '@/utils/log'
 
@@ -23,17 +22,15 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
   bvid: string
 }) {
   const { colors } = useTheme()
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
-  const { data: personalInfo } = usePersonalInformation(bilibiliApi)
+  const { data: personalInfo } = usePersonalInformation()
   const {
     data: playlists,
     refetch: refetchPlaylists,
     isPending: playlistsPending,
     isFetching: playlistsFetching,
     isError: playlistsError,
-  } = useGetFavoriteForOneVideo(bilibiliApi, bvid, personalInfo?.mid)
-  const { mutateAsync: dealFavoriteForOneVideo } =
-    useDealFavoriteForOneVideo(bilibiliApi)
+  } = useGetFavoriteForOneVideo(bvid, personalInfo?.mid)
+  const { mutateAsync: dealFavoriteForOneVideo } = useDealFavoriteForOneVideo()
   const queryClient = useQueryClient()
 
   const [checkedList, setCheckedList] = useState<string[]>([])

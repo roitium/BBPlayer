@@ -5,7 +5,8 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import type { BilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import appStore from '@/hooks/stores/appStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
@@ -62,10 +63,8 @@ export const favoriteListQueryKeys = {
  * @param bilibiliApi
  * @param favoriteId
  */
-export const useInfiniteFavoriteList = (
-  bilibiliApi: BilibiliApi,
-  favoriteId?: number,
-) => {
+export const useInfiniteFavoriteList = (favoriteId?: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString && !!favoriteId
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId),
     queryFn: favoriteId
@@ -80,8 +79,8 @@ export const useInfiniteFavoriteList = (
     initialPageParam: 1,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
-    staleTime: 5*60*1000,
-    enabled: !!favoriteId && !!bilibiliApi.getCookie(), // 依赖 favoriteId 和 bilibiliApi
+    staleTime: 5 * 60 * 1000,
+    enabled: enabled,
   })
 }
 
@@ -90,26 +89,22 @@ export const useInfiniteFavoriteList = (
  * @param bilibiliApi
  * @param userMid
  */
-export const useGetFavoritePlaylists = (
-  bilibiliApi: BilibiliApi,
-  userMid?: number,
-) => {
+export const useGetFavoritePlaylists = (userMid?: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString && !!userMid
   return useQuery({
     queryKey: favoriteListQueryKeys.allFavoriteList(userMid),
     queryFn: userMid
       ? () => returnOrThrowAsync(bilibiliApi.getFavoritePlaylists(userMid))
       : skipToken,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!userMid && !!bilibiliApi.getCookie(), // 依赖 userMid 和 bilibiliApi
+    enabled: enabled,
   })
 }
 
 /**
  * 删除收藏夹内容
  */
-export const useBatchDeleteFavoriteListContents = (
-  bilibiliApi: BilibiliApi,
-) => {
+export const useBatchDeleteFavoriteListContents = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -148,10 +143,8 @@ export const useBatchDeleteFavoriteListContents = (
 /**
  * 获取追更合集列表（分页）
  */
-export const useInfiniteCollectionsList = (
-  bilibiliApi: BilibiliApi,
-  mid?: number,
-) => {
+export const useInfiniteCollectionsList = (mid?: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString && !!mid
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteCollectionList(mid),
     queryFn: mid
@@ -162,34 +155,29 @@ export const useInfiniteCollectionsList = (
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
-    enabled: !!mid && !!bilibiliApi.getCookie(), // 依赖 mid 和 bilibiliApi
+    enabled: enabled,
   })
 }
 
 /**
  * 获取合集详细信息和完整内容
  */
-export const useCollectionAllContents = (
-  bilibiliApi: BilibiliApi,
-  collectionId: number,
-) => {
+export const useCollectionAllContents = (collectionId: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString
   return useQuery({
     queryKey: favoriteListQueryKeys.collectionAllContents(collectionId),
     queryFn: () =>
       returnOrThrowAsync(bilibiliApi.getCollectionAllContents(collectionId)),
     staleTime: 1,
-    enabled: !!bilibiliApi.getCookie(), // 依赖 bilibiliApi
+    enabled: enabled,
   })
 }
 
 /**
  * 获取包含指定视频的收藏夹列表
  */
-export const useGetFavoriteForOneVideo = (
-  bilibiliApi: BilibiliApi,
-  bvid: string,
-  userMid?: number,
-) => {
+export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
+  const enabled = !!appStore.getState().bilibiliCookieString && !!userMid
   return useQuery({
     queryKey: favoriteListQueryKeys.favoriteForOneVideo(bvid, userMid),
     queryFn: userMid
@@ -199,14 +187,14 @@ export const useGetFavoriteForOneVideo = (
           )
       : skipToken,
     staleTime: 1,
-    enabled: !!bilibiliApi.getCookie() && !!userMid, // 依赖 bilibiliApi 和 userMid
+    enabled: enabled,
   })
 }
 
 /**
  * 单个视频添加/删除到多个收藏夹
  */
-export const useDealFavoriteForOneVideo = (bilibiliApi: BilibiliApi) => {
+export const useDealFavoriteForOneVideo = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -256,11 +244,15 @@ export const useDealFavoriteForOneVideo = (bilibiliApi: BilibiliApi) => {
  * 在所有收藏夹中搜索关键字
  */
 export const useInfiniteSearchFavoriteItems = (
-  bilibiliApi: BilibiliApi,
   scope: 'all' | 'this',
   keyword?: string,
   favoriteId?: number,
 ) => {
+  const enabled =
+    !!keyword &&
+    keyword.trim().length > 0 &&
+    !!appStore.getState().bilibiliCookieString &&
+    !!favoriteId
   return useInfiniteQuery({
     queryKey: favoriteListQueryKeys.infiniteSearchFavoriteItems(
       scope,
@@ -283,10 +275,6 @@ export const useInfiniteSearchFavoriteItems = (
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     staleTime: 1,
-    enabled:
-      !!keyword &&
-      keyword.trim().length > 0 &&
-      !!bilibiliApi.getCookie() &&
-      !!favoriteId,
+    enabled: enabled,
   })
 }

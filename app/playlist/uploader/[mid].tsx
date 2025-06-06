@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -12,7 +12,6 @@ import {
   useInfiniteGetUserUploadedVideos,
   useOtherUserInfo,
 } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
@@ -26,7 +25,6 @@ export default function UploaderPage() {
   const router = useRouter()
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
   const insets = useSafeAreaInsets()
   const [modalVisible, setModalVisible] = useState(false)
@@ -56,13 +54,13 @@ export default function UploaderPage() {
     fetchNextPage,
     refetch,
     hasNextPage,
-  } = useInfiniteGetUserUploadedVideos(bilibiliApi, Number(mid))
+  } = useInfiniteGetUserUploadedVideos(Number(mid))
 
   const {
     data: uploaderUserInfo,
     isPending: isUserInfoPending,
     isError: isUserInfoError,
-  } = useOtherUserInfo(bilibiliApi, Number(mid))
+  } = useOtherUserInfo(Number(mid))
 
   const tracks = useMemo(() => {
     if (!uploadedVideos) return []

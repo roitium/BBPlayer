@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -12,8 +12,8 @@ import {
   useBatchDeleteFavoriteListContents,
   useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/useFavoriteData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
@@ -26,9 +26,8 @@ export default function FavoritePage() {
   const router = useRouter()
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
   const [refreshing, setRefreshing] = useState(false)
-  const { mutate } = useBatchDeleteFavoriteListContents(bilibiliApi)
+  const { mutate } = useBatchDeleteFavoriteListContents()
   const insets = useSafeAreaInsets()
   const [modalVisible, setModalVisible] = useState(false)
   const [currentModalBvid, setCurrentModalBvid] = useState('')
@@ -81,7 +80,7 @@ export default function FavoritePage() {
         playlistLog.sentry('播放全部失败', error)
       }
     },
-    [addToQueue, bilibiliApi.getFavoriteListAllContents, id],
+    [addToQueue, id],
   )
 
   // 获取收藏夹数据
@@ -92,7 +91,7 @@ export default function FavoritePage() {
     fetchNextPage,
     refetch,
     hasNextPage,
-  } = useInfiniteFavoriteList(bilibiliApi, Number(id))
+  } = useInfiniteFavoriteList(Number(id))
 
   const trackMenuItems = useCallback(
     (item: Track) => [

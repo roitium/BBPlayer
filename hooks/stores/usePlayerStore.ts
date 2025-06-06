@@ -7,6 +7,7 @@ import TrackPlayer, {
 } from 'react-native-track-player'
 import { create } from 'zustand'
 import { PRELOAD_TRACKS } from '@/constants/player'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import type {
   addToQueueParams,
@@ -23,7 +24,6 @@ import {
   reportPlaybackHistory,
 } from '@/utils/player'
 import Toast from '@/utils/toast'
-import useAppStore from './useAppStore'
 
 const playerLog = log.extend('PLAYER/STORE')
 
@@ -649,7 +649,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
             trackId: track.id,
             cid: track.cid,
           })
-          const bilibiliApi = useAppStore.getState().bilibiliApi
           const metadata = await bilibiliApi.getVideoDetails(track.id)
           if (metadata.isErr()) {
             playerLog.sentry('获取元数据失败,返回原始track', metadata.error)

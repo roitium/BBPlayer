@@ -1,5 +1,6 @@
 import Bottleneck from 'bottleneck'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
+import useAppStore from '@/hooks/stores/useAppStore'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/utils/errors'
 import { wrapResultAsyncFunction } from '@/utils/neverthrowUtils'
 
@@ -20,15 +21,25 @@ class ApiClient {
    * 核心请求方法，使用 neverthrow 进行封装
    * @param endpoint API 端点
    * @param options Fetch 请求选项
-   * @param cookie Cookie 字符串
    * @returns ResultAsync 包含成功数据或错误
    */
   private request = <T>(
     endpoint: string,
     options: RequestInit = {},
-    cookie = '',
+    fullUrl?: string,
   ): ResultAsync<T, BilibiliApiError> => {
-    const url = `${this.baseUrl}${endpoint}`
+    const url = fullUrl || `${this.baseUrl}${endpoint}`
+    const cookie = useAppStore.getState().bilibiliCookieString
+    if (!cookie) {
+      return errAsync(
+        new BilibiliApiError(
+          '未设置 bilibili Cookie，请先登录',
+          0,
+          null,
+          BilibiliApiErrorType.NoCookie,
+        ),
+      )
+    }
 
     const headers = {
       Cookie: cookie,
@@ -91,13 +102,13 @@ class ApiClient {
    * 发送 GET 请求
    * @param endpoint API 端点
    * @param params URL 查询参数
-   * @param cookie Cookie 字符串
+   * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
    * @returns ResultAsync 包含成功数据或错误
    */
   get<T>(
     endpoint: string,
     params?: Record<string, string> | string,
-    cookie = '',
+    fullUrl?: string,
   ): ResultAsync<T, BilibiliApiError> {
     let url = endpoint
     if (typeof params === 'string') {
@@ -107,7 +118,7 @@ class ApiClient {
     }
     return wrapResultAsyncFunction(() =>
       this.throttle.schedule(() =>
-        this.request<T>(url, { method: 'GET' }, cookie),
+        this.request<T>(url, { method: 'GET' }, fullUrl),
       ),
     )()
   }
@@ -116,15 +127,15 @@ class ApiClient {
    * 发送 POST 请求
    * @param endpoint API 端点
    * @param data 请求体数据
-   * @param cookie Cookie 字符串
    * @param headers 请求头（默认请求类型为 application/x-www-form-urlencoded）
+   * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
    * @returns ResultAsync 包含成功数据或错误
    */
   post<T>(
     endpoint: string,
     data?: BodyInit,
-    cookie = '',
     headers?: Record<string, string>,
+    fullUrl?: string,
   ): ResultAsync<T, BilibiliApiError> {
     return wrapResultAsyncFunction(() =>
       this.throttle.schedule(() =>
@@ -138,7 +149,7 @@ class ApiClient {
             },
             body: data,
           },
-          cookie,
+          fullUrl,
         ),
       ),
     )()

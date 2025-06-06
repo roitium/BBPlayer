@@ -20,10 +20,9 @@ import {
 } from 'react-native-safe-area-context'
 import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
-import PlayerQueueModal from '@/components/PlayerQueueModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
 import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import {
   usePlaybackProgress,
   usePlayerStore,
@@ -43,7 +42,6 @@ export default function PlayerPage() {
   const skipToNext = usePlayerStore((state) => state.skipToNext)
   const seekTo = usePlayerStore((state) => state.seekTo)
   const { position, duration } = usePlaybackProgress(100)
-  const bilibiliApi = useAppStore((state) => state.bilibiliApi)
 
   const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
     useShallow((state) => {
@@ -56,10 +54,7 @@ export default function PlayerPage() {
     }),
   )
 
-  const { data: videoDetails } = useGetVideoDetails(
-    currentTrack?.id,
-    bilibiliApi,
-  )
+  const { data: videoDetails } = useGetVideoDetails(currentTrack?.id)
 
   const [isSeeking, setIsSeeking] = useState(false)
   const [seekValue, setSeekValue] = useState(0)

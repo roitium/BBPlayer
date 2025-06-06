@@ -2,6 +2,7 @@ import { err, ok, type Result } from 'neverthrow'
 import type { Track as RNTPTrack } from 'react-native-track-player'
 import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import log from './log'
 
@@ -116,7 +117,6 @@ async function checkAndUpdateAudioStream(
     // 3. 需要更新 Bilibili 音频流
     playerLog.debug('需要更新 B 站音频流', { trackId: track.id })
     try {
-      const bilibiliApi = useAppStore.getState().bilibiliApi
       const bvid = track.id
       let cid = track.cid
 
@@ -246,7 +246,6 @@ function isTargetTrack(
  */
 async function reportPlaybackHistory(track: Track): Promise<void> {
   if (!useAppStore.getState().settings.sendPlayHistory) return
-  const bilibiliApi = useAppStore.getState().bilibiliApi
   if (!track.cid || !track.id || !(track.source === 'bilibili')) {
     return
   }

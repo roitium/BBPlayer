@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { FlatList, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
@@ -12,7 +12,6 @@ import {
   useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
@@ -24,17 +23,13 @@ export default function SearchResultsPage() {
   const { colors } = useTheme()
   const { query } = useLocalSearchParams<{ query?: string }>()
   const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const bilibiliApi = useAppStore((store) => store.bilibiliApi)
   const addToQueue = usePlayerStore((state) => state.addToQueue)
   const [modalVisible, setModalVisible] = useState(false)
   const [currentModalBvid, setCurrentModalBvid] = useState('')
   const insets = useSafeAreaInsets()
 
-  const { data: userData } = usePersonalInformation(bilibiliApi)
-  const { data: favoriteFolderList } = useGetFavoritePlaylists(
-    bilibiliApi,
-    userData?.mid,
-  )
+  const { data: userData } = usePersonalInformation()
+  const { data: favoriteFolderList } = useGetFavoritePlaylists(userData?.mid)
   const {
     data: searchData,
     isPending: isPendingSearchData,
@@ -42,7 +37,6 @@ export default function SearchResultsPage() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteSearchFavoriteItems(
-    bilibiliApi,
     'all',
     query,
     favoriteFolderList?.at(0) ? favoriteFolderList?.at(0)?.id : undefined,
