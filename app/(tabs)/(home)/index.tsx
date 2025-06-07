@@ -2,7 +2,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { memo, useCallback, useEffect, useState } from 'react'
-import { FlatList, RefreshControl, ScrollView, View } from 'react-native'
+import {
+	FlatList,
+	RefreshControl,
+	TouchableOpacity as RNTouchableOpacity,
+	ScrollView,
+	View,
+} from 'react-native'
 import {
 	ActivityIndicator,
 	Button,
@@ -502,7 +508,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 	const handleOpenMenu = () => setMenuVisible(item.id.toString())
 
 	return (
-		<TouchableOpacity
+		<RNTouchableOpacity
 			key={item.id}
 			style={{ marginBottom: 8 }}
 			onPress={() => playSingleTrack(item)}
@@ -578,7 +584,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 					</Menu>
 				</View>
 			</Surface>
-		</TouchableOpacity>
+		</RNTouchableOpacity>
 	)
 })
 

@@ -5,6 +5,7 @@ import { router, Stack } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
 import { Animated, Dimensions, View } from 'react-native'
+import { Pressable } from 'react-native-gesture-handler'
 import {
 	Divider,
 	IconButton,
@@ -22,7 +23,7 @@ import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
-import TouchableOpacity from '@/components/TouchableOpacity'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
 import {
 	usePlaybackProgress,
@@ -44,16 +45,16 @@ export default function PlayerPage() {
 	const seekTo = usePlayerStore((state) => state.seekTo)
 	const { position, duration } = usePlaybackProgress(100)
 
-	const { currentTrack, isPlaying, repeatMode, shuffleMode } = usePlayerStore(
+	const { isPlaying, repeatMode, shuffleMode } = usePlayerStore(
 		useShallow((state) => {
 			return {
-				currentTrack: state.currentTrack,
 				isPlaying: state.isPlaying,
 				repeatMode: state.repeatMode,
 				shuffleMode: state.shuffleMode,
 			}
 		}),
 	)
+	const currentTrack = useCurrentTrack()
 
 	const { data: videoDetails } = useGetVideoDetails(currentTrack?.id)
 
@@ -234,10 +235,7 @@ export default function PlayerPage() {
 							paddingVertical: 24,
 						}}
 					>
-						<TouchableOpacity
-							activeOpacity={0.9}
-							onPress={toggleViewMode}
-						>
+						<Pressable onPress={toggleViewMode}>
 							<Surface
 								elevation={5}
 								style={{ borderRadius: 16 }}
@@ -252,7 +250,7 @@ export default function PlayerPage() {
 									transition={300}
 								/>
 							</Surface>
-						</TouchableOpacity>
+						</Pressable>
 					</View>
 
 					{/* 歌曲信息 */}
@@ -449,7 +447,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 	uploaderMid: number | undefined
 	setFavModalVisible: (visible: boolean) => void
 }) {
-	const currentTrack = usePlayerStore((state) => state.currentTrack)
+	const currentTrack = useCurrentTrack()
 
 	return (
 		<Menu

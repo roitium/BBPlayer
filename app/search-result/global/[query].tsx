@@ -14,6 +14,7 @@ import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
@@ -25,7 +26,7 @@ const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
 	const { query } = useLocalSearchParams<{ query?: string }>()
-	const currentTrack = usePlayerStore((state) => state.currentTrack)
+	const currentTrack = useCurrentTrack()
 
 	const [searchQuery, setSearchQuery] = useState(query || '')
 	const [currentPage, setCurrentPage] = useState(1)

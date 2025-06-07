@@ -7,6 +7,7 @@ import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteSearchFavoriteItems,
@@ -22,7 +23,7 @@ const searchLog = log.extend('SEARCH_RESULTS/FAV')
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
 	const { query } = useLocalSearchParams<{ query?: string }>()
-	const currentTrack = usePlayerStore((state) => state.currentTrack)
+	const currentTrack = useCurrentTrack()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalBvid, setCurrentModalBvid] = useState('')

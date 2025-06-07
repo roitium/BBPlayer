@@ -20,6 +20,7 @@ import {
 	checkAndUpdateAudioStream,
 	checkBilibiliAudioExpiry,
 	convertToRNTPTrack,
+	getTrackKey,
 	isTargetTrack,
 	reportPlaybackHistory,
 } from '@/utils/player'
@@ -41,18 +42,34 @@ const checkPlayerReady = () => {
  */
 export const usePlayerStore = create<PlayerStore>()((set, get) => {
 	const initialState: PlayerState = {
-		queue: [],
-		currentIndex: -1,
-		currentTrack: null,
+		tracks: {},
+		orderedList: [],
+		shuffledList: [],
+		currentTrackKey: null,
 		isPlaying: false,
 		isBuffering: false,
 		repeatMode: RepeatMode.Off,
 		shuffleMode: false,
-		shuffledQueue: [],
 	}
 
 	const store = {
 		...initialState,
+
+		_getActiveList: () => {
+			const { shuffleMode, orderedList, shuffledList } = get()
+			return shuffleMode ? shuffledList : orderedList
+		},
+
+		_getCurrentTrack: (): Track | null => {
+			const { tracks, currentTrackKey } = get()
+			return currentTrackKey ? (tracks[currentTrackKey] ?? null) : null
+		},
+
+		_getCurrentIndex: (): number => {
+			const { currentTrackKey } = get()
+			if (!currentTrackKey) return -1
+			return get()._getActiveList().indexOf(currentTrackKey)
+		},
 
 		resetPlayer: async () => {
 			if (!global.playerIsReady) return
@@ -72,63 +89,80 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 		removeTrack: async (id: string, cid: number | undefined) => {
 			playerLog.debug('removeTrack()', { id, cid })
-			const { queue, shuffledQueue, shuffleMode, currentTrack } = get()
-			const currentQueue = shuffleMode ? shuffledQueue : queue
-			if (currentTrack?.id === id && currentTrack?.cid === cid) {
-				if (currentQueue.length === 1) {
-					playerLog.debug('队列只有一首歌曲，清空队列并停止播放')
-					set(
-						produce((state: PlayerState) => {
-							state.queue = []
-							state.currentIndex = -1
-							state.currentTrack = null
-							state.isPlaying = false
-							state.shuffledQueue = []
-						}),
-					)
-					await TrackPlayer.stop()
-					await TrackPlayer.remove([0])
-					return
-				}
-				const lastTrack = currentQueue.at(-1)
-				if (lastTrack) {
-					if (lastTrack.id === id && lastTrack.cid === cid) {
-						await get().skipToPrevious()
-					} else {
-						await get().skipToNext()
-					}
-				}
-			}
-			const queueIndex = queue.findIndex((t) => t.id === id && t.cid === cid)
-			if (queueIndex === -1) {
-				Toast.error('播放器异常', {
-					description: '在播放列表中找不到该曲目，已重置播放器',
-				})
-				await get().clearQueue()
+			const { tracks, currentTrackKey: initialCurrentKey } = get()
+
+			// 根据 id 和 cid 找到 key
+			const keyToRemove = Object.keys(tracks).find((key) => {
+				const track = tracks[key]
+				return track.id === id && (!track.isMultiPage || track.cid === cid)
+			})
+
+			if (!keyToRemove) {
+				Toast.error('播放器异常', { description: '找不到该曲目' })
 				return
 			}
-			const shuffledQueueIndex = shuffledQueue.findIndex(
-				(t) => t.id === id && t.cid === cid,
-			)
-			// 当没有开启过随机模式时，shuffledQueue 为空，所以在判断 shuffledQueueIndex 时还需要判断列表不为空
-			if (shuffledQueueIndex === -1 && shuffledQueue.length > 0) {
-				Toast.error('播放器异常', {
-					description: '在播放列表中找不到该曲目，已重置播放器',
-				})
-				await get().clearQueue()
+
+			if (initialCurrentKey !== keyToRemove) {
+				set(
+					produce((state: PlayerState) => {
+						delete state.tracks[keyToRemove]
+						const orderedIndex = state.orderedList.indexOf(keyToRemove)
+						if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
+						const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
+						if (shuffledIndex > -1) state.shuffledList.splice(shuffledIndex, 1)
+					}),
+				)
 				return
 			}
+
+			// 只有在删除当前正在播放的歌曲时，才需要复杂的处理
+			const activeList = get()._getActiveList()
+
+			// 如果是最后一首歌
+			if (activeList.length === 1) {
+				await get().resetStore()
+				return
+			}
+
+			const currentIndex = activeList.indexOf(keyToRemove)
+			const isLastTrack = currentIndex === activeList.length - 1
+
+			const nextIndexToPlayInOldList = isLastTrack
+				? currentIndex - 1
+				: currentIndex + 1
+			const nextTrackKeyToPlay = activeList[nextIndexToPlayInOldList]
+
 			set(
 				produce((state: PlayerState) => {
-					state.queue.splice(queueIndex, 1)
-					state.shuffledQueue.splice(shuffledQueueIndex, 1)
+					// 删除 track 数据
+					delete state.tracks[keyToRemove]
+
+					// 从顺序列表中删除
+					const orderedIndex = state.orderedList.indexOf(keyToRemove)
+					if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
+
+					// 从随机列表中删除
+					const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
+					if (shuffledIndex > -1) state.shuffledList.splice(shuffledIndex, 1)
+
+					state.currentTrackKey = nextTrackKeyToPlay
 				}),
 			)
+
+			const newActiveList = get()._getActiveList()
+			const finalIndexToPlay = newActiveList.indexOf(nextTrackKeyToPlay)
+
+			if (finalIndexToPlay !== -1) {
+				await get().skipToTrack(finalIndexToPlay)
+			} else {
+				await get().resetStore()
+			}
 		},
 
 		/**
 		 * 添加多条曲目到队列
 		 * 当 playNow 为 false 时，startFromId 不生效
+		 * 提供
 		 * @param tracks
 		 * @param playNow 是否立即播放（在 startFromId 为空时是播放新增队列的第一首歌曲）
 		 * @param clearQueue
@@ -137,6 +171,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		 * @param playNext （仅在 playNow 为 false 时）是否把新曲目插入到当前播放曲目的后面
 		 * @returns
 		 */
+		// ✨ FIX: 修正后的 addToQueue 函数
 		addToQueue: async ({
 			tracks,
 			playNow,
@@ -145,162 +180,113 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			startFromCid,
 			playNext,
 		}: addToQueueParams) => {
-			playerLog.debug('addToQueue()', {
-				tracksCount: tracks.length,
-				playNow,
-				clearQueue,
-				playNext,
-			})
+			if (!checkPlayerReady() || tracks.length === 0) return
+			if (clearQueue) await get().resetStore()
 
-			if (!checkPlayerReady()) return
-			if (tracks.length === 0) return
-			if (playNow && playNext) {
-				playerLog.error('playNow 和 playNext 不能同时为 true')
-				return
-			}
-			if (startFromCid && startFromId) {
-				playerLog.error('startFromCid 和 startFromId 不能同时填写')
-				return
-			}
-
-			if (clearQueue) {
-				await get().clearQueue()
-			}
-
+			const existingTracks = get().tracks
 			const newTracks = tracks.filter(
 				(track) =>
-					!get().queue.some((t) => isTargetTrack(t, track.id, track.cid)),
+					!Object.values(existingTracks).some((t) =>
+						isTargetTrack(t, track.id, track.cid),
+					),
 			)
 
+			// 没有新歌，需要跳转播放
 			if (newTracks.length === 0) {
-				playerLog.debug('无新曲目需要添加')
-				const switchTrackPipe = async (targetIndex: number) => {
-					set(
-						produce((state: PlayerState) => {
-							state.currentIndex = targetIndex
-							const queue = state.shuffleMode
-								? state.shuffledQueue
-								: state.queue
-							state.currentTrack = queue[targetIndex]
-						}),
-					)
-					await get().skipToTrack(targetIndex)
-					await TrackPlayer.play()
-					set({ isPlaying: true })
-				}
-
-				if (playNow && (startFromId || startFromCid)) {
-					if (get().shuffleMode) {
-						const targetIndex = get().shuffledQueue.findIndex((t) =>
-							isTargetTrack(t, startFromId, startFromCid),
-						)
-						if (targetIndex !== -1) {
-							await switchTrackPipe(targetIndex)
-						}
-					} else {
-						const targetIndex = get().queue.findIndex((t) =>
-							isTargetTrack(t, startFromId, startFromCid),
-						)
-						if (targetIndex !== -1) {
-							await switchTrackPipe(targetIndex)
+				if (playNow) {
+					let targetKey: string | null = null
+					// 遍历现有的 tracks 字典来找到匹配的 key
+					for (const key in existingTracks) {
+						if (isTargetTrack(existingTracks[key], startFromId, startFromCid)) {
+							targetKey = key
+							break
 						}
 					}
-				} else if (playNow) {
-					// 如果没有指定播放新曲目，则播放新队列的第一首(在现有队列中寻找)
-					const targetIndex = get().queue.findIndex((t) =>
-						isTargetTrack(t, tracks[0].id, tracks[0].cid),
-					)
-					if (targetIndex !== -1) {
-						await switchTrackPipe(targetIndex)
+
+					if (targetKey) {
+						const targetIndex = get()._getActiveList().indexOf(targetKey)
+						if (targetIndex !== -1) {
+							await get().skipToTrack(targetIndex)
+						}
 					}
 				}
 				return
 			}
 
+			// 有新歌加入
 			set(
 				produce((state: PlayerState) => {
-					let insertIndexForQueue = state.queue.length // 默认为队列末尾
-					if (playNext && state.currentIndex !== -1) {
-						insertIndexForQueue = state.currentIndex + 1
-					}
-					state.queue.splice(insertIndexForQueue, 0, ...newTracks)
+					// 1. 先把新歌数据加进去
+					const newKeys = newTracks.map(getTrackKey)
+					newTracks.forEach((track, i) => {
+						state.tracks[newKeys[i]] = track
+					})
 
-					if (state.shuffleMode) {
-						let insertIndexForShuffled = state.shuffledQueue.length
-						if (
-							playNext &&
-							state.currentIndex !== -1 &&
-							state.shuffledQueue.length > state.currentIndex
-						) {
-							insertIndexForShuffled = state.currentIndex + 1
-						}
-						state.shuffledQueue.splice(insertIndexForShuffled, 0, ...newTracks)
+					// 2. 计算插入位置
+					const currentKey = state.currentTrackKey
+					let orderedInsertIdx = state.orderedList.length
+					let shuffledInsertIdx = state.shuffledList.length
+					if (playNext && currentKey) {
+						orderedInsertIdx = state.orderedList.indexOf(currentKey) + 1
+						shuffledInsertIdx = state.shuffledList.indexOf(currentKey) + 1
 					}
 
+					// 3. 插入 key 列表
+					state.orderedList.splice(orderedInsertIdx, 0, ...newKeys)
+					state.shuffledList.splice(shuffledInsertIdx, 0, ...newKeys)
+
+					// 4. 决定当前播放的 key
 					if (playNow) {
-						let newPlayIndex = -1
-						if (startFromCid) {
-							newPlayIndex = state.queue.findIndex(
-								(t) => t.cid === startFromCid,
-							)
-						} else if (startFromId) {
-							newPlayIndex = state.queue.findIndex((t) => t.id === startFromId)
-						} else {
-							// 播放新添加内容的第一首
-							newPlayIndex = insertIndexForQueue
-						}
+						let keyToPlay = newKeys[0] // 默认播放新歌的第一首
 
-						if (newPlayIndex === -1 && newTracks.length > 0) {
-							// 按道理这不会发生，但还是做一下处理
-							newPlayIndex = state.queue.findIndex((t) =>
-								isTargetTrack(t, newTracks[0].id, newTracks[0].cid),
+						// 如果指定了开始播放的歌曲，就从 newTracks 数组里找到它
+						if (startFromId) {
+							// 使用 isTargetTrack 找到那个完整的 track 对象
+							const targetTrackInNewList = newTracks.find((t) =>
+								isTargetTrack(t, startFromId, startFromCid),
 							)
-						}
 
-						if (newPlayIndex !== -1) {
-							state.currentIndex = newPlayIndex
-							state.currentTrack = state.queue[newPlayIndex]
-						} else if (state.queue.length > 0) {
-							// 这也不该发生，继续兜底
-							state.currentIndex = 0
-							state.currentTrack = state.queue[0]
+							// 如果找到了，就用这个完整的对象去生成可靠的 key
+							if (targetTrackInNewList) {
+								keyToPlay = getTrackKey(targetTrackInNewList)
+							}
 						}
-					} else if (state.currentTrack === null && state.queue.length > 0) {
-						// 设置队列第一首为当前播放
-						state.currentIndex = 0
-						state.currentTrack = state.queue[0]
+						state.currentTrackKey = keyToPlay
+					} else if (!state.currentTrackKey && state.orderedList.length > 0) {
+						// 如果当前无播放，则默认指向列表第一首
+						state.currentTrackKey = state.orderedList[0]
 					}
 				}),
 			)
 
 			if (playNow) {
-				const currentStore = get()
-				if (currentStore.currentIndex !== -1) {
-					await currentStore.skipToTrack(currentStore.currentIndex)
-					await TrackPlayer.play()
-					set({ isPlaying: true })
+				const keyToPlay = get().currentTrackKey
+				if (!keyToPlay) {
+					playerLog.error('播放器异常，无法找到当前播放的 key', {
+						list: get()._getActiveList(),
+					})
+					return
+				}
+				const indexToPlay = get()._getActiveList().indexOf(keyToPlay)
+				if (indexToPlay !== -1) {
+					await get().skipToTrack(indexToPlay)
 				}
 			}
 		},
 
-		// 预加载
 		preloadTracks: async (index: number) => {
-			const { queue, shuffleMode, shuffledQueue } = get()
-			const currentQueue = shuffleMode ? shuffledQueue : queue
-
-			// 预加载当前播放歌曲的后 n 首
+			const activeList = get()._getActiveList()
+			const { tracks } = get()
 			const preloadStartIndex = index + 1
 			const preloadEndIndex = Math.min(
 				preloadStartIndex + PRELOAD_TRACKS,
-				currentQueue.length,
+				activeList.length,
 			)
-			const tracksToPreload = currentQueue.slice(
-				preloadStartIndex,
-				preloadEndIndex,
-			)
+			const keysToPreload = activeList.slice(preloadStartIndex, preloadEndIndex)
+			const tracksToPreload = keysToPreload.map((key) => tracks[key])
+			playerLog.debug(`开始预加载 ${tracksToPreload.length} 首曲目`)
 
 			if (tracksToPreload.length > 0) {
-				playerLog.debug(`开始预加载 ${tracksToPreload.length} 首曲目`)
 				await Promise.all(
 					tracksToPreload.map((track) => get().patchMetadataAndAudio(track)),
 				)
@@ -309,26 +295,15 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 		// 切换播放/暂停
 		togglePlay: async () => {
-			const {
-				isPlaying,
-				currentTrack,
-				skipToTrack,
-				currentIndex,
-				rntpQueue,
-				patchMetadataAndAudio,
-				seekTo,
-			} = get()
-
-			if (!checkPlayerReady()) return
-			if (!currentTrack) return
-
 			try {
-				if (!(await rntpQueue()).length) {
-					playerLog.debug('rntp 队列为空, 尝试重新加载当前曲目')
-					if (currentTrack) {
-						skipToTrack(currentIndex)
-					}
-					return // skipToTrack will handle playback
+				const { isPlaying } = get()
+				const currentTrack = get()._getCurrentTrack()
+				if (!checkPlayerReady() || !currentTrack) return
+
+				if (!(await get().rntpQueue()).length) {
+					const currentIndex = get()._getCurrentIndex()
+					if (currentIndex !== -1) get().skipToTrack(currentIndex)
+					return
 				}
 
 				if (isPlaying) {
@@ -342,7 +317,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 					}
 
 					playerLog.debug('音频流已过期, 正在更新...')
-					const result = await patchMetadataAndAudio(currentTrack)
+					const result = await get().patchMetadataAndAudio(currentTrack)
 					if (result.isErr()) {
 						playerLog.sentry('更新音频流失败', result.error)
 						return
@@ -357,7 +332,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 							return
 						}
 						await TrackPlayer.load(rntpTrack.value)
-						await seekTo(position)
+						await get().seekTo(position)
 					}
 					await TrackPlayer.play()
 				}
@@ -368,70 +343,42 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		},
 
 		skipToNext: async () => {
-			const { queue, currentIndex, shuffleMode, repeatMode, shuffledQueue } =
-				get()
+			const activeList = get()._getActiveList()
+			const { repeatMode } = get()
+			const currentIndex = get()._getCurrentIndex()
 
-			if (!checkPlayerReady()) return
+			if (currentIndex === -1 || activeList.length <= 1) {
+				await TrackPlayer.pause()
+				set({ isPlaying: false })
+				return
+			}
 
-			try {
-				const currentQueue = shuffleMode ? shuffledQueue : queue
-
-				if (currentQueue.length <= 1) {
-					playerLog.debug('队列中曲目不足, 无法跳转下一首')
+			let nextIndex = currentIndex + 1
+			if (nextIndex >= activeList.length) {
+				if (repeatMode === RepeatMode.Queue) {
+					nextIndex = 0
+				} else {
 					await TrackPlayer.pause()
 					set({ isPlaying: false })
 					return
 				}
-
-				let nextIndex: number
-				if (repeatMode === RepeatMode.Queue) {
-					nextIndex = (currentIndex + 1) % currentQueue.length
-				} else {
-					nextIndex = currentIndex + 1
-					if (nextIndex >= currentQueue.length) {
-						playerLog.debug('已到达最后一首, 停止播放')
-						await TrackPlayer.pause()
-						set({ isPlaying: false })
-						return
-					}
-				}
-				await get().skipToTrack(nextIndex)
-			} catch (error) {
-				playerLog.sentry('跳转到下一曲失败', error)
 			}
+			await get().skipToTrack(nextIndex)
 		},
 
 		skipToPrevious: async () => {
-			const { queue, currentIndex, shuffleMode, shuffledQueue } = get()
+			const activeList = get()._getActiveList()
+			const currentIndex = get()._getCurrentIndex()
+			if (currentIndex === -1 || activeList.length <= 1) return
 
-			if (!checkPlayerReady()) return
-
-			try {
-				const currentQueue = shuffleMode ? shuffledQueue : queue
-
-				if (currentQueue.length <= 1) {
-					playerLog.debug('队列中曲目不足, 无法跳转上一首')
-					return
-				}
-
-				// 由于在切换 shuffle 模式时已经包含了重新定位当前曲目的逻辑，所以这里不需要再把目标索引同步到另一个 queue 中
-				const previousIndex =
-					currentIndex === 0 ? currentQueue.length - 1 : currentIndex - 1
-
-				await get().skipToTrack(previousIndex)
-			} catch (error) {
-				playerLog.sentry('跳转到上一曲失败', error)
-			}
+			const previousIndex =
+				currentIndex === 0 ? activeList.length - 1 : currentIndex - 1
+			await get().skipToTrack(previousIndex)
 		},
 
 		seekTo: async (position: number) => {
 			if (!checkPlayerReady()) return
-
-			try {
-				await TrackPlayer.seekTo(position)
-			} catch (error) {
-				playerLog.sentry('跳转到指定位置失败', error)
-			}
+			await TrackPlayer.seekTo(position)
 		},
 
 		toggleRepeatMode: async () => {
@@ -455,73 +402,44 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		},
 
 		toggleShuffleMode: () => {
-			const { shuffleMode, queue, currentIndex } = get()
+			const { shuffleMode, orderedList, currentTrackKey } = get()
 			if (!checkPlayerReady()) return
 
-			if (shuffleMode) {
-				playerLog.debug('关闭随机模式')
-				set(
-					produce((state: PlayerState) => {
-						state.shuffleMode = false
-						if (state.currentTrack) {
-							const currentTrack = state.currentTrack
-							state.currentIndex = state.queue.findIndex((track) =>
-								isTargetTrack(track, currentTrack.id, currentTrack.cid),
-							)
-						}
-						state.shuffledQueue = []
-					}),
-				)
-			} else {
+			const newShuffleMode = !shuffleMode
+			if (newShuffleMode) {
+				// 进入随机模式
 				playerLog.debug('开启随机模式')
-				const shuffledQueue = [...queue]
-				for (let i = shuffledQueue.length - 1; i > 0; i--) {
+				const newShuffledList = [...orderedList]
+				// Fisher-Yates shuffle
+				for (let i = newShuffledList.length - 1; i > 0; i--) {
 					const j = Math.floor(Math.random() * (i + 1))
-					;[shuffledQueue[i], shuffledQueue[j]] = [
-						shuffledQueue[j],
-						shuffledQueue[i],
+					;[newShuffledList[i], newShuffledList[j]] = [
+						newShuffledList[j],
+						newShuffledList[i],
 					]
 				}
-
-				const currentTrackIndex = shuffledQueue.findIndex((track) =>
-					isTargetTrack(track, queue[currentIndex].id, queue[currentIndex].cid),
-				)
-				if (currentTrackIndex !== -1) {
-					;[shuffledQueue[0], shuffledQueue[currentTrackIndex]] = [
-						shuffledQueue[currentTrackIndex],
-						shuffledQueue[0],
-					]
+				// 将当前歌曲放到随机列表的第一位
+				if (currentTrackKey) {
+					const idx = newShuffledList.indexOf(currentTrackKey)
+					if (idx !== -1) {
+						;[newShuffledList[0], newShuffledList[idx]] = [
+							newShuffledList[idx],
+							newShuffledList[0],
+						]
+					}
 				}
-
-				set(
-					produce((state: PlayerState) => {
-						state.shuffleMode = true
-						state.shuffledQueue = shuffledQueue
-						state.currentIndex = 0
-					}),
-				)
+				set({ shuffleMode: true, shuffledList: newShuffledList })
+			} else {
+				playerLog.debug('关闭随机模式')
+				set({ shuffleMode: false, shuffledList: [] })
 			}
 		},
 
-		clearQueue: async () => {
+		resetStore: async () => {
 			playerLog.debug('清空队列')
 			if (!checkPlayerReady()) return
-
-			try {
-				await TrackPlayer.reset()
-				set(
-					produce((store) => {
-						store.queue = []
-						store.currentIndex = -1
-						store.currentTrack = null
-						store.isPlaying = false
-						store.shuffledQueue = []
-						store.isBuffering = false
-					}),
-				)
-			} catch (error) {
-				playerLog.sentry('清空队列失败', error)
-			}
+			await TrackPlayer.reset()
+			set(initialState)
 		},
 
 		patchMetadataAndAudio: async (
@@ -529,16 +447,17 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		): Promise<
 			Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | unknown>
 		> => {
-			let updatedTrack = track
+			const oldKey = getTrackKey(track)
+
 			try {
+				let trackAfterMeta = track
+				// 1. 获取元数据 (如果需要)
 				if (!track.hasMetadata) {
-					playerLog.debug(`获取元数据: id=${track.id}, cid=${track.cid}`)
+					playerLog.debug('获取元数据', { id: track.id, cid: track.cid })
 					const metadata = await bilibiliApi.getVideoDetails(track.id)
-					if (metadata.isErr()) {
-						playerLog.sentry('获取元数据失败', metadata.error)
-						return err(metadata.error)
-					}
-					updatedTrack = {
+					if (metadata.isErr()) return err(metadata.error)
+
+					trackAfterMeta = {
 						...track,
 						title: metadata.value.title,
 						artist: metadata.value.owner.name,
@@ -549,109 +468,112 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 						hasMetadata: true,
 					}
 
+					const newKey = getTrackKey(trackAfterMeta)
+
 					set(
 						produce((state: PlayerState) => {
-							const queueIndex = state.queue.findIndex((t) =>
-								isTargetTrack(t, updatedTrack.id, updatedTrack.cid),
-							)
-							if (queueIndex !== -1) {
-								state.queue[queueIndex] = updatedTrack
-							}
-							const shuffledQueueIndex = state.shuffledQueue.findIndex((t) =>
-								isTargetTrack(t, updatedTrack.id, updatedTrack.cid),
-							)
-							if (shuffledQueueIndex !== -1) {
-								state.shuffledQueue[shuffledQueueIndex] = updatedTrack
+							// ✨ 处理 key 可能变化的关键逻辑
+							if (oldKey !== newKey) {
+								// 如果 key 变了，需要更新 key 列表和 tracks 字典
+								const orderedIndex = state.orderedList.indexOf(oldKey)
+								if (orderedIndex > -1) state.orderedList[orderedIndex] = newKey
+
+								const shuffledIndex = state.shuffledList.indexOf(oldKey)
+								if (shuffledIndex > -1)
+									state.shuffledList[shuffledIndex] = newKey
+
+								if (state.currentTrackKey === oldKey) {
+									state.currentTrackKey = newKey
+								}
+
+								delete state.tracks[oldKey]
+								state.tracks[newKey] = trackAfterMeta
+							} else {
+								// 如果 key 不变，直接更新
+								state.tracks[oldKey] = trackAfterMeta
 							}
 						}),
 					)
 				}
-				const result = await checkAndUpdateAudioStream(updatedTrack)
-				if (result.isErr()) {
-					return err(result.error)
-				}
+
+				// 2. 获取和更新音频流
+				const result = await checkAndUpdateAudioStream(trackAfterMeta)
+				if (result.isErr()) return err(result.error)
+
 				const { track: finalTrack, needsUpdate } = result.value
 				if (needsUpdate) {
+					// 这里 key 不会再变，因为 id 和 cid 不会再被修改
+					const finalKey = getTrackKey(finalTrack)
 					set(
 						produce((state: PlayerState) => {
-							const queueIndex = state.queue.findIndex((t) =>
-								isTargetTrack(t, finalTrack.id, finalTrack.cid),
-							)
-							if (queueIndex !== -1) {
-								state.queue[queueIndex] = finalTrack
-							}
-							const shuffledQueueIndex = state.shuffledQueue.findIndex((t) =>
-								isTargetTrack(t, finalTrack.id, finalTrack.cid),
-							)
-							if (shuffledQueueIndex !== -1) {
-								state.shuffledQueue[shuffledQueueIndex] = finalTrack
-							}
+							state.tracks[finalKey] = finalTrack
 						}),
 					)
 				}
-				return ok({ track: finalTrack, needsUpdate: true })
+
+				return ok({ track: finalTrack, needsUpdate })
 			} catch (error) {
 				return err(error)
 			}
 		},
 
 		skipToTrack: async (index: number) => {
-			const { shuffleMode, shuffledQueue, queue } = get()
-			const currentQueue = shuffleMode ? shuffledQueue : queue
+			const activeList = get()._getActiveList()
 
-			if (!checkPlayerReady()) return
-			if (index < 0 || index >= currentQueue.length) {
+			if (!checkPlayerReady() || index < 0 || index >= activeList.length) {
 				playerLog.debug('skipToTrack 索引超出范围', {
 					index,
-					queueSize: currentQueue.length,
+					queueSize: activeList.length,
 				})
 				return
 			}
 
-			const track = currentQueue[index]
-			if (!track) {
-				playerLog.debug('未找到指定索引的曲目', { index })
+			const keyToPlay = activeList[index]
+			const initialTrack = get().tracks[keyToPlay]
+
+			if (!initialTrack) {
+				playerLog.error('未找到指定 key 的曲目', { key: keyToPlay })
 				return
 			}
 
-			playerLog.debug(`跳转到曲目: index=${index}, title=${track.title}`)
-			if (track.hasMetadata) {
-				set({ currentTrack: track, isBuffering: true, currentIndex: index })
-			}
+			playerLog.debug(
+				`跳转到曲目: index=${index}, key=${keyToPlay}, title=${initialTrack.title}`,
+			)
+			set({ currentTrackKey: keyToPlay, isBuffering: true })
 
-			const updatedTrackResult = await get().patchMetadataAndAudio(track)
+			// 1. 获取最新的元数据和音频流
+			const updatedTrackResult = await get().patchMetadataAndAudio(initialTrack)
 			if (updatedTrackResult.isErr()) {
 				playerLog.sentry('更新音频流失败', updatedTrackResult.error)
-				TrackPlayer.pause()
+				await TrackPlayer.pause()
 				Toast.error('播放失败: 更新音频流失败', {
-					description: `id: ${track.id}，错误：${updatedTrackResult.error}`,
-					duration: Number.POSITIVE_INFINITY,
+					/* ... */
 				})
 				return
 			}
-			const updatedTrack = updatedTrackResult.value.track
 
-			const rntpTrackResult = convertToRNTPTrack(updatedTrack)
+			// 2. 使用最终的、最新的 track 对象进行播放
+			const finalTrack = updatedTrackResult.value.track
+			const finalKey = getTrackKey(finalTrack) // 获取最终的 key
+
+			const rntpTrackResult = convertToRNTPTrack(finalTrack)
 			if (rntpTrackResult.isErr()) {
-				playerLog.sentry('转换为 RNTP 对象失败', rntpTrackResult.error)
-				TrackPlayer.pause()
-				Toast.error('播放失败: 转换播放器对象失败', {
-					description: `id: ${updatedTrack.id}，错误：${rntpTrackResult.error}`,
-					duration: Number.POSITIVE_INFINITY,
-				})
+				playerLog.sentry('转换为 RNTPTrack 失败', rntpTrackResult.error)
 				return
 			}
+
 			await TrackPlayer.load(rntpTrackResult.value)
-			reportPlaybackHistory(updatedTrack).catch((error) =>
-				playerLog.error('上报播放历史失败 (捕获到非预期错误)', error),
+			await TrackPlayer.play()
+			reportPlaybackHistory(finalTrack).catch((error) =>
+				playerLog.error('上报播放历史失败', error),
 			)
 
-			set(
-				produce((state: PlayerState) => {
-					state.currentIndex = index
-					state.currentTrack = updatedTrack
-				}),
-			)
+			set({
+				currentTrackKey: finalKey,
+				isPlaying: true,
+				isBuffering: false,
+			})
+
 			get().preloadTracks(index)
 		},
 	}
