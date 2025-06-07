@@ -7,13 +7,13 @@ import { type Result, ResultAsync } from 'neverthrow'
  * @returns Promise<T> which resolves with value T or rejects with error E.
  */
 export async function returnOrThrowAsync<T, E>(
-  resultAsync: ResultAsync<T, E>,
+	resultAsync: ResultAsync<T, E>,
 ): Promise<T> {
-  const result = await resultAsync
-  if (result.isOk()) {
-    return result.value
-  }
-  throw result.error
+	const result = await resultAsync
+	if (result.isOk()) {
+		return result.value
+	}
+	throw result.error
 }
 
 /**
@@ -24,7 +24,7 @@ export async function returnOrThrowAsync<T, E>(
  * you must ensure that `func` will never reject.
  */
 export function wrapResultAsyncFunction<A extends unknown[], T, E>(
-  func: (...args: A) => Promise<Result<T, E>>,
+	func: (...args: A) => Promise<Result<T, E>>,
 ): (...args: A) => ResultAsync<T, E> {
-  return (...args): ResultAsync<T, E> => new ResultAsync(func(...args))
+	return (...args): ResultAsync<T, E> => new ResultAsync(func(...args))
 }

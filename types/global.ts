@@ -1,5 +1,5 @@
 export {}
 
 declare global {
-  var playerIsReady: boolean
+	var playerIsReady: boolean
 }

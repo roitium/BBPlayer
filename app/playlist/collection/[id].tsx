@@ -3,11 +3,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
-  ActivityIndicator,
-  Appbar,
-  Button,
-  Text,
-  useTheme,
+	ActivityIndicator,
+	Appbar,
+	Button,
+	Text,
+	useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
@@ -23,250 +23,250 @@ import Toast from '@/utils/toast'
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 export default function CollectionPage() {
-  const { id } = useLocalSearchParams()
-  const router = useRouter()
-  const { colors } = useTheme()
-  const addToQueue = usePlayerStore((state) => state.addToQueue)
-  const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const [refreshing, setRefreshing] = useState(false)
-  const insets = useSafeAreaInsets()
-  const [modalVisible, setModalVisible] = useState(false)
-  const [currentModalBvid, setCurrentModalBvid] = useState('')
+	const { id } = useLocalSearchParams()
+	const router = useRouter()
+	const { colors } = useTheme()
+	const addToQueue = usePlayerStore((state) => state.addToQueue)
+	const currentTrack = usePlayerStore((state) => state.currentTrack)
+	const [refreshing, setRefreshing] = useState(false)
+	const insets = useSafeAreaInsets()
+	const [modalVisible, setModalVisible] = useState(false)
+	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
-  const {
-    data: collectionData,
-    isPending: isCollectionDataPending,
-    isError: isCollectionDataError,
-    refetch,
-  } = useCollectionAllContents(Number(id))
+	const {
+		data: collectionData,
+		isPending: isCollectionDataPending,
+		isError: isCollectionDataError,
+		refetch,
+	} = useCollectionAllContents(Number(id))
 
-  const playAll = useCallback(
-    async (startFromId?: string) => {
-      try {
-        if (!collectionData?.medias) {
-          Toast.error('播放全部失败', {
-            description: '无法加载收藏夹内容',
-          })
-          playlistLog.error(
-            '播放全部失败 - collectionData.medias 为空',
-            collectionData,
-          )
-          return
-        }
-        await addToQueue({
-          tracks: collectionData.medias,
-          playNow: true,
-          clearQueue: true,
-          startFromId,
-          playNext: false,
-        })
-      } catch (error) {
-        playlistLog.sentry('播放全部失败', error)
-        Toast.error('播放全部失败', { description: '发生未知错误' })
-      }
-    },
-    [addToQueue, collectionData],
-  )
+	const playAll = useCallback(
+		async (startFromId?: string) => {
+			try {
+				if (!collectionData?.medias) {
+					Toast.error('播放全部失败', {
+						description: '无法加载收藏夹内容',
+					})
+					playlistLog.error(
+						'播放全部失败 - collectionData.medias 为空',
+						collectionData,
+					)
+					return
+				}
+				await addToQueue({
+					tracks: collectionData.medias,
+					playNow: true,
+					clearQueue: true,
+					startFromId,
+					playNext: false,
+				})
+			} catch (error) {
+				playlistLog.sentry('播放全部失败', error)
+				Toast.error('播放全部失败', { description: '发生未知错误' })
+			}
+		},
+		[addToQueue, collectionData],
+	)
 
-  const playNext = useCallback(
-    async (track: Track) => {
-      try {
-        await addToQueue({
-          tracks: [track],
-          playNow: false,
-          clearQueue: false,
-          playNext: true,
-        })
-        Toast.success(`已添加 ${track.title} 到下一首播放`)
-      } catch (error) {
-        playlistLog.sentry('添加到队列失败', error)
-        Toast.error('添加到队列失败')
-      }
-    },
-    [addToQueue],
-  )
+	const playNext = useCallback(
+		async (track: Track) => {
+			try {
+				await addToQueue({
+					tracks: [track],
+					playNow: false,
+					clearQueue: false,
+					playNext: true,
+				})
+				Toast.success(`已添加 ${track.title} 到下一首播放`)
+			} catch (error) {
+				playlistLog.sentry('添加到队列失败', error)
+				Toast.error('添加到队列失败')
+			}
+		},
+		[addToQueue],
+	)
 
-  const trackMenuItems = useCallback(
-    (item: Track) => [
-      {
-        title: '下一首播放',
-        leadingIcon: 'play-circle-outline',
-        onPress: playNext,
-      },
-      {
-        title: '添加到收藏夹',
-        leadingIcon: 'plus',
-        onPress: () => {
-          setCurrentModalBvid(item.id)
-          setModalVisible(true)
-        },
-      },
-    ],
-    [playNext],
-  )
+	const trackMenuItems = useCallback(
+		(item: Track) => [
+			{
+				title: '下一首播放',
+				leadingIcon: 'play-circle-outline',
+				onPress: playNext,
+			},
+			{
+				title: '添加到收藏夹',
+				leadingIcon: 'plus',
+				onPress: () => {
+					setCurrentModalBvid(item.id)
+					setModalVisible(true)
+				},
+			},
+		],
+		[playNext],
+	)
 
-  const handleTrackPress = useCallback(
-    (track: Track) => {
-      playAll(track.id)
-    },
-    [playAll],
-  )
+	const handleTrackPress = useCallback(
+		(track: Track) => {
+			playAll(track.id)
+		},
+		[playAll],
+	)
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: Track; index: number }) => {
-      return (
-        <TrackListItem
-          item={item}
-          index={index}
-          onTrackPress={handleTrackPress}
-          menuItems={trackMenuItems(item)}
-        />
-      )
-    },
-    [handleTrackPress, trackMenuItems],
-  )
+	const renderItem = useCallback(
+		({ item, index }: { item: Track; index: number }) => {
+			return (
+				<TrackListItem
+					item={item}
+					index={index}
+					onTrackPress={handleTrackPress}
+					menuItems={trackMenuItems(item)}
+				/>
+			)
+		},
+		[handleTrackPress, trackMenuItems],
+	)
 
-  const keyExtractor = useCallback((item: Track) => item.id, [])
+	const keyExtractor = useCallback((item: Track) => item.id, [])
 
-  useEffect(() => {
-    if (typeof id !== 'string') {
-      // @ts-expect-error: 触发 404
-      router.replace('/not-found')
-    }
-  }, [id, router])
+	useEffect(() => {
+		if (typeof id !== 'string') {
+			// @ts-expect-error: 触发 404
+			router.replace('/not-found')
+		}
+	}, [id, router])
 
-  if (typeof id !== 'string') {
-    return
-  }
+	if (typeof id !== 'string') {
+		return
+	}
 
-  if (isCollectionDataPending) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.background,
-        }}
-      >
-        <ActivityIndicator size='large' />
-      </View>
-    )
-  }
+	if (isCollectionDataPending) {
+		return (
+			<View
+				style={{
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'center',
+					backgroundColor: colors.background,
+				}}
+			>
+				<ActivityIndicator size='large' />
+			</View>
+		)
+	}
 
-  if (isCollectionDataError || !collectionData) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 16,
-          backgroundColor: colors.background,
-        }}
-      >
-        <Text
-          variant='titleMedium'
-          style={{ textAlign: 'center', marginBottom: 16 }}
-        >
-          加载收藏夹内容失败
-        </Text>
-        <Button
-          onPress={() => refetch()}
-          mode='contained'
-        >
-          重试
-        </Button>
-      </View>
-    )
-  }
+	if (isCollectionDataError || !collectionData) {
+		return (
+			<View
+				style={{
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'center',
+					padding: 16,
+					backgroundColor: colors.background,
+				}}
+			>
+				<Text
+					variant='titleMedium'
+					style={{ textAlign: 'center', marginBottom: 16 }}
+				>
+					加载收藏夹内容失败
+				</Text>
+				<Button
+					onPress={() => refetch()}
+					mode='contained'
+				>
+					重试
+				</Button>
+			</View>
+		)
+	}
 
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
-      {/* App Bar */}
-      <Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 10 }}>
-        <Appbar.BackAction onPress={() => router.back()} />
-      </Appbar.Header>
+	return (
+		<View
+			style={{
+				flex: 1,
+				backgroundColor: colors.background,
+			}}
+		>
+			{/* App Bar */}
+			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 10 }}>
+				<Appbar.BackAction onPress={() => router.back()} />
+			</Appbar.Header>
 
-      {/* 顶部背景图 */}
-      <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
-        <Image
-          source={{ uri: collectionData?.info.cover }}
-          style={{
-            width: '100%',
-            height: '100%',
-            opacity: 0.15,
-          }}
-          blurRadius={15}
-        />
-      </View>
+			{/* 顶部背景图 */}
+			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
+				<Image
+					source={{ uri: collectionData?.info.cover }}
+					style={{
+						width: '100%',
+						height: '100%',
+						opacity: 0.15,
+					}}
+					blurRadius={15}
+				/>
+			</View>
 
-      {/* Content Area */}
-      <View
-        style={{
-          flex: 1,
-          paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
-        }}
-      >
-        <FlatList
-          data={collectionData.medias}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: 0 }}
-          ListHeaderComponent={
-            <PlaylistHeader
-              coverUri={collectionData.info.cover}
-              title={collectionData.info.title}
-              subtitle={`${collectionData.info.upper.name} • ${collectionData.info.media_count} 首歌曲`}
-              description={collectionData.info.intro}
-              onPlayAll={() => playAll()}
-            />
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={async () => {
-                setRefreshing(true)
-                await refetch()
-                setRefreshing(false)
-              }}
-              colors={[colors.primary]}
-            />
-          }
-          ListFooterComponent={
-            <Text
-              variant='titleMedium'
-              style={{ textAlign: 'center', paddingTop: 10 }}
-            >
-              •
-            </Text>
-          }
-        />
-      </View>
+			{/* Content Area */}
+			<View
+				style={{
+					flex: 1,
+					paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
+				}}
+			>
+				<FlatList
+					data={collectionData.medias}
+					renderItem={renderItem}
+					keyExtractor={keyExtractor}
+					showsVerticalScrollIndicator={false}
+					contentContainerStyle={{ paddingTop: 0 }}
+					ListHeaderComponent={
+						<PlaylistHeader
+							coverUri={collectionData.info.cover}
+							title={collectionData.info.title}
+							subtitle={`${collectionData.info.upper.name} • ${collectionData.info.media_count} 首歌曲`}
+							description={collectionData.info.intro}
+							onPlayAll={() => playAll()}
+						/>
+					}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={async () => {
+								setRefreshing(true)
+								await refetch()
+								setRefreshing(false)
+							}}
+							colors={[colors.primary]}
+						/>
+					}
+					ListFooterComponent={
+						<Text
+							variant='titleMedium'
+							style={{ textAlign: 'center', paddingTop: 10 }}
+						>
+							•
+						</Text>
+					}
+				/>
+			</View>
 
-      <AddToFavoriteListsModal
-        visible={modalVisible}
-        bvid={currentModalBvid}
-        setVisible={setModalVisible}
-      />
+			<AddToFavoriteListsModal
+				visible={modalVisible}
+				bvid={currentModalBvid}
+				setVisible={setModalVisible}
+			/>
 
-      {/* Now Playing Bar */}
-      <View
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: insets.bottom,
-          left: 0,
-        }}
-      >
-        <NowPlayingBar />
-      </View>
-    </View>
-  )
+			{/* Now Playing Bar */}
+			<View
+				style={{
+					position: 'absolute',
+					right: 0,
+					bottom: insets.bottom,
+					left: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
+		</View>
+	)
 }
