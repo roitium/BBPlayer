@@ -363,7 +363,7 @@ export const createBilibiliApi = () => ({
 
 		const csrfToken = useAppStore
 			.getState()
-			.bilibiliCookieList.find((cookie) => cookie.name === 'bili_jct')?.value
+			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
 
 		if (!csrfToken) {
 			return errAsync(new CsrfError('未找到 CSRF Token'))
@@ -448,7 +448,7 @@ export const createBilibiliApi = () => ({
 		const delInFavoriteIdsCombined = delInFavoriteIds.join(',')
 		const csrfToken = useAppStore
 			.getState()
-			.bilibiliCookieList.find((cookie) => cookie.name === 'bili_jct')?.value
+			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
 
 		if (!csrfToken) {
 			return errAsync(new CsrfError('未找到 CSRF Token'))
@@ -501,7 +501,7 @@ export const createBilibiliApi = () => ({
 		const avid = bv2av(bvid)
 		const csrfToken = useAppStore
 			.getState()
-			.bilibiliCookieList.find((cookie) => cookie.name === 'bili_jct')?.value
+			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
 		if (!csrfToken) {
 			return errAsync(new CsrfError('未找到 CSRF Token'))
 		}

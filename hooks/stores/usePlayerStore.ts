@@ -89,48 +89,74 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 		removeTrack: async (id: string, cid: number | undefined) => {
 			playerLog.debug('removeTrack()', { id, cid })
-			const { tracks, currentTrackKey } = get()
+			const { tracks, currentTrackKey: initialCurrentKey } = get()
 
-			// 通过 id 和 cid 反向查找 key
-			const keyToRemove = Object.keys(tracks).find((key) =>
-				isTargetTrack(tracks[key], id, cid),
-			)
+			// 根据 id 和 cid 找到 key
+			const keyToRemove = Object.keys(tracks).find((key) => {
+				const track = tracks[key]
+				return track.id === id && (!track.isMultiPage || track.cid === cid)
+			})
 
 			if (!keyToRemove) {
-				Toast.error('播放器异常', {
-					description: '在播放列表中找不到该曲目，已重置播放器',
-				})
+				Toast.error('播放器异常', { description: '找不到该曲目' })
+				return
+			}
+
+			if (initialCurrentKey !== keyToRemove) {
+				set(
+					produce((state: PlayerState) => {
+						delete state.tracks[keyToRemove]
+						const orderedIndex = state.orderedList.indexOf(keyToRemove)
+						if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
+						const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
+						if (shuffledIndex > -1) state.shuffledList.splice(shuffledIndex, 1)
+					}),
+				)
+				return
+			}
+
+			// 只有在删除当前正在播放的歌曲时，才需要复杂的处理
+			const activeList = get()._getActiveList()
+
+			// 如果是最后一首歌
+			if (activeList.length === 1) {
 				await get().resetStore()
 				return
 			}
 
-			// 如果删除的是当前歌曲，先处理播放状态
-			if (currentTrackKey === keyToRemove) {
-				if (get()._getActiveList().length === 1) {
-					await get().resetStore()
-					return
-				}
-				// 这里我们假设 skipToNext/Previous 会处理好跳转
-				// 为了避免竞态条件，先跳转再删除
-				const currentTrack = get()._getCurrentTrack()
-				const lastTrackKey = get()._getActiveList().at(-1)
+			const currentIndex = activeList.indexOf(keyToRemove)
+			const isLastTrack = currentIndex === activeList.length - 1
 
-				if (currentTrack && getTrackKey(currentTrack) === lastTrackKey) {
-					await get().skipToPrevious()
-				} else {
-					await get().skipToNext()
-				}
-			}
+			const nextIndexToPlayInOldList = isLastTrack
+				? currentIndex - 1
+				: currentIndex + 1
+			const nextTrackKeyToPlay = activeList[nextIndexToPlayInOldList]
 
 			set(
 				produce((state: PlayerState) => {
+					// 删除 track 数据
 					delete state.tracks[keyToRemove]
+
+					// 从顺序列表中删除
 					const orderedIndex = state.orderedList.indexOf(keyToRemove)
 					if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
+
+					// 从随机列表中删除
 					const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
 					if (shuffledIndex > -1) state.shuffledList.splice(shuffledIndex, 1)
+
+					state.currentTrackKey = nextTrackKeyToPlay
 				}),
 			)
+
+			const newActiveList = get()._getActiveList()
+			const finalIndexToPlay = newActiveList.indexOf(nextTrackKeyToPlay)
+
+			if (finalIndexToPlay !== -1) {
+				await get().skipToTrack(finalIndexToPlay)
+			} else {
+				await get().resetStore()
+			}
 		},
 
 		/**
