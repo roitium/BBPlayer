@@ -7,12 +7,13 @@ import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import Toast from '@/utils/toast'
 
 export default function TestPage() {
-	const clearQueue = usePlayerStore((state) => state.clearQueue)
-	const queue = usePlayerStore((state) => state.queue)
+	const clearQueue = usePlayerStore((state) => state.resetStore)
+	const queue = useCurrentQueue()
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
 	const insets = useSafeAreaInsets()

@@ -8,8 +8,11 @@ import {
 	TouchableRipple,
 	useTheme,
 } from 'react-native-paper'
+import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import { isTargetTrack } from '@/utils/player'
 
 const TrackItem = memo(
 	({
@@ -83,25 +86,21 @@ const TrackItem = memo(
 TrackItem.displayName = 'TrackItem'
 
 function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
-	const shuffleMode = usePlayerStore((state) => state.shuffleMode)
-	const queue = usePlayerStore((state) => state.queue)
+	const queue = useCurrentQueue()
 	const removeTrack = usePlayerStore((state) => state.removeTrack)
-	const currentTrack = usePlayerStore((state) => state.currentTrack)
-	const shuffledQueue = usePlayerStore((state) => state.shuffledQueue)
+	const currentTrack = useCurrentTrack()
 	const skipToTrack = usePlayerStore((state) => state.skipToTrack)
 	const theme = useTheme()
 
 	const switchTrackHandler = useCallback(
 		(track: Track) => {
-			const index = shuffleMode
-				? shuffledQueue.findIndex(
-						(t) => t.id === track.id && t.cid === track.cid,
-					)
-				: queue.findIndex((t) => t.id === track.id && t.cid === track.cid)
+			const index = queue.findIndex((t) =>
+				isTargetTrack(t, track.id, track.cid),
+			)
 			if (index === -1) return
 			skipToTrack(index)
 		},
-		[skipToTrack, queue, shuffledQueue, shuffleMode],
+		[skipToTrack, queue],
 	)
 
 	const removeTrackHandler = useCallback(
@@ -148,7 +147,7 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
 			}}
 		>
 			<BottomSheetFlatList
-				data={shuffleMode ? shuffledQueue : queue}
+				data={queue}
 				keyExtractor={keyExtractor}
 				renderItem={renderItem}
 				contentContainerStyle={{

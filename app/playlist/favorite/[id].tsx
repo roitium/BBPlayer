@@ -8,6 +8,7 @@ import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useBatchDeleteFavoriteListContents,
 	useInfiniteFavoriteList,
@@ -25,7 +26,7 @@ export default function FavoritePage() {
 	const { colors } = useTheme()
 	const router = useRouter()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const currentTrack = usePlayerStore((state) => state.currentTrack)
+	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const { mutate } = useBatchDeleteFavoriteListContents()
 	const insets = useSafeAreaInsets()

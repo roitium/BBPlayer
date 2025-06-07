@@ -236,6 +236,17 @@ function isTargetTrack(
 	return track.id === targetId
 }
 
+function getTrackKey(track: {
+	id: string
+	cid?: number
+	isMultiPage?: boolean
+}): string {
+	if (track.isMultiPage && track.cid) {
+		return `${track.id}-${track.cid}`
+	}
+	return track.id
+}
+
 /**
  * 上报播放记录
  * 由于这只是一个非常边缘的功能，我们不关心他是否出错，所以发生报错时只写个 log，返回 void
@@ -268,4 +279,5 @@ export {
 	checkBilibiliAudioExpiry,
 	isTargetTrack,
 	reportPlaybackHistory,
+	getTrackKey,
 }

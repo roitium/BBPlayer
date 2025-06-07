@@ -8,6 +8,7 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaybackProgress,
 	usePlayerStore,
@@ -16,7 +17,7 @@ import TouchableOpacity from './TouchableOpacity'
 
 export default function NowPlayingBar() {
 	const { colors } = useTheme()
-	const currentTrack = usePlayerStore((state) => state.currentTrack)
+	const currentTrack = useCurrentTrack()
 	const isPlaying = usePlayerStore((state) => state.isPlaying)
 	const progress = usePlaybackProgress(100)
 	const [internalProgressPosition, setInternalProgressPosition] = useState(0)
