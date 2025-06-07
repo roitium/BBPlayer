@@ -1,8 +1,6 @@
-import Bottleneck from 'bottleneck'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/utils/errors'
-import { wrapResultAsyncFunction } from '@/utils/neverthrowUtils'
 
 type ReqResponse<T> = {
 	code: number
@@ -12,10 +10,6 @@ type ReqResponse<T> = {
 
 class ApiClient {
 	private baseUrl = 'https://api.bilibili.com'
-	private throttle = new Bottleneck({
-		minTime: 1,
-		maxConcurrent: 100,
-	})
 
 	/**
 	 * 核心请求方法，使用 neverthrow 进行封装
@@ -120,11 +114,7 @@ class ApiClient {
 		} else if (params) {
 			url = `${endpoint}?${new URLSearchParams(params).toString()}`
 		}
-		return wrapResultAsyncFunction(() =>
-			this.throttle.schedule(() =>
-				this.request<T>(url, { method: 'GET' }, fullUrl, allowMissingCookie),
-			),
-		)()
+		return this.request<T>(url, { method: 'GET' }, fullUrl, allowMissingCookie)
 	}
 
 	/**
@@ -143,23 +133,19 @@ class ApiClient {
 		fullUrl?: string,
 		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> {
-		return wrapResultAsyncFunction(() =>
-			this.throttle.schedule(() =>
-				this.request<T>(
-					endpoint,
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/x-www-form-urlencoded',
-							...headers,
-						},
-						body: data,
-					},
-					fullUrl,
-					allowMissingCookie,
-				),
-			),
-		)()
+		return this.request<T>(
+			endpoint,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					...headers,
+				},
+				body: data,
+			},
+			fullUrl,
+			allowMissingCookie,
+		)
 	}
 }
 

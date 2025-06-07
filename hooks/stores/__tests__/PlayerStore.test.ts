@@ -80,13 +80,27 @@ jest.mock('@/utils/player', () => ({
 	}),
 }))
 
+// jest.mock('@/utils/log', () => {
+// 	const mockLog = {
+// 		debug: jest.fn(),
+// 		info: jest.fn(),
+// 		warn: jest.fn(),
+// 		error: jest.fn(),
+// 		sentry: jest.fn(),
+// 	}
+// 	return {
+// 		...mockLog,
+// 		extend: () => mockLog,
+// 	}
+// })
+
 jest.mock('@/utils/log', () => {
 	const mockLog = {
-		debug: jest.fn((...args) => console.log(...args)),
-		info: jest.fn((...args) => console.log(...args)),
-		warn: jest.fn((...args) => console.log(...args)),
-		error: jest.fn((...args) => console.log(...args)),
-		sentry: jest.fn((...args) => console.log(...args)),
+		debug: jest.fn(),
+		info: jest.fn(),
+		warn: jest.fn(),
+		error: jest.fn(),
+		sentry: jest.fn(),
 	}
 	return {
 		...mockLog,

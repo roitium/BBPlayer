@@ -222,10 +222,6 @@ async function checkAndUpdateAudioStream(
 	}
 
 	const unknownSourceError = new Error(`未知的 Track source: ${track.source}`)
-	// playerLog.sentry(unknownSourceError.message, {
-	//   trackId: track.id,
-	//   source: track.source,
-	// })
 	return err(unknownSourceError)
 }
 
@@ -242,7 +238,7 @@ function isTargetTrack(
 
 /**
  * 上报播放记录
- * 由于这只是一个非常边缘的功能，所以发生报错时只写个 log，返回 void
+ * 由于这只是一个非常边缘的功能，我们不关心他是否出错，所以发生报错时只写个 log，返回 void
  */
 async function reportPlaybackHistory(track: Track): Promise<void> {
 	if (!useAppStore.getState().settings.sendPlayHistory) return
