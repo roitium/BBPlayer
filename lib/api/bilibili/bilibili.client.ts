@@ -21,16 +21,18 @@ class ApiClient {
 	 * 核心请求方法，使用 neverthrow 进行封装
 	 * @param endpoint API 端点
 	 * @param options Fetch 请求选项
+	 * @param allowMissingCookie 是否允许缺少 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	private request = <T>(
 		endpoint: string,
 		options: RequestInit = {},
 		fullUrl?: string,
+		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> => {
 		const url = fullUrl || `${this.baseUrl}${endpoint}`
 		const cookie = useAppStore.getState().bilibiliCookieString
-		if (!cookie) {
+		if (!cookie && !allowMissingCookie) {
 			return errAsync(
 				new BilibiliApiError(
 					'未设置 bilibili Cookie，请先登录',
@@ -42,7 +44,7 @@ class ApiClient {
 		}
 
 		const headers = {
-			Cookie: cookie,
+			Cookie: cookie ?? '',
 			'User-Agent':
 				'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 BiliApp/6.66.0',
 			...options.headers,
@@ -103,12 +105,14 @@ class ApiClient {
 	 * @param endpoint API 端点
 	 * @param params URL 查询参数
 	 * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
+	 * @param allowMissingCookie 是否允许缺少 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	get<T>(
 		endpoint: string,
 		params?: Record<string, string> | string,
 		fullUrl?: string,
+		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> {
 		let url = endpoint
 		if (typeof params === 'string') {
@@ -118,7 +122,7 @@ class ApiClient {
 		}
 		return wrapResultAsyncFunction(() =>
 			this.throttle.schedule(() =>
-				this.request<T>(url, { method: 'GET' }, fullUrl),
+				this.request<T>(url, { method: 'GET' }, fullUrl, allowMissingCookie),
 			),
 		)()
 	}
@@ -129,6 +133,7 @@ class ApiClient {
 	 * @param data 请求体数据
 	 * @param headers 请求头（默认请求类型为 application/x-www-form-urlencoded）
 	 * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
+	 * @param allowMissingCookie 是否允许缺少 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	post<T>(
@@ -136,6 +141,7 @@ class ApiClient {
 		data?: BodyInit,
 		headers?: Record<string, string>,
 		fullUrl?: string,
+		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> {
 		return wrapResultAsyncFunction(() =>
 			this.throttle.schedule(() =>
@@ -150,6 +156,7 @@ class ApiClient {
 						body: data,
 					},
 					fullUrl,
+					allowMissingCookie,
 				),
 			),
 		)()
