@@ -491,8 +491,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			}
 		},
 
-		// ✨ REFACTORED: skipToTrack
-		// 接口保持不变 (接收 index)，内部逻辑完全基于 key
 		skipToTrack: async (index: number) => {
 			const activeList = get()._getActiveList()
 
@@ -534,24 +532,22 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 			const rntpTrackResult = convertToRNTPTrack(finalTrack)
 			if (rntpTrackResult.isErr()) {
-				// ... 错误处理
+				playerLog.sentry('转换为 RNTPTrack 失败', rntpTrackResult.error)
 				return
 			}
 
-			// 3. 加载并上报
 			await TrackPlayer.load(rntpTrackResult.value)
+			await TrackPlayer.play()
 			reportPlaybackHistory(finalTrack).catch((error) =>
 				playerLog.error('上报播放历史失败', error),
 			)
 
-			// 4. 更新最终状态
 			set({
-				currentTrackKey: finalKey, // 使用最终的 key，确保同步
+				currentTrackKey: finalKey,
 				isPlaying: true,
 				isBuffering: false,
 			})
 
-			// 5. 预加载
 			get().preloadTracks(index)
 		},
 	}

@@ -86,8 +86,11 @@ const PlayerLogic = {
 			Event.PlaybackState,
 			async (data: { state: TrackPlayerState }) => {
 				const { state } = data
-				const store = usePlayerStore.getState()
 				const setter = usePlayerStore.setState
+				const store = usePlayerStore.getState()
+				const currentTrack = store.currentTrackKey
+					? (store.tracks[store.currentTrackKey] ?? null)
+					: null
 
 				// 获取状态名称用于日志
 				const stateName =
@@ -96,16 +99,10 @@ const PlayerLogic = {
 							TrackPlayerState[key as keyof typeof TrackPlayerState] === state,
 					) || state.toString()
 
-				playerLog.debug('播放状态变化', {
-					stateValue: state,
-					stateName,
-					currentTrack: store.currentTrack?.title,
-				})
-
 				if (state === TrackPlayerState.Playing) {
 					playerLog.debug('播放状态: 播放中', {
-						trackId: store.currentTrack?.id,
-						title: store.currentTrack?.title,
+						trackId: currentTrack?.id,
+						title: currentTrack?.title,
 					})
 					setter((state) => ({ ...state, isPlaying: true, isBuffering: false }))
 				} else if (
@@ -114,8 +111,8 @@ const PlayerLogic = {
 				) {
 					playerLog.debug('播放状态: 暂停/停止', {
 						state: stateName,
-						trackId: store.currentTrack?.id,
-						title: store.currentTrack?.title,
+						trackId: currentTrack?.id,
+						title: currentTrack?.title,
 					})
 					setter((state) => ({
 						...state,
@@ -128,14 +125,14 @@ const PlayerLogic = {
 				) {
 					playerLog.debug('播放状态: 缓冲中/加载中', {
 						state: stateName,
-						trackId: store.currentTrack?.id,
-						title: store.currentTrack?.title,
+						trackId: currentTrack?.id,
+						title: currentTrack?.title,
 					})
 					setter((state) => ({ ...state, isBuffering: true }))
 				} else if (state === TrackPlayerState.Ready) {
 					playerLog.debug('播放状态: 就绪', {
-						trackId: store.currentTrack?.id,
-						title: store.currentTrack?.title,
+						trackId: currentTrack?.id,
+						title: currentTrack?.title,
 					})
 					setter((state) => ({ ...state, isBuffering: false }))
 				}
@@ -155,11 +152,6 @@ const PlayerLogic = {
 
 			// 单曲结束后的行为
 			if (repeatMode !== RepeatMode.Track) {
-				// 如果不是单曲循环，则触发切换到下一首
-				playerLog.debug(
-					'当前队列：',
-					store.queue.map((track) => track.title),
-				)
 				await store.skipToNext()
 			}
 		})
@@ -176,7 +168,10 @@ const PlayerLogic = {
 				} else {
 					playerLog.sentry('播放错误', data)
 				}
-				const nowTrack = usePlayerStore.getState().currentTrack
+				const state = usePlayerStore.getState()
+				const nowTrack = state.currentTrackKey
+					? (state.tracks[state.currentTrackKey] ?? null)
+					: null
 				if (nowTrack) {
 					playerLog.debug('当前播放的曲目', {
 						trackId: nowTrack.id,
