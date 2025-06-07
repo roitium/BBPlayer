@@ -1,6 +1,10 @@
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Image, View } from 'react-native'
+import {
+	Image,
+	TouchableOpacity as RNTouchableOpacity,
+	View,
+} from 'react-native'
 import {
 	IconButton,
 	ProgressBar,
@@ -13,7 +17,6 @@ import {
 	usePlaybackProgress,
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
-import TouchableOpacity from './TouchableOpacity'
 
 export default function NowPlayingBar() {
 	const { colors } = useTheme()
@@ -48,7 +51,7 @@ export default function NowPlayingBar() {
 			}}
 			elevation={2}
 		>
-			<TouchableOpacity
+			<RNTouchableOpacity
 				style={{ position: 'relative' }}
 				onPress={() => {
 					router.push('/player')
@@ -106,25 +109,34 @@ export default function NowPlayingBar() {
 						<IconButton
 							icon='skip-previous'
 							size={24}
-							onPress={skipToPrevious}
+							onPress={(e) => {
+								e.stopPropagation()
+								skipToPrevious()
+							}}
 							iconColor={colors.onSurface}
 						/>
 						<IconButton
 							icon={isPlaying ? 'pause' : 'play'}
 							size={24}
-							onPress={togglePlay}
+							onPress={(e) => {
+								e.stopPropagation()
+								togglePlay()
+							}}
 							iconColor={colors.primary}
 							style={{ marginHorizontal: 0 }}
 						/>
 						<IconButton
 							icon='skip-next'
 							size={24}
-							onPress={skipToNext}
+							onPress={(e) => {
+								e.stopPropagation()
+								skipToNext()
+							}}
 							iconColor={colors.onSurface}
 						/>
 					</View>
 				</View>
-			</TouchableOpacity>
+			</RNTouchableOpacity>
 		</Surface>
 	)
 }

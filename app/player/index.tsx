@@ -5,6 +5,7 @@ import { router, Stack } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
 import { Animated, Dimensions, View } from 'react-native'
+import { Pressable } from 'react-native-gesture-handler'
 import {
 	Divider,
 	IconButton,
@@ -22,7 +23,6 @@ import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
-import TouchableOpacity from '@/components/TouchableOpacity'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
 import {
@@ -235,10 +235,7 @@ export default function PlayerPage() {
 							paddingVertical: 24,
 						}}
 					>
-						<TouchableOpacity
-							activeOpacity={0.9}
-							onPress={toggleViewMode}
-						>
+						<Pressable onPress={toggleViewMode}>
 							<Surface
 								elevation={5}
 								style={{ borderRadius: 16 }}
@@ -253,7 +250,7 @@ export default function PlayerPage() {
 									transition={300}
 								/>
 							</Surface>
-						</TouchableOpacity>
+						</Pressable>
 					</View>
 
 					{/* 歌曲信息 */}
