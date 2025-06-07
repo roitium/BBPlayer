@@ -1,6 +1,6 @@
 import { router } from 'expo-router' // Import router
 import { useCallback, useState } from 'react'
-import { ScrollView, TouchableOpacity, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
 import {
   ActivityIndicator,
@@ -11,6 +11,7 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import TouchableOpacity from '@/components/TouchableOpacity'
 import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
 import log from '@/utils/log'
 

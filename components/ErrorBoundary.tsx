@@ -1,5 +1,6 @@
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Button } from 'react-native-paper'
+import TouchableOpacity from './TouchableOpacity'
 
 export default function GlobalErrorFallback({
   error,

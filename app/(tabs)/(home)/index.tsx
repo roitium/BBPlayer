@@ -2,16 +2,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { memo, useCallback, useEffect, useState } from 'react'
-import {
-  FlatList,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { FlatList, RefreshControl, ScrollView, View } from 'react-native'
 import {
   ActivityIndicator,
-  Avatar,
   Button,
   Dialog,
   Divider,
@@ -25,6 +18,7 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import TouchableOpacity from '@/components/TouchableOpacity'
 import {
   favoriteListQueryKeys,
   useGetFavoritePlaylists,
@@ -122,8 +116,8 @@ function HomePage() {
               </Text>
             </View>
             <TouchableOpacity onPress={() => setSetCookieDialogVisible(true)}>
-              <Avatar.Image
-                size={40}
+              <Image
+                style={{ width: 40, height: 40, borderRadius: 20 }}
                 source={
                   !personalInfoPending &&
                   !personalInfoError &&
@@ -511,7 +505,6 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
     <TouchableOpacity
       key={item.id}
       style={{ marginBottom: 8 }}
-      activeOpacity={0.7}
       onPress={() => playSingleTrack(item)}
     >
       <Surface

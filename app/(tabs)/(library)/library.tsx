@@ -1,7 +1,7 @@
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { memo, useCallback, useState } from 'react'
-import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import {
   ActivityIndicator,
   Divider,
@@ -13,6 +13,7 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import TouchableOpacity from '@/components/TouchableOpacity'
 import {
   useGetFavoritePlaylists,
   useInfiniteCollectionsList,

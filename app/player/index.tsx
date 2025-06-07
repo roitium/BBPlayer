@@ -4,7 +4,7 @@ import { Image } from 'expo-image'
 import { router, Stack } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
-import { Animated, Dimensions, TouchableOpacity, View } from 'react-native'
+import { Animated, Dimensions, View } from 'react-native'
 import {
   Divider,
   IconButton,
@@ -22,6 +22,7 @@ import { RepeatMode } from 'react-native-track-player'
 import { useShallow } from 'zustand/react/shallow'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
+import TouchableOpacity from '@/components/TouchableOpacity'
 import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
 import {
   usePlaybackProgress,
@@ -177,6 +178,7 @@ export default function PlayerPage() {
             {currentTrack.title}
           </Text>
           <IconButton
+            // style={{ zIndex: 1 }}
             icon='dots-vertical'
             size={24}
             onPress={() => setMenuVisible(true)}
@@ -457,20 +459,20 @@ const FunctionalMenu = memo(function FunctionalMenu({
     >
       <Menu.Item
         onPress={() => {
-          setFavModalVisible(true)
           setMenuVisible(false)
+          setFavModalVisible(true)
         }}
         title='添加到收藏夹'
         leadingIcon='playlist-plus'
       />
       <Menu.Item
         onPress={() => {
+          setMenuVisible(false)
           if (!uploaderMid) {
             Toast.error('获取视频详细信息失败')
           } else {
             router.push(`/playlist/uploader/${uploaderMid}`)
           }
-          setMenuVisible(false)
         }}
         title='查看作者'
         leadingIcon='account-music'
@@ -478,11 +480,11 @@ const FunctionalMenu = memo(function FunctionalMenu({
       <Divider />
       <Menu.Item
         onPress={async () => {
+          setMenuVisible(false)
           if (!currentTrack) return
           await WebBrowser.openBrowserAsync(
             `https://www.bilibili.com/video/${currentTrack.id}`,
           )
-          setMenuVisible(false)
         }}
         title='查看原视频'
         leadingIcon='share-variant'

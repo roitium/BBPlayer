@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Image, TouchableOpacity, View } from 'react-native'
+import { Image, View } from 'react-native'
 import {
   IconButton,
   ProgressBar,
@@ -12,6 +12,7 @@ import {
   usePlaybackProgress,
   usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
+import TouchableOpacity from './TouchableOpacity'
 
 export default function NowPlayingBar() {
   const { colors } = useTheme()
