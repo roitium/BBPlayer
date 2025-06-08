@@ -1,13 +1,13 @@
-import { Image } from 'expo-image'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { RootStackParamList } from '../../../types/navigation'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const CLICK_TIMES = 3
 const CLICK_TOAST_ID = 'click-toast-enter-test-page'
@@ -19,23 +19,26 @@ export default function AboutPage() {
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const [clickTimes, setClickTimes] = useState(0)
 
+	// FIXME: 暂不清楚是 sonner-native 的问题还是我的问题，但是使用这个函数进行跳转时，上方被 toast 遮挡的区域会一直存在，哪怕 toast 已经消失，导致其他页面最上方的交互按钮无法被点击
 	const handlePress = useCallback(() => {
 		setClickTimes(clickTimes + 1)
 		if (clickTimes >= CLICK_TIMES) {
-			Toast.dismiss(CLICK_TOAST_ID)
-			setClickTimes(0)
 			navigation.navigate('Test')
+			setTimeout(() => {
+				Toast.dismiss(CLICK_TOAST_ID)
+				setClickTimes(0)
+			}, 200)
 			return
 		}
 		Toast.show(`再点击 ${CLICK_TIMES - clickTimes} 次进入测试页面！`, {
 			id: CLICK_TOAST_ID,
 		})
-	}, [clickTimes, navigation]) // Added navigation to dependency array
+	}, [clickTimes, navigation])
 
 	return (
 		<View
 			style={{
-				paddingTop: insets.top + 8,
+				paddingTop: insets.top,
 				flex: 1,
 				backgroundColor: colors.background,
 			}}
@@ -67,7 +70,7 @@ export default function AboutPage() {
 			<Text
 				variant='headlineLarge'
 				style={{ textAlign: 'center', marginBottom: 8 }}
-				onPress={handlePress}
+				onPress={() => navigation.navigate('Test')}
 			>
 				BBPlayer
 			</Text>
