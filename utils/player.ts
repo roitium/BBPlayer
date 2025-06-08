@@ -236,11 +236,7 @@ function isTargetTrack(
 	return track.id === targetId
 }
 
-function getTrackKey(track: {
-	id: string
-	cid?: number
-	isMultiPage?: boolean
-}): string {
+function getTrackKey(track: Track): string {
 	if (track.isMultiPage && track.cid) {
 		return `${track.id}-${track.cid}`
 	}

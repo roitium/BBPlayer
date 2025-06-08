@@ -558,6 +558,7 @@ export const createBilibiliApi = () => ({
 			'',
 			undefined,
 			'https://passport.bilibili.com/x/passport-login/web/qrcode/generate',
+			true,
 		)
 	},
 
