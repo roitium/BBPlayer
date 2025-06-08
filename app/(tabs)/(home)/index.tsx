@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigation } from '@react-navigation/native'
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
 import { memo, useCallback, useEffect, useState } from 'react'
 import {
 	FlatList,
@@ -249,8 +249,9 @@ function SetCookieDialog({
 }
 
 function PlaylistItem({ item }: { item: Playlist }) {
+	const navigation = useNavigation()
 	const handlePress = () => {
-		router.push(`/playlist/favorite/${item.id}`)
+		navigation.navigate('PlaylistFavorite', { id: item.id })
 	}
 
 	return (
@@ -291,8 +292,9 @@ function FavoriteList() {
 		isError: playlistsError,
 	} = useGetFavoritePlaylists(personalInfo?.mid)
 
+	const navigation = useNavigation()
 	const handleViewAll = () => {
-		router.push('/library')
+		navigation.navigate('MainTabs', { screen: 'Library' })
 	}
 
 	const filteredData = playlists?.filter(

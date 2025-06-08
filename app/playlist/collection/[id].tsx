@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -24,8 +24,9 @@ import Toast from '@/utils/toast'
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 export default function CollectionPage() {
-	const { id } = useLocalSearchParams()
-	const router = useRouter()
+	const navigation = useNavigation()
+	const route = useRoute()
+	const { id } = route.params as { id: string }
 	const { colors } = useTheme()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
@@ -131,10 +132,9 @@ export default function CollectionPage() {
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [id, router])
+	}, [id, navigation])
 
 	if (typeof id !== 'string') {
 		return
@@ -191,7 +191,7 @@ export default function CollectionPage() {
 		>
 			{/* App Bar */}
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 10 }}>
-				<Appbar.BackAction onPress={() => router.back()} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
 			</Appbar.Header>
 
 			{/* 顶部背景图 */}

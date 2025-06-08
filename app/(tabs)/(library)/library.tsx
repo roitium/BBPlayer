@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
+import { useNavigation } from '@react-navigation/native'
 import { memo, useCallback, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -95,13 +95,14 @@ export default function LibraryScreen() {
 }
 
 const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
+	const navigation = useNavigation()
 	return (
 		<View key={item.id}>
 			<View style={{ marginVertical: 8, overflow: 'hidden' }}>
 				<TouchableOpacity
 					activeOpacity={0.7}
 					onPress={() => {
-						router.push(`/playlist/favorite/${item.id}`)
+						navigation.navigate('PlaylistFavorite', { id: item.id })
 					}}
 				>
 					<View
@@ -135,6 +136,7 @@ FavoriteFolderListItem.displayName = 'FavoriteFolderListItem'
  */
 const FavoriteFolderListComponent = memo(
 	({ isHidden }: { isHidden: boolean }) => {
+		const navigation = useNavigation()
 		const [query, setQuery] = useState('')
 		const { data: userInfo } = usePersonalInformation()
 		const {
@@ -216,7 +218,7 @@ const FavoriteFolderListComponent = memo(
 					}}
 					onSubmitEditing={() => {
 						setQuery('')
-						router.push(`/search-result/fav/${query}`)
+						navigation.navigate('SearchResultFav', { query })
 					}}
 				/>
 				<FlatList
@@ -367,6 +369,7 @@ CollectionListComponent.displayName = 'CollectionListComponent'
  * 渲染追更合集项
  */
 const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
+	const navigation = useNavigation()
 	return (
 		<View key={item.id}>
 			<View style={{ marginVertical: 8, overflow: 'hidden' }}>
@@ -374,11 +377,11 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
 					activeOpacity={0.7}
 					disabled={item.state === 1}
 					onPress={() => {
-						router.push(
-							item.attr === 0
-								? `/playlist/collection/${item.id}`
-								: `/playlist/favorite/${item.id}`,
-						)
+						if (item.attr === 0) {
+							navigation.navigate('PlaylistCollection', { id: item.id })
+						} else {
+							navigation.navigate('PlaylistFavorite', { id: item.id })
+						}
 					}}
 				>
 					<View
@@ -549,13 +552,14 @@ MultiPageVideosListComponent.displayName = 'MultiPageVideosListComponent'
  * 渲染分 p 视频项
  */
 const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
+	const navigation = useNavigation()
 	return (
 		<View key={item.id}>
 			<View style={{ marginVertical: 8, overflow: 'hidden' }}>
 				<TouchableOpacity
 					activeOpacity={0.7}
 					onPress={() => {
-						router.push(`/playlist/multipage/${item.id}`)
+						navigation.navigate('PlaylistMultipage', { bvid: item.id })
 					}}
 				>
 					<View

@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -22,9 +22,10 @@ import Toast from '@/utils/toast'
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
 export default function FavoritePage() {
-	const { id } = useLocalSearchParams()
+	const route = useRoute()
+	const { id } = route.params as { id: string }
 	const { colors } = useTheme()
-	const router = useRouter()
+	const navigation = useNavigation()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
@@ -148,10 +149,9 @@ export default function FavoritePage() {
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [id, router])
+	}, [id, navigation])
 
 	if (typeof id !== 'string') {
 		return
@@ -197,7 +197,7 @@ export default function FavoritePage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>

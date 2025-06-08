@@ -1,11 +1,19 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { CommonActions } from '@react-navigation/native'
-import { Tabs } from 'expo-router'
 import { BottomNavigation } from 'react-native-paper'
+
+// Import screen components
+import HomePage from 'app/(tabs)/(home)/index.tsx'
+import SearchPage from 'app/(tabs)/(search)/search.tsx'
+import LibraryScreen from 'app/(tabs)/(library)/library.tsx'
+import AboutPage from 'app/(tabs)/(about)/index.tsx'
+
+const Tab = createBottomTabNavigator()
 
 export default function TabLayout() {
 	return (
-		<Tabs
+		<Tab.Navigator
 			tabBar={({ navigation, state, descriptors, insets }) => (
 				<BottomNavigation.Bar
 					navigationState={state}
@@ -51,8 +59,9 @@ export default function TabLayout() {
 				headerShown: false,
 			}}
 		>
-			<Tabs.Screen
-				name='(home)/index'
+			<Tab.Screen
+				name='Home'
+				component={HomePage}
 				options={{
 					title: '主页',
 					tabBarIcon: ({ color }: { color: string }) => (
@@ -62,10 +71,12 @@ export default function TabLayout() {
 							size={26}
 						/>
 					),
+					tabBarLabel: '主页',
 				}}
 			/>
-			<Tabs.Screen
-				name='(search)/search'
+			<Tab.Screen
+				name='Search'
+				component={SearchPage}
 				options={{
 					title: '搜索',
 					tabBarIcon: ({ color }: { color: string }) => (
@@ -75,10 +86,12 @@ export default function TabLayout() {
 							size={26}
 						/>
 					),
+					tabBarLabel: '搜索',
 				}}
 			/>
-			<Tabs.Screen
-				name='(library)/library'
+			<Tab.Screen
+				name='Library'
+				component={LibraryScreen}
 				options={{
 					title: '音乐库',
 					tabBarIcon: ({ color }: { color: string }) => (
@@ -88,10 +101,12 @@ export default function TabLayout() {
 							size={26}
 						/>
 					),
+					tabBarLabel: '音乐库',
 				}}
 			/>
-			<Tabs.Screen
-				name='(about)/index'
+			<Tab.Screen
+				name='About'
+				component={AboutPage}
 				options={{
 					title: '关于',
 					tabBarIcon: ({ color }: { color: string }) => (
@@ -101,8 +116,9 @@ export default function TabLayout() {
 							size={26}
 						/>
 					),
+					tabBarLabel: '关于',
 				}}
 			/>
-		</Tabs>
+		</Tab.Navigator>
 	)
 }

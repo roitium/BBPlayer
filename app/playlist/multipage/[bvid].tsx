@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -21,8 +21,9 @@ import Toast from '@/utils/toast'
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
 export default function MultipagePage() {
-	const { bvid } = useLocalSearchParams<{ bvid?: string }>()
-	const router = useRouter()
+	const navigation = useNavigation()
+	const route = useRoute()
+	const { bvid } = route.params as { bvid?: string }
 	const [refreshing, setRefreshing] = useState(false)
 	const colors = useTheme().colors
 	const currentTrack = useCurrentTrack()
@@ -139,10 +140,9 @@ export default function MultipagePage() {
 
 	useEffect(() => {
 		if (typeof bvid !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [bvid, router])
+	}, [bvid, navigation])
 
 	if (typeof bvid !== 'string') {
 		return
@@ -188,7 +188,7 @@ export default function MultipagePage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>

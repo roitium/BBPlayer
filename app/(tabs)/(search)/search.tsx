@@ -1,4 +1,4 @@
-import { router } from 'expo-router' // Import router
+import { useNavigation } from '@react-navigation/native'
 import { useCallback, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
@@ -29,6 +29,7 @@ interface SearchHistoryItem {
 export default function SearchPage() {
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
+	const navigation = useNavigation()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [searchHistory, setSearchHistory] =
 		useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
@@ -96,7 +97,7 @@ export default function SearchPage() {
 		if (!query.trim()) return
 		addSearchHistory(query)
 		setSearchQuery('')
-		router.push(`/search-result/global/${query}`)
+		navigation.navigate('SearchResult', { query })
 	}
 
 	// 处理搜索历史或热门搜索项点击

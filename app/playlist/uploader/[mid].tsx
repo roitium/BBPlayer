@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -21,9 +21,10 @@ import log from '@/utils/log'
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
 
 export default function UploaderPage() {
-	const { mid } = useLocalSearchParams()
+	const route = useRoute()
+	const { mid } = route.params as { mid: string }
 	const { colors } = useTheme()
-	const router = useRouter()
+	const navigation = useNavigation()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
@@ -89,11 +90,11 @@ export default function UploaderPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: async () => {
-					router.push(`/playlist/multipage/${item.id}`)
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
 				},
 			},
 		],
-		[playTrack, router.push],
+		[playTrack, navigation],
 	)
 
 	const renderItem = useCallback(
@@ -114,10 +115,9 @@ export default function UploaderPage() {
 
 	useEffect(() => {
 		if (typeof mid !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [mid, router])
+	}, [mid, navigation])
 
 	if (typeof mid !== 'string') {
 		return
@@ -163,7 +163,7 @@ export default function UploaderPage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>

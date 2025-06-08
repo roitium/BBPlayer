@@ -1,5 +1,5 @@
 import * as EXPOFS from 'expo-file-system'
-import { router } from 'expo-router'
+import { useNavigation } from '@react-navigation/native'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -16,6 +16,7 @@ export default function TestPage() {
 	const queue = useCurrentQueue()
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
+	const navigation = useNavigation()
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
 	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
@@ -116,7 +117,7 @@ export default function TestPage() {
 					</Button>
 					<Button
 						mode='outlined'
-						onPress={() => router.push('/player')}
+						onPress={() => navigation.navigate('Player')}
 						style={{ marginBottom: 8 }}
 					>
 						打开播放器
