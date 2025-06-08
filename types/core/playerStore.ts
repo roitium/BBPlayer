@@ -38,9 +38,6 @@ interface PlayerActions {
 	_getCurrentTrack: () => Track | null
 	_getCurrentIndex: () => number
 
-	// 重置
-	resetPlayer: () => Promise<void>
-
 	// 队列操作
 	addToQueue: ({
 		tracks,
@@ -71,7 +68,6 @@ interface PlayerActions {
 	) => Promise<
 		Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | unknown>
 	>
-	preloadTracks: (index: number) => Promise<void>
 }
 
 // 完整的播放器存储类型

@@ -6,7 +6,6 @@ import TrackPlayer, {
 	useProgress,
 } from 'react-native-track-player'
 import { create } from 'zustand'
-import { PRELOAD_TRACKS } from '@/constants/player'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import type {
@@ -69,17 +68,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			const { currentTrackKey } = get()
 			if (!currentTrackKey) return -1
 			return get()._getActiveList().indexOf(currentTrackKey)
-		},
-
-		resetPlayer: async () => {
-			if (!global.playerIsReady) return
-
-			try {
-				await TrackPlayer.reset()
-				set(initialState)
-			} catch (error) {
-				playerLog.sentry('重置播放器失败:', error)
-			}
 		},
 
 		rntpQueue: async () => {
@@ -171,7 +159,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		 * @param playNext （仅在 playNow 为 false 时）是否把新曲目插入到当前播放曲目的后面
 		 * @returns
 		 */
-		// ✨ FIX: 修正后的 addToQueue 函数
 		addToQueue: async ({
 			tracks,
 			playNow,
@@ -271,25 +258,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 				if (indexToPlay !== -1) {
 					await get().skipToTrack(indexToPlay)
 				}
-			}
-		},
-
-		preloadTracks: async (index: number) => {
-			const activeList = get()._getActiveList()
-			const { tracks } = get()
-			const preloadStartIndex = index + 1
-			const preloadEndIndex = Math.min(
-				preloadStartIndex + PRELOAD_TRACKS,
-				activeList.length,
-			)
-			const keysToPreload = activeList.slice(preloadStartIndex, preloadEndIndex)
-			const tracksToPreload = keysToPreload.map((key) => tracks[key])
-			playerLog.debug(`开始预加载 ${tracksToPreload.length} 首曲目`)
-
-			if (tracksToPreload.length > 0) {
-				await Promise.all(
-					tracksToPreload.map((track) => get().patchMetadataAndAudio(track)),
-				)
 			}
 		},
 
@@ -436,7 +404,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		},
 
 		resetStore: async () => {
-			playerLog.debug('清空队列')
+			playerLog.debug('重置播放器')
 			if (!checkPlayerReady()) return
 			await TrackPlayer.reset()
 			set(initialState)
@@ -451,7 +419,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 			try {
 				let trackAfterMeta = track
-				// 1. 获取元数据 (如果需要)
 				if (!track.hasMetadata) {
 					playerLog.debug('获取元数据', { id: track.id, cid: track.cid })
 					const metadata = await bilibiliApi.getVideoDetails(track.id)
@@ -472,7 +439,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 					set(
 						produce((state: PlayerState) => {
-							// ✨ 处理 key 可能变化的关键逻辑
 							if (oldKey !== newKey) {
 								// 如果 key 变了，需要更新 key 列表和 tracks 字典
 								const orderedIndex = state.orderedList.indexOf(oldKey)
@@ -541,18 +507,17 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			)
 			set({ currentTrackKey: keyToPlay, isBuffering: true })
 
-			// 1. 获取最新的元数据和音频流
 			const updatedTrackResult = await get().patchMetadataAndAudio(initialTrack)
 			if (updatedTrackResult.isErr()) {
 				playerLog.sentry('更新音频流失败', updatedTrackResult.error)
 				await TrackPlayer.pause()
 				Toast.error('播放失败: 更新音频流失败', {
-					/* ... */
+					description: `更新音频流失败: ${updatedTrackResult.error}`,
+					duration: Number.POSITIVE_INFINITY,
 				})
 				return
 			}
 
-			// 2. 使用最终的、最新的 track 对象进行播放
 			const finalTrack = updatedTrackResult.value.track
 			const finalKey = getTrackKey(finalTrack) // 获取最终的 key
 
@@ -573,8 +538,6 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 				isPlaying: true,
 				isBuffering: false,
 			})
-
-			get().preloadTracks(index)
 		},
 	}
 
