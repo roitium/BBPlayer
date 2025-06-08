@@ -1,4 +1,4 @@
-import { router } from 'expo-router'
+import { useNavigation } from '@react-navigation/native'
 import { useEffect, useState } from 'react'
 import {
 	Image,
@@ -28,6 +28,7 @@ export default function NowPlayingBar() {
 	const togglePlay = usePlayerStore((state) => state.togglePlay)
 	const skipToNext = usePlayerStore((state) => state.skipToNext)
 	const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
+	const navigator = useNavigation()
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条，不需要 progress 作为 dep
 	useEffect(() => {
@@ -54,7 +55,7 @@ export default function NowPlayingBar() {
 			<RNTouchableOpacity
 				style={{ position: 'relative' }}
 				onPress={() => {
-					router.push('/player')
+					navigator.navigate('Player')
 				}}
 				activeOpacity={0.9}
 			>
