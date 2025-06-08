@@ -2,13 +2,11 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { CommonActions } from '@react-navigation/native'
 import { BottomNavigation } from 'react-native-paper'
-
-// Import screen components
-import HomePage from 'app/(tabs)/(home)/index.tsx'
-import SearchPage from 'app/(tabs)/(search)/search.tsx'
-import LibraryScreen from 'app/(tabs)/(library)/library.tsx'
-import AboutPage from 'app/(tabs)/(about)/index.tsx'
 import type { BottomTabParamList } from '../../types/navigation'
+import AboutPage from './(about)/index'
+import HomePage from './(home)/index'
+import LibraryScreen from './(library)/library'
+import SearchPage from './(search)/search'
 
 const Tab = createBottomTabNavigator<BottomTabParamList>()
 

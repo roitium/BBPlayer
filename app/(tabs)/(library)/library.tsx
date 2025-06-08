@@ -1,6 +1,6 @@
-import { Image } from 'expo-image'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Image } from 'expo-image'
 import { memo, useCallback, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -23,8 +23,8 @@ import {
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
-import type { RootStackParamList } from '../../../types/navigation'
 import { formatDurationToHHMMSS } from '@/utils/times'
+import type { RootStackParamList } from '../../../types/navigation'
 
 export default function LibraryScreen() {
 	const { colors } = useTheme()
@@ -105,7 +105,7 @@ const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
 				<TouchableOpacity
 					activeOpacity={0.7}
 					onPress={() => {
-						navigation.navigate('PlaylistFavorite', { id: item.id })
+						navigation.navigate('PlaylistFavorite', { id: String(item.id) })
 					}}
 				>
 					<View
@@ -383,9 +383,9 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
 					disabled={item.state === 1}
 					onPress={() => {
 						if (item.attr === 0) {
-							navigation.navigate('PlaylistCollection', { id: item.id })
+							navigation.navigate('PlaylistCollection', { id: String(item.id) })
 						} else {
-							navigation.navigate('PlaylistFavorite', { id: item.id })
+							navigation.navigate('PlaylistFavorite', { id: String(item.id) })
 						}
 					}}
 				>

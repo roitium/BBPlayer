@@ -1,13 +1,13 @@
-import React from 'react'
-import { View, Text, Button, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Button, StyleSheet, Text, View } from 'react-native'
+import type { RootStackParamList } from '@/types/navigation'
 
 const NotFoundScreen: React.FC = () => {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
 	const handleGoHome = () => {
-		// Assuming 'MainTabs' is the name of your tab navigator
-		// and 'Home' is the name of the home screen route in that navigator
 		navigation.navigate('MainTabs', { screen: 'Home' })
 	}
 

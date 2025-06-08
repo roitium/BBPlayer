@@ -1,4 +1,8 @@
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, View } from 'react-native'
@@ -19,9 +23,9 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 
@@ -102,7 +106,7 @@ export default function SearchResultsPage() {
 				Toast.show('播放失败')
 			}
 		},
-		[addToQueue],
+		[addToQueue, navigation.navigate],
 	)
 
 	const handlePageChange = useCallback(
@@ -157,7 +161,7 @@ export default function SearchResultsPage() {
 				},
 			},
 		],
-		[playNext],
+		[playNext, navigation.navigate],
 	)
 
 	const renderSearchResultItem = useCallback(
