@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
-import { Animated, Dimensions, View } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import { Pressable } from 'react-native-gesture-handler'
 import {
 	Divider,
@@ -30,9 +30,9 @@ import {
 	usePlaybackProgress,
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
-import type { RootStackParamList } from '../../types/navigation'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../../types/navigation'
 
 export default function PlayerPage() {
 	const navigation =
@@ -100,13 +100,6 @@ export default function PlayerPage() {
 	const [menuVisible, setMenuVisible] = useState(false)
 	const [favModalVisible, setFavModalVisible] = useState(false)
 
-	const scrollY = useRef(new Animated.Value(0)).current
-	const headerOpacity = scrollY.interpolate({
-		inputRange: [0, 100],
-		outputRange: [0, 1],
-		extrapolate: 'clamp',
-	})
-
 	const toggleViewMode = () => {
 		setViewMode('cover')
 	}
@@ -133,56 +126,13 @@ export default function PlayerPage() {
 	return (
 		<View
 			style={{
+				flex: 1,
 				height: '100%',
 				width: '100%',
 				backgroundColor: colors.background,
 				paddingTop: insets.top,
 			}}
 		>
-			{/* 顶部导航栏 */}
-			<Animated.View
-				style={{
-					position: 'absolute',
-					right: 0,
-					left: 0,
-					zIndex: 10,
-					paddingTop: insets.top,
-					paddingBottom: 8,
-					opacity: headerOpacity,
-				}}
-			>
-				<View
-					style={{
-						flexDirection: 'row',
-						alignItems: 'center',
-						justifyContent: 'space-between',
-						paddingHorizontal: 16,
-					}}
-				>
-					<IconButton
-						icon='chevron-down'
-						size={24}
-						onPress={() => navigation.goBack()}
-					/>
-					<Text
-						variant='titleMedium'
-						numberOfLines={1}
-						style={{
-							flex: 1,
-							textAlign: 'center',
-						}}
-					>
-						{currentTrack.title}
-					</Text>
-					<IconButton
-						// style={{ zIndex: 1 }}
-						icon='dots-vertical'
-						size={24}
-						onPress={() => setMenuVisible(true)}
-					/>
-				</View>
-			</Animated.View>
-
 			{/* 主内容区域 */}
 			<View
 				style={{
@@ -467,7 +417,9 @@ const FunctionalMenu = memo(function FunctionalMenu({
 					if (!uploaderMid) {
 						Toast.error('获取视频详细信息失败')
 					} else {
-						navigation.navigate('PlaylistUploader', { mid: String(uploaderMid) })
+						navigation.navigate('PlaylistUploader', {
+							mid: String(uploaderMid),
+						})
 					}
 				}}
 				title='查看作者'

@@ -1,6 +1,6 @@
-import * as EXPOFS from 'expo-file-system'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as EXPOFS from 'expo-file-system'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -10,8 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import type { RootStackParamList } from '../../types/navigation'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../../types/navigation'
 
 export default function TestPage() {
 	const clearQueue = usePlayerStore((state) => state.resetStore)
@@ -104,7 +104,7 @@ export default function TestPage() {
 			style={{
 				flex: 1,
 				paddingBottom: 20,
-				paddingTop: insets.top,
+				paddingTop: insets.top + 30,
 				backgroundColor: colors.background,
 			}}
 		>
