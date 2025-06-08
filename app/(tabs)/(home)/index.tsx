@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { memo, useCallback, useEffect, useState } from 'react'
 import {
@@ -37,6 +38,7 @@ import {
 import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
@@ -249,7 +251,8 @@ function SetCookieDialog({
 }
 
 function PlaylistItem({ item }: { item: Playlist }) {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const handlePress = () => {
 		navigation.navigate('PlaylistFavorite', { id: item.id })
 	}
@@ -292,7 +295,8 @@ function FavoriteList() {
 		isError: playlistsError,
 	} = useGetFavoritePlaylists(personalInfo?.mid)
 
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const handleViewAll = () => {
 		navigation.navigate('MainTabs', { screen: 'Library' })
 	}

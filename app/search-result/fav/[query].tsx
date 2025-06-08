@@ -1,4 +1,5 @@
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
 import { FlatList, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -15,6 +16,7 @@ import {
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
@@ -22,9 +24,12 @@ const searchLog = log.extend('SEARCH_RESULTS/FAV')
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
-	const navigation = useNavigation()
-	const route = useRoute()
-	const { query } = route.params as { query?: string }
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'SearchResultFav'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'SearchResultFav'>>()
+	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const [modalVisible, setModalVisible] = useState(false)

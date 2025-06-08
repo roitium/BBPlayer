@@ -1,5 +1,6 @@
 import { Image } from 'expo-image'
 import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { memo, useCallback, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -22,6 +23,7 @@ import {
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import { formatDurationToHHMMSS } from '@/utils/times'
 
 export default function LibraryScreen() {
@@ -95,7 +97,8 @@ export default function LibraryScreen() {
 }
 
 const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	return (
 		<View key={item.id}>
 			<View style={{ marginVertical: 8, overflow: 'hidden' }}>
@@ -136,7 +139,8 @@ FavoriteFolderListItem.displayName = 'FavoriteFolderListItem'
  */
 const FavoriteFolderListComponent = memo(
 	({ isHidden }: { isHidden: boolean }) => {
-		const navigation = useNavigation()
+		const navigation =
+			useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 		const [query, setQuery] = useState('')
 		const { data: userInfo } = usePersonalInformation()
 		const {
@@ -369,7 +373,8 @@ CollectionListComponent.displayName = 'CollectionListComponent'
  * 渲染追更合集项
  */
 const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	return (
 		<View key={item.id}>
 			<View style={{ marginVertical: 8, overflow: 'hidden' }}>
@@ -552,7 +557,8 @@ MultiPageVideosListComponent.displayName = 'MultiPageVideosListComponent'
  * 渲染分 p 视频项
  */
 const MultiPageVideosItem = memo(({ item }: { item: Track }) => {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	return (
 		<View key={item.id}>
 			<View style={{ marginVertical: 8, overflow: 'hidden' }}>

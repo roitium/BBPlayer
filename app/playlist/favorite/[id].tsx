@@ -1,5 +1,6 @@
 import { Image } from 'expo-image'
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -16,16 +17,20 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
 export default function FavoritePage() {
-	const route = useRoute()
-	const { id } = route.params as { id: string }
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistFavorite'>>()
+	const { id } = route.params
 	const { colors } = useTheme()
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistFavorite'>
+		>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)

@@ -1,5 +1,6 @@
 import { Image } from 'expo-image'
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -16,15 +17,19 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
 
 export default function UploaderPage() {
-	const route = useRoute()
-	const { mid } = route.params as { mid: string }
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistUploader'>>()
+	const { mid } = route.params
 	const { colors } = useTheme()
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistUploader'>
+		>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)

@@ -1,5 +1,6 @@
 import { Image } from 'expo-image'
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -18,15 +19,19 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 export default function CollectionPage() {
-	const navigation = useNavigation()
-	const route = useRoute()
-	const { id } = route.params as { id: string }
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistCollection'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistCollection'>>()
+	const { id } = route.params
 	const { colors } = useTheme()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()

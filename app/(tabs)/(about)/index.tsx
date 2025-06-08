@@ -1,10 +1,12 @@
 import { Image } from 'expo-image'
 import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { RootStackParamList } from '../../../types/navigation'
 import Toast from '@/utils/toast'
 
 const CLICK_TIMES = 3
@@ -13,7 +15,8 @@ const CLICK_TOAST_ID = 'click-toast-enter-test-page'
 export default function AboutPage() {
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const [clickTimes, setClickTimes] = useState(0)
 
 	const handlePress = useCallback(() => {
@@ -27,7 +30,7 @@ export default function AboutPage() {
 		Toast.show(`再点击 ${CLICK_TIMES - clickTimes} 次进入测试页面！`, {
 			id: CLICK_TOAST_ID,
 		})
-	}, [clickTimes])
+	}, [clickTimes, navigation]) // Added navigation to dependency array
 
 	return (
 		<View

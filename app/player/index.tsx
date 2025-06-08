@@ -1,6 +1,7 @@
 import type BottomSheet from '@gorhom/bottom-sheet'
 import Slider from '@react-native-community/slider'
 import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
@@ -29,11 +30,13 @@ import {
 	usePlaybackProgress,
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
+import type { RootStackParamList } from '../../types/navigation'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
 
 export default function PlayerPage() {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
 	const { colors } = useTheme()
 	const insets = useSafeAreaInsets()
 	const { width: screenWidth } = Dimensions.get('window')
@@ -440,7 +443,8 @@ const FunctionalMenu = memo(function FunctionalMenu({
 	uploaderMid: number | undefined
 	setFavModalVisible: (visible: boolean) => void
 }) {
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
 	const currentTrack = useCurrentTrack()
 
 	return (
@@ -463,7 +467,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 					if (!uploaderMid) {
 						Toast.error('获取视频详细信息失败')
 					} else {
-						navigation.navigate('PlaylistUploader', { mid: uploaderMid })
+						navigation.navigate('PlaylistUploader', { mid: String(uploaderMid) })
 					}
 				}}
 				title='查看作者'

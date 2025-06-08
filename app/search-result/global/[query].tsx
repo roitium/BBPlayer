@@ -1,4 +1,5 @@
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, View } from 'react-native'
 import {
@@ -18,6 +19,7 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
@@ -25,9 +27,12 @@ const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
-	const navigation = useNavigation()
-	const route = useRoute()
-	const { query } = route.params as { query?: string }
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'SearchResult'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'SearchResult'>>()
+	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 
 	const [searchQuery, setSearchQuery] = useState(query || '')

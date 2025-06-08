@@ -1,4 +1,5 @@
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -15,15 +16,19 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
 export default function MultipagePage() {
-	const navigation = useNavigation()
-	const route = useRoute()
-	const { bvid } = route.params as { bvid?: string }
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistMultipage'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistMultipage'>>()
+	const { bvid } = route.params
 	const [refreshing, setRefreshing] = useState(false)
 	const colors = useTheme().colors
 	const currentTrack = useCurrentTrack()
