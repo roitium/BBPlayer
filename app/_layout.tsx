@@ -1,7 +1,11 @@
-import { Stack, useNavigationContainerRef } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
+import {
+	NavigationContainer,
+	useNavigationContainerRef,
+} from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
 import {
 	focusManager,
@@ -20,11 +24,13 @@ import {
 	type AppStateStatus,
 	InteractionManager,
 	Platform,
+	Text,
 	useColorScheme,
 	View,
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Toaster } from 'sonner-native'
 import GlobalErrorFallback from '@/components/ErrorBoundary'
 import useAppStore from '@/hooks/stores/useAppStore'
@@ -32,6 +38,18 @@ import { initPlayer } from '@/lib/player/playerLogic'
 import { ApiCallingError } from '@/utils/errors'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../types/navigation'
+import NotFoundScreen from './+not-found'
+// Screen imports
+import TabLayout from './(tabs)/_layout'
+import PlayerPage from './player/index'
+import PlaylistCollectionPage from './playlist/collection/[id]'
+import PlaylistFavoritePage from './playlist/favorite/[id]'
+import PlaylistMultipagePage from './playlist/multipage/[bvid]'
+import PlaylistUploaderPage from './playlist/uploader/[mid]'
+import SearchResultFavPage from './search-result/fav/[query]'
+import SearchResultsPage from './search-result/global/[query]'
+import TestPage from './test/index'
 
 const rootLog = log.extend('ROOT')
 
@@ -140,8 +158,39 @@ const queryClient = new QueryClient({
 	}),
 })
 
-export const unstable_settings = {
-	initialRouteName: '/(tabs)/(home)/index',
+const RootStack = createNativeStackNavigator<RootStackParamList>()
+
+const linking = {
+	prefixes: ['bbplayer://', 'trackplayer://'],
+	config: {
+		screens: {
+			Player: 'player',
+			MainTabs: {
+				path: 'tabs',
+				screens: {
+					Home: 'home',
+					Search: 'search',
+					Library: 'library',
+					About: 'about',
+				},
+			},
+			PlaylistCollection: 'playlist/collection/:id',
+			PlaylistFavorite: 'playlist/favorite/:id',
+			PlaylistMultipage: 'playlist/multipage/:bvid',
+			PlaylistUploader: 'playlist/uploader/:mid',
+			SearchResult: 'search-result/global/:query',
+			SearchResultFav: 'search-result/fav/:query',
+			Test: 'test',
+			NotFound: '*',
+		},
+	},
+	// getStateFromPath(path: string, options: any) {
+	// 	console.log(path)
+	// 	if (path.startsWith('notification.click')) {
+	// 		return { routes: [{ name: 'Player' }] }
+	// 	}
+	// 	return getStateFromPathDefault(path, options)
+	// },
 }
 
 function onAppStateChange(status: AppStateStatus) {
@@ -284,46 +333,84 @@ export default Sentry.wrap(function RootLayout() {
 	}
 
 	return (
-		<View
-			onLayout={onLayoutRootView}
-			style={{ flex: 1 }}
-		>
-			<Sentry.ErrorBoundary
-				fallback={({ error, resetError }) => (
-					<GlobalErrorFallback
-						error={error}
-						resetError={resetError}
-					/>
-				)}
+		<SafeAreaProvider>
+			<View
+				onLayout={onLayoutRootView}
+				style={{ flex: 1 }}
 			>
-				<GestureHandlerRootView>
-					<QueryClientProvider client={queryClient}>
-						<PaperProvider theme={paperTheme}>
-							<Stack screenOptions={{ headerShown: false }}>
-								<Stack.Screen
-									name='(tabs)'
-									options={{ headerShown: false }}
-								/>
-								<Stack.Screen
-									name='player/index'
-									options={{ headerShown: false }}
-								/>
-								<Stack.Screen
-									name='test/index'
-									options={{ headerShown: false }}
-								/>
-								<Stack.Screen
-									name='search-result/global/[query]'
-									options={{ headerShown: false }}
-								/>
-								<Stack.Screen name='+not-found' />
-							</Stack>
-						</PaperProvider>
-					</QueryClientProvider>
-					<Toaster />
-				</GestureHandlerRootView>
-			</Sentry.ErrorBoundary>
-			<StatusBar style='auto' />
-		</View>
+				<Sentry.ErrorBoundary
+					fallback={({ error, resetError }) => (
+						<GlobalErrorFallback
+							error={error}
+							resetError={resetError}
+						/>
+					)}
+				>
+					<GestureHandlerRootView>
+						<QueryClientProvider client={queryClient}>
+							<PaperProvider theme={paperTheme}>
+								<NavigationContainer
+									ref={ref}
+									linking={linking}
+									fallback={<Text>Loading...</Text>}
+								>
+									<RootStack.Navigator
+										initialRouteName='MainTabs'
+										screenOptions={{ headerShown: false }}
+									>
+										<RootStack.Screen
+											name='MainTabs'
+											component={TabLayout}
+										/>
+										<RootStack.Screen
+											name='Player'
+											component={PlayerPage}
+											options={{
+												animation: 'slide_from_bottom',
+												animationDuration: 200,
+											}}
+										/>
+										<RootStack.Screen
+											name='Test'
+											component={TestPage}
+										/>
+										<RootStack.Screen
+											name='SearchResult'
+											component={SearchResultsPage}
+										/>
+										<RootStack.Screen
+											name='NotFound'
+											component={NotFoundScreen}
+										/>
+										<RootStack.Screen
+											name='PlaylistCollection'
+											component={PlaylistCollectionPage}
+										/>
+										<RootStack.Screen
+											name='PlaylistFavorite'
+											component={PlaylistFavoritePage}
+										/>
+										<RootStack.Screen
+											name='PlaylistMultipage'
+											component={PlaylistMultipagePage}
+										/>
+										<RootStack.Screen
+											name='PlaylistUploader'
+											component={PlaylistUploaderPage}
+										/>
+										<RootStack.Screen
+											name='SearchResultFav'
+											component={SearchResultFavPage}
+										/>
+									</RootStack.Navigator>
+								</NavigationContainer>
+							</PaperProvider>
+						</QueryClientProvider>
+						<Toaster />
+					</GestureHandlerRootView>
+				</Sentry.ErrorBoundary>
+				<StatusBar style='auto' />
+			</View>
+		</SafeAreaProvider>
 	)
 })

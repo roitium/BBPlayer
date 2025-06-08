@@ -1,7 +1,8 @@
 import type BottomSheet from '@gorhom/bottom-sheet'
 import Slider from '@react-native-community/slider'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { router, Stack } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
 import { Animated, Dimensions, View } from 'react-native'
@@ -29,10 +30,13 @@ import {
 	usePlaybackProgress,
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
+import type { RootStackParamList } from '../../types/navigation'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
 
 export default function PlayerPage() {
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
 	const { colors } = useTheme()
 	const insets = useSafeAreaInsets()
 	const { width: screenWidth } = Dimensions.get('window')
@@ -120,7 +124,7 @@ export default function PlayerPage() {
 				<Text style={{ color: colors.onBackground }}>没有正在播放的曲目</Text>
 				<IconButton
 					icon='arrow-left'
-					onPress={() => router.back()}
+					onPress={() => navigation.goBack()}
 				/>
 			</View>
 		)
@@ -135,14 +139,6 @@ export default function PlayerPage() {
 				paddingTop: insets.top,
 			}}
 		>
-			<Stack.Screen
-				options={{
-					animation: 'slide_from_bottom',
-					headerShown: false,
-					animationDuration: 200,
-				}}
-			/>
-
 			{/* 顶部导航栏 */}
 			<Animated.View
 				style={{
@@ -166,7 +162,7 @@ export default function PlayerPage() {
 					<IconButton
 						icon='chevron-down'
 						size={24}
-						onPress={() => router.back()}
+						onPress={() => navigation.goBack()}
 					/>
 					<Text
 						variant='titleMedium'
@@ -209,7 +205,7 @@ export default function PlayerPage() {
 						<IconButton
 							icon='chevron-down'
 							size={24}
-							onPress={() => router.back()}
+							onPress={() => navigation.goBack()}
 						/>
 						<Text
 							variant='titleMedium'
@@ -447,6 +443,8 @@ const FunctionalMenu = memo(function FunctionalMenu({
 	uploaderMid: number | undefined
 	setFavModalVisible: (visible: boolean) => void
 }) {
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
 	const currentTrack = useCurrentTrack()
 
 	return (
@@ -469,7 +467,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 					if (!uploaderMid) {
 						Toast.error('获取视频详细信息失败')
 					} else {
-						router.push(`/playlist/uploader/${uploaderMid}`)
+						navigation.navigate('PlaylistUploader', { mid: String(uploaderMid) })
 					}
 				}}
 				title='查看作者'

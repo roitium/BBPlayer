@@ -1,4 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -15,14 +16,19 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
 export default function MultipagePage() {
-	const { bvid } = useLocalSearchParams<{ bvid?: string }>()
-	const router = useRouter()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistMultipage'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistMultipage'>>()
+	const { bvid } = route.params
 	const [refreshing, setRefreshing] = useState(false)
 	const colors = useTheme().colors
 	const currentTrack = useCurrentTrack()
@@ -139,10 +145,9 @@ export default function MultipagePage() {
 
 	useEffect(() => {
 		if (typeof bvid !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [bvid, router])
+	}, [bvid, navigation])
 
 	if (typeof bvid !== 'string') {
 		return
@@ -188,7 +193,7 @@ export default function MultipagePage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>

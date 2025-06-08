@@ -1,5 +1,6 @@
 import * as EXPOFS from 'expo-file-system'
-import { router } from 'expo-router'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -9,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import type { RootStackParamList } from '../../types/navigation'
 import Toast from '@/utils/toast'
 
 export default function TestPage() {
@@ -16,6 +18,8 @@ export default function TestPage() {
 	const queue = useCurrentQueue()
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Test'>>()
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
 	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
@@ -116,7 +120,7 @@ export default function TestPage() {
 					</Button>
 					<Button
 						mode='outlined'
-						onPress={() => router.push('/player')}
+						onPress={() => navigation.navigate('Player')}
 						style={{ marginBottom: 8 }}
 					>
 						打开播放器

@@ -26,7 +26,6 @@
 					"launchMode": "most-recent"
 				}
 			],
-			"expo-router",
 			[
 				"expo-splash-screen",
 				{

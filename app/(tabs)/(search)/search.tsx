@@ -1,4 +1,5 @@
-import { router } from 'expo-router' // Import router
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import TouchableOpacity from '@/components/TouchableOpacity'
 import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 
 const searchLog = log.extend('SEARCH')
@@ -29,6 +31,8 @@ interface SearchHistoryItem {
 export default function SearchPage() {
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [searchHistory, setSearchHistory] =
 		useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
@@ -96,7 +100,7 @@ export default function SearchPage() {
 		if (!query.trim()) return
 		addSearchHistory(query)
 		setSearchQuery('')
-		router.push(`/search-result/global/${query}`)
+		navigation.navigate('SearchResult', { query })
 	}
 
 	// 处理搜索历史或热门搜索项点击

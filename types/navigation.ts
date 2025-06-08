@@ -1,0 +1,21 @@
+import type { NavigatorScreenParams } from '@react-navigation/native'
+
+export type BottomTabParamList = {
+	Home: undefined
+	Search: undefined
+	Library: undefined
+	About: undefined
+}
+
+export type RootStackParamList = {
+	MainTabs: NavigatorScreenParams<BottomTabParamList>
+	Player: undefined
+	Test: undefined
+	SearchResult: { query: string }
+	NotFound: undefined
+	PlaylistCollection: { id: string }
+	PlaylistFavorite: { id: string }
+	PlaylistMultipage: { bvid: string }
+	PlaylistUploader: { mid: string }
+	SearchResultFav: { query: string }
+}

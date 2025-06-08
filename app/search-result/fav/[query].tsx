@@ -1,4 +1,9 @@
-import { router, useLocalSearchParams } from 'expo-router'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
 import { FlatList, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -17,12 +22,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH_RESULTS/FAV')
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
-	const { query } = useLocalSearchParams<{ query?: string }>()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'SearchResultFav'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'SearchResultFav'>>()
+	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const [modalVisible, setModalVisible] = useState(false)
@@ -68,7 +79,7 @@ export default function SearchResultsPage() {
 					track.title?.includes(keyword),
 				)
 			) {
-				router.push(`/playlist/multipage/${track.id}`)
+				navigation.navigate('PlaylistMultipage', { bvid: track.id })
 				return
 			}
 			try {
@@ -83,7 +94,7 @@ export default function SearchResultsPage() {
 				Toast.show('播放失败')
 			}
 		},
-		[addToQueue],
+		[addToQueue, navigation.navigate],
 	)
 
 	const trackMenuItems = useCallback(
@@ -97,7 +108,7 @@ export default function SearchResultsPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: async () => {
-					router.push(`/playlist/multipage/${item.id}`)
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
 				},
 			},
 			{
@@ -109,7 +120,7 @@ export default function SearchResultsPage() {
 				},
 			},
 		],
-		[playNext],
+		[playNext, navigation.navigate],
 	)
 
 	const renderSearchResultItem = useCallback(
@@ -176,7 +187,7 @@ export default function SearchResultsPage() {
 				style={{ backgroundColor: colors.surface }}
 				elevated
 			>
-				<Appbar.BackAction onPress={() => router.back()} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
 				<Appbar.Content
 					title={`搜索: ${query}`}
 					titleStyle={{ fontSize: 18 }}

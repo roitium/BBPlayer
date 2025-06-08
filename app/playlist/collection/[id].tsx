@@ -1,5 +1,6 @@
 import { Image } from 'expo-image'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -18,14 +19,19 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
 import Toast from '@/utils/toast'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 export default function CollectionPage() {
-	const { id } = useLocalSearchParams()
-	const router = useRouter()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistCollection'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistCollection'>>()
+	const { id } = route.params
 	const { colors } = useTheme()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
@@ -131,10 +137,9 @@ export default function CollectionPage() {
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [id, router])
+	}, [id, navigation])
 
 	if (typeof id !== 'string') {
 		return
@@ -191,7 +196,7 @@ export default function CollectionPage() {
 		>
 			{/* App Bar */}
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 10 }}>
-				<Appbar.BackAction onPress={() => router.back()} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
 			</Appbar.Header>
 
 			{/* 顶部背景图 */}

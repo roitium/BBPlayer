@@ -1,6 +1,7 @@
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
 import { memo, useCallback, useEffect, useState } from 'react'
 import {
 	FlatList,
@@ -40,6 +41,7 @@ import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import Toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const homeLog = log.extend('HOME')
 
@@ -249,8 +251,10 @@ function SetCookieDialog({
 }
 
 function PlaylistItem({ item }: { item: Playlist }) {
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const handlePress = () => {
-		router.push(`/playlist/favorite/${item.id}`)
+		navigation.navigate('PlaylistFavorite', { id: String(item.id) })
 	}
 
 	return (
@@ -291,8 +295,10 @@ function FavoriteList() {
 		isError: playlistsError,
 	} = useGetFavoritePlaylists(personalInfo?.mid)
 
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const handleViewAll = () => {
-		router.push('/library')
+		navigation.navigate('MainTabs', { screen: 'Library' })
 	}
 
 	const filteredData = playlists?.filter(
