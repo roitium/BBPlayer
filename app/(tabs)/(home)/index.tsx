@@ -6,8 +6,8 @@ import { memo, useCallback, useEffect, useState } from 'react'
 import {
 	FlatList,
 	RefreshControl,
-	TouchableOpacity as RNTouchableOpacity,
 	ScrollView,
+	TouchableOpacity,
 	View,
 } from 'react-native'
 import {
@@ -25,7 +25,6 @@ import {
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import TouchableOpacity from '@/components/TouchableOpacity'
 import {
 	favoriteListQueryKeys,
 	useGetFavoritePlaylists,
@@ -514,7 +513,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 	const handleOpenMenu = () => setMenuVisible(item.id.toString())
 
 	return (
-		<RNTouchableOpacity
+		<TouchableOpacity
 			key={item.id}
 			style={{ marginBottom: 8 }}
 			onPress={() => playSingleTrack(item)}
@@ -590,7 +589,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 					</Menu>
 				</View>
 			</Surface>
-		</RNTouchableOpacity>
+		</TouchableOpacity>
 	)
 })
 

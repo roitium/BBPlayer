@@ -1,11 +1,7 @@
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useEffect, useState } from 'react'
-import {
-	Image,
-	TouchableOpacity as RNTouchableOpacity,
-	View,
-} from 'react-native'
+import { Image, TouchableOpacity, View } from 'react-native'
 import {
 	IconButton,
 	ProgressBar,
@@ -55,7 +51,7 @@ export default function NowPlayingBar() {
 			}}
 			elevation={2}
 		>
-			<RNTouchableOpacity
+			<TouchableOpacity
 				style={{ position: 'relative' }}
 				onPress={() => {
 					navigator.navigate('Player')
@@ -140,7 +136,7 @@ export default function NowPlayingBar() {
 						/>
 					</View>
 				</View>
-			</RNTouchableOpacity>
+			</TouchableOpacity>
 		</Surface>
 	)
 }

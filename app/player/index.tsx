@@ -5,8 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useRef, useState } from 'react'
-import { Dimensions, View } from 'react-native'
-import { Pressable } from 'react-native-gesture-handler'
+import { Dimensions, TouchableOpacity, View } from 'react-native'
 import {
 	Divider,
 	IconButton,
@@ -181,7 +180,7 @@ export default function PlayerPage() {
 							paddingVertical: 24,
 						}}
 					>
-						<Pressable onPress={toggleViewMode}>
+						<TouchableOpacity onPress={toggleViewMode}>
 							<Surface
 								elevation={5}
 								style={{ borderRadius: 16 }}
@@ -196,7 +195,7 @@ export default function PlayerPage() {
 									transition={300}
 								/>
 							</Surface>
-						</Pressable>
+						</TouchableOpacity>
 					</View>
 
 					{/* 歌曲信息 */}
