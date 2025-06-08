@@ -7,6 +7,10 @@ export default (api) => {
 				plugins: ['react-native-paper/babel'],
 			},
 		},
-		plugins: ['babel-plugin-react-compiler', 'react-native-reanimated/plugin'],
+		plugins: [
+			'babel-plugin-react-compiler',
+			'react-native-reanimated/plugin',
+			['inline-import', { extensions: ['.sql'] }],
+		],
 	}
 }
