@@ -1,6 +1,5 @@
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { memo, useCallback, useEffect, useState } from 'react'
 import {
@@ -12,34 +11,26 @@ import {
 } from 'react-native'
 import {
 	ActivityIndicator,
-	Button,
-	Dialog,
-	Divider,
 	IconButton,
 	Menu,
 	Surface,
-	Switch,
 	Text,
-	TextInput,
 	useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import {
-	favoriteListQueryKeys,
-	useGetFavoritePlaylists,
-} from '@/hooks/queries/bilibili/useFavoriteData'
+import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
 import {
 	usePersonalInformation,
 	useRecentlyPlayed,
-	userQueryKeys,
 } from '@/hooks/queries/bilibili/useUserData'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const homeLog = log.extend('HOME')
@@ -49,7 +40,7 @@ function HomePage() {
 	const insets = useSafeAreaInsets()
 	const [menuVisible, setMenuVisible] = useState<string | null>(null)
 	const bilibiliCookie = useAppStore((state) => state.bilibiliCookieString)
-	const [setCookieDialogVisible, setSetCookieDialogVisible] = useState(false)
+	const [loginDialogVisible, setLoginDialogVisible] = useState(false)
 	const [greeting, setGreeting] = useState('')
 
 	const {
@@ -80,8 +71,8 @@ function HomePage() {
 
 	useEffect(() => {
 		if (!bilibiliCookie) {
-			Toast.warning('看起来你还没设置 Cookie，请先设置一下吧！')
-			setSetCookieDialogVisible(true)
+			toast.warning('看起来你是第一次打开 BBPlayer，先登录一下吧！')
+			setLoginDialogVisible(true)
 		}
 	}, [bilibiliCookie])
 
@@ -122,7 +113,7 @@ function HomePage() {
 									: personalInfo.name}
 							</Text>
 						</View>
-						<TouchableOpacity onPress={() => setSetCookieDialogVisible(true)}>
+						<View>
 							<Image
 								style={{ width: 40, height: 40, borderRadius: 20 }}
 								source={
@@ -134,14 +125,14 @@ function HomePage() {
 											require('@/assets/images/bilibili-default-avatar.jpg')
 								}
 							/>
-						</TouchableOpacity>
+						</View>
 					</View>
 				</View>
 
 				<View style={{ marginTop: 16, marginBottom: 24 }}>
 					<FavoriteList />
 				</View>
-				{/* Recently Played (Uses FlatList) */}
+				{/* Recently Played */}
 				<View style={{ marginBottom: 24, paddingHorizontal: 16 }}>
 					<RecentlyPlayed
 						data={limitedRecentlyPlayed}
@@ -165,87 +156,11 @@ function HomePage() {
 				<NowPlayingBar />
 			</View>
 
-			<SetCookieDialog
-				visible={setCookieDialogVisible}
-				setVisible={setSetCookieDialogVisible}
+			<QrCodeLoginModal
+				visible={loginDialogVisible}
+				setVisible={setLoginDialogVisible}
 			/>
 		</View>
-	)
-}
-
-function SetCookieDialog({
-	visible,
-	setVisible,
-}: {
-	visible: boolean
-	setVisible: (visible: boolean) => void
-}) {
-	const queryClient = useQueryClient()
-	const cookie = useAppStore((state) => state.bilibiliCookieString)
-	const [inputCookie, setInputCookie] = useState(cookie)
-	const setBilibiliCookie = useAppStore(
-		(state) => state.setBilibiliCookieString,
-	)
-	const sendPlayHistory = useAppStore((state) => state.settings.sendPlayHistory)
-	const setSendPlayHistory = useAppStore(
-		(state) => state.setEnableSendPlayHistory,
-	)
-	const [inputPlayHistory, setInputPlayHistory] = useState(sendPlayHistory)
-	const handleConfirm = () => {
-		if (inputCookie === cookie) {
-			setVisible(false)
-			setSendPlayHistory(inputPlayHistory)
-			return
-		}
-		if (!inputCookie) {
-			Toast.error('Cookie 不能为空')
-			return
-		}
-		setSendPlayHistory(inputPlayHistory)
-		setBilibiliCookie(inputCookie)
-		setVisible(false)
-		// 刷新所有 b 站个人和收藏夹相关请求
-		queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all })
-		queryClient.refetchQueries({ queryKey: userQueryKeys.all })
-	}
-
-	return (
-		<Dialog
-			visible={visible}
-			onDismiss={() => setVisible(false)}
-		>
-			<Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
-			<Dialog.Content>
-				<TextInput
-					label='Cookie'
-					value={inputCookie}
-					onChangeText={setInputCookie}
-					mode='outlined'
-					numberOfLines={5}
-					multiline
-					style={{ maxHeight: 200 }}
-					textAlignVertical='top'
-				/>
-				<Text
-					variant='bodySmall'
-					style={{ marginTop: 8 }}
-				>
-					请在此处粘贴您的 Bilibili Cookie 以获取个人数据。
-				</Text>
-				<Divider style={{ marginTop: 16, marginBottom: 16 }} />
-				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-					<Text>向 bilibili 上报观看进度</Text>
-					<Switch
-						value={inputPlayHistory}
-						onValueChange={setInputPlayHistory}
-					/>
-				</View>
-			</Dialog.Content>
-			<Dialog.Actions>
-				<Button onPress={() => setVisible(false)}>取消</Button>
-				<Button onPress={handleConfirm}>确定</Button>
-			</Dialog.Actions>
-		</Dialog>
 	)
 }
 
@@ -308,7 +223,6 @@ function FavoriteList() {
 		<>
 			<View
 				style={{
-					// marginBottom: 8,
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'space-between',
@@ -504,6 +418,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 				clearQueue: false,
 				playNext: true,
 			})
+			toast.success('添加到下一首播放成功')
 		} catch (error) {
 			homeLog.sentry('添加到队列失败', error)
 		}

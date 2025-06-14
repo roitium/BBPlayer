@@ -1,4 +1,8 @@
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, RefreshControl, View } from 'react-native'
@@ -16,9 +20,9 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
-import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
@@ -61,6 +65,7 @@ export default function MultipagePage() {
 					clearQueue: false,
 					playNext: true,
 				})
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				playlistLog.sentry('添加到队列失败', error)
 			}
@@ -72,7 +77,7 @@ export default function MultipagePage() {
 		async (startFromCid?: number) => {
 			try {
 				if (!tracksData || tracksData.length === 0) {
-					Toast.error('播放全部失败', {
+					toast.error('播放全部失败', {
 						description: '未知错误，tracksData 为空',
 					})
 					playlistLog.error('未知错误，tracksData 为空', tracksData)

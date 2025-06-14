@@ -10,7 +10,6 @@ import {
 	Divider,
 	IconButton,
 	Menu,
-	Surface,
 	Text,
 	Tooltip,
 	useTheme,
@@ -30,7 +29,7 @@ import {
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/times'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../types/navigation'
 
 export default function PlayerPage() {
@@ -180,21 +179,19 @@ export default function PlayerPage() {
 							paddingVertical: 24,
 						}}
 					>
-						<TouchableOpacity onPress={toggleViewMode}>
-							<Surface
-								elevation={5}
-								style={{ borderRadius: 16 }}
-							>
-								<Image
-									source={{ uri: currentTrack.cover }}
-									style={{
-										width: screenWidth - 80,
-										height: screenWidth - 80,
-										borderRadius: 16,
-									}}
-									transition={300}
-								/>
-							</Surface>
+						<TouchableOpacity
+							onPress={toggleViewMode}
+							activeOpacity={0.8}
+						>
+							<Image
+								source={{ uri: currentTrack.cover }}
+								style={{
+									width: screenWidth - 80,
+									height: screenWidth - 80,
+									borderRadius: 16,
+								}}
+								transition={300}
+							/>
 						</TouchableOpacity>
 					</View>
 
@@ -414,7 +411,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 				onPress={() => {
 					setMenuVisible(false)
 					if (!uploaderMid) {
-						Toast.error('获取视频详细信息失败')
+						toast.error('获取视频详细信息失败')
 					} else {
 						navigation.navigate('PlaylistUploader', {
 							mid: String(uploaderMid),
@@ -438,7 +435,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 			/>
 			<Menu.Item
 				onPress={() => {
-					Toast.show('暂未实现')
+					toast.show('暂未实现')
 					setMenuVisible(false)
 					// toggleViewMode()
 				}}

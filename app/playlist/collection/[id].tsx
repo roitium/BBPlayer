@@ -1,6 +1,10 @@
-import { Image } from 'expo-image'
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Image } from 'expo-image'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -19,9 +23,9 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
@@ -51,7 +55,7 @@ export default function CollectionPage() {
 		async (startFromId?: string) => {
 			try {
 				if (!collectionData?.medias) {
-					Toast.error('播放全部失败', {
+					toast.error('播放全部失败', {
 						description: '无法加载收藏夹内容',
 					})
 					playlistLog.error(
@@ -69,7 +73,7 @@ export default function CollectionPage() {
 				})
 			} catch (error) {
 				playlistLog.sentry('播放全部失败', error)
-				Toast.error('播放全部失败', { description: '发生未知错误' })
+				toast.error('播放全部失败', { description: '发生未知错误' })
 			}
 		},
 		[addToQueue, collectionData],
@@ -84,10 +88,10 @@ export default function CollectionPage() {
 					clearQueue: false,
 					playNext: true,
 				})
-				Toast.success(`已添加 ${track.title} 到下一首播放`)
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				playlistLog.sentry('添加到队列失败', error)
-				Toast.error('添加到队列失败')
+				toast.error('添加到队列失败')
 			}
 		},
 		[addToQueue],

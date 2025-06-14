@@ -24,13 +24,13 @@ import {
 	isTargetTrack,
 	reportPlaybackHistory,
 } from '@/utils/player'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 
 const playerLog = log.extend('PLAYER/STORE')
 
 const checkPlayerReady = () => {
 	if (!global.playerIsReady) {
-		Toast.error('播放器未初始化', { description: '请稍后再试' })
+		toast.error('播放器未初始化', { description: '请稍后再试' })
 		return false
 	}
 	return true
@@ -98,7 +98,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			})
 
 			if (!keyToRemove) {
-				Toast.error('播放器异常', { description: '找不到该曲目' })
+				toast.error('播放器异常', { description: '找不到该曲目' })
 				return
 			}
 
@@ -546,7 +546,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			if (updatedTrackResult.isErr()) {
 				playerLog.sentry('更新音频流失败', updatedTrackResult.error)
 				await TrackPlayer.pause()
-				Toast.error('播放失败: 更新音频流失败', {
+				toast.error('播放失败: 更新音频流失败', {
 					/* ... */
 				})
 				return

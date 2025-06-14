@@ -1,6 +1,10 @@
-import { Image } from 'expo-image'
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Image } from 'expo-image'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -17,9 +21,9 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
-import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
@@ -49,6 +53,7 @@ export default function FavoritePage() {
 					clearQueue: false,
 					playNext: true,
 				})
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				playlistLog.sentry('添加到队列失败', error)
 			}
@@ -65,7 +70,7 @@ export default function FavoritePage() {
 				)
 				if (allContentIds.isErr()) {
 					playlistLog.sentry('获取所有内容失败', allContentIds.error)
-					Toast.error('播放全部失败', {
+					toast.error('播放全部失败', {
 						description: '获取收藏夹所有内容失败，无法播放',
 					})
 					return

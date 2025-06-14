@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../types/navigation'
 
 export default function TestPage() {
@@ -28,13 +28,13 @@ export default function TestPage() {
 	const testCheckUpdate = async () => {
 		try {
 			const result = await Updates.checkForUpdateAsync()
-			Toast.success('检查更新结果', {
+			toast.success('检查更新结果', {
 				description: `isAvailable: ${result.isAvailable}, whyNotAvailable: ${result.reason}, isRollbackToEmbedding: ${result.isRollBackToEmbedded}`,
 				duration: Number.POSITIVE_INFINITY,
 			})
 		} catch (error) {
 			console.error('检查更新失败:', error)
-			Toast.error('检查更新失败', { description: String(error) })
+			toast.error('检查更新失败', { description: String(error) })
 		}
 	}
 
@@ -46,14 +46,14 @@ export default function TestPage() {
 			}
 			const result = await Updates.checkForUpdateAsync()
 			if (!result.isAvailable) {
-				Toast.error('没有可用的更新', {
+				toast.error('没有可用的更新', {
 					description: '当前已是最新版本',
 				})
 				return
 			}
 			const updateResult = await Updates.fetchUpdateAsync()
 			if (updateResult.isNew === true) {
-				Toast.success('有新版本可用', {
+				toast.success('有新版本可用', {
 					description: '现在更新',
 				})
 				setTimeout(() => {
@@ -62,7 +62,7 @@ export default function TestPage() {
 			}
 		} catch (error) {
 			console.error('更新失败:', error)
-			Toast.error('更新失败', { description: String(error) })
+			toast.error('更新失败', { description: String(error) })
 		}
 	}
 
@@ -78,7 +78,7 @@ export default function TestPage() {
 			})
 			.catch((err) => {
 				console.log('open file error', err)
-				Toast.error('打开文件失败', {
+				toast.error('打开文件失败', {
 					description: String(err),
 					duration: Number.POSITIVE_INFINITY,
 				})
@@ -90,10 +90,10 @@ export default function TestPage() {
 		try {
 			setLoading(true)
 			await clearQueue()
-			Toast.success('队列已清空')
+			toast.success('队列已清空')
 		} catch (error) {
 			console.error('清空队列失败:', error)
-			Toast.error('清空队列失败', { description: String(error) })
+			toast.error('清空队列失败', { description: String(error) })
 		} finally {
 			setLoading(false)
 		}

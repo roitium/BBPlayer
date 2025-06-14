@@ -24,7 +24,7 @@ import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
@@ -74,10 +74,10 @@ export default function SearchResultsPage() {
 					clearQueue: false,
 					playNext: true,
 				})
-				Toast.show('已添加到下一首播放')
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				searchLog.sentry('添加到队列失败', error)
-				Toast.show('添加到队列失败')
+				toast.show('添加到队列失败')
 			}
 		},
 		[addToQueue],
@@ -103,7 +103,7 @@ export default function SearchResultsPage() {
 				})
 			} catch (error) {
 				searchLog.sentry('播放失败', error)
-				Toast.show('播放失败')
+				toast.show('播放失败')
 			}
 		},
 		[addToQueue, navigation.navigate],
@@ -134,7 +134,7 @@ export default function SearchResultsPage() {
 			setCurrentPage(pageNumber)
 		} else {
 			setPageInputValue(currentPage.toString())
-			Toast.warning(`请输入 1 到 ${totalPages} 之间的页码`)
+			toast.warning(`请输入 1 到 ${totalPages} 之间的页码`)
 		}
 	}, [pageInputValue, currentPage, totalPages])
 

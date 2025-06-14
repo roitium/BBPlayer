@@ -114,7 +114,7 @@ const dismiss = (toastId?: number | string) => {
 	sonnerToast.dismiss(toastId)
 }
 
-const Toast = {
+const toast = {
 	show,
 	success,
 	error,
@@ -126,4 +126,4 @@ const Toast = {
 	wiggle: sonnerToast.wiggle,
 }
 
-export default Toast
+export default toast

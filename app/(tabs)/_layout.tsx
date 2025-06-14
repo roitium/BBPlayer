@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { CommonActions } from '@react-navigation/native'
 import { BottomNavigation } from 'react-native-paper'
 import type { BottomTabParamList } from '../../types/navigation'
-import AboutPage from './(about)/index'
 import HomePage from './(home)/index'
 import LibraryScreen from './(library)/library'
 import SearchPage from './(search)/search'
+import SettingsPage from './(settings)/index'
 
 const Tab = createBottomTabNavigator<BottomTabParamList>()
 
@@ -104,18 +104,18 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tab.Screen
-				name='About'
-				component={AboutPage}
+				name='Settings'
+				component={SettingsPage}
 				options={{
-					title: '关于',
+					title: '设置',
 					tabBarIcon: ({ color }: { color: string }) => (
 						<MaterialCommunityIcons
-							name='information'
+							name='cog-box'
 							color={color}
 							size={26}
 						/>
 					),
-					tabBarLabel: '关于',
+					tabBarLabel: '设置',
 				}}
 			/>
 		</Tab.Navigator>

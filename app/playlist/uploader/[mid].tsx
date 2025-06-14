@@ -1,6 +1,10 @@
-import { Image } from 'expo-image'
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Image } from 'expo-image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -17,8 +21,8 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
-import type { RootStackParamList } from '../../../types/navigation'
 import log from '@/utils/log'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
 

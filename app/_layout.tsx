@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import {
+	getStateFromPath as getStateFromPathDefault,
 	NavigationContainer,
 	useNavigationContainerRef,
 } from '@react-navigation/native'
@@ -37,7 +38,7 @@ import useAppStore from '@/hooks/stores/useAppStore'
 import { initPlayer } from '@/lib/player/playerLogic'
 import { ApiCallingError } from '@/utils/errors'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 import type { RootStackParamList } from '../types/navigation'
 import NotFoundScreen from './+not-found'
 // Screen imports
@@ -133,7 +134,7 @@ const queryClient = new QueryClient({
 	},
 	queryCache: new QueryCache({
 		onError: (error, query) => {
-			Toast.error(`请求 ${query.queryKey} 失败`, {
+			toast.error(`请求 ${query.queryKey} 失败`, {
 				description: error.message,
 				duration: Number.POSITIVE_INFINITY,
 			})
@@ -184,13 +185,14 @@ const linking = {
 			NotFound: '*',
 		},
 	},
-	// getStateFromPath(path: string, options: any) {
-	// 	console.log(path)
-	// 	if (path.startsWith('notification.click')) {
-	// 		return { routes: [{ name: 'Player' }] }
-	// 	}
-	// 	return getStateFromPathDefault(path, options)
-	// },
+	// biome-ignore lint/suspicious/noExplicitAny: fuck off
+	getStateFromPath(path: string, options: any) {
+		console.log(path)
+		if (path.startsWith('notification.click')) {
+			return { routes: [{ name: 'Player' }] }
+		}
+		return getStateFromPathDefault(path, options)
+	},
 }
 
 function onAppStateChange(status: AppStateStatus) {
@@ -256,17 +258,17 @@ export default Sentry.wrap(function RootLayout() {
 			return
 		}
 		const update = () => {
-			Toast.loading('正在下载更新包', { id: 'update' })
+			toast.loading('正在下载更新包', { id: 'update' })
 			Updates.fetchUpdateAsync()
 				.then(() => {
-					Toast.success('更新包下载完成，重载应用', { id: 'update' })
+					toast.success('更新包下载完成，重载应用', { id: 'update' })
 				})
 				.then(() => {
 					Updates.reloadAsync()
 				})
 				.catch((error) => {
 					console.error('更新包下载失败', error)
-					Toast.error('更新包下载失败', {
+					toast.error('更新包下载失败', {
 						description: error.message,
 						id: 'update',
 						duration: Number.POSITIVE_INFINITY,
@@ -276,7 +278,7 @@ export default Sentry.wrap(function RootLayout() {
 		Updates.checkForUpdateAsync()
 			.then((result) => {
 				if (result.isAvailable) {
-					Toast.show('检测到有新的热更新，是否更新？', {
+					toast.show('检测到有新的热更新，是否更新？', {
 						action: { label: '更新', onClick: update },
 						duration: Number.POSITIVE_INFINITY,
 						id: 'update',
@@ -285,7 +287,7 @@ export default Sentry.wrap(function RootLayout() {
 			})
 			.catch((error) => {
 				console.error('检测更新失败', error)
-				Toast.error('检测更新失败', {
+				toast.error('检测更新失败', {
 					description: error.message,
 					duration: Number.POSITIVE_INFINITY,
 				})
