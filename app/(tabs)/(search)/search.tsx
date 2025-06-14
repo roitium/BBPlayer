@@ -153,6 +153,7 @@ export default function SearchPage() {
 				style={{ flex: 1, paddingHorizontal: 16 }}
 				contentContainerStyle={{ paddingBottom: 20 }}
 				keyboardShouldPersistTaps='handled'
+				contentInsetAdjustmentBehavior="automatic"
 			>
 				{/* 搜索历史 */}
 				<View style={{ marginTop: 16, marginBottom: 24 }}>

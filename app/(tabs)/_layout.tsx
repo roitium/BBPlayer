@@ -1,58 +1,17 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation'
 import { CommonActions } from '@react-navigation/native'
-import { BottomNavigation } from 'react-native-paper'
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import type { BottomTabParamList } from '../../types/navigation'
 import HomePage from './(home)/index'
 import LibraryScreen from './(library)/library'
 import SearchPage from './(search)/search'
 import SettingsPage from './(settings)/index'
 
-const Tab = createBottomTabNavigator<BottomTabParamList>()
+const Tab = createNativeBottomTabNavigator<BottomTabParamList>()
 
 export default function TabLayout() {
 	return (
 		<Tab.Navigator
-			tabBar={({ navigation, state, descriptors, insets }) => (
-				<BottomNavigation.Bar
-					navigationState={state}
-					safeAreaInsets={insets}
-					onTabPress={({ route, preventDefault }) => {
-						const event = navigation.emit({
-							type: 'tabPress',
-							target: route.key,
-							canPreventDefault: true,
-						})
-
-						if (event.defaultPrevented) {
-							preventDefault()
-						} else {
-							navigation.dispatch({
-								...CommonActions.navigate(route.name, route.params),
-								target: state.key,
-							})
-						}
-					}}
-					renderIcon={({ route, focused, color }) =>
-						descriptors[route.key].options.tabBarIcon?.({
-							focused,
-							color,
-							size: 24,
-						}) || null
-					}
-					getLabelText={({ route }) => {
-						const { options } = descriptors[route.key]
-						const label =
-							typeof options.tabBarLabel === 'string'
-								? options.tabBarLabel
-								: typeof options.title === 'string'
-									? options.title
-									: route.name
-
-						return label
-					}}
-				/>
-			)}
 			screenOptions={{
 				tabBarHideOnKeyboard: true,
 				headerShown: false,
@@ -63,12 +22,8 @@ export default function TabLayout() {
 				component={HomePage}
 				options={{
 					title: '主页',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='home'
-							color={color}
-							size={26}
-						/>
+					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+						<Icon name='home' color={color} size={size} />
 					),
 					tabBarLabel: '主页',
 				}}
@@ -78,12 +33,8 @@ export default function TabLayout() {
 				component={SearchPage}
 				options={{
 					title: '搜索',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='magnify'
-							color={color}
-							size={26}
-						/>
+					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+						<Icon name='magnify' color={color} size={size} />
 					),
 					tabBarLabel: '搜索',
 				}}
@@ -93,12 +44,8 @@ export default function TabLayout() {
 				component={LibraryScreen}
 				options={{
 					title: '音乐库',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='library-shelves'
-							color={color}
-							size={26}
-						/>
+					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+						<Icon name='bookshelf' color={color} size={size} />
 					),
 					tabBarLabel: '音乐库',
 				}}
@@ -108,12 +55,8 @@ export default function TabLayout() {
 				component={SettingsPage}
 				options={{
 					title: '设置',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='cog-box'
-							color={color}
-							size={26}
-						/>
+					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+						<Icon name='cog' color={color} size={size} />
 					),
 					tabBarLabel: '设置',
 				}}
