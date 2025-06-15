@@ -2,7 +2,7 @@
 	"expo": {
 		"name": "BBPlayer",
 		"slug": "bbplayer",
-		"version": "0.0.2",
+		"version": "0.0.3",
 		"orientation": "portrait",
 		"icon": "./assets/images/icon.png",
 		"scheme": "bbplayer",
@@ -15,8 +15,8 @@
 				"backgroundColor": "#ffffff"
 			},
 			"package": "com.roitium.BBPlayer",
-			"versionCode": 43,
-			"runtimeVersion": "0.0.2",
+			"versionCode": 46,
+			"runtimeVersion": "0.0.3",
 			"edgeToEdgeEnabled": true
 		},
 		"plugins": [
@@ -56,7 +56,21 @@
 					"assets": []
 				}
 			],
-			"expo-font"
+			"expo-font",
+			[
+				"react-native-bottom-tabs",
+				{
+					"theme": "material3-dynamic"
+				}
+			],
+			[
+				"react-native-edge-to-edge",
+				{
+					"android": {
+						"parentTheme": "Material3"
+					}
+				}
+			]
 		],
 		"experiments": {
 			"typedRoutes": true,

@@ -261,6 +261,7 @@ function FavoriteList() {
 			) : (
 				<ScrollView
 					horizontal
+					contentInsetAdjustmentBehavior='automatic'
 					showsHorizontalScrollIndicator={false}
 					contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
 				>

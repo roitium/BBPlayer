@@ -94,8 +94,8 @@ android {
         applicationId 'com.roitium.BBPlayer'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 43
-        versionName "0.0.2"
+        versionCode 46
+        versionName "0.0.3"
     }
     signingConfigs {
         debug {

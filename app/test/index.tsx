@@ -108,7 +108,7 @@ export default function TestPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<ScrollView style={{ flex: 1, padding: 16 }}>
+			<ScrollView style={{ flex: 1, padding: 16 }} contentInsetAdjustmentBehavior="automatic">
 				<View style={{ marginBottom: 16 }}>
 					<Button
 						mode='outlined'

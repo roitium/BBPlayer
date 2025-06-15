@@ -1,75 +1,41 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { CommonActions } from '@react-navigation/native'
-import { BottomNavigation } from 'react-native-paper'
+import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation'
+import Icon from '@react-native-vector-icons/material-design-icons'
+import { useTheme } from 'react-native-paper'
 import type { BottomTabParamList } from '../../types/navigation'
 import HomePage from './(home)/index'
 import LibraryScreen from './(library)/library'
 import SearchPage from './(search)/search'
 import SettingsPage from './(settings)/index'
 
-const Tab = createBottomTabNavigator<BottomTabParamList>()
+const Tab = createNativeBottomTabNavigator<BottomTabParamList>()
+
+type nonNullableIcon = {
+	uri: string
+	scale: number
+}
+
+const homeIcon = Icon.getImageSourceSync('home', 24) as nonNullableIcon
+const searchIcon = Icon.getImageSourceSync('magnify', 24) as nonNullableIcon
+const libraryIcon = Icon.getImageSourceSync('bookshelf', 24) as nonNullableIcon
+const settingsIcon = Icon.getImageSourceSync('cog', 24) as nonNullableIcon
 
 export default function TabLayout() {
+	const themes = useTheme().colors
+
 	return (
 		<Tab.Navigator
-			tabBar={({ navigation, state, descriptors, insets }) => (
-				<BottomNavigation.Bar
-					navigationState={state}
-					safeAreaInsets={insets}
-					onTabPress={({ route, preventDefault }) => {
-						const event = navigation.emit({
-							type: 'tabPress',
-							target: route.key,
-							canPreventDefault: true,
-						})
-
-						if (event.defaultPrevented) {
-							preventDefault()
-						} else {
-							navigation.dispatch({
-								...CommonActions.navigate(route.name, route.params),
-								target: state.key,
-							})
-						}
-					}}
-					renderIcon={({ route, focused, color }) =>
-						descriptors[route.key].options.tabBarIcon?.({
-							focused,
-							color,
-							size: 24,
-						}) || null
-					}
-					getLabelText={({ route }) => {
-						const { options } = descriptors[route.key]
-						const label =
-							typeof options.tabBarLabel === 'string'
-								? options.tabBarLabel
-								: typeof options.title === 'string'
-									? options.title
-									: route.name
-
-						return label
-					}}
-				/>
-			)}
-			screenOptions={{
-				tabBarHideOnKeyboard: true,
-				headerShown: false,
-			}}
+			labeled={true}
+			disablePageAnimations={true}
+			tabBarActiveTintColor={themes.primary}
+			activeIndicatorColor={themes.primaryContainer}
+			tabBarStyle={{ backgroundColor: themes.elevation.level1 }}
 		>
 			<Tab.Screen
 				name='Home'
 				component={HomePage}
 				options={{
 					title: '主页',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='home'
-							color={color}
-							size={26}
-						/>
-					),
+					tabBarIcon: () => homeIcon,
 					tabBarLabel: '主页',
 				}}
 			/>
@@ -78,13 +44,7 @@ export default function TabLayout() {
 				component={SearchPage}
 				options={{
 					title: '搜索',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='magnify'
-							color={color}
-							size={26}
-						/>
-					),
+					tabBarIcon: () => searchIcon,
 					tabBarLabel: '搜索',
 				}}
 			/>
@@ -93,13 +53,7 @@ export default function TabLayout() {
 				component={LibraryScreen}
 				options={{
 					title: '音乐库',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='library-shelves'
-							color={color}
-							size={26}
-						/>
-					),
+					tabBarIcon: () => libraryIcon,
 					tabBarLabel: '音乐库',
 				}}
 			/>
@@ -108,13 +62,7 @@ export default function TabLayout() {
 				component={SettingsPage}
 				options={{
 					title: '设置',
-					tabBarIcon: ({ color }: { color: string }) => (
-						<MaterialCommunityIcons
-							name='cog-box'
-							color={color}
-							size={26}
-						/>
-					),
+					tabBarIcon: () => settingsIcon,
 					tabBarLabel: '设置',
 				}}
 			/>

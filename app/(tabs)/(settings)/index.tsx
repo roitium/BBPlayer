@@ -46,6 +46,7 @@ export default function SettingsPage() {
 				contentContainerStyle={{
 					paddingHorizontal: 25,
 				}}
+				contentInsetAdjustmentBehavior="automatic"
 			>
 				<SettingsSection />
 			</ScrollView>
