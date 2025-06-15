@@ -66,7 +66,7 @@ const PlayerLogic = {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
 				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				icon: require('../../assets/images/icon.png'),
+				icon: require('../../assets/images/icon-large.png'),
 			})
 			playerLog.debug('播放器能力设置完成')
 			// 设置重复模式为 Off
