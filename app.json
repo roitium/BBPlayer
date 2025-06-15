@@ -15,7 +15,7 @@
 				"backgroundColor": "#ffffff"
 			},
 			"package": "com.roitium.BBPlayer",
-			"versionCode": 43,
+			"versionCode": 46,
 			"runtimeVersion": "0.0.3",
 			"edgeToEdgeEnabled": true
 		},

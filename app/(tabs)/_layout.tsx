@@ -1,5 +1,6 @@
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
+import { useTheme } from 'react-native-paper'
 import type { BottomTabParamList } from '../../types/navigation'
 import HomePage from './(home)/index'
 import LibraryScreen from './(library)/library'
@@ -19,8 +20,16 @@ const libraryIcon = Icon.getImageSourceSync('bookshelf', 24) as nonNullableIcon
 const settingsIcon = Icon.getImageSourceSync('cog', 24) as nonNullableIcon
 
 export default function TabLayout() {
+	const themes = useTheme().colors
+
 	return (
-		<Tab.Navigator>
+		<Tab.Navigator
+			labeled={true}
+			disablePageAnimations={true}
+			tabBarActiveTintColor={themes.primary}
+			activeIndicatorColor={themes.primaryContainer}
+			tabBarStyle={{ backgroundColor: themes.elevation.level1 }}
+		>
 			<Tab.Screen
 				name='Home'
 				component={HomePage}
