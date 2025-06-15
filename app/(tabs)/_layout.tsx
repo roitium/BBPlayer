@@ -1,6 +1,5 @@
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation'
-import { CommonActions } from '@react-navigation/native'
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import Icon from '@react-native-vector-icons/material-design-icons'
 import type { BottomTabParamList } from '../../types/navigation'
 import HomePage from './(home)/index'
 import LibraryScreen from './(library)/library'
@@ -9,22 +8,25 @@ import SettingsPage from './(settings)/index'
 
 const Tab = createNativeBottomTabNavigator<BottomTabParamList>()
 
+type nonNullableIcon = {
+	uri: string
+	scale: number
+}
+
+const homeIcon = Icon.getImageSourceSync('home', 24) as nonNullableIcon
+const searchIcon = Icon.getImageSourceSync('magnify', 24) as nonNullableIcon
+const libraryIcon = Icon.getImageSourceSync('bookshelf', 24) as nonNullableIcon
+const settingsIcon = Icon.getImageSourceSync('cog', 24) as nonNullableIcon
+
 export default function TabLayout() {
 	return (
-		<Tab.Navigator
-			screenOptions={{
-				tabBarHideOnKeyboard: true,
-				headerShown: false,
-			}}
-		>
+		<Tab.Navigator>
 			<Tab.Screen
 				name='Home'
 				component={HomePage}
 				options={{
 					title: '主页',
-					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-						<Icon name='home' color={color} size={size} />
-					),
+					tabBarIcon: () => homeIcon,
 					tabBarLabel: '主页',
 				}}
 			/>
@@ -33,9 +35,7 @@ export default function TabLayout() {
 				component={SearchPage}
 				options={{
 					title: '搜索',
-					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-						<Icon name='magnify' color={color} size={size} />
-					),
+					tabBarIcon: () => searchIcon,
 					tabBarLabel: '搜索',
 				}}
 			/>
@@ -44,9 +44,7 @@ export default function TabLayout() {
 				component={LibraryScreen}
 				options={{
 					title: '音乐库',
-					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-						<Icon name='bookshelf' color={color} size={size} />
-					),
+					tabBarIcon: () => libraryIcon,
 					tabBarLabel: '音乐库',
 				}}
 			/>
@@ -55,9 +53,7 @@ export default function TabLayout() {
 				component={SettingsPage}
 				options={{
 					title: '设置',
-					tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-						<Icon name='cog' color={color} size={size} />
-					),
+					tabBarIcon: () => settingsIcon,
 					tabBarLabel: '设置',
 				}}
 			/>

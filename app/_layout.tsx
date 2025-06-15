@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import {
@@ -29,6 +28,7 @@ import {
 	useColorScheme,
 	View,
 } from 'react-native'
+import { SystemBars } from 'react-native-edge-to-edge'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -411,7 +411,7 @@ export default Sentry.wrap(function RootLayout() {
 						<Toaster />
 					</GestureHandlerRootView>
 				</Sentry.ErrorBoundary>
-				<StatusBar style='auto' />
+				<SystemBars style='auto' />
 			</View>
 		</SafeAreaProvider>
 	)

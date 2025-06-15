@@ -2,7 +2,7 @@
 	"expo": {
 		"name": "BBPlayer",
 		"slug": "bbplayer",
-		"version": "0.0.2",
+		"version": "0.0.3",
 		"orientation": "portrait",
 		"icon": "./assets/images/icon.png",
 		"scheme": "bbplayer",
@@ -16,7 +16,7 @@
 			},
 			"package": "com.roitium.BBPlayer",
 			"versionCode": 43,
-			"runtimeVersion": "0.0.2",
+			"runtimeVersion": "0.0.3",
 			"edgeToEdgeEnabled": true
 		},
 		"plugins": [
@@ -61,6 +61,14 @@
 				"react-native-bottom-tabs",
 				{
 					"theme": "material3-dynamic"
+				}
+			],
+			[
+				"react-native-edge-to-edge",
+				{
+					"android": {
+						"parentTheme": "Material3"
+					}
 				}
 			]
 		],
