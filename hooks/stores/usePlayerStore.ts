@@ -21,7 +21,6 @@ import {
 	checkBilibiliAudioExpiry,
 	convertToRNTPTrack,
 	getTrackKey,
-	isTargetTrack,
 	reportPlaybackHistory,
 } from '@/utils/player'
 import toast from '@/utils/toast'
@@ -166,58 +165,48 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 		 * @param tracks
 		 * @param playNow 是否立即播放（在 startFromId 为空时是播放新增队列的第一首歌曲）
 		 * @param clearQueue
-		 * @param startFromId 从指定 id 开始播放
-		 * @param startFromCid 从指定 cid 开始播放
+		 * @param startFromKey 从指定 key 开始播放
 		 * @param playNext （仅在 playNow 为 false 时）是否把新曲目插入到当前播放曲目的后面
 		 * @returns
 		 */
-		// ✨ FIX: 修正后的 addToQueue 函数
 		addToQueue: async ({
 			tracks,
 			playNow,
 			clearQueue,
-			startFromId,
-			startFromCid,
+			startFromKey,
 			playNext,
 		}: addToQueueParams) => {
 			if (!checkPlayerReady() || tracks.length === 0) return
 			if (clearQueue) await get().resetStore()
 
 			const existingTracks = get().tracks
-			const newTracks = tracks.filter(
-				(track) =>
-					!Object.values(existingTracks).some((t) =>
-						isTargetTrack(t, track.id, track.cid),
-					),
-			)
+			// 找出需要新加入的 tracks
+			const newTracks = tracks.filter((track) => {
+				const key = getTrackKey(track)
+				return !existingTracks[key]
+			})
 
-			// 没有新歌，需要跳转播放
+			// 没有新歌加入，但需要跳转播放
 			if (newTracks.length === 0) {
-				if (playNow) {
-					let targetKey: string | null = null
-					// 遍历现有的 tracks 字典来找到匹配的 key
-					for (const key in existingTracks) {
-						if (isTargetTrack(existingTracks[key], startFromId, startFromCid)) {
-							targetKey = key
-							break
-						}
-					}
-
-					if (targetKey) {
-						const targetIndex = get()._getActiveList().indexOf(targetKey)
-						if (targetIndex !== -1) {
-							await get().skipToTrack(targetIndex)
-						}
+				if (playNow && startFromKey) {
+					// 直接在当前播放列表中找到 key 对应的索引
+					const targetIndex = get()._getActiveList().indexOf(startFromKey)
+					if (targetIndex !== -1) {
+						await get().skipToTrack(targetIndex)
+					} else {
+						playerLog.warn('指定的 startFromKey 在当前队列中不存在', {
+							key: startFromKey,
+						})
 					}
 				}
 				return
 			}
 
-			// 有新歌加入
+			// Case 2: 有新歌加入
+			const newKeys = newTracks.map(getTrackKey)
 			set(
 				produce((state: PlayerState) => {
-					// 1. 先把新歌数据加进去
-					const newKeys = newTracks.map(getTrackKey)
+					// 1. 把新歌数据加进去
 					newTracks.forEach((track, i) => {
 						state.tracks[newKeys[i]] = track
 					})
@@ -237,23 +226,15 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 
 					// 4. 决定当前播放的 key
 					if (playNow) {
-						let keyToPlay = newKeys[0] // 默认播放新歌的第一首
+						// 默认播放新列表的第一首
+						let keyToPlay = newKeys[0]
 
-						// 如果指定了开始播放的歌曲，就从 newTracks 数组里找到它
-						if (startFromId) {
-							// 使用 isTargetTrack 找到那个完整的 track 对象
-							const targetTrackInNewList = newTracks.find((t) =>
-								isTargetTrack(t, startFromId, startFromCid),
-							)
-
-							// 如果找到了，就用这个完整的对象去生成可靠的 key
-							if (targetTrackInNewList) {
-								keyToPlay = getTrackKey(targetTrackInNewList)
-							}
+						// 如果提供了 startFromKey，并且这个 key 属于本次新添加的歌曲，则使用它
+						if (startFromKey && newKeys.includes(startFromKey)) {
+							keyToPlay = startFromKey
 						}
 						state.currentTrackKey = keyToPlay
 					} else if (!state.currentTrackKey && state.orderedList.length > 0) {
-						// 如果当前无播放，则默认指向列表第一首
 						state.currentTrackKey = state.orderedList[0]
 					}
 				}),
@@ -262,9 +243,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => {
 			if (playNow) {
 				const keyToPlay = get().currentTrackKey
 				if (!keyToPlay) {
-					playerLog.error('播放器异常，无法找到当前播放的 key', {
-						list: get()._getActiveList(),
-					})
+					playerLog.error('播放器异常，无法找到当前播放的 key')
 					return
 				}
 				const indexToPlay = get()._getActiveList().indexOf(keyToPlay)

@@ -85,7 +85,7 @@ export default function FavoritePage() {
 					tracks: allTracks,
 					playNow: true,
 					clearQueue: true,
-					startFromId,
+					startFromKey: startFromId,
 					playNext: false,
 				})
 			} catch (error) {

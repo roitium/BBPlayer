@@ -88,14 +88,14 @@ export default function MultipagePage() {
 					tracks: tracksData,
 					playNow: true,
 					clearQueue: true,
-					startFromCid,
+					startFromKey: startFromCid ? `${bvid}-${startFromCid}` : undefined,
 					playNext: false,
 				})
 			} catch (error) {
 				playlistLog.sentry('播放全部失败', error)
 			}
 		},
-		[addToQueue, tracksData],
+		[addToQueue, tracksData, bvid],
 	)
 
 	const trackMenuItems = useCallback(
