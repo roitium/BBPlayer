@@ -77,11 +77,12 @@ const navigationIntegration = Sentry.reactNavigationIntegration({
 Sentry.init({
 	dsn: 'https://893ea8eb3743da1e065f56b3aa5e96f9@o4508985265618944.ingest.us.sentry.io/4508985267191808',
 	debug: false,
-	tracesSampleRate: developement ? 1 : 0.7,
+	tracesSampleRate: 0.7,
 	sendDefaultPii: true,
 	integrations: [navigationIntegration, Sentry.mobileReplayIntegration()],
 	enableNativeFramesTracking: !isRunningInExpoGo(),
-	profilesSampleRate: developement ? 0 : 0.1,
+	enabled: !developement,
+	environment: developement ? 'development' : 'production',
 })
 
 const scope = Sentry.getGlobalScope()
