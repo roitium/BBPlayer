@@ -48,15 +48,6 @@ jobs:
           path: ${{runner.temp}}/app.apk
           if-no-files-found: error
 
-      - name: 🚀 Bump version number
-        uses: EndBug/add-and-commit@v9
-        if: github.event.inputs.buildType == 'prod-v8a' || github.event.inputs.buildType == 'prod-universal'
-        with:
-          # 更新应用版本号
-          message: "chore: bump version number"
-          committer_name: GitHub Actions
-          committer_email: 41898282+github-actions[bot]@users.noreply.github.com
-
       - name: 🎁 Draft release
         if: github.event.inputs.buildType == 'prod-v8a' || github.event.inputs.buildType == 'prod-universal'
         env: 

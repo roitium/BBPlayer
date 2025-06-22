@@ -20,7 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			backgroundColor: '#ffffff',
 		},
 		package: 'com.roitium.BBPlayer',
-		versionCode: 46,
+		versionCode: 47,
 		edgeToEdgeEnabled: true,
 	},
 	plugins: [
