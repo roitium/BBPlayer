@@ -102,6 +102,7 @@
 		"eslint-plugin-react-hooks": "6.0.0-rc1",
 		"globals": "^16.0.0",
 		"lefthook": "^1.11.12",
+		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.31.1"
 	},
