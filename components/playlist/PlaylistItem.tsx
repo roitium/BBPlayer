@@ -22,6 +22,7 @@ interface TrackListItemProps {
 	index: number
 	onTrackPress: (track: Track) => void
 	menuItems: TrackMenuItem[]
+	showCoverImage?: boolean
 }
 
 /**
@@ -32,6 +33,7 @@ export const TrackListItem = memo(function TrackListItem({
 	index,
 	onTrackPress,
 	menuItems,
+	showCoverImage = true,
 }: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
@@ -72,11 +74,14 @@ export const TrackListItem = memo(function TrackListItem({
 					</Text>
 
 					{/* Cover Image */}
-					<Image
-						source={{ uri: item.cover }}
-						style={{ width: 45, height: 45, borderRadius: 4 }}
-						transition={300}
-					/>
+					{showCoverImage ? (
+						<Image
+							source={{ uri: item.cover }}
+							style={{ width: 45, height: 45, borderRadius: 4 }}
+							transition={300}
+							cachePolicy={'none'}
+						/>
+					) : null}
 
 					{/* Title and Details */}
 					<View style={{ marginLeft: 12, flex: 1, marginRight: 4 }}>

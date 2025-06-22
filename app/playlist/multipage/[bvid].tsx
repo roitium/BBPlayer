@@ -43,7 +43,7 @@ export default function MultipagePage() {
 	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
 	const {
-		data: multipageData,
+		data: rawMultipageData,
 		isPending: isMultipageDataPending,
 		isError: isMultipageDataError,
 		refetch,
@@ -54,6 +54,11 @@ export default function MultipagePage() {
 		isError: isVideoDataError,
 		isPending: isVideoDataPending,
 	} = useGetVideoDetails(bvid)
+
+	const multipageData = rawMultipageData?.map((item) => ({
+		...item,
+		first_frame: videoData?.pic || '',
+	}))
 
 	// 其他 Hooks
 	const playNext = useCallback(
@@ -132,6 +137,7 @@ export default function MultipagePage() {
 					index={index}
 					onTrackPress={handleTrackPress}
 					menuItems={trackMenuItems(item)}
+					showCoverImage={false}
 				/>
 			)
 		},
@@ -142,11 +148,12 @@ export default function MultipagePage() {
 		return item.cid ? item.cid.toString() : ''
 	}, [])
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: multipageData 是基于 rawMultipageData 的派生数据，因此不应该在依赖中添加 multipageData
 	useEffect(() => {
 		if (multipageData && videoData) {
 			setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
 		}
-	}, [multipageData, videoData])
+	}, [rawMultipageData, videoData])
 
 	useEffect(() => {
 		if (typeof bvid !== 'string') {
@@ -229,7 +236,7 @@ export default function MultipagePage() {
 						<PlaylistHeader
 							coverUri={videoData.pic}
 							title={videoData.title}
-							subtitle={`${videoData.owner.name} • ${multipageData.length} 首歌曲`}
+							subtitle={`${videoData.owner.name} • ${(multipageData ?? []).length} 首歌曲`}
 							description={videoData.desc}
 							onPlayAll={() => playAll()}
 						/>
