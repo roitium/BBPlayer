@@ -15,6 +15,11 @@ const initPlayer = async () => {
 	playerLog.debug('调用 initPlayer()')
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
+	// 在初始化时修改一次重复模式，与水合后的 store 状态保持一致
+	const repeatMode = usePlayerStore.getState().repeatMode
+	await TrackPlayer.setRepeatMode(
+		repeatMode === RepeatMode.Track ? RepeatMode.Track : RepeatMode.Off,
+	)
 	global.playerIsReady = true
 	playerLog.debug('播放器初始化完成')
 }

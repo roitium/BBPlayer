@@ -108,7 +108,10 @@ export default function TestPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<ScrollView style={{ flex: 1, padding: 16 }} contentInsetAdjustmentBehavior="automatic">
+			<ScrollView
+				style={{ flex: 1, padding: 16 }}
+				contentInsetAdjustmentBehavior='automatic'
+			>
 				<View style={{ marginBottom: 16 }}>
 					<Button
 						mode='outlined'
@@ -157,6 +160,15 @@ export default function TestPage() {
 						style={{ marginBottom: 8 }}
 					>
 						测试扫码登录
+					</Button>
+					<Button
+						mode='outlined'
+						onPress={() => {
+							usePlayerStore.persist.rehydrate()
+						}}
+						style={{ marginBottom: 8 }}
+					>
+						重新水合播放器 store
 					</Button>
 				</View>
 
