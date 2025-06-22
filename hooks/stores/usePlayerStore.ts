@@ -582,23 +582,6 @@ export const usePlayerStore = create<PlayerStore>()(
 			name: 'player-storage',
 			storage: createJSONStorage(() => zustandStorage),
 			partialize: (state) => ({ repeatMode: state.repeatMode }),
-			// onRehydrateStorage: (state) => {
-			// 	const setRepeatModeOnPlayer = async () => {
-			// 		if (global.playerIsReady && state?.repeatMode !== undefined) {
-			// 			playerLog.debug('恢复播放器重复模式:', state?.repeatMode)
-			// 			const rntpRepeatMode =
-			// 				state.repeatMode === RepeatMode.Track
-			// 					? RepeatMode.Track
-			// 					: RepeatMode.Off
-			// 			await TrackPlayer.setRepeatMode(rntpRepeatMode)
-			// 		}
-			// 	}
-			// 	return () => {
-			// 		setRepeatModeOnPlayer().catch((error) => {
-			// 			playerLog.sentry('恢复播放器重复模式失败', error)
-			// 		})
-			// 	}
-			// },
 		},
 	),
 )
