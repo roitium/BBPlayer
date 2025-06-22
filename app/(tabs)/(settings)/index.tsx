@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Application from 'expo-application'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -46,7 +47,7 @@ export default function SettingsPage() {
 				contentContainerStyle={{
 					paddingHorizontal: 25,
 				}}
-				contentInsetAdjustmentBehavior="automatic"
+				contentInsetAdjustmentBehavior='automatic'
 			>
 				<SettingsSection />
 			</ScrollView>
@@ -91,6 +92,13 @@ const AboutSection = memo(function AboutSection() {
 				onPress={handlePress}
 			>
 				BBPlayer
+			</Text>
+			<Text
+				variant='bodyMedium'
+				style={{ textAlign: 'center' }}
+			>
+				v{Application.nativeApplicationVersion} (
+				{Application.nativeBuildVersion})
 			</Text>
 			<Text
 				variant='bodyMedium'

@@ -34,6 +34,7 @@
 		"cookie": "^1.0.2",
 		"eslint-config-biome": "^1.9.4",
 		"expo": "~53.0.12",
+		"expo-application": "~6.1.4",
 		"expo-asset": "~11.1.4",
 		"expo-blur": "~14.1.4",
 		"expo-build-properties": "~0.14.6",
