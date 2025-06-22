@@ -56,3 +56,10 @@ jobs:
           message: "chore: bump version number"
           committer_name: GitHub Actions
           committer_email: 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: 🎁 Draft release
+        if: github.event.inputs.buildType == 'prod-v8a' || github.event.inputs.buildType == 'prod-universal'
+        env: 
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            gh release create "v$(node -p "require('./package.json').version")" '${{runner.temp}}/app.apk#bbplayer-v$(node -p "require('./package.json').version")-${{ github.event.inputs.buildType }}.apk' --title "v$(node -p "require('./package.json').version")" --draft --notes "auto release by GitHub Actions"
