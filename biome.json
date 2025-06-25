@@ -1,5 +1,6 @@
 {
-	"$schema": "https://next.biomejs.dev/schemas/2.0.0-beta.2/schema.json",
+	"root": false,
+	"$schema": "https://biomejs.dev/schemas/2.0.5/schema.json",
 	"files": {
 		"ignoreUnknown": false,
 		"includes": ["**"]
@@ -19,10 +20,8 @@
 			"recommended": true,
 			"style": {
 				"useLiteralEnumMembers": "error",
-				"noCommaOperator": "error",
 				"useNodejsImportProtocol": "error",
 				"useAsConstAssertion": "error",
-				"useNumericLiterals": "error",
 				"useEnumInitializers": "error",
 				"useSelfClosingElements": "error",
 				"useConst": "error",
@@ -35,7 +34,6 @@
 				"noParameterAssign": "error",
 				"noNonNullAssertion": "error",
 				"useDefaultParameterLast": "error",
-				"noArguments": "error",
 				"useImportType": "error",
 				"useExportType": "error",
 				"noUselessElse": "error",
@@ -51,7 +49,10 @@
 				"noUnresolvedImports": "off"
 			},
 			"complexity": {
-				"noForEach": "error"
+				"noForEach": "error",
+				"noCommaOperator": "error",
+				"useNumericLiterals": "error",
+				"noArguments": "error"
 			}
 		}
 	},
