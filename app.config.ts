@@ -22,6 +22,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 		package: 'com.roitium.BBPlayer',
 		versionCode: 47,
 		edgeToEdgeEnabled: true,
+		runtimeVersion: version,
 	},
 	plugins: [
 		'./plugins/withAndroidPlugin',
