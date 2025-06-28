@@ -1,15 +1,16 @@
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as Application from "expo-application";
-import * as WebBrowser from "expo-web-browser";
-import { memo, useCallback, useState } from "react";
-import { ScrollView, View } from "react-native";
-import { Button, Divider, Switch, Text, useTheme } from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import CookieLoginModal from "@/components/modals/CookieLoginModal";
-import QrCodeLoginModal from "@/components/modals/QRCodeLoginModal";
-import useAppStore from "@/hooks/stores/useAppStore";
-import type { RootStackParamList } from "../../../types/navigation";
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Application from 'expo-application'
+import * as WebBrowser from 'expo-web-browser'
+import { memo, useCallback, useState } from 'react'
+import { ScrollView, View } from 'react-native'
+import { Button, Divider, Switch, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import CookieLoginModal from '@/components/modals/CookieLoginModal'
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import useAppStore from '@/hooks/stores/useAppStore'
+import type { RootStackParamList } from '../../../types/navigation'
+import * as Updates from 'expo-updates'
 
 const CLICK_TIMES = 3;
 
@@ -72,16 +73,6 @@ const AboutSection = memo(function AboutSection() {
 
 	return (
 		<View style={{ paddingBottom: 15 }}>
-			{/* <Image
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				source={require('@/assets/images/icon.png')}
-				style={{
-					width: 200,
-					height: 200,
-					resizeMode: 'contain',
-					marginHorizontal: 'auto',
-				}}
-			/> */}
 			<Text
 				variant="titleLarge"
 				style={{ textAlign: "center", marginBottom: 5 }}
@@ -89,9 +80,12 @@ const AboutSection = memo(function AboutSection() {
 			>
 				BBPlayer
 			</Text>
-			<Text variant="bodyMedium" style={{ textAlign: "center" }}>
-				v{Application.nativeApplicationVersion} (
-				{Application.nativeBuildVersion})
+			<Text
+				variant='bodyMedium'
+				style={{ textAlign: 'center', marginBottom: 5 }}
+			>
+				v{Application.nativeApplicationVersion}:{Application.nativeBuildVersion}{' '}
+				{Updates.updateId ? `(hotfix-${Updates.updateId.slice(0, 7)})` : ''}
 			</Text>
 			<Text variant="bodyMedium" style={{ textAlign: "center" }}>
 				一个<Text style={{ textDecorationLine: "line-through" }}>简陋</Text>的
