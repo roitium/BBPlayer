@@ -54,7 +54,7 @@ jobs:
         run: |
           APP_VERSION=$(node -p "require('./package.json').version")
 
-          APK_NAME="bbplayer-v${APP_VERSION}-${{ github.event.inputs.buildType }}.apk"
+          APK_NAME="bbplayer-v${APP_VERSION}-${{ github.event.inputs.buildType }}.zip"
           RELEASE_TAG="v${APP_VERSION}"
 
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV

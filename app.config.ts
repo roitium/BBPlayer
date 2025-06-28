@@ -1,5 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config'
-import { version } from './package.json'
+import { version, versionCode } from './package.json'
 import 'ts-node/register'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -20,7 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			backgroundColor: '#ffffff',
 		},
 		package: 'com.roitium.BBPlayer',
-		versionCode: 47,
+		versionCode: versionCode,
 		edgeToEdgeEnabled: true,
 		runtimeVersion: version,
 	},
