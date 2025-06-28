@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       buildType:
-        description: "构建类型"
+        description: '构建类型'
         required: true
-        default: "prod-universal"
+        default: 'prod-universal'
         type: choice
         options:
           - prod-v8a
@@ -53,10 +53,10 @@ jobs:
         id: prep
         run: |
           APP_VERSION=$(node -p "require('./package.json').version")
-          
+
           APK_NAME="bbplayer-v${APP_VERSION}-${{ github.event.inputs.buildType }}.apk"
           RELEASE_TAG="v${APP_VERSION}"
-          
+
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
           echo "APK_NAME=${APK_NAME}" >> $GITHUB_ENV
           echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_ENV

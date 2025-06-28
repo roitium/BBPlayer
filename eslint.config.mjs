@@ -1,7 +1,7 @@
 import js from '@eslint/js'
 import pluginQuery from '@tanstack/eslint-plugin-query'
 import { defineConfig } from 'eslint/config'
-import biome from 'eslint-config-biome'
+import eslintConfigPrettier from 'eslint-config-prettier/flat'
 import pluginReact from 'eslint-plugin-react'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -14,7 +14,14 @@ export default defineConfig([
 		extends: ['js/recommended'],
 	},
 	tseslint.configs.recommended,
-	pluginReact.configs.flat.recommended,
+	{
+		...pluginReact.configs.flat.recommended,
+		settings: {
+			react: {
+				version: 'detect',
+			},
+		},
+	},
 	pluginReact.configs.flat['jsx-runtime'],
 	...pluginQuery.configs['flat/recommended'],
 	reactHooks.configs['recommended-latest'],
@@ -41,5 +48,5 @@ export default defineConfig([
 		},
 	},
 	reactCompiler.configs.recommended,
-	biome,
+	eslintConfigPrettier,
 ])

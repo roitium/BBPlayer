@@ -187,7 +187,7 @@ const linking = {
 			NotFound: "*",
 		},
 	},
-	// biome-ignore lint/suspicious/noExplicitAny: fuck off
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	getStateFromPath(path: string, options: any) {
 		console.log(path);
 		if (path.startsWith("notification.click")) {
