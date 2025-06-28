@@ -122,7 +122,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		checkedList,
 		dealFavoriteForOneVideo,
 		setVisible,
-		queryClient.removeQueries,
+		queryClient,
 	])
 
 	const showLoading =

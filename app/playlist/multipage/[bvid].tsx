@@ -148,11 +148,13 @@ export default function MultipagePage() {
 		return item.cid ? item.cid.toString() : ''
 	}, [])
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: multipageData 是基于 rawMultipageData 的派生数据，因此不应该在依赖中添加 multipageData
 	useEffect(() => {
 		if (multipageData && videoData) {
 			setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
 		}
+		// multipageData 是基于 rawMultipageData 的派生数据，因此不应该在依赖中添加 multipageData
+		// eslint-disable-next-line react-compiler/react-compiler
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [rawMultipageData, videoData])
 
 	useEffect(() => {

@@ -109,7 +109,11 @@ const PlayerLogic = {
 						trackId: currentTrack?.id,
 						title: currentTrack?.title,
 					})
-					setter((state) => ({ ...state, isPlaying: true, isBuffering: false }))
+					setter((state) => ({
+						...state,
+						isPlaying: true,
+						isBuffering: false,
+					}))
 				} else if (
 					state === TrackPlayerState.Paused ||
 					state === TrackPlayerState.Stopped

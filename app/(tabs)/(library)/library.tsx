@@ -382,7 +382,9 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
 					disabled={item.state === 1}
 					onPress={() => {
 						if (item.attr === 0) {
-							navigation.navigate('PlaylistCollection', { id: String(item.id) })
+							navigation.navigate('PlaylistCollection', {
+								id: String(item.id),
+							})
 						} else {
 							navigation.navigate('PlaylistFavorite', { id: String(item.id) })
 						}

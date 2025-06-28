@@ -18,7 +18,7 @@ type StyleProps = {
 
 type PromiseOptions = {
 	promise: Promise<unknown>
-	// biome-ignore lint/suspicious/noExplicitAny: 来自库
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	success: (result: any) => string
 	error: ((error: unknown) => string) | string
 	loading: string

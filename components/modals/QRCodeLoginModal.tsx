@@ -112,14 +112,7 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 			}, 2000)
 			return () => clearInterval(interval)
 		}
-	}, [
-		startPolling,
-		qrcodeKey,
-		visible,
-		setCookie,
-		queryClient.refetchQueries,
-		setVisible,
-	])
+	}, [startPolling, qrcodeKey, visible, setCookie, queryClient, setVisible])
 
 	useEffect(() => {
 		if (isExpired) {

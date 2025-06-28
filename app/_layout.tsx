@@ -105,7 +105,7 @@ if (typeof updateGroup === 'string') {
 
 // 设置全局错误处理器，捕获未被处理的 JS 错误
 if (!developement) {
-	// biome-ignore lint/suspicious/noExplicitAny: 无需解释
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const errorUtils = (global as any).ErrorUtils
 	if (errorUtils) {
 		const originalErrorHandler = errorUtils.getGlobalHandler()
@@ -186,7 +186,7 @@ const linking = {
 			NotFound: '*',
 		},
 	},
-	// biome-ignore lint/suspicious/noExplicitAny: fuck off
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	getStateFromPath(path: string, options: any) {
 		console.log(path)
 		if (path.startsWith('notification.click')) {

@@ -94,7 +94,7 @@ export default function SearchResultsPage() {
 				toast.show('播放失败')
 			}
 		},
-		[addToQueue, navigation.navigate],
+		[addToQueue, navigation],
 	)
 
 	const trackMenuItems = useCallback(
@@ -120,7 +120,7 @@ export default function SearchResultsPage() {
 				},
 			},
 		],
-		[playNext, navigation.navigate],
+		[playNext, navigation],
 	)
 
 	const renderSearchResultItem = useCallback(
