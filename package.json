@@ -6,12 +6,9 @@
 	"scripts": {
 		"start": "expo start",
 		"android": "expo run:android",
-		"ios": "expo run:ios",
-		"web": "expo start --web",
 		"test": "jest --watchAll",
-		"lint": "expo lint",
-		"format:check": "biome check . && eslint .",
-		"format": "biome check --write --unsafe . && eslint --fix ."
+		"lint": "eslint .",
+		"format": "eslint . --fix && prettier --write ."
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.27.1",
@@ -79,9 +76,10 @@
 		"react-native-track-player": "^4.1.1",
 		"react-native-web": "~0.20.0",
 		"react-native-webview": "13.13.5",
+		"react-native-z-view": "^0.2.4",
 		"set-cookie-parser": "^2.7.1",
 		"shaka-player": "^4.14.10",
-		"sonner-native": "^0.19.0",
+		"sonner-native": "^0.21.0",
 		"ts-jest": "^29.3.2",
 		"zustand": "^5.0.4"
 	},

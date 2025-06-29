@@ -7,6 +7,7 @@ import {
 } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
+import { ZView } from 'react-native-z-view'
 import {
 	focusManager,
 	onlineManager,
@@ -403,7 +404,7 @@ export default Sentry.wrap(function RootLayout() {
 								</NavigationContainer>
 							</PaperProvider>
 						</QueryClientProvider>
-						<Toaster />
+						<Toaster ToasterOverlayWrapper={ZView} />
 					</GestureHandlerRootView>
 				</Sentry.ErrorBoundary>
 				<SystemBars style='auto' />
