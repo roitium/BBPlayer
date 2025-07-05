@@ -77,7 +77,6 @@
 		"react-native-track-player": "^4.1.1",
 		"react-native-web": "~0.20.0",
 		"react-native-webview": "13.13.5",
-		"react-native-z-view": "^0.2.4",
 		"set-cookie-parser": "^2.7.1",
 		"shaka-player": "^4.14.10",
 		"ts-jest": "^29.3.2",
