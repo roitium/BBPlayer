@@ -170,6 +170,20 @@ export default function TestPage() {
 					>
 						重新水合播放器 store
 					</Button>
+					<Button
+						mode='outlined'
+						onPress={() => {
+							toast.info('这是一个测试 toast', {
+								duration: 3000,
+								text1: '测试 Toast',
+								text2:
+									'这是一个测试的 Toast 消息aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaasdhkisuvghaosvuohafdiubvhasfv\nasdasdasd\n\nhhhhhhhhhh',
+							})
+						}}
+						style={{ marginBottom: 8 }}
+					>
+						弹出 toast
+					</Button>
 				</View>
 
 				<Text
