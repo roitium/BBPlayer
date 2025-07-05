@@ -24,6 +24,7 @@ import type { BilibiliCollection } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import type { RootStackParamList } from '../../../types/navigation'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 
 export default function LibraryScreen() {
 	const { colors } = useTheme()
@@ -145,8 +146,13 @@ const FavoriteFolderListComponent = memo(
 		const {
 			data: playlists,
 			isPending: playlistsIsPending,
+			refetch,
 			isError: playlistsIsError,
 		} = useGetFavoritePlaylists(userInfo?.mid)
+		const currentTrack = useCurrentTrack()
+		const colors = useTheme().colors
+		// 使用 refreshing 状态而非 useQuery 自带的 isFetching 来判断是否正在刷新，是因为 isFetching 会导致 RefreshController 闪烁。
+		const [refreshing, setRefreshing] = useState(false)
 
 		const renderPlaylistItem = useCallback(
 			({ item }: { item: Playlist }) => <FavoriteFolderListItem item={item} />,
@@ -226,10 +232,22 @@ const FavoriteFolderListComponent = memo(
 				/>
 				<FlatList
 					style={{ flex: 1 }}
-					contentContainerStyle={{ paddingBottom: 80 }}
+					contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
 					showsVerticalScrollIndicator={false}
 					data={filteredPlaylists}
 					renderItem={renderPlaylistItem}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={async () => {
+								setRefreshing(true)
+								await refetch()
+								setRefreshing(false)
+							}}
+							colors={[colors.primary]}
+							progressViewOffset={50}
+						/>
+					}
 					keyExtractor={keyExtractor}
 					ListFooterComponent={
 						<Text
@@ -263,8 +281,9 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 		hasNextPage,
 		fetchNextPage,
 	} = useInfiniteCollectionsList(Number(userInfo?.mid))
-	const [refreshing, setRefreshing] = useState(false)
 	const colors = useTheme().colors
+	const currentTrack = useCurrentTrack()
+	const [refreshing, setRefreshing] = useState(false)
 
 	const renderCollectionItem = useCallback(
 		({ item }: { item: BilibiliCollection }) => (
@@ -337,7 +356,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 					/>
 				}
 				keyExtractor={keyExtractor}
-				contentContainerStyle={{ paddingBottom: 80 }}
+				contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
 				showsVerticalScrollIndicator={false}
 				onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
 				ListFooterComponent={
@@ -435,15 +454,19 @@ const MultiPageVideosListComponent = memo(
 			isPending: playlistsIsPending,
 			isError: playlistsIsError,
 		} = useGetFavoritePlaylists(userInfo?.mid)
+		const [refreshing, setRefreshing] = useState(false)
 		const {
 			data: favoriteData,
 			isError: isFavoriteDataError,
 			isLoading: isFavoriteDataLoading,
 			fetchNextPage,
+			refetch,
 			hasNextPage,
 		} = useInfiniteFavoriteList(
 			playlists?.find((item) => item.title.startsWith('[mp]'))?.id,
 		)
+		const currentTrack = useCurrentTrack()
+		const colors = useTheme().colors
 
 		const renderPlaylistItem = useCallback(
 			({ item }: { item: Track }) => <MultiPageVideosItem item={item} />,
@@ -516,11 +539,23 @@ const MultiPageVideosListComponent = memo(
 				</View>
 				<FlatList
 					style={{ flex: 1 }}
-					contentContainerStyle={{ paddingBottom: 80 }}
+					contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
 					showsVerticalScrollIndicator={false}
 					data={favoriteData?.pages.flatMap((page) => page.tracks)}
 					renderItem={renderPlaylistItem}
 					keyExtractor={keyExtractor}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={async () => {
+								setRefreshing(true)
+								await refetch()
+								setRefreshing(false)
+							}}
+							colors={[colors.primary]}
+							progressViewOffset={50}
+						/>
+					}
 					ListEmptyComponent={
 						<Text style={{ textAlign: 'center' }}>没有分P视频</Text>
 					}

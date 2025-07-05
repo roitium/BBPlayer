@@ -367,7 +367,7 @@ function RecentlyPlayed({
 								refreshing={isPending}
 								onRefresh={async () => {
 									setRefreshing(true)
-									await refetch()
+									refetch()
 									setRefreshing(false)
 								}}
 								colors={[colors.primary]}
@@ -509,16 +509,16 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 								}}
 								title='添加到收藏夹'
 							/>
+							<Divider />
+							<Menu.Item
+								leadingIcon='eye-outline'
+								onPress={() => {
+									navigation.navigate('PlaylistMultipage', { bvid: item.id })
+									handleDismissMenu()
+								}}
+								title='作为分P视频展示'
+							/>
 						</Menu>
-						<Divider />
-						<Menu.Item
-							leadingIcon='eye-outline'
-							onPress={() => {
-								navigation.navigate('PlaylistMultipage', { bvid: item.id })
-								handleDismissMenu()
-							}}
-							title='作为分P视频展示'
-						/>
 					</View>
 				</Surface>
 			</TouchableOpacity>
