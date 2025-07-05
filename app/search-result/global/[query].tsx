@@ -134,7 +134,7 @@ export default function SearchResultsPage() {
 			setCurrentPage(pageNumber)
 		} else {
 			setPageInputValue(currentPage.toString())
-			toast.warning(`请输入 1 到 ${totalPages} 之间的页码`)
+			toast.error(`请输入 1 到 ${totalPages} 之间的页码`)
 		}
 	}, [pageInputValue, currentPage, totalPages])
 

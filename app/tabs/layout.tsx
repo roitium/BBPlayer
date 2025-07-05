@@ -2,10 +2,10 @@ import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
 import { useTheme } from 'react-native-paper'
 import type { BottomTabParamList } from '../../types/navigation'
-import HomePage from './(home)/index'
-import LibraryScreen from './(library)/library'
-import SearchPage from './(search)/search'
-import SettingsPage from './(settings)/index'
+import HomePage from './home/index'
+import LibraryScreen from './library/library'
+import SearchPage from './search/search'
+import SettingsPage from './settings/index'
 
 const Tab = createNativeBottomTabNavigator<BottomTabParamList>()
 
@@ -24,7 +24,6 @@ export default function TabLayout() {
 
 	return (
 		<Tab.Navigator
-			labeled={true}
 			disablePageAnimations={true}
 			tabBarActiveTintColor={themes.primary}
 			activeIndicatorColor={themes.primaryContainer}

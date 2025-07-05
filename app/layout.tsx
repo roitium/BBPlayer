@@ -41,17 +41,17 @@ import { ApiCallingError } from '@/utils/errors'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import type { RootStackParamList } from '../types/navigation'
-import NotFoundScreen from './+not-found'
+import NotFoundScreen from './not-found'
 // Screen imports
-import TabLayout from './(tabs)/_layout'
-import PlayerPage from './player/index'
+import TabLayout from './tabs/layout'
+import PlayerPage from './player/player'
 import PlaylistCollectionPage from './playlist/collection/[id]'
 import PlaylistFavoritePage from './playlist/favorite/[id]'
 import PlaylistMultipagePage from './playlist/multipage/[bvid]'
 import PlaylistUploaderPage from './playlist/uploader/[mid]'
 import SearchResultFavPage from './search-result/fav/[query]'
 import SearchResultsPage from './search-result/global/[query]'
-import TestPage from './test/index'
+import TestPage from './test/test'
 
 const rootLog = log.extend('ROOT')
 

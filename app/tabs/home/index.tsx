@@ -71,7 +71,7 @@ function HomePage() {
 
 	useEffect(() => {
 		if (!bilibiliCookie) {
-			toast.warning('看起来你是第一次打开 BBPlayer，先登录一下吧！')
+			toast.info('看起来你是第一次打开 BBPlayer，先登录一下吧！')
 			setLoginDialogVisible(true)
 		}
 	}, [bilibiliCookie])
