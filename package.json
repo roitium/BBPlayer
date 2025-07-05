@@ -1,17 +1,14 @@
 {
 	"name": "bbplayer",
 	"main": "index.js",
-	"version": "0.0.5",
-	"versionCode": 48,
+	"version": "0.0.6",
+	"versionCode": 49,
 	"scripts": {
 		"start": "expo start",
 		"android": "expo run:android",
-		"ios": "expo run:ios",
-		"web": "expo start --web",
 		"test": "jest --watchAll",
-		"lint": "expo lint",
-		"format:check": "biome check . && eslint .",
-		"format": "biome check --write --unsafe . && eslint --fix ."
+		"lint": "eslint .",
+		"format": "eslint . --fix && prettier --write ."
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.27.1",
@@ -80,6 +77,7 @@
 		"react-native-track-player": "^4.1.1",
 		"react-native-web": "~0.20.0",
 		"react-native-webview": "13.13.5",
+		"react-native-z-view": "^0.2.4",
 		"set-cookie-parser": "^2.7.1",
 		"shaka-player": "^4.14.10",
 		"ts-jest": "^29.3.2",
