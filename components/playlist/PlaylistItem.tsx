@@ -2,6 +2,7 @@ import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
 import {
+	Divider,
 	IconButton,
 	Menu,
 	Surface,
@@ -15,6 +16,12 @@ export interface TrackMenuItem {
 	title: string
 	leadingIcon: string
 	onPress: (track: Track) => void
+}
+
+export const TrackMenuItemDividerToken = {
+	title: 'divider',
+	leadingIcon: '',
+	onPress: () => {},
 }
 
 interface TrackListItemProps {
@@ -85,7 +92,7 @@ export const TrackListItem = memo(function TrackListItem({
 
 					{/* Title and Details */}
 					<View style={{ marginLeft: 12, flex: 1, marginRight: 4 }}>
-						<Text variant='titleMedium'>{item.title}</Text>
+						<Text variant='bodySmall'>{item.title}</Text>
 						<View
 							style={{
 								flexDirection: 'row',
@@ -125,24 +132,27 @@ export const TrackListItem = memo(function TrackListItem({
 							anchor={
 								<IconButton
 									icon='dots-vertical'
-									size={24}
+									size={20}
 									onPress={openMenu}
-									style={{ margin: -8 }}
 								/>
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem) => (
-								<Menu.Item
-									key={menuItem.title}
-									leadingIcon={menuItem.leadingIcon}
-									onPress={() => {
-										menuItem.onPress(item)
-										closeMenu()
-									}}
-									title={menuItem.title}
-								/>
-							))}
+							{menuItems.map((menuItem) =>
+								menuItem.title === 'divider' ? (
+									<Divider key={menuItem.title} />
+								) : (
+									<Menu.Item
+										key={menuItem.title}
+										leadingIcon={menuItem.leadingIcon}
+										onPress={() => {
+											menuItem.onPress(item)
+											closeMenu()
+										}}
+										title={menuItem.title}
+									/>
+								),
+							)}
 						</Menu>
 					)}
 				</View>

@@ -10,7 +10,10 @@ import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
@@ -104,6 +107,7 @@ export default function SearchResultsPage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
@@ -111,6 +115,7 @@ export default function SearchResultsPage() {
 					navigation.navigate('PlaylistMultipage', { bvid: item.id })
 				},
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',

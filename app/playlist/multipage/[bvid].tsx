@@ -11,7 +11,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetMultiPageList,
@@ -110,6 +113,7 @@ export default function MultipagePage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',

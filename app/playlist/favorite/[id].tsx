@@ -12,7 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useBatchDeleteFavoriteListContents,
@@ -112,6 +115,7 @@ export default function FavoritePage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '从收藏夹中删除',
 				leadingIcon: 'playlist-remove',
@@ -130,8 +134,16 @@ export default function FavoritePage() {
 					setModalVisible(true)
 				},
 			},
+			TrackMenuItemDividerToken,
+			{
+				title: '作为分P视频展示',
+				leadingIcon: 'eye-outline',
+				onPress: () => {
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
+				},
+			},
 		],
-		[playNext, mutate, refetch, id],
+		[playNext, mutate, refetch, id, navigation],
 	)
 
 	const handleTrackPress = useCallback(

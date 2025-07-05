@@ -67,6 +67,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					<IconButton
 						mode='contained'
 						icon='play'
+						size={30}
 						onPress={() => onPlayAll()}
 					/>
 				)}

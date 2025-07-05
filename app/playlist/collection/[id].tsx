@@ -18,7 +18,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
@@ -104,6 +107,7 @@ export default function CollectionPage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
@@ -112,8 +116,16 @@ export default function CollectionPage() {
 					setModalVisible(true)
 				},
 			},
+			TrackMenuItemDividerToken,
+			{
+				title: '作为分P视频展示',
+				leadingIcon: 'eye-outline',
+				onPress: () => {
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
+				},
+			},
 		],
-		[playNext],
+		[playNext, navigation],
 	)
 
 	const handleTrackPress = useCallback(

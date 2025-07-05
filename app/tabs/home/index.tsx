@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import {
 	ActivityIndicator,
+	Divider,
 	IconButton,
 	Menu,
 	Surface,
@@ -32,6 +33,7 @@ import log from '@/utils/log'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 
 const homeLog = log.extend('HOME')
 
@@ -388,6 +390,10 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 	menuVisible: string | null
 	setMenuVisible: (visible: string | null) => void
 }) {
+	const [modalVisible, setModalVisible] = useState(false)
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+
 	const playSingleTrack = async (track: Track) => {
 		try {
 			await usePlayerStore.getState().addToQueue({
@@ -419,84 +425,109 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 	const handleOpenMenu = () => setMenuVisible(item.id.toString())
 
 	return (
-		<TouchableOpacity
-			key={item.id}
-			style={{ marginBottom: 8 }}
-			onPress={() => playSingleTrack(item)}
-		>
-			<Surface
-				style={{ overflow: 'hidden', borderRadius: 8 }}
-				elevation={0}
+		<>
+			<TouchableOpacity
+				key={item.id}
+				style={{ marginBottom: 8 }}
+				onPress={() => playSingleTrack(item)}
 			>
-				<View
-					style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+				<Surface
+					style={{ overflow: 'hidden', borderRadius: 8 }}
+					elevation={0}
 				>
-					<Image
-						source={{ uri: item.cover }}
-						style={{ width: 48, height: 48, borderRadius: 4 }}
-						transition={300}
-						cachePolicy={'none'}
-					/>
-					<View style={{ marginLeft: 12, flex: 1 }}>
-						<Text
-							variant='titleMedium'
-							numberOfLines={1}
-						>
-							{item.title}
-						</Text>
-						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-							<Text variant='bodySmall'>{item.artist}</Text>
-							{item.duration != null && item.duration > 0 && (
-								<>
-									<Text
-										style={{ marginHorizontal: 4 }}
-										variant='bodySmall'
-									>
-										•
-									</Text>
-									<Text variant='bodySmall'>
-										{formatDurationToHHMMSS(item.duration)}
-									</Text>
-								</>
-							)}
-						</View>
-					</View>
-					<Menu
-						visible={menuVisible === item.id.toString()}
-						onDismiss={handleDismissMenu}
-						anchor={
-							<IconButton
-								icon='dots-vertical'
-								size={24}
-								onPress={handleOpenMenu}
-							/>
-						}
-						anchorPosition='bottom'
+					<View
+						style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
 					>
+						<Image
+							source={{ uri: item.cover }}
+							style={{ width: 48, height: 48, borderRadius: 4 }}
+							transition={300}
+							cachePolicy={'none'}
+						/>
+						<View style={{ marginLeft: 12, flex: 1 }}>
+							<Text
+								variant='titleMedium'
+								numberOfLines={1}
+							>
+								{item.title}
+							</Text>
+							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+								<Text variant='bodySmall'>{item.artist}</Text>
+								{item.duration != null && item.duration > 0 && (
+									<>
+										<Text
+											style={{ marginHorizontal: 4 }}
+											variant='bodySmall'
+										>
+											•
+										</Text>
+										<Text variant='bodySmall'>
+											{formatDurationToHHMMSS(item.duration)}
+										</Text>
+									</>
+								)}
+							</View>
+						</View>
+						<Menu
+							visible={menuVisible === item.id.toString()}
+							onDismiss={handleDismissMenu}
+							anchor={
+								<IconButton
+									icon='dots-vertical'
+									size={24}
+									onPress={handleOpenMenu}
+								/>
+							}
+							anchorPosition='bottom'
+						>
+							<Menu.Item
+								leadingIcon='play-circle-outline'
+								onPress={() => {
+									playSingleTrack(item).catch((error) => {
+										homeLog.sentry('播放单曲失败', error)
+									})
+									handleDismissMenu()
+								}}
+								title='立即播放'
+							/>
+							<Menu.Item
+								leadingIcon='playlist-play'
+								onPress={() => {
+									playNext(item).catch((error) => {
+										homeLog.sentry('添加到队列失败', error)
+									})
+									handleDismissMenu()
+								}}
+								title='下一首播放'
+							/>
+							<Divider />
+							<Menu.Item
+								leadingIcon='plus'
+								onPress={() => {
+									setModalVisible(true)
+									handleDismissMenu()
+								}}
+								title='添加到收藏夹'
+							/>
+						</Menu>
+						<Divider />
 						<Menu.Item
-							leadingIcon='play-circle-outline'
+							leadingIcon='eye-outline'
 							onPress={() => {
-								playSingleTrack(item).catch((error) => {
-									homeLog.sentry('播放单曲失败', error)
-								})
+								navigation.navigate('PlaylistMultipage', { bvid: item.id })
 								handleDismissMenu()
 							}}
-							title='立即播放'
+							title='作为分P视频展示'
 						/>
-						<Menu.Item
-							leadingIcon='playlist-play'
-							onPress={() => {
-								playNext(item).catch((error) => {
-									homeLog.sentry('添加到队列失败', error)
-								})
-								handleDismissMenu()
-							}}
-							title='下一首播放'
-						/>
-					</Menu>
-				</View>
-			</Surface>
-		</TouchableOpacity>
+					</View>
+				</Surface>
+			</TouchableOpacity>
+			<AddToFavoriteListsModal
+				visible={modalVisible}
+				bvid={item.id}
+				setVisible={setModalVisible}
+			/>
+		</>
 	)
 })
 
