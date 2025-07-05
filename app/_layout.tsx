@@ -259,30 +259,10 @@ export default Sentry.wrap(function RootLayout() {
 		if (developement) {
 			return
 		}
-		const update = () => {
-			toast.loading('正在下载更新包', { id: 'update' })
-			Updates.fetchUpdateAsync()
-				.then(() => {
-					toast.success('更新包下载完成，重载应用', { id: 'update' })
-				})
-				.then(() => {
-					Updates.reloadAsync()
-				})
-				.catch((error) => {
-					console.error('更新包下载失败', error)
-					toast.error('更新包下载失败', {
-						description: error.message,
-						id: 'update',
-						duration: Number.POSITIVE_INFINITY,
-					})
-				})
-		}
 		Updates.checkForUpdateAsync()
 			.then((result) => {
 				if (result.isAvailable) {
-					toast.show('检测到有新的热更新，是否更新？', {
-						action: { label: '更新', onClick: update },
-						duration: Number.POSITIVE_INFINITY,
+					toast.show('有新的热更新，将在下次启动时应用', {
 						id: 'update',
 					})
 				}
@@ -291,7 +271,6 @@ export default Sentry.wrap(function RootLayout() {
 				console.error('检测更新失败', error)
 				toast.error('检测更新失败', {
 					description: error.message,
-					duration: Number.POSITIVE_INFINITY,
 				})
 			})
 	}, [])
