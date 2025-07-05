@@ -330,16 +330,6 @@ function RecentlyPlayed({
 				>
 					最近播放
 				</Text>
-				<TouchableOpacity
-					onPress={() => homeLog.info('View All Recently Played pressed')}
-				>
-					<Text
-						variant='labelLarge'
-						style={{ color: colors.primary }}
-					>
-						查看全部
-					</Text>
-				</TouchableOpacity>
 			</View>
 
 			{/* Content Area */}

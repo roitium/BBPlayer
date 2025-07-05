@@ -98,7 +98,8 @@ export default function SearchPage() {
 	const navigateToResults = (query: string) => {
 		if (!query.trim()) return
 		addSearchHistory(query)
-		setSearchQuery('')
+		// 我不喜欢清除，因为我可能要反复搜索调整关键词
+		// setSearchQuery('')
 		navigation.navigate('SearchResult', { query })
 	}
 
