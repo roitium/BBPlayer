@@ -61,10 +61,9 @@ export const createBilibiliApi = () => ({
 	 */
 	getPopularVideos(partition: string): ResultAsync<Track[], BilibiliApiError> {
 		return bilibiliApiClient
-			.get<{ list: BilibiliVideoDetails[] }>(
-				`/x/web-interface/ranking/v2?rid=${partition}`,
-				undefined,
-			)
+			.get<{
+				list: BilibiliVideoDetails[]
+			}>(`/x/web-interface/ranking/v2?rid=${partition}`, undefined)
 			.map((response) => transformVideoDetailsToTracks(response.list))
 	},
 
@@ -75,10 +74,9 @@ export const createBilibiliApi = () => ({
 		userMid: number,
 	): ResultAsync<Playlist[], BilibiliApiError> {
 		return bilibiliApiClient
-			.get<{ list: BilibiliPlaylist[] | null }>(
-				`/x/v3/fav/folder/created/list-all?up_mid=${userMid}`,
-				undefined,
-			)
+			.get<{
+				list: BilibiliPlaylist[] | null
+			}>(`/x/v3/fav/folder/created/list-all?up_mid=${userMid}`, undefined)
 			.map((response) => transformFavoriteListsToPlaylists(response.list))
 	},
 

@@ -1,5 +1,10 @@
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -7,7 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useInfiniteGetUserUploadedVideos,
@@ -17,13 +25,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
 
 export default function UploaderPage() {
-	const { mid } = useLocalSearchParams()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistUploader'>>()
+	const { mid } = route.params
 	const { colors } = useTheme()
-	const router = useRouter()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistUploader'>
+		>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
@@ -77,6 +90,7 @@ export default function UploaderPage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: () => playTrack(item, false),
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
@@ -85,15 +99,16 @@ export default function UploaderPage() {
 					setModalVisible(true)
 				},
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: async () => {
-					router.push(`/playlist/multipage/${item.id}`)
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
 				},
 			},
 		],
-		[playTrack, router.push],
+		[playTrack, navigation],
 	)
 
 	const renderItem = useCallback(
@@ -114,10 +129,9 @@ export default function UploaderPage() {
 
 	useEffect(() => {
 		if (typeof mid !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [mid, router])
+	}, [mid, navigation])
 
 	if (typeof mid !== 'string') {
 		return
@@ -163,7 +177,7 @@ export default function UploaderPage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>

@@ -1,7 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
-import { Button, Checkbox, Dialog, Text, useTheme } from 'react-native-paper'
+import {
+	Button,
+	Checkbox,
+	Dialog,
+	Portal,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import {
 	useDealFavoriteForOneVideo,
 	useGetFavoriteForOneVideo,
@@ -115,7 +122,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		checkedList,
 		dealFavoriteForOneVideo,
 		setVisible,
-		queryClient.removeQueries,
+		queryClient,
 	])
 
 	const showLoading =
@@ -124,74 +131,80 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 
 	if (showLoading) {
 		return (
-			<Dialog
-				visible={visible}
-				onDismiss={() => setVisible(false)}
-			>
-				<Dialog.Title>添加到收藏夹</Dialog.Title>
-				<Dialog.Content style={{ alignItems: 'center', paddingVertical: 20 }}>
-					<ActivityIndicator size={'large'} />
-				</Dialog.Content>
-			</Dialog>
+			<Portal>
+				<Dialog
+					visible={visible}
+					onDismiss={() => setVisible(false)}
+				>
+					<Dialog.Title>添加到收藏夹</Dialog.Title>
+					<Dialog.Content style={{ alignItems: 'center', paddingVertical: 20 }}>
+						<ActivityIndicator size={'large'} />
+					</Dialog.Content>
+				</Dialog>
+			</Portal>
 		)
 	}
 
 	if (showError) {
 		return (
+			<Portal>
+				<Dialog
+					visible={visible}
+					onDismiss={() => setVisible(false)}
+				>
+					<Dialog.Title>添加到收藏夹</Dialog.Title>
+					<Dialog.Content>
+						<Text
+							style={{ textAlign: 'center', color: colors.error, padding: 16 }}
+						>
+							加载收藏夹失败
+						</Text>
+					</Dialog.Content>
+					<Dialog.Actions>
+						<Button onPress={() => setVisible(false)}>关闭</Button>
+						<Button onPress={() => refetchPlaylists()}>重试</Button>
+					</Dialog.Actions>
+				</Dialog>
+			</Portal>
+		)
+	}
+
+	return (
+		<Portal>
 			<Dialog
 				visible={visible}
 				onDismiss={() => setVisible(false)}
 			>
 				<Dialog.Title>添加到收藏夹</Dialog.Title>
 				<Dialog.Content>
-					<Text
-						style={{ textAlign: 'center', color: colors.error, padding: 16 }}
-					>
-						加载收藏夹失败
-					</Text>
+					<FlatList
+						data={playlists || []}
+						renderItem={renderFavoriteListItem}
+						keyExtractor={keyExtractor}
+						style={{
+							height: 300,
+							borderColor: colors.elevation.level5,
+							borderWidth: 1,
+						}}
+						ListEmptyComponent={
+							<View
+								style={{
+									flex: 1,
+									justifyContent: 'center',
+									alignItems: 'center',
+								}}
+							>
+								<Text style={{ padding: 16 }}>暂无收藏夹</Text>
+							</View>
+						}
+					/>
 				</Dialog.Content>
-				<Dialog.Actions>
-					<Button onPress={() => setVisible(false)}>关闭</Button>
-					<Button onPress={() => refetchPlaylists()}>重试</Button>
+				<Dialog.Actions style={{ marginTop: 16 }}>
+					<Button onPress={() => setVisible(false)}>取消</Button>
+					<Button onPress={handleConfirm}>确定</Button>
 				</Dialog.Actions>
 			</Dialog>
-		)
-	}
-
-	return (
-		<Dialog
-			visible={visible}
-			onDismiss={() => setVisible(false)}
-		>
-			<Dialog.Title>添加到收藏夹</Dialog.Title>
-			<Dialog.Content>
-				<FlatList
-					data={playlists || []}
-					renderItem={renderFavoriteListItem}
-					keyExtractor={keyExtractor}
-					style={{
-						height: 300,
-						borderColor: colors.elevation.level5,
-						borderWidth: 1,
-					}}
-					ListEmptyComponent={
-						<View
-							style={{
-								flex: 1,
-								justifyContent: 'center',
-								alignItems: 'center',
-							}}
-						>
-							<Text style={{ padding: 16 }}>暂无收藏夹</Text>
-						</View>
-					}
-				/>
-			</Dialog.Content>
-			<Dialog.Actions style={{ marginTop: 16 }}>
-				<Button onPress={() => setVisible(false)}>取消</Button>
-				<Button onPress={handleConfirm}>确定</Button>
-			</Dialog.Actions>
-		</Dialog>
+		</Portal>
 	)
 })
 

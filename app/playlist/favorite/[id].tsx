@@ -1,5 +1,10 @@
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -7,7 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useBatchDeleteFavoriteListContents,
@@ -17,14 +25,19 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
 export default function FavoritePage() {
-	const { id } = useLocalSearchParams()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistFavorite'>>()
+	const { id } = route.params
 	const { colors } = useTheme()
-	const router = useRouter()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistFavorite'>
+		>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
@@ -43,6 +56,7 @@ export default function FavoritePage() {
 					clearQueue: false,
 					playNext: true,
 				})
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				playlistLog.sentry('添加到队列失败', error)
 			}
@@ -59,7 +73,7 @@ export default function FavoritePage() {
 				)
 				if (allContentIds.isErr()) {
 					playlistLog.sentry('获取所有内容失败', allContentIds.error)
-					Toast.error('播放全部失败', {
+					toast.error('播放全部失败', {
 						description: '获取收藏夹所有内容失败，无法播放',
 					})
 					return
@@ -74,7 +88,7 @@ export default function FavoritePage() {
 					tracks: allTracks,
 					playNow: true,
 					clearQueue: true,
-					startFromId,
+					startFromKey: startFromId,
 					playNext: false,
 				})
 			} catch (error) {
@@ -101,6 +115,7 @@ export default function FavoritePage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '从收藏夹中删除',
 				leadingIcon: 'playlist-remove',
@@ -119,8 +134,16 @@ export default function FavoritePage() {
 					setModalVisible(true)
 				},
 			},
+			TrackMenuItemDividerToken,
+			{
+				title: '作为分P视频展示',
+				leadingIcon: 'eye-outline',
+				onPress: () => {
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
+				},
+			},
 		],
-		[playNext, mutate, refetch, id],
+		[playNext, mutate, refetch, id, navigation],
 	)
 
 	const handleTrackPress = useCallback(
@@ -148,10 +171,9 @@ export default function FavoritePage() {
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [id, router])
+	}, [id, navigation])
 
 	if (typeof id !== 'string') {
 		return
@@ -197,7 +219,7 @@ export default function FavoritePage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>

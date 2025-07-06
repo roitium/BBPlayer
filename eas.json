@@ -13,7 +13,7 @@
 			}
 		},
 		"prod-v8a": {
-			"autoIncrement": true,
+			"autoIncrement": false,
 			"android": {
 				"buildType": "apk",
 				"gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
@@ -21,7 +21,7 @@
 			"channel": "production"
 		},
 		"prod-universal": {
-			"autoIncrement": true,
+			"autoIncrement": false,
 			"android": {
 				"buildType": "apk",
 				"gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64"

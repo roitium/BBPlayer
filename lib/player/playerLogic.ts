@@ -15,6 +15,11 @@ const initPlayer = async () => {
 	playerLog.debug('调用 initPlayer()')
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
+	// 在初始化时修改一次重复模式，与水合后的 store 状态保持一致
+	const repeatMode = usePlayerStore.getState().repeatMode
+	await TrackPlayer.setRepeatMode(
+		repeatMode === RepeatMode.Track ? RepeatMode.Track : RepeatMode.Off,
+	)
 	global.playerIsReady = true
 	playerLog.debug('播放器初始化完成')
 }
@@ -66,7 +71,7 @@ const PlayerLogic = {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
 				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				icon: require('../../assets/images/icon.png'),
+				icon: require('../../assets/images/icon-large.png'),
 			})
 			playerLog.debug('播放器能力设置完成')
 			// 设置重复模式为 Off
@@ -104,7 +109,11 @@ const PlayerLogic = {
 						trackId: currentTrack?.id,
 						title: currentTrack?.title,
 					})
-					setter((state) => ({ ...state, isPlaying: true, isBuffering: false }))
+					setter((state) => ({
+						...state,
+						isPlaying: true,
+						isBuffering: false,
+					}))
 				} else if (
 					state === TrackPlayerState.Paused ||
 					state === TrackPlayerState.Stopped

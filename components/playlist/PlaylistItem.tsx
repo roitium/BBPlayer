@@ -2,6 +2,7 @@ import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
 import {
+	Divider,
 	IconButton,
 	Menu,
 	Surface,
@@ -17,11 +18,18 @@ export interface TrackMenuItem {
 	onPress: (track: Track) => void
 }
 
+export const TrackMenuItemDividerToken = {
+	title: 'divider',
+	leadingIcon: '',
+	onPress: () => {},
+}
+
 interface TrackListItemProps {
 	item: Track
 	index: number
 	onTrackPress: (track: Track) => void
 	menuItems: TrackMenuItem[]
+	showCoverImage?: boolean
 }
 
 /**
@@ -32,6 +40,7 @@ export const TrackListItem = memo(function TrackListItem({
 	index,
 	onTrackPress,
 	menuItems,
+	showCoverImage = true,
 }: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
@@ -72,15 +81,18 @@ export const TrackListItem = memo(function TrackListItem({
 					</Text>
 
 					{/* Cover Image */}
-					<Image
-						source={{ uri: item.cover }}
-						style={{ width: 45, height: 45, borderRadius: 4 }}
-						transition={300}
-					/>
+					{showCoverImage ? (
+						<Image
+							source={{ uri: item.cover }}
+							style={{ width: 45, height: 45, borderRadius: 4 }}
+							transition={300}
+							cachePolicy={'none'}
+						/>
+					) : null}
 
 					{/* Title and Details */}
 					<View style={{ marginLeft: 12, flex: 1, marginRight: 4 }}>
-						<Text variant='titleMedium'>{item.title}</Text>
+						<Text variant='bodySmall'>{item.title}</Text>
 						<View
 							style={{
 								flexDirection: 'row',
@@ -120,24 +132,27 @@ export const TrackListItem = memo(function TrackListItem({
 							anchor={
 								<IconButton
 									icon='dots-vertical'
-									size={24}
+									size={20}
 									onPress={openMenu}
-									style={{ margin: -8 }}
 								/>
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem) => (
-								<Menu.Item
-									key={menuItem.title}
-									leadingIcon={menuItem.leadingIcon}
-									onPress={() => {
-										menuItem.onPress(item)
-										closeMenu()
-									}}
-									title={menuItem.title}
-								/>
-							))}
+							{menuItems.map((menuItem) =>
+								menuItem.title === 'divider' ? (
+									<Divider key={menuItem.title} />
+								) : (
+									<Menu.Item
+										key={menuItem.title}
+										leadingIcon={menuItem.leadingIcon}
+										onPress={() => {
+											menuItem.onPress(item)
+											closeMenu()
+										}}
+										title={menuItem.title}
+									/>
+								),
+							)}
 						</Menu>
 					)}
 				</View>

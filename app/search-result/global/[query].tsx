@@ -1,4 +1,9 @@
-import { router, useLocalSearchParams } from 'expo-router'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, View } from 'react-native'
 import {
@@ -12,20 +17,29 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
-	const { query } = useLocalSearchParams<{ query?: string }>()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'SearchResult'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'SearchResult'>>()
+	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 
 	const [searchQuery, setSearchQuery] = useState(query || '')
@@ -63,10 +77,10 @@ export default function SearchResultsPage() {
 					clearQueue: false,
 					playNext: true,
 				})
-				Toast.show('已添加到下一首播放')
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				searchLog.sentry('添加到队列失败', error)
-				Toast.show('添加到队列失败')
+				toast.show('添加到队列失败')
 			}
 		},
 		[addToQueue],
@@ -80,7 +94,7 @@ export default function SearchResultsPage() {
 					track.title?.includes(keyword),
 				)
 			) {
-				router.push(`/playlist/multipage/${track.id}`)
+				navigation.navigate('PlaylistMultipage', { bvid: track.id })
 				return
 			}
 			try {
@@ -92,10 +106,10 @@ export default function SearchResultsPage() {
 				})
 			} catch (error) {
 				searchLog.sentry('播放失败', error)
-				Toast.show('播放失败')
+				toast.show('播放失败')
 			}
 		},
-		[addToQueue],
+		[addToQueue, navigation],
 	)
 
 	const handlePageChange = useCallback(
@@ -123,7 +137,7 @@ export default function SearchResultsPage() {
 			setCurrentPage(pageNumber)
 		} else {
 			setPageInputValue(currentPage.toString())
-			Toast.warning(`请输入 1 到 ${totalPages} 之间的页码`)
+			toast.error(`请输入 1 到 ${totalPages} 之间的页码`)
 		}
 	}, [pageInputValue, currentPage, totalPages])
 
@@ -134,13 +148,15 @@ export default function SearchResultsPage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: async () => {
-					router.push(`/playlist/multipage/${item.id}`)
+					navigation.navigate('PlaylistMultipage', { bvid: item.id })
 				},
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
@@ -150,7 +166,7 @@ export default function SearchResultsPage() {
 				},
 			},
 		],
-		[playNext],
+		[playNext, navigation],
 	)
 
 	const renderSearchResultItem = useCallback(
@@ -268,7 +284,7 @@ export default function SearchResultsPage() {
 				style={{ backgroundColor: colors.surface }}
 				elevated
 			>
-				<Appbar.BackAction onPress={() => router.back()} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
 				<Appbar.Content
 					title={`搜索: ${searchQuery}`}
 					titleStyle={{ fontSize: 18 }}

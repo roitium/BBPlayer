@@ -1,10 +1,7 @@
-import { router } from 'expo-router'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useEffect, useState } from 'react'
-import {
-	Image,
-	TouchableOpacity as RNTouchableOpacity,
-	View,
-} from 'react-native'
+import { Image, TouchableOpacity, View } from 'react-native'
 import {
 	IconButton,
 	ProgressBar,
@@ -17,6 +14,7 @@ import {
 	usePlaybackProgress,
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
+import type { RootStackParamList } from '@/types/navigation'
 
 export default function NowPlayingBar() {
 	const { colors } = useTheme()
@@ -28,6 +26,8 @@ export default function NowPlayingBar() {
 	const togglePlay = usePlayerStore((state) => state.togglePlay)
 	const skipToNext = usePlayerStore((state) => state.skipToNext)
 	const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
+	const navigator =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条，不需要 progress 作为 dep
 	useEffect(() => {
@@ -51,10 +51,10 @@ export default function NowPlayingBar() {
 			}}
 			elevation={2}
 		>
-			<RNTouchableOpacity
+			<TouchableOpacity
 				style={{ position: 'relative' }}
 				onPress={() => {
-					router.push('/player')
+					navigator.navigate('Player')
 				}}
 				activeOpacity={0.9}
 			>
@@ -136,7 +136,7 @@ export default function NowPlayingBar() {
 						/>
 					</View>
 				</View>
-			</RNTouchableOpacity>
+			</TouchableOpacity>
 		</Surface>
 	)
 }

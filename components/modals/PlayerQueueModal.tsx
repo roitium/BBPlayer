@@ -1,5 +1,5 @@
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet'
-import { memo, type RefObject, useCallback } from 'react'
+import { memo, type RefObject, useCallback, useState } from 'react'
 import { View } from 'react-native'
 import {
 	IconButton,
@@ -13,6 +13,7 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import { isTargetTrack } from '@/utils/player'
+import { usePreventRemove } from '@react-navigation/native'
 
 const TrackItem = memo(
 	({
@@ -91,6 +92,11 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
 	const currentTrack = useCurrentTrack()
 	const skipToTrack = usePlayerStore((state) => state.skipToTrack)
 	const theme = useTheme()
+	const [currentPosition, setCurrentPosition] = useState(-1)
+
+	usePreventRemove(currentPosition !== -1, () => {
+		sheetRef.current?.close()
+	})
 
 	const switchTrackHandler = useCallback(
 		(track: Track) => {
@@ -138,6 +144,9 @@ function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
 			enableDynamicSizing={false}
 			enablePanDownToClose={true}
 			snapPoints={['75%']}
+			onChange={(index) => {
+				setCurrentPosition(index)
+			}}
 			backgroundStyle={{
 				backgroundColor: theme.colors.elevation.level1,
 			}}

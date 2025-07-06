@@ -1,4 +1,9 @@
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Image, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -6,7 +11,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetMultiPageList,
@@ -16,13 +24,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
 export default function MultipagePage() {
-	const { bvid } = useLocalSearchParams<{ bvid?: string }>()
-	const router = useRouter()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistMultipage'>
+		>()
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistMultipage'>>()
+	const { bvid } = route.params
 	const [refreshing, setRefreshing] = useState(false)
 	const colors = useTheme().colors
 	const currentTrack = useCurrentTrack()
@@ -33,7 +46,7 @@ export default function MultipagePage() {
 	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
 	const {
-		data: multipageData,
+		data: rawMultipageData,
 		isPending: isMultipageDataPending,
 		isError: isMultipageDataError,
 		refetch,
@@ -45,6 +58,11 @@ export default function MultipagePage() {
 		isPending: isVideoDataPending,
 	} = useGetVideoDetails(bvid)
 
+	const multipageData = rawMultipageData?.map((item) => ({
+		...item,
+		first_frame: videoData?.pic || '',
+	}))
+
 	// 其他 Hooks
 	const playNext = useCallback(
 		async (track: Track) => {
@@ -55,6 +73,7 @@ export default function MultipagePage() {
 					clearQueue: false,
 					playNext: true,
 				})
+				toast.success('添加到下一首播放成功')
 			} catch (error) {
 				playlistLog.sentry('添加到队列失败', error)
 			}
@@ -66,7 +85,7 @@ export default function MultipagePage() {
 		async (startFromCid?: number) => {
 			try {
 				if (!tracksData || tracksData.length === 0) {
-					Toast.error('播放全部失败', {
+					toast.error('播放全部失败', {
 						description: '未知错误，tracksData 为空',
 					})
 					playlistLog.error('未知错误，tracksData 为空', tracksData)
@@ -77,14 +96,14 @@ export default function MultipagePage() {
 					tracks: tracksData,
 					playNow: true,
 					clearQueue: true,
-					startFromCid,
+					startFromKey: startFromCid ? `${bvid}-${startFromCid}` : undefined,
 					playNext: false,
 				})
 			} catch (error) {
 				playlistLog.sentry('播放全部失败', error)
 			}
 		},
-		[addToQueue, tracksData],
+		[addToQueue, tracksData, bvid],
 	)
 
 	const trackMenuItems = useCallback(
@@ -94,6 +113,7 @@ export default function MultipagePage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: playNext,
 			},
+			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
@@ -121,6 +141,7 @@ export default function MultipagePage() {
 					index={index}
 					onTrackPress={handleTrackPress}
 					menuItems={trackMenuItems(item)}
+					showCoverImage={false}
 				/>
 			)
 		},
@@ -135,14 +156,16 @@ export default function MultipagePage() {
 		if (multipageData && videoData) {
 			setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
 		}
-	}, [multipageData, videoData])
+		// multipageData 是基于 rawMultipageData 的派生数据，因此不应该在依赖中添加 multipageData
+		// eslint-disable-next-line react-compiler/react-compiler
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [rawMultipageData, videoData])
 
 	useEffect(() => {
 		if (typeof bvid !== 'string') {
-			// @ts-expect-error: 触发 404
-			router.replace('/not-found')
+			navigation.replace('NotFound')
 		}
-	}, [bvid, router])
+	}, [bvid, navigation])
 
 	if (typeof bvid !== 'string') {
 		return
@@ -188,7 +211,7 @@ export default function MultipagePage() {
 			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
 				<Appbar.BackAction
 					onPress={() => {
-						router.back()
+						navigation.goBack()
 					}}
 				/>
 			</Appbar.Header>
@@ -219,7 +242,7 @@ export default function MultipagePage() {
 						<PlaylistHeader
 							coverUri={videoData.pic}
 							title={videoData.title}
-							subtitle={`${videoData.owner.name} • ${multipageData.length} 首歌曲`}
+							subtitle={`${videoData.owner.name} • ${(multipageData ?? []).length} 首歌曲`}
 							description={videoData.desc}
 							onPlayAll={() => playAll()}
 						/>

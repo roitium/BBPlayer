@@ -10,7 +10,7 @@ import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { BilibiliApiError, CsrfError } from '@/utils/errors'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import Toast from '@/utils/toast'
+import toast from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
@@ -116,7 +116,7 @@ export const useBatchDeleteFavoriteListContents = () => {
 				),
 			),
 		onSuccess: (_data, variables) => {
-			Toast.success('删除成功')
+			toast.success('删除成功')
 			queryClient.refetchQueries({
 				queryKey: favoriteListQueryKeys.infiniteFavoriteList(
 					variables.favoriteId,
@@ -131,7 +131,7 @@ export const useBatchDeleteFavoriteListContents = () => {
 				errorMessage = `删除失败：${error.message} (${error.msgCode})`
 			}
 
-			Toast.error('操作失败', {
+			toast.error('操作失败', {
 				description: errorMessage,
 				duration: Number.POSITIVE_INFINITY,
 			})
@@ -211,7 +211,7 @@ export const useDealFavoriteForOneVideo = () => {
 				),
 			),
 		onSuccess: (_data, _value) => {
-			Toast.success('操作成功', {
+			toast.success('操作成功', {
 				description:
 					_data.toast_msg.length > 0
 						? `api 返回消息：${_data.toast_msg}`
@@ -231,7 +231,7 @@ export const useDealFavoriteForOneVideo = () => {
 				errorMessage = `删除失败：${error.message} (${error.msgCode})`
 			}
 
-			Toast.error('操作失败', {
+			toast.error('操作失败', {
 				description: errorMessage,
 				duration: Number.POSITIVE_INFINITY,
 			})
