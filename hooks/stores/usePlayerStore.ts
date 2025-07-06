@@ -7,7 +7,6 @@ import TrackPlayer, {
 } from 'react-native-track-player'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { PRELOAD_TRACKS } from '@/constants/player'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import type {
@@ -259,30 +258,6 @@ export const usePlayerStore = create<PlayerStore>()(
 						if (indexToPlay !== -1) {
 							await get().skipToTrack(indexToPlay)
 						}
-					}
-				},
-
-				preloadTracks: async (index: number) => {
-					const activeList = get()._getActiveList()
-					const { tracks } = get()
-					const preloadStartIndex = index + 1
-					const preloadEndIndex = Math.min(
-						preloadStartIndex + PRELOAD_TRACKS,
-						activeList.length,
-					)
-					const keysToPreload = activeList.slice(
-						preloadStartIndex,
-						preloadEndIndex,
-					)
-					const tracksToPreload = keysToPreload.map((key) => tracks[key])
-					playerLog.debug(`开始预加载 ${tracksToPreload.length} 首曲目`)
-
-					if (tracksToPreload.length > 0) {
-						await Promise.all(
-							tracksToPreload.map((track) =>
-								get().patchMetadataAndAudio(track),
-							),
-						)
 					}
 				},
 
@@ -571,8 +546,6 @@ export const usePlayerStore = create<PlayerStore>()(
 						isPlaying: true,
 						isBuffering: false,
 					})
-
-					get().preloadTracks(index)
 				},
 			}
 
