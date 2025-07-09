@@ -78,6 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			},
 		],
 		'expo-web-browser',
+		'expo-sqlite',
 	],
 	experiments: {
 		reactCompiler: true,

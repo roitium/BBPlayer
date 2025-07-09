@@ -29,6 +29,7 @@ import {
 	View,
 } from 'react-native'
 import { SystemBars } from 'react-native-edge-to-edge'
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -51,7 +52,9 @@ import PlaylistMultipagePage from './playlist/multipage/[bvid]'
 import PlaylistUploaderPage from './playlist/uploader/[mid]'
 import SearchResultFavPage from './search-result/fav/[query]'
 import SearchResultsPage from './search-result/global/[query]'
+import migrations from '@/drizzle/migrations'
 import TestPage from './test/test'
+import db from '@/lib/db/db'
 
 const rootLog = log.extend('ROOT')
 
@@ -209,6 +212,7 @@ export default Sentry.wrap(function RootLayout() {
 
 	const colorScheme = useColorScheme()
 	const { theme } = useMaterial3Theme()
+	const { success, error: _migrationError } = useMigrations(db, migrations)
 	const paperTheme = useMemo(
 		() =>
 			colorScheme === 'dark'
@@ -300,10 +304,10 @@ export default Sentry.wrap(function RootLayout() {
 	}, [appIsReady])
 
 	const onLayoutRootView = useCallback(() => {
-		if (appIsReady) {
+		if (appIsReady && success) {
 			SplashScreen.hide()
 		}
-	}, [appIsReady])
+	}, [appIsReady, success])
 
 	if (!appIsReady) {
 		return null
