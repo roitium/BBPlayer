@@ -32,22 +32,13 @@ export const createNeteaseApi = () => ({
 		const endpoint =
 			type == '2000' ? '/api/search/voice/get' : '/api/cloudsearch/pc'
 
-		const data: {
-			s: string
-			type: number | string
-			limit: number
-			offset: number
-			keyword?: string
-		} = {
-			s: params.keywords,
+		const data = {
 			type: type,
 			limit: params.limit || 30,
 			offset: params.offset || 0,
-		}
-
-		if (type == '2000') {
-			data.keyword = params.keywords
-			delete (data as Partial<typeof data>).s
+			...(type == '2000'
+				? { keyword: params.keywords }
+				: { s: params.keywords }),
 		}
 
 		const requestOptions: RequestOptions = createOption({}, 'weapi')
