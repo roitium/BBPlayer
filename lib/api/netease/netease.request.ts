@@ -1,7 +1,8 @@
 /* 这些代码从 https://github.com/nooblong/NeteaseCloudMusicApiBackup/ 抄的，但做了进一步封装和解耦，凑合着用 */
+import { NeteaseApiError } from '@/utils/errors'
 import * as Encrypt from './netease.crypto'
 import { cookieToJson, cookieObjToString, toBoolean } from './netease.utils'
-import { ResultAsync, err, ok, Result, errAsync } from 'neverthrow'
+import { ResultAsync, err, ok, Result } from 'neverthrow'
 import * as setCookie from 'set-cookie-parser'
 import { URLSearchParams } from 'url'
 
@@ -46,7 +47,7 @@ const buildRequestPayload = <T extends object>(
 	uri: string,
 	data: T,
 	options: RequestOptions,
-): Result<RequestPayload, Error> => {
+): RequestPayload => {
 	const { ua, crypto = 'weapi' } = options
 	const cookie =
 		typeof options.cookie === 'string'
@@ -101,10 +102,10 @@ const buildRequestPayload = <T extends object>(
 			break
 		}
 		default:
-			return err(new Error(`Unknown crypto type: ${crypto}`))
+		// pass
 	}
 
-	return ok({ url, headers, body, e_r })
+	return { url, headers, body, e_r }
 }
 
 interface FetchResult<TReturnBody> {
@@ -114,7 +115,7 @@ interface FetchResult<TReturnBody> {
 
 const executeFetch = <TReturnBody>(
 	payload: RequestPayload,
-): ResultAsync<FetchResult<TReturnBody>, Error> => {
+): ResultAsync<FetchResult<TReturnBody>, NeteaseApiError> => {
 	const { url, headers, body, e_r } = payload
 	const settings = {
 		method: 'POST',
@@ -125,7 +126,13 @@ const executeFetch = <TReturnBody>(
 	return ResultAsync.fromPromise(
 		fetch(url, settings).then(async (res) => {
 			if (!res.ok) {
-				return err(new Error(`HTTP error! status: ${res.status}`))
+				return err(
+					new NeteaseApiError(
+						`请求失败！http 状态码不符合预期！`,
+						res.status,
+						res.statusText,
+					),
+				)
 			}
 
 			const responseBody = e_r
@@ -147,19 +154,21 @@ const executeFetch = <TReturnBody>(
 			})
 		}),
 		(e: unknown) =>
-			new Error(`Fetch failed: ${e instanceof Error ? e.message : String(e)}`),
-	).andThen((res) => res as Result<FetchResult<TReturnBody>, Error>)
+			// 按理来说不应该发生
+			new NeteaseApiError(
+				`请求失败！`,
+				500,
+				e instanceof Error ? e.message : String(e),
+			),
+	).andThen((res) => res as Result<FetchResult<TReturnBody>, NeteaseApiError>)
 }
 
 export const createRequest = <TData extends object, TReturnBody>(
 	uri: string,
 	data: TData,
 	options: RequestOptions,
-): ResultAsync<FetchResult<TReturnBody>, Error> => {
+): ResultAsync<FetchResult<TReturnBody>, NeteaseApiError> => {
 	const payloadResult = buildRequestPayload(uri, data, options)
-	if (payloadResult.isErr()) {
-		return errAsync(payloadResult.error)
-	}
 
-	return executeFetch(payloadResult.value)
+	return executeFetch(payloadResult)
 }

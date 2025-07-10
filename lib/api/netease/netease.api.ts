@@ -2,11 +2,10 @@ import type {
 	NeteaseLyricResponse,
 	NeteaseSearchResponse,
 } from '@/types/apis/netease'
-import { NeteaseApiError } from '@/utils/errors'
 import { createRequest, RequestOptions } from './netease.request'
-import { createOption, Query } from './netease.utils'
+import { createOption } from './netease.utils'
 
-interface SearchQuery extends Query {
+interface SearchParams {
 	keywords: string
 	type?: number | string
 	limit?: number
@@ -14,7 +13,7 @@ interface SearchQuery extends Query {
 }
 
 export const createNeteaseApi = () => ({
-	getLyrics: async (id: number) => {
+	getLyrics: (id: number) => {
 		const data = {
 			id: id,
 			lv: -1,
@@ -22,18 +21,14 @@ export const createNeteaseApi = () => ({
 			os: 'pc',
 		}
 		const requestOptions: RequestOptions = createOption({}, 'weapi')
-		const result = await createRequest<object, NeteaseLyricResponse>(
+		return createRequest<object, NeteaseLyricResponse>(
 			'/api/song/lyric',
 			data,
 			requestOptions,
-		)
-
-		return result
-			.map((res) => res.body)
-			.mapErr((err) => new NeteaseApiError('获取歌词失败', 500, err))
+		).map((res) => res.body)
 	},
-	search: async (query: SearchQuery) => {
-		const type = query.type || 1
+	search: (params: SearchParams) => {
+		const type = params.type || 1
 		const endpoint =
 			type == '2000' ? '/api/search/voice/get' : '/api/cloudsearch/pc'
 
@@ -44,26 +39,22 @@ export const createNeteaseApi = () => ({
 			offset: number
 			keyword?: string
 		} = {
-			s: query.keywords,
+			s: params.keywords,
 			type: type,
-			limit: query.limit || 30,
-			offset: query.offset || 0,
+			limit: params.limit || 30,
+			offset: params.offset || 0,
 		}
 
 		if (type == '2000') {
-			data.keyword = query.keywords
+			data.keyword = params.keywords
 			delete (data as Partial<typeof data>).s
 		}
 
-		const requestOptions: RequestOptions = createOption(query, 'weapi')
-		const result = await createRequest<object, NeteaseSearchResponse>(
+		const requestOptions: RequestOptions = createOption({}, 'weapi')
+		return createRequest<object, NeteaseSearchResponse>(
 			endpoint,
 			data,
 			requestOptions,
-		)
-
-		return result
-			.map((res) => res.body)
-			.mapErr((err) => new NeteaseApiError('搜索失败', 500, err))
+		).map((res) => res.body)
 	},
 })

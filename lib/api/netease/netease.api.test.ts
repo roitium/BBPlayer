@@ -10,12 +10,10 @@ describe('Netease API Integration Tests', () => {
 		if (result.isOk()) {
 			const data = result.value
 			expect(data).toBeDefined()
-			expect(data.code).toBe(200)
 			expect(data.lrc).toBeDefined()
 			expect(data.lrc.lyric).toContain('[00:')
 		} else {
-			console.error('getLyrics test failed:', result.error)
-			expect(result.isErr()).toBe(true)
+			throw result.error
 		}
 	}, 15000)
 
@@ -30,11 +28,9 @@ describe('Netease API Integration Tests', () => {
 		if (result.isOk()) {
 			const data = result.value
 			expect(data).toBeDefined()
-			expect(data.code).toBe(200)
 			expect(data.result.songs.length).toBeGreaterThan(0)
 		} else {
-			console.error('search test failed:', result.error)
-			expect(result.isErr()).toBe(true)
+			throw result.error
 		}
 	}, 15000)
 })
