@@ -2,6 +2,7 @@
 import * as Encrypt from './netease.crypto'
 import { cookieToJson, cookieObjToString, toBoolean } from './netease.utils'
 import { ResultAsync, err, ok, Result, errAsync } from 'neverthrow'
+import * as setCookie from 'set-cookie-parser'
 import { URLSearchParams } from 'url'
 
 interface AppConfig {
@@ -135,11 +136,14 @@ const executeFetch = <TReturnBody>(
 					)
 				: await res.json()
 
+			const parsedCookies = setCookie.parse(res.headers.get('set-cookie') || '')
+			const cookies = parsedCookies.map(
+				(cookie) => `${cookie.name}=${cookie.value}`,
+			)
+
 			return ok({
 				body: responseBody,
-				cookie: (res.headers.get('set-cookie') || '')
-					.split(',')
-					.map((c) => c.split(';')[0]),
+				cookie: cookies,
 			})
 		}),
 		(e: unknown) =>
