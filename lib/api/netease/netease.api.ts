@@ -1,29 +1,69 @@
-import { errAsync, okAsync } from 'neverthrow'
-import type { NeteaseLyricResponse } from '@/types/apis/netease'
+import type {
+	NeteaseLyricResponse,
+	NeteaseSearchResponse,
+} from '@/types/apis/netease'
 import { NeteaseApiError } from '@/utils/errors'
+import { createRequest, RequestOptions } from './netease.request'
+import { createOption, Query } from './netease.utils'
+
+interface SearchQuery extends Query {
+	keywords: string
+	type?: number | string
+	limit?: number
+	offset?: number
+}
 
 export const createNeteaseApi = () => ({
 	getLyrics: async (id: number) => {
-		const url = `https://music.163.com/api/song/lyric?lv=-1&tv=-1&os=pc&id=${id}`
-		const headers = {
-			'User-Agent':
-				'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-			Accept: 'application/json',
+		const data = {
+			id: id,
+			lv: -1,
+			tv: -1,
+			os: 'pc',
 		}
-		const options = {
-			method: 'GET',
-			headers,
+		const requestOptions: RequestOptions = createOption({}, 'weapi')
+		const result = await createRequest<object, NeteaseLyricResponse>(
+			'/api/song/lyric',
+			data,
+			requestOptions,
+		)
+
+		return result
+			.map((res) => res.body)
+			.mapErr((err) => new NeteaseApiError('获取歌词失败', 500, err))
+	},
+	search: async (query: SearchQuery) => {
+		const type = query.type || 1
+		const endpoint =
+			type == '2000' ? '/api/search/voice/get' : '/api/cloudsearch/pc'
+
+		const data: {
+			s: string
+			type: number | string
+			limit: number
+			offset: number
+			keyword?: string
+		} = {
+			s: query.keywords,
+			type: type,
+			limit: query.limit || 30,
+			offset: query.offset || 0,
 		}
-		const response = await fetch(url, options)
-		if (!response.ok) {
-			return errAsync(
-				new NeteaseApiError('获取歌词失败', response.status, null),
-			)
+
+		if (type == '2000') {
+			data.keyword = query.keywords
+			delete (data as Partial<typeof data>).s
 		}
-		const data: NeteaseLyricResponse = await response.json()
-		if (data.code !== 200) {
-			return errAsync(new NeteaseApiError('获取歌词失败', data.code, data))
-		}
-		return okAsync(data)
+
+		const requestOptions: RequestOptions = createOption(query, 'weapi')
+		const result = await createRequest<object, NeteaseSearchResponse>(
+			endpoint,
+			data,
+			requestOptions,
+		)
+
+		return result
+			.map((res) => res.body)
+			.mapErr((err) => new NeteaseApiError('搜索失败', 500, err))
 	},
 })
