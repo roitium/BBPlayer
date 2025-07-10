@@ -19,7 +19,6 @@ import {
 	useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 import { RepeatMode } from 'react-native-track-player'
-import { useShallow } from 'zustand/react/shallow'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
@@ -46,16 +45,9 @@ export default function PlayerPage() {
 	const skipToNext = usePlayerStore((state) => state.skipToNext)
 	const seekTo = usePlayerStore((state) => state.seekTo)
 	const { position, duration } = usePlaybackProgress(100)
-
-	const { isPlaying, repeatMode, shuffleMode } = usePlayerStore(
-		useShallow((state) => {
-			return {
-				isPlaying: state.isPlaying,
-				repeatMode: state.repeatMode,
-				shuffleMode: state.shuffleMode,
-			}
-		}),
-	)
+	const isPlaying = usePlayerStore((state) => state.isPlaying)
+	const repeatMode = usePlayerStore((state) => state.repeatMode)
+	const shuffleMode = usePlayerStore((state) => state.shuffleMode)
 	const currentTrack = useCurrentTrack()
 
 	const { data: videoDetails } = useGetVideoDetails(currentTrack?.id)

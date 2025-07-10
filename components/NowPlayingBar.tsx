@@ -1,14 +1,8 @@
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { Image, TouchableOpacity, View } from 'react-native'
-import {
-	IconButton,
-	ProgressBar,
-	Surface,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { IconButton, ProgressBar, Text, useTheme } from 'react-native-paper'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaybackProgress,
@@ -16,7 +10,7 @@ import {
 } from '@/hooks/stores/usePlayerStore'
 import type { RootStackParamList } from '@/types/navigation'
 
-export default function NowPlayingBar() {
+const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const isPlaying = usePlayerStore((state) => state.isPlaying)
@@ -43,100 +37,118 @@ export default function NowPlayingBar() {
 	if (!currentTrack) return null
 
 	return (
-		<Surface
-			style={{
-				overflow: 'hidden',
-				borderBottomWidth: 1,
-				borderBottomColor: colors.elevation.level5,
+		<TouchableOpacity
+			onPress={() => {
+				navigator.navigate('Player')
 			}}
-			elevation={2}
+			activeOpacity={0.9}
+			style={{
+				flex: 1,
+				alignItems: 'center',
+				justifyContent: 'center',
+				borderRadius: 24,
+				marginHorizontal: 16,
+				marginBottom: 8,
+				position: 'relative',
+				height: 48,
+				backgroundColor: colors.elevation.level2,
+			}}
 		>
-			<TouchableOpacity
-				style={{ position: 'relative' }}
-				onPress={() => {
-					navigator.navigate('Player')
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
 				}}
-				activeOpacity={0.9}
 			>
-				<ProgressBar
-					animatedValue={internalProgressPosition / internalProgressDuration}
-					color={colors.primary}
-					style={{ height: 2 }}
+				<Image
+					source={{ uri: currentTrack.cover }}
+					style={{
+						height: 48,
+						width: 48,
+						borderRadius: 24,
+						borderWidth: 0.8,
+						borderColor: colors.primary,
+					}}
 				/>
+
+				<View
+					style={{
+						marginLeft: 12,
+						flex: 1,
+						justifyContent: 'center',
+						marginRight: 8,
+					}}
+				>
+					<Text
+						variant='titleSmall'
+						numberOfLines={1}
+						style={{ color: colors.onSurface }}
+					>
+						{currentTrack?.title}
+					</Text>
+					<Text
+						variant='bodySmall'
+						numberOfLines={1}
+						style={{ color: colors.onSurfaceVariant }}
+					>
+						{currentTrack?.artist}
+					</Text>
+				</View>
 
 				<View
 					style={{
 						flexDirection: 'row',
 						alignItems: 'center',
-						padding: 8,
 					}}
 				>
-					<Image
-						source={{ uri: currentTrack.cover }}
-						style={{ height: 48, width: 48, borderRadius: 6 }}
+					<IconButton
+						icon='skip-previous'
+						size={16}
+						onPress={(e) => {
+							e.stopPropagation()
+							skipToPrevious()
+						}}
+						iconColor={colors.onSurface}
 					/>
-
-					<View
-						style={{
-							marginLeft: 12,
-							flex: 1,
-							justifyContent: 'center',
-							marginRight: 8,
+					<IconButton
+						icon={isPlaying ? 'pause' : 'play'}
+						size={24}
+						onPress={(e) => {
+							e.stopPropagation()
+							togglePlay()
 						}}
-					>
-						<Text
-							variant='titleMedium'
-							numberOfLines={1}
-							style={{ color: colors.onSurface }}
-						>
-							{currentTrack?.title}
-						</Text>
-						<Text
-							variant='bodySmall'
-							numberOfLines={1}
-							style={{ color: colors.onSurfaceVariant }}
-						>
-							{currentTrack?.artist}
-						</Text>
-					</View>
-
-					<View
-						style={{
-							flexDirection: 'row',
-							alignItems: 'center',
+						iconColor={colors.primary}
+						style={{ marginHorizontal: 0 }}
+					/>
+					<IconButton
+						icon='skip-next'
+						size={16}
+						onPress={(e) => {
+							e.stopPropagation()
+							skipToNext()
 						}}
-					>
-						<IconButton
-							icon='skip-previous'
-							size={24}
-							onPress={(e) => {
-								e.stopPropagation()
-								skipToPrevious()
-							}}
-							iconColor={colors.onSurface}
-						/>
-						<IconButton
-							icon={isPlaying ? 'pause' : 'play'}
-							size={24}
-							onPress={(e) => {
-								e.stopPropagation()
-								togglePlay()
-							}}
-							iconColor={colors.primary}
-							style={{ marginHorizontal: 0 }}
-						/>
-						<IconButton
-							icon='skip-next'
-							size={24}
-							onPress={(e) => {
-								e.stopPropagation()
-								skipToNext()
-							}}
-							iconColor={colors.onSurface}
-						/>
-					</View>
+						iconColor={colors.onSurface}
+					/>
 				</View>
-			</TouchableOpacity>
-		</Surface>
+			</View>
+			<View
+				style={{
+					width: '85%',
+					alignSelf: 'center',
+					position: 'absolute',
+					bottom: 0,
+				}}
+			>
+				<ProgressBar
+					animatedValue={internalProgressPosition / internalProgressDuration}
+					color={colors.primary}
+					style={{ height: 0.8, backgroundColor: colors.elevation.level2 }}
+				/>
+			</View>
+		</TouchableOpacity>
 	)
-}
+})
+
+NowPlayingBar.displayName = 'NowPlayingBar'
+
+export default NowPlayingBar
