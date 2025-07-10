@@ -2,7 +2,8 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { memo, useCallback, useState } from 'react'
-import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native'
+import { RefreshControl, TouchableOpacity, View } from 'react-native'
+import { LegendList } from '@legendapp/list'
 import {
 	ActivityIndicator,
 	Divider,
@@ -230,7 +231,7 @@ const FavoriteFolderListComponent = memo(
 						navigation.navigate('SearchResultFav', { query })
 					}}
 				/>
-				<FlatList
+				<LegendList
 					style={{ flex: 1 }}
 					contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
 					showsVerticalScrollIndicator={false}
@@ -340,7 +341,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 					{collections?.pages[0]?.count ?? 0} 个追更
 				</Text>
 			</View>
-			<FlatList
+			<LegendList
 				data={collections?.pages.flatMap((page) => page.list)}
 				renderItem={renderCollectionItem}
 				refreshControl={
@@ -537,11 +538,11 @@ const MultiPageVideosListComponent = memo(
 						{favoriteData?.pages[0]?.favoriteMeta?.media_count ?? 0} 个分P视频
 					</Text>
 				</View>
-				<FlatList
+				<LegendList
 					style={{ flex: 1 }}
 					contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
 					showsVerticalScrollIndicator={false}
-					data={favoriteData?.pages.flatMap((page) => page.tracks)}
+					data={favoriteData?.pages.flatMap((page) => page.tracks) ?? []}
 					renderItem={renderPlaylistItem}
 					keyExtractor={keyExtractor}
 					refreshControl={

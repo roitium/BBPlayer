@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
-import { FlatList, View } from 'react-native'
+import { View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -29,6 +29,7 @@ import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
+import { LegendList } from '@legendapp/list'
 
 const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 
@@ -298,7 +299,7 @@ export default function SearchResultsPage() {
 					style={{ marginTop: 32 }}
 				/>
 			) : (
-				<FlatList
+				<LegendList
 					contentContainerStyle={{ paddingBottom: 20 }}
 					data={searchResults}
 					renderItem={renderSearchResultItem}

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, View } from 'react-native'
+import { ActivityIndicator, View } from 'react-native'
 import {
 	Button,
 	Checkbox,
@@ -16,6 +16,7 @@ import {
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import log from '@/utils/log'
+import { LegendList } from '@legendapp/list'
 
 const modalLog = log.extend('ADD_TO_FAVORITE_LISTS_MODAL')
 
@@ -177,7 +178,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 			>
 				<Dialog.Title>添加到收藏夹</Dialog.Title>
 				<Dialog.Content>
-					<FlatList
+					<LegendList
 						data={playlists || []}
 						renderItem={renderFavoriteListItem}
 						keyExtractor={keyExtractor}

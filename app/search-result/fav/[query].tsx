@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
-import { FlatList, View } from 'react-native'
+import { View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
@@ -26,6 +26,7 @@ import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
+import { LegendList } from '@legendapp/list'
 
 const searchLog = log.extend('SEARCH_RESULTS/FAV')
 
@@ -200,7 +201,7 @@ export default function SearchResultsPage() {
 			</Appbar.Header>
 
 			{/* Content Area */}
-			<FlatList
+			<LegendList
 				contentContainerStyle={{ paddingBottom: 20 }}
 				data={searchData?.pages.flatMap((page) => page.tracks)}
 				renderItem={renderSearchResultItem}

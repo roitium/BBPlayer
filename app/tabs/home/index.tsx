@@ -3,7 +3,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { memo, useCallback, useEffect, useState } from 'react'
 import {
-	FlatList,
 	RefreshControl,
 	ScrollView,
 	TouchableOpacity,
@@ -34,6 +33,7 @@ import { formatDurationToHHMMSS } from '@/utils/times'
 import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import { LegendList } from '@legendapp/list'
 
 const homeLog = log.extend('HOME')
 
@@ -352,7 +352,7 @@ function RecentlyPlayed({
 						borderWidth: 1,
 					}}
 				>
-					<FlatList
+					<LegendList
 						data={data}
 						renderItem={renderItem}
 						keyExtractor={keyExtractor}

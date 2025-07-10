@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
@@ -26,6 +26,7 @@ import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
+import { LegendList } from '@legendapp/list'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
@@ -234,7 +235,7 @@ export default function MultipagePage() {
 					flex: 1,
 				}}
 			>
-				<FlatList
+				<LegendList
 					data={tracksData}
 					renderItem={renderItem}
 					ListHeaderComponent={

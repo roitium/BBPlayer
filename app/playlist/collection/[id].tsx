@@ -5,7 +5,8 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
+import { LegendList } from '@legendapp/list'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -233,7 +234,7 @@ export default function CollectionPage() {
 					flex: 1,
 				}}
 			>
-				<FlatList
+				<LegendList
 					data={collectionData.medias}
 					renderItem={renderItem}
 					keyExtractor={keyExtractor}

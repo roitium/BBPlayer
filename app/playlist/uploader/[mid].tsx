@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
@@ -25,6 +25,7 @@ import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import type { RootStackParamList } from '../../../types/navigation'
+import { LegendList } from '@legendapp/list'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
 
@@ -199,7 +200,7 @@ export default function UploaderPage() {
 					flex: 1,
 				}}
 			>
-				<FlatList
+				<LegendList
 					data={tracks}
 					renderItem={renderItem}
 					ListHeaderComponent={
