@@ -231,7 +231,6 @@ export default function CollectionPage() {
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
 				}}
 			>
 				<FlatList
@@ -263,7 +262,13 @@ export default function CollectionPage() {
 					ListFooterComponent={
 						<Text
 							variant='titleMedium'
-							style={{ textAlign: 'center', paddingTop: 10 }}
+							style={{
+								textAlign: 'center',
+								paddingTop: 10,
+								paddingBottom: currentTrack
+									? 70 + insets.bottom
+									: insets.bottom,
+							}}
 						>
 							•
 						</Text>

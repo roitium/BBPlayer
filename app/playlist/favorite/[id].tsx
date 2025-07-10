@@ -239,7 +239,7 @@ export default function FavoritePage() {
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
+					// paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
 				}}
 			>
 				<FlatList
@@ -277,6 +277,9 @@ export default function FavoritePage() {
 									alignItems: 'center',
 									justifyContent: 'center',
 									padding: 16,
+									paddingBottom: currentTrack
+										? 70 + insets.bottom
+										: insets.bottom,
 								}}
 							>
 								<ActivityIndicator size='small' />
@@ -284,7 +287,13 @@ export default function FavoritePage() {
 						) : (
 							<Text
 								variant='titleMedium'
-								style={{ textAlign: 'center', paddingTop: 10 }}
+								style={{
+									textAlign: 'center',
+									paddingTop: 10,
+									paddingBottom: currentTrack
+										? 70 + insets.bottom
+										: insets.bottom,
+								}}
 							>
 								•
 							</Text>

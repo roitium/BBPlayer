@@ -237,7 +237,16 @@ export default function SearchPage() {
 			</ScrollView>
 
 			{/* 底部播放栏 */}
-			<NowPlayingBar />
+			<View
+				style={{
+					position: 'absolute',
+					right: 0,
+					bottom: 0,
+					left: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }
