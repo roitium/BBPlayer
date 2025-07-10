@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
-import { FlatList, Image, RefreshControl, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
@@ -217,7 +217,7 @@ export default function MultipagePage() {
 			</Appbar.Header>
 
 			{/* 顶部背景图 */}
-			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
+			{/* <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
 				<Image
 					source={{ uri: videoData.pic }}
 					style={{
@@ -227,7 +227,7 @@ export default function MultipagePage() {
 					}}
 					blurRadius={15}
 				/>
-			</View>
+			</View> */}
 
 			<View
 				style={{

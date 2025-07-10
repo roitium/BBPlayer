@@ -4,7 +4,6 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { Image } from 'expo-image'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -216,7 +215,7 @@ export default function CollectionPage() {
 			</Appbar.Header>
 
 			{/* 顶部背景图 */}
-			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
+			{/* <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
 				<Image
 					source={{ uri: collectionData?.info.cover }}
 					style={{
@@ -226,7 +225,7 @@ export default function CollectionPage() {
 					}}
 					blurRadius={15}
 				/>
-			</View>
+			</View> */}
 
 			{/* Content Area */}
 			<View

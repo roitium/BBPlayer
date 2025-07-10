@@ -4,7 +4,6 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { Image } from 'expo-image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
@@ -183,7 +182,7 @@ export default function UploaderPage() {
 			</Appbar.Header>
 
 			{/* 顶部背景图 */}
-			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
+			{/* <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
 				<Image
 					source={{ uri: uploaderUserInfo?.face }}
 					style={{
@@ -193,7 +192,7 @@ export default function UploaderPage() {
 					}}
 					blurRadius={15}
 				/>
-			</View>
+			</View> */}
 
 			<View
 				style={{
