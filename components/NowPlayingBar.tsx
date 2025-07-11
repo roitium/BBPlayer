@@ -1,14 +1,15 @@
-import { useNavigation } from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { memo, useEffect, useState } from 'react'
-import { Image, TouchableOpacity, View } from 'react-native'
-import { IconButton, ProgressBar, Text, useTheme } from 'react-native-paper'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaybackProgress,
 	usePlayerStore,
 } from '@/hooks/stores/usePlayerStore'
 import type { RootStackParamList } from '@/types/navigation'
+import { useNavigation, useNavigationState } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { memo, useEffect, useState } from 'react'
+import { Image, TouchableOpacity, View } from 'react-native'
+import { IconButton, ProgressBar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
@@ -22,8 +23,18 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
 	const navigator =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+	const navigationState = useNavigationState((state) => state)
+	const insets = useSafeAreaInsets()
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: 当切歌时归零进度条，不需要 progress 作为 dep
+	// 仅当不在播放器页且有歌曲在播放时，才显示 NowPlayingBar
+	const onTabView = navigationState
+		? navigationState.routes[navigationState.index]?.name === 'MainTabs'
+		: true
+	const shouldShowNowPlayingBar =
+		(navigationState
+			? navigationState.routes[navigationState.index]?.name !== 'Player'
+			: false) && currentTrack
+
 	useEffect(() => {
 		setInternalProgressPosition(0)
 		setInternalProgressDuration(1)
@@ -34,7 +45,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 		setInternalProgressDuration(progress.duration)
 	}, [progress.position, progress.duration])
 
-	if (!currentTrack) return null
+	if (!currentTrack || !shouldShowNowPlayingBar) return null
 
 	return (
 		<TouchableOpacity
@@ -47,11 +58,20 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 				alignItems: 'center',
 				justifyContent: 'center',
 				borderRadius: 24,
-				marginHorizontal: 16,
-				marginBottom: 8,
+				marginHorizontal: 20,
+				marginBottom: onTabView ? insets.bottom + 90 : insets.bottom + 10,
 				position: 'relative',
 				height: 48,
 				backgroundColor: colors.elevation.level2,
+				shadowColor: '#000',
+				shadowOffset: {
+					width: 0,
+					height: 3,
+				},
+				shadowOpacity: 0.29,
+				shadowRadius: 4.65,
+
+				elevation: 7,
 			}}
 		>
 			<View

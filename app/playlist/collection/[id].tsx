@@ -1,22 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
-import { LegendList } from '@legendapp/list'
-import {
-	ActivityIndicator,
-	Appbar,
-	Button,
-	Text,
-	useTheme,
-} from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -28,6 +10,23 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import {
+	ActivityIndicator,
+	Appbar,
+	Button,
+	Text,
+	useTheme,
+} from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
@@ -239,7 +238,10 @@ export default function CollectionPage() {
 					renderItem={renderItem}
 					keyExtractor={keyExtractor}
 					showsVerticalScrollIndicator={false}
-					contentContainerStyle={{ paddingTop: 0 }}
+					contentContainerStyle={{
+						paddingTop: 0,
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={collectionData.info.cover}
@@ -266,9 +268,6 @@ export default function CollectionPage() {
 							style={{
 								textAlign: 'center',
 								paddingTop: 10,
-								paddingBottom: currentTrack
-									? 70 + insets.bottom
-									: insets.bottom,
 							}}
 						>
 							•
@@ -284,7 +283,7 @@ export default function CollectionPage() {
 			/>
 
 			{/* Now Playing Bar */}
-			<View
+			{/* <View
 				style={{
 					position: 'absolute',
 					right: 0,
@@ -293,7 +292,7 @@ export default function CollectionPage() {
 				}}
 			>
 				<NowPlayingBar />
-			</View>
+			</View> */}
 		</View>
 	)
 }

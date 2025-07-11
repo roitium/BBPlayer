@@ -57,6 +57,7 @@
 		"jsc-android": "^250231.0.0",
 		"md5": "^2.3.0",
 		"neverthrow": "^8.2.0",
+		"prettier-plugin-organize-imports": "^4.1.0",
 		"promise": "^8.3.0",
 		"react": "19.0.0",
 		"react-dom": "19.0.0",

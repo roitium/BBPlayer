@@ -1,3 +1,17 @@
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
+import {
+	usePersonalInformation,
+	useRecentlyPlayed,
+} from '@/hooks/queries/bilibili/useUserData'
+import useAppStore from '@/hooks/stores/useAppStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import type { Playlist, Track } from '@/types/core/media'
+import log from '@/utils/log'
+import { formatDurationToHHMMSS } from '@/utils/times'
+import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
@@ -18,22 +32,7 @@ import {
 	useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
-import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
-import {
-	usePersonalInformation,
-	useRecentlyPlayed,
-} from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/hooks/stores/useAppStore'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import type { Playlist, Track } from '@/types/core/media'
-import log from '@/utils/log'
-import { formatDurationToHHMMSS } from '@/utils/times'
-import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import { LegendList } from '@legendapp/list'
 
 const homeLog = log.extend('HOME')
 
@@ -82,7 +81,7 @@ function HomePage() {
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<View style={{ flex: 1, paddingBottom: 80 }}>
+			<View style={{ flex: 1 }}>
 				{/*顶部欢迎区域*/}
 				<View
 					style={{
@@ -147,7 +146,7 @@ function HomePage() {
 				</View>
 			</View>
 
-			<View
+			{/* <View
 				style={{
 					position: 'absolute',
 					right: 0,
@@ -156,7 +155,7 @@ function HomePage() {
 				}}
 			>
 				<NowPlayingBar />
-			</View>
+			</View> */}
 
 			<QrCodeLoginModal
 				visible={loginDialogVisible}

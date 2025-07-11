@@ -1,15 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -24,8 +13,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import type { RootStackParamList } from '../../../types/navigation'
 import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
 
@@ -202,6 +201,9 @@ export default function UploaderPage() {
 			>
 				<LegendList
 					data={tracks}
+					contentContainerStyle={{
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					renderItem={renderItem}
 					ListHeaderComponent={
 						<PlaylistHeader
@@ -245,9 +247,6 @@ export default function UploaderPage() {
 								style={{
 									textAlign: 'center',
 									paddingTop: 10,
-									paddingBottom: currentTrack
-										? 70 + insets.bottom
-										: insets.bottom,
 								}}
 							>
 								•
@@ -262,17 +261,6 @@ export default function UploaderPage() {
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
 			/>
-
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

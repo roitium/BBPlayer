@@ -1,15 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -25,8 +14,18 @@ import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
-import type { RootStackParamList } from '../../../types/navigation'
 import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
@@ -268,6 +267,9 @@ export default function FavoritePage() {
 						/>
 					}
 					keyExtractor={keyExtractor}
+					contentContainerStyle={{
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					showsVerticalScrollIndicator={false}
 					onEndReached={hasNextPage ? () => fetchNextPage() : null}
 					ListFooterComponent={
@@ -278,9 +280,6 @@ export default function FavoritePage() {
 									alignItems: 'center',
 									justifyContent: 'center',
 									padding: 16,
-									paddingBottom: currentTrack
-										? 70 + insets.bottom
-										: insets.bottom,
 								}}
 							>
 								<ActivityIndicator size='small' />
@@ -291,9 +290,6 @@ export default function FavoritePage() {
 								style={{
 									textAlign: 'center',
 									paddingTop: 10,
-									paddingBottom: currentTrack
-										? 70 + insets.bottom
-										: insets.bottom,
 								}}
 							>
 								•
@@ -308,17 +304,6 @@ export default function FavoritePage() {
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
 			/>
-
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

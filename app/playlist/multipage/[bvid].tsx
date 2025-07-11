@@ -1,15 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -25,8 +14,18 @@ import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.tr
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
-import type { RootStackParamList } from '../../../types/navigation'
 import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
 
@@ -238,6 +237,9 @@ export default function MultipagePage() {
 				<LegendList
 					data={tracksData}
 					renderItem={renderItem}
+					contentContainerStyle={{
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={videoData.pic}
@@ -267,9 +269,6 @@ export default function MultipagePage() {
 							style={{
 								textAlign: 'center',
 								paddingTop: 10,
-								paddingBottom: currentTrack
-									? 70 + insets.bottom
-									: insets.bottom,
 							}}
 						>
 							•
@@ -283,18 +282,6 @@ export default function MultipagePage() {
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
 			/>
-
-			{/* 当前播放栏 */}
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

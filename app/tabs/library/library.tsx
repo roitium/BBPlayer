@@ -1,9 +1,19 @@
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import {
+	useGetFavoritePlaylists,
+	useInfiniteCollectionsList,
+	useInfiniteFavoriteList,
+} from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+import type { BilibiliCollection } from '@/types/apis/bilibili'
+import type { Playlist, Track } from '@/types/core/media'
+import { formatDurationToHHMMSS } from '@/utils/times'
+import { LegendList } from '@legendapp/list'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, TouchableOpacity, View } from 'react-native'
-import { LegendList } from '@legendapp/list'
 import {
 	ActivityIndicator,
 	Divider,
@@ -14,18 +24,7 @@ import {
 	useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import NowPlayingBar from '@/components/NowPlayingBar'
-import {
-	useGetFavoritePlaylists,
-	useInfiniteCollectionsList,
-	useInfiniteFavoriteList,
-} from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { BilibiliCollection } from '@/types/apis/bilibili'
-import type { Playlist, Track } from '@/types/core/media'
-import { formatDurationToHHMMSS } from '@/utils/times'
 import type { RootStackParamList } from '../../../types/navigation'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 
 export default function LibraryScreen() {
 	const { colors } = useTheme()
@@ -80,18 +79,6 @@ export default function LibraryScreen() {
 				<FavoriteFolderListComponent isHidden={value !== 'favorite'} />
 				<CollectionListComponent isHidden={value !== 'collection'} />
 				<MultiPageVideosListComponent isHidden={value !== 'multipage'} />
-			</View>
-
-			{/* 当前播放栏 */}
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: 0,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
 			</View>
 		</View>
 	)
@@ -233,7 +220,7 @@ const FavoriteFolderListComponent = memo(
 				/>
 				<LegendList
 					style={{ flex: 1 }}
-					contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
+					contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 					showsVerticalScrollIndicator={false}
 					data={filteredPlaylists}
 					renderItem={renderPlaylistItem}
@@ -357,7 +344,7 @@ const CollectionListComponent = memo(({ isHidden }: { isHidden: boolean }) => {
 					/>
 				}
 				keyExtractor={keyExtractor}
-				contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
+				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
 				onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
 				ListFooterComponent={
@@ -540,7 +527,7 @@ const MultiPageVideosListComponent = memo(
 				</View>
 				<LegendList
 					style={{ flex: 1 }}
-					contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 10 }}
+					contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 					showsVerticalScrollIndicator={false}
 					data={favoriteData?.pages.flatMap((page) => page.tracks) ?? []}
 					renderItem={renderPlaylistItem}

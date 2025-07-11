@@ -1,9 +1,17 @@
-import 'react-native-reanimated'
+import GlobalErrorFallback from '@/components/ErrorBoundary'
+import NowPlayingBar from '@/components/NowPlayingBar'
+import { toastConfig } from '@/components/toast/ToastConfig'
+import useAppStore from '@/hooks/stores/useAppStore'
+import { initPlayer } from '@/lib/player/playerLogic'
+import { ApiCallingError } from '@/utils/errors'
+import log from '@/utils/log'
+import toast from '@/utils/toast'
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import {
 	getStateFromPath as getStateFromPathDefault,
 	NavigationContainer,
 	useNavigationContainerRef,
+	useNavigationState,
 } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
@@ -31,19 +39,16 @@ import {
 import { SystemBars } from 'react-native-edge-to-edge'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+import 'react-native-reanimated'
+import {
+	SafeAreaProvider,
+	useSafeAreaInsets,
+} from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
-import GlobalErrorFallback from '@/components/ErrorBoundary'
-import { toastConfig } from '@/components/toast/ToastConfig'
-import useAppStore from '@/hooks/stores/useAppStore'
-import { initPlayer } from '@/lib/player/playerLogic'
-import { ApiCallingError } from '@/utils/errors'
-import log from '@/utils/log'
-import toast from '@/utils/toast'
 import type { RootStackParamList } from '../types/navigation'
 import NotFoundScreen from './not-found'
 // Screen imports
-import TabLayout from './tabs/layout'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import PlayerPage from './player/player'
 import PlaylistCollectionPage from './playlist/collection/[id]'
 import PlaylistFavoritePage from './playlist/favorite/[id]'
@@ -51,6 +56,7 @@ import PlaylistMultipagePage from './playlist/multipage/[bvid]'
 import PlaylistUploaderPage from './playlist/uploader/[mid]'
 import SearchResultFavPage from './search-result/fav/[query]'
 import SearchResultsPage from './search-result/global/[query]'
+import TabLayout from './tabs/layout'
 import TestPage from './test/test'
 
 const rootLog = log.extend('ROOT')
@@ -203,6 +209,85 @@ function onAppStateChange(status: AppStateStatus) {
 	}
 }
 
+function RootLayoutNav() {
+	const navigationState = useNavigationState((state) => state)
+	const currentTrack = useCurrentTrack()
+	const insets = useSafeAreaInsets()
+
+	// 仅当不在播放器页且有歌曲在播放时，才显示 NowPlayingBar
+	const onTabView =
+		navigationState?.routes[navigationState.index]?.name === 'MainTabs'
+	const shouldShowNowPlayingBar =
+		navigationState?.routes[navigationState.index]?.name !== 'Player' &&
+		currentTrack
+
+	return (
+		<View style={{ flex: 1 }}>
+			<RootStack.Navigator
+				initialRouteName='MainTabs'
+				screenOptions={{ headerShown: false }}
+			>
+				<RootStack.Screen
+					name='MainTabs'
+					component={TabLayout}
+				/>
+				<RootStack.Screen
+					name='Player'
+					component={PlayerPage}
+					options={{
+						animation: 'slide_from_bottom',
+						animationDuration: 200,
+					}}
+				/>
+				<RootStack.Screen
+					name='Test'
+					component={TestPage}
+				/>
+				<RootStack.Screen
+					name='SearchResult'
+					component={SearchResultsPage}
+				/>
+				<RootStack.Screen
+					name='NotFound'
+					component={NotFoundScreen}
+				/>
+				<RootStack.Screen
+					name='PlaylistCollection'
+					component={PlaylistCollectionPage}
+				/>
+				<RootStack.Screen
+					name='PlaylistFavorite'
+					component={PlaylistFavoritePage}
+				/>
+				<RootStack.Screen
+					name='PlaylistMultipage'
+					component={PlaylistMultipagePage}
+				/>
+				<RootStack.Screen
+					name='PlaylistUploader'
+					component={PlaylistUploaderPage}
+				/>
+				<RootStack.Screen
+					name='SearchResultFav'
+					component={SearchResultFavPage}
+				/>
+			</RootStack.Navigator>
+			{shouldShowNowPlayingBar && (
+				<View
+					style={{
+						position: 'absolute',
+						bottom: onTabView ? 80 + insets.bottom : insets.bottom,
+						left: 0,
+						right: 0,
+					}}
+				>
+					<NowPlayingBar />
+				</View>
+			)}
+		</View>
+	)
+}
+
 export default Sentry.wrap(function RootLayout() {
 	const ref = useNavigationContainerRef()
 	const [appIsReady, setAppIsReady] = useState(false)
@@ -324,7 +409,7 @@ export default Sentry.wrap(function RootLayout() {
 							/>
 						)}
 					>
-						<GestureHandlerRootView>
+						<GestureHandlerRootView style={{ flex: 1 }}>
 							<QueryClientProvider client={queryClient}>
 								<PaperProvider theme={paperTheme}>
 									<NavigationContainer
@@ -332,55 +417,7 @@ export default Sentry.wrap(function RootLayout() {
 										linking={linking}
 										fallback={<Text>Loading...</Text>}
 									>
-										<RootStack.Navigator
-											initialRouteName='MainTabs'
-											screenOptions={{ headerShown: false }}
-										>
-											<RootStack.Screen
-												name='MainTabs'
-												component={TabLayout}
-											/>
-											<RootStack.Screen
-												name='Player'
-												component={PlayerPage}
-												options={{
-													animation: 'slide_from_bottom',
-													animationDuration: 200,
-												}}
-											/>
-											<RootStack.Screen
-												name='Test'
-												component={TestPage}
-											/>
-											<RootStack.Screen
-												name='SearchResult'
-												component={SearchResultsPage}
-											/>
-											<RootStack.Screen
-												name='NotFound'
-												component={NotFoundScreen}
-											/>
-											<RootStack.Screen
-												name='PlaylistCollection'
-												component={PlaylistCollectionPage}
-											/>
-											<RootStack.Screen
-												name='PlaylistFavorite'
-												component={PlaylistFavoritePage}
-											/>
-											<RootStack.Screen
-												name='PlaylistMultipage'
-												component={PlaylistMultipagePage}
-											/>
-											<RootStack.Screen
-												name='PlaylistUploader'
-												component={PlaylistUploaderPage}
-											/>
-											<RootStack.Screen
-												name='SearchResultFav'
-												component={SearchResultFavPage}
-											/>
-										</RootStack.Navigator>
+										<RootLayoutNav />
 									</NavigationContainer>
 								</PaperProvider>
 							</QueryClientProvider>
