@@ -1,5 +1,4 @@
 import GlobalErrorFallback from '@/components/ErrorBoundary'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { toastConfig } from '@/components/toast/ToastConfig'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { initPlayer } from '@/lib/player/playerLogic'
@@ -11,7 +10,6 @@ import {
 	getStateFromPath as getStateFromPathDefault,
 	NavigationContainer,
 	useNavigationContainerRef,
-	useNavigationState,
 } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import * as Sentry from '@sentry/react-native'
@@ -40,15 +38,12 @@ import { SystemBars } from 'react-native-edge-to-edge'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
 import 'react-native-reanimated'
-import {
-	SafeAreaProvider,
-	useSafeAreaInsets,
-} from 'react-native-safe-area-context'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
 import type { RootStackParamList } from '../types/navigation'
 import NotFoundScreen from './not-found'
 // Screen imports
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import PlayerPage from './player/player'
 import PlaylistCollectionPage from './playlist/collection/[id]'
 import PlaylistFavoritePage from './playlist/favorite/[id]'
@@ -167,7 +162,7 @@ const queryClient = new QueryClient({
 	}),
 })
 
-const RootStack = createNativeStackNavigator<RootStackParamList>()
+export const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 const linking = {
 	prefixes: ['bbplayer://', 'trackplayer://'],
@@ -210,17 +205,6 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 function RootLayoutNav() {
-	const navigationState = useNavigationState((state) => state)
-	const currentTrack = useCurrentTrack()
-	const insets = useSafeAreaInsets()
-
-	// 仅当不在播放器页且有歌曲在播放时，才显示 NowPlayingBar
-	const onTabView =
-		navigationState?.routes[navigationState.index]?.name === 'MainTabs'
-	const shouldShowNowPlayingBar =
-		navigationState?.routes[navigationState.index]?.name !== 'Player' &&
-		currentTrack
-
 	return (
 		<View style={{ flex: 1 }}>
 			<RootStack.Navigator
@@ -236,7 +220,6 @@ function RootLayoutNav() {
 					component={PlayerPage}
 					options={{
 						animation: 'slide_from_bottom',
-						animationDuration: 200,
 					}}
 				/>
 				<RootStack.Screen
@@ -272,18 +255,16 @@ function RootLayoutNav() {
 					component={SearchResultFavPage}
 				/>
 			</RootStack.Navigator>
-			{shouldShowNowPlayingBar && (
-				<View
-					style={{
-						position: 'absolute',
-						bottom: onTabView ? 80 + insets.bottom : insets.bottom,
-						left: 0,
-						right: 0,
-					}}
-				>
-					<NowPlayingBar />
-				</View>
-			)}
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

@@ -1,9 +1,9 @@
-import { err, ok, type Result } from 'neverthrow'
-import type { Track as RNTPTrack } from 'react-native-track-player'
 import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import type { Track } from '@/types/core/media'
+import { err, ok, type Result } from 'neverthrow'
+import type { Track as RNTPTrack } from 'react-native-track-player'
 import log from './log'
 
 const playerLog = log.extend('PLAYER/UTILS')
@@ -270,10 +270,10 @@ async function reportPlaybackHistory(track: Track): Promise<void> {
 }
 
 export {
-	convertToRNTPTrack,
 	checkAndUpdateAudioStream,
 	checkBilibiliAudioExpiry,
+	convertToRNTPTrack,
+	getTrackKey,
 	isTargetTrack,
 	reportPlaybackHistory,
-	getTrackKey,
 }

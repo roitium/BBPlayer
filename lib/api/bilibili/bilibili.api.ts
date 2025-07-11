@@ -1,4 +1,3 @@
-import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import useAppStore from '@/hooks/stores/useAppStore'
 import {
 	type BilibiliAudioStreamParams,
@@ -28,6 +27,7 @@ import {
 	CsrfError,
 } from '@/utils/errors'
 import log from '@/utils/log'
+import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './bilibili.client'
 import {
 	transformCollectionAllContentsToTracks,

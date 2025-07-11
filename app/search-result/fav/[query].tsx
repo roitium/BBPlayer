@@ -1,13 +1,3 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useState } from 'react'
-import { View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import {
@@ -25,8 +15,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
-import type { RootStackParamList } from '../../../types/navigation'
 import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useState } from 'react'
+import { View } from 'react-native'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH_RESULTS/FAV')
 

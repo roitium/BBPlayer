@@ -1,3 +1,9 @@
+import appStore from '@/hooks/stores/appStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { BilibiliApiError, CsrfError } from '@/utils/errors'
+import log from '@/utils/log'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import toast from '@/utils/toast'
 import {
 	skipToken,
 	useInfiniteQuery,
@@ -5,12 +11,6 @@ import {
 	useQuery,
 	useQueryClient,
 } from '@tanstack/react-query'
-import appStore from '@/hooks/stores/appStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
-import { BilibiliApiError, CsrfError } from '@/utils/errors'
-import log from '@/utils/log'
-import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import toast from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 

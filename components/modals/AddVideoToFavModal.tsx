@@ -1,3 +1,11 @@
+import {
+	useDealFavoriteForOneVideo,
+	useGetFavoriteForOneVideo,
+} from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+import type { BilibiliPlaylist } from '@/types/apis/bilibili'
+import log from '@/utils/log'
+import { LegendList } from '@legendapp/list'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
@@ -9,14 +17,6 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
-import {
-	useDealFavoriteForOneVideo,
-	useGetFavoriteForOneVideo,
-} from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { BilibiliPlaylist } from '@/types/apis/bilibili'
-import log from '@/utils/log'
-import { LegendList } from '@legendapp/list'
 
 const modalLog = log.extend('ADD_TO_FAVORITE_LISTS_MODAL')
 

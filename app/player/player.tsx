@@ -1,3 +1,13 @@
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
+import {
+	usePlaybackProgress,
+	usePlayerStore,
+} from '@/hooks/stores/usePlayerStore'
+import { formatDurationToHHMMSS } from '@/utils/times'
+import toast from '@/utils/toast'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import Slider from '@react-native-community/slider'
 import { useNavigation } from '@react-navigation/native'
@@ -19,16 +29,6 @@ import {
 	useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 import { RepeatMode } from 'react-native-track-player'
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
-import {
-	usePlaybackProgress,
-	usePlayerStore,
-} from '@/hooks/stores/usePlayerStore'
-import { formatDurationToHHMMSS } from '@/utils/times'
-import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../types/navigation'
 
 export default function PlayerPage() {

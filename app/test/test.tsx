@@ -1,3 +1,7 @@
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as EXPOFS from 'expo-file-system'
@@ -7,10 +11,6 @@ import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../types/navigation'
 
 export default function TestPage() {

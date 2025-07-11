@@ -1,6 +1,6 @@
-import { errAsync, okAsync } from 'neverthrow'
 import type { NeteaseLyricResponse } from '@/types/apis/netease'
 import { NeteaseApiError } from '@/utils/errors'
+import { errAsync, okAsync } from 'neverthrow'
 
 export const createNeteaseApi = () => ({
 	getLyrics: async (id: number) => {

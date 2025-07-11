@@ -1,3 +1,7 @@
+import useAppStore from '@/hooks/stores/useAppStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
+import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useEffect, useState } from 'react'
@@ -5,10 +9,6 @@ import { Pressable } from 'react-native'
 import { Button, Dialog, Portal, Text } from 'react-native-paper'
 import QRCode from 'react-native-qrcode-svg'
 import * as setCookieParser from 'set-cookie-parser'
-import useAppStore from '@/hooks/stores/useAppStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
-import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
-import toast from '@/utils/toast'
 
 const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	visible,

@@ -1,3 +1,17 @@
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import NowPlayingBar from '@/components/NowPlayingBar'
+import {
+	TrackListItem,
+	TrackMenuItemDividerToken,
+} from '@/components/playlist/PlaylistItem'
+import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import type { Track } from '@/types/core/media'
+import log from '@/utils/log'
+import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
@@ -15,21 +29,7 @@ import {
 	useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
-import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import type { Track } from '@/types/core/media'
-import log from '@/utils/log'
-import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../../types/navigation'
-import { LegendList } from '@legendapp/list'
 
 const searchLog = log.extend('SEARCH_RESULTS/GLOBAL')
 

@@ -1,3 +1,6 @@
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import log from '@/utils/log'
+import { convertToRNTPTrack } from '@/utils/player'
 import TrackPlayer, {
 	AppKilledPlaybackBehavior,
 	Capability,
@@ -5,9 +8,6 @@ import TrackPlayer, {
 	RepeatMode,
 	State as TrackPlayerState,
 } from 'react-native-track-player'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import log from '@/utils/log'
-import { convertToRNTPTrack } from '@/utils/player'
 
 const playerLog = log.extend('PLAYER/LOGIC')
 
@@ -212,4 +212,4 @@ const PlayerLogic = {
 	},
 }
 
-export { PlayerLogic, initPlayer }
+export { initPlayer, PlayerLogic }
