@@ -9,7 +9,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { memo, useEffect, useState } from 'react'
 import { Image, TouchableOpacity, View } from 'react-native'
 import { IconButton, ProgressBar, Text, useTheme } from 'react-native-paper'
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+const AnimatedTouchableOpacity =
+	Animated.createAnimatedComponent(TouchableOpacity)
 
 const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
@@ -33,7 +41,41 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const shouldShowNowPlayingBar =
 		(navigationState
 			? navigationState.routes[navigationState.index]?.name !== 'Player'
-			: false) && currentTrack
+			: false) && !!currentTrack
+
+	const marginBottom = useSharedValue(
+		onTabView ? insets.bottom + 90 : insets.bottom + 10,
+	)
+	const translateY = useSharedValue(100)
+	const opacity = useSharedValue(0)
+
+	const animatedStyle = useAnimatedStyle(() => {
+		return {
+			opacity: opacity.get(),
+			marginBottom: marginBottom.get(),
+			transform: [{ translateY: translateY.get() }],
+		}
+	})
+
+	useEffect(() => {
+		marginBottom.set(
+			withTiming(onTabView ? insets.bottom + 90 : insets.bottom + 10, {
+				duration: 300,
+			}),
+		)
+		// eslint-disable-next-line react-compiler/react-compiler
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [insets.bottom, onTabView])
+
+	useEffect(() => {
+		if (!shouldShowNowPlayingBar) return
+		translateY.set(100)
+		opacity.set(0)
+		translateY.set(withTiming(0, { duration: 500 }))
+		opacity.set(withTiming(1, { duration: 500 }))
+		// eslint-disable-next-line react-compiler/react-compiler
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [shouldShowNowPlayingBar])
 
 	useEffect(() => {
 		setInternalProgressPosition(0)
@@ -45,34 +87,35 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 		setInternalProgressDuration(progress.duration)
 	}, [progress.position, progress.duration])
 
-	if (!currentTrack || !shouldShowNowPlayingBar) return null
+	if (!shouldShowNowPlayingBar) return null
 
 	return (
-		<TouchableOpacity
+		<AnimatedTouchableOpacity
 			onPress={() => {
 				navigator.navigate('Player')
 			}}
 			activeOpacity={0.9}
-			style={{
-				flex: 1,
-				alignItems: 'center',
-				justifyContent: 'center',
-				borderRadius: 24,
-				marginHorizontal: 20,
-				marginBottom: onTabView ? insets.bottom + 90 : insets.bottom + 10,
-				position: 'relative',
-				height: 48,
-				backgroundColor: colors.elevation.level2,
-				shadowColor: '#000',
-				shadowOffset: {
-					width: 0,
-					height: 3,
+			style={[
+				{
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'center',
+					borderRadius: 24,
+					marginHorizontal: 20,
+					position: 'relative',
+					height: 48,
+					backgroundColor: colors.elevation.level2,
+					shadowColor: '#000',
+					shadowOffset: {
+						width: 0,
+						height: 3,
+					},
+					shadowOpacity: 0.29,
+					shadowRadius: 4.65,
+					elevation: 7,
 				},
-				shadowOpacity: 0.29,
-				shadowRadius: 4.65,
-
-				elevation: 7,
-			}}
+				animatedStyle,
+			]}
 		>
 			<View
 				style={{
@@ -104,14 +147,14 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						numberOfLines={1}
 						style={{ color: colors.onSurface }}
 					>
-						{currentTrack?.title}
+						{currentTrack.title}
 					</Text>
 					<Text
 						variant='bodySmall'
 						numberOfLines={1}
 						style={{ color: colors.onSurfaceVariant }}
 					>
-						{currentTrack?.artist}
+						{currentTrack.artist}
 					</Text>
 				</View>
 
@@ -153,7 +196,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 			</View>
 			<View
 				style={{
-					width: '85%',
+					width: '83%',
 					alignSelf: 'center',
 					position: 'absolute',
 					bottom: 0,
@@ -165,7 +208,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 					style={{ height: 0.8, backgroundColor: colors.elevation.level2 }}
 				/>
 			</View>
-		</TouchableOpacity>
+		</AnimatedTouchableOpacity>
 	)
 })
 
