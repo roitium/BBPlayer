@@ -23,7 +23,13 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import {
+	ActivityIndicator,
+	Appbar,
+	Divider,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
@@ -237,6 +243,7 @@ export default function MultipagePage() {
 				<LegendList
 					data={tracksData}
 					renderItem={renderItem}
+					ItemSeparatorComponent={() => <Divider />}
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 					}}

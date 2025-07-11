@@ -1,5 +1,6 @@
 import CookieLoginModal from '@/components/modals/CookieLoginModal'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -19,6 +20,7 @@ const updateTime = Updates.createdAt
 
 export default function SettingsPage() {
 	const insets = useSafeAreaInsets()
+	const currentTrack = useCurrentTrack()
 	const colors = useTheme().colors
 	return (
 		<View
@@ -26,6 +28,7 @@ export default function SettingsPage() {
 				flex: 1,
 				backgroundColor: colors.background,
 				paddingTop: insets.top + 8,
+				paddingBottom: currentTrack ? 70 : insets.bottom,
 			}}
 		>
 			<View

@@ -22,7 +22,13 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import {
+	ActivityIndicator,
+	Appbar,
+	Divider,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
@@ -227,6 +233,7 @@ export default function UploaderPage() {
 						/>
 					}
 					keyExtractor={keyExtractor}
+					ItemSeparatorComponent={() => <Divider />}
 					showsVerticalScrollIndicator={false}
 					onEndReached={hasNextPage ? () => fetchNextPage() : null}
 					ListFooterComponent={

@@ -1,5 +1,4 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import {
 	TrackListItem,
 	TrackMenuItemDividerToken,
@@ -277,7 +276,6 @@ export default function SearchResultsPage() {
 			style={{
 				flex: 1,
 				backgroundColor: colors.background,
-				paddingBottom: currentTrack ? 80 : 0,
 			}}
 		>
 			{/* Header with Back Button and Title */}
@@ -300,7 +298,9 @@ export default function SearchResultsPage() {
 				/>
 			) : (
 				<LegendList
-					contentContainerStyle={{ paddingBottom: 20 }}
+					contentContainerStyle={{
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					data={searchResults}
 					renderItem={renderSearchResultItem}
 					keyExtractor={keyExtractor}
@@ -324,17 +324,6 @@ export default function SearchResultsPage() {
 				visible={modalVisible}
 				setVisible={setModalVisible}
 			/>
-
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

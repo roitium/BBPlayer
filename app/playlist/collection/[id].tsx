@@ -23,6 +23,7 @@ import {
 	ActivityIndicator,
 	Appbar,
 	Button,
+	Divider,
 	Text,
 	useTheme,
 } from 'react-native-paper'
@@ -236,6 +237,7 @@ export default function CollectionPage() {
 				<LegendList
 					data={collectionData.medias}
 					renderItem={renderItem}
+					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}
 					showsVerticalScrollIndicator={false}
 					contentContainerStyle={{

@@ -23,7 +23,13 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import {
+	ActivityIndicator,
+	Appbar,
+	Divider,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
@@ -245,6 +251,7 @@ export default function FavoritePage() {
 				<LegendList
 					data={favoriteData?.pages.flatMap((page) => page.tracks)}
 					renderItem={renderItem}
+					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={favoriteData?.pages[0].favoriteMeta.cover}
