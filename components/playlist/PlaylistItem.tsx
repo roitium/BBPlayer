@@ -138,9 +138,9 @@ export const TrackListItem = memo(function TrackListItem({
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem) =>
+							{menuItems.map((menuItem, index) =>
 								menuItem.title === 'divider' ? (
-									<Divider key={menuItem.title} />
+									<Divider key={`divider-${index}`} />
 								) : (
 									<Menu.Item
 										key={menuItem.title}
