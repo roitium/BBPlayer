@@ -1,49 +1,29 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
-import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import log from '@/utils/log'
-import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useState } from 'react'
+import { type RouteProp, useRoute } from '@react-navigation/native'
+import { useCallback } from 'react'
 import { View } from 'react-native'
 import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
-
-const searchLog = log.extend('SEARCH_RESULTS/FAV')
+import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
-	const navigation =
-		useNavigation<
-			NativeStackNavigationProp<RootStackParamList, 'SearchResultFav'>
-		>()
 	const route = useRoute<RouteProp<RootStackParamList, 'SearchResultFav'>>()
 	const { query } = route.params
 	const currentTrack = useCurrentTrack()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalBvid, setCurrentModalBvid] = useState('')
 	const insets = useSafeAreaInsets()
 
 	const { data: userData } = usePersonalInformation()
@@ -57,79 +37,16 @@ export default function SearchResultsPage() {
 	} = useInfiniteSearchFavoriteItems(
 		'all',
 		query,
-		favoriteFolderList?.at(0) ? favoriteFolderList?.at(0)?.id : undefined,
+		favoriteFolderList?.at(0)?.id,
 	)
 
-	const playNext = useCallback(
-		async (track: Track) => {
-			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: false,
-					clearQueue: false,
-					playNext: true,
-				})
-				toast.success('添加到下一首播放成功')
-			} catch (error) {
-				searchLog.sentry('添加到队列失败', error)
-				toast.show('添加到队列失败')
-			}
-		},
-		[addToQueue],
-	)
-
-	const onTrackPress = useCallback(
-		async (track: Track) => {
-			if (
-				MULTIPAGE_VIDEO_KEYWORDS.some((keyword) =>
-					track.title?.includes(keyword),
-				)
-			) {
-				navigation.navigate('PlaylistMultipage', { bvid: track.id })
-				return
-			}
-			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: true,
-					clearQueue: false,
-					playNext: false,
-				})
-			} catch (error) {
-				searchLog.sentry('播放失败', error)
-				toast.show('播放失败')
-			}
-		},
-		[addToQueue, navigation],
-	)
-
-	const trackMenuItems = useCallback(
-		(item: Track) => [
-			{
-				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
-				onPress: playNext,
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '作为分P视频展示',
-				leadingIcon: 'eye-outline',
-				onPress: async () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.id })
-				},
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '添加到收藏夹',
-				leadingIcon: 'plus',
-				onPress: () => {
-					setCurrentModalBvid(item.id)
-					setModalVisible(true)
-				},
-			},
-		],
-		[playNext, navigation],
-	)
+	const {
+		modalVisible,
+		currentModalBvid,
+		setModalVisible,
+		onTrackPress,
+		trackMenuItems,
+	} = useSearchInteractions()
 
 	const renderSearchResultItem = useCallback(
 		({ item, index }: { item: Track; index: number }) => {
@@ -162,9 +79,8 @@ export default function SearchResultsPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<PlaylistAppBar title={`搜索: ${query}`} />
+			<PlaylistAppBar />
 
-			{/* Content Area */}
 			<LegendList
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,

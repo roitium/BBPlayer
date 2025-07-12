@@ -86,7 +86,6 @@ export const createBilibiliApi = () => ({
 	searchVideos(
 		keyword: string,
 		page: number,
-		page_size: number,
 	): ResultAsync<{ tracks: Track[]; numPages: number }, BilibiliApiError> {
 		return bilibiliApiClient
 			.get<{
@@ -96,7 +95,6 @@ export const createBilibiliApi = () => ({
 				keyword,
 				search_type: 'video',
 				page: page.toString(),
-				page_size: page_size.toString(),
 			})
 			.map((response) => ({
 				tracks: transformSearchResultsToTracks(response.result),

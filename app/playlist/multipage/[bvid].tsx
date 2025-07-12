@@ -158,7 +158,10 @@ export default function MultipagePage() {
 		if (multipageData && videoData) {
 			setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
 		}
-	}, [multipageData, videoData])
+
+		// eslint-disable-next-line react-compiler/react-compiler
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- multipageData 是 rawMultipageData 的派生数据
+	}, [rawMultipageData, videoData])
 
 	useEffect(() => {
 		if (typeof bvid !== 'string') {
