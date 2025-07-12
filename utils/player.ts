@@ -72,9 +72,9 @@ function checkBilibiliAudioExpiry(track: Track): boolean {
 	playerLog.debug('检查 B 站音频流过期状态', {
 		trackId: track.id,
 		hasStream: !!track.biliStreamUrl,
-		streamAge: track.biliStreamUrl ? now - track.biliStreamUrl.getTime : 'N/A',
+		// streamAge: track.biliStreamUrl ? now - track.biliStreamUrl.getTime : 'N/A',
 		isExpired,
-		expiryTime: STREAM_EXPIRY_TIME,
+		// expiryTime: STREAM_EXPIRY_TIME,
 	})
 	return isExpired
 }
@@ -105,12 +105,12 @@ async function checkAndUpdateAudioStream(
 		const needsUpdate = checkBilibiliAudioExpiry(track)
 
 		if (!needsUpdate) {
-			playerLog.debug('B 站音频流仍然有效，无需更新', {
-				trackId: track.id,
-				getTime: track.biliStreamUrl
-					? new Date(track.biliStreamUrl.getTime).toISOString()
-					: 'N/A',
-			})
+			// playerLog.debug('B 站音频流仍然有效，无需更新', {
+			// 	trackId: track.id,
+			// 	getTime: track.biliStreamUrl
+			// 		? new Date(track.biliStreamUrl.getTime).toISOString()
+			// 		: 'N/A',
+			// })
 			return ok({ track, needsUpdate: false }) // 流有效，返回 ok
 		}
 
@@ -181,7 +181,7 @@ async function checkAndUpdateAudioStream(
 					playerLog.debug('音频流获取成功', {
 						bvid,
 						cid,
-						url: streamInfo.url,
+						// url: streamInfo.url,
 						quality: streamInfo.quality,
 						type: streamInfo.type,
 					})
@@ -198,12 +198,12 @@ async function checkAndUpdateAudioStream(
 						},
 					}
 
-					playerLog.debug('Track 对象已更新音频流信息', {
-						trackId: updatedTrack.id,
-						title: updatedTrack.title,
-						streamUrl: updatedTrack.biliStreamUrl.url,
-						getTime: new Date(updatedTrack.biliStreamUrl.getTime).toISOString(),
-					})
+					// playerLog.debug('Track 对象已更新音频流信息', {
+					// 	trackId: updatedTrack.id,
+					// 	title: updatedTrack.title,
+					// 	streamUrl: updatedTrack.biliStreamUrl.url,
+					// 	getTime: new Date(updatedTrack.biliStreamUrl.getTime).toISOString(),
+					// })
 
 					return ok({ track: updatedTrack, needsUpdate: true })
 				},

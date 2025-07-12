@@ -92,6 +92,8 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 			}
 		}
 
+		console.log('heya!')
+
 		modalLog.debug('Processing favorite changes', {
 			bvid,
 			addToFavoriteIds,

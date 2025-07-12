@@ -92,23 +92,23 @@ const PlayerLogic = {
 			async (data: { state: TrackPlayerState }) => {
 				const { state } = data
 				const setter = usePlayerStore.setState
-				const store = usePlayerStore.getState()
-				const currentTrack = store.currentTrackKey
-					? (store.tracks[store.currentTrackKey] ?? null)
-					: null
+				// const store = usePlayerStore.getState()
+				// const currentTrack = store.currentTrackKey
+				// 	? (store.tracks[store.currentTrackKey] ?? null)
+				// 	: null
 
 				// 获取状态名称用于日志
-				const stateName =
-					Object.keys(TrackPlayerState).find(
-						(key) =>
-							TrackPlayerState[key as keyof typeof TrackPlayerState] === state,
-					) || state.toString()
+				// const stateName =
+				// 	Object.keys(TrackPlayerState).find(
+				// 		(key) =>
+				// 			TrackPlayerState[key as keyof typeof TrackPlayerState] === state,
+				// 	) || state.toString()
 
 				if (state === TrackPlayerState.Playing) {
-					playerLog.debug('播放状态: 播放中', {
-						trackId: currentTrack?.id,
-						title: currentTrack?.title,
-					})
+					// playerLog.debug('播放状态: 播放中', {
+					// 	trackId: currentTrack?.id,
+					// 	title: currentTrack?.title,
+					// })
 					setter((state) => ({
 						...state,
 						isPlaying: true,
@@ -118,11 +118,11 @@ const PlayerLogic = {
 					state === TrackPlayerState.Paused ||
 					state === TrackPlayerState.Stopped
 				) {
-					playerLog.debug('播放状态: 暂停/停止', {
-						state: stateName,
-						trackId: currentTrack?.id,
-						title: currentTrack?.title,
-					})
+					// playerLog.debug('播放状态: 暂停/停止', {
+					// 	state: stateName,
+					// 	trackId: currentTrack?.id,
+					// 	title: currentTrack?.title,
+					// })
 					setter((state) => ({
 						...state,
 						isPlaying: false,
@@ -132,17 +132,17 @@ const PlayerLogic = {
 					state === TrackPlayerState.Buffering ||
 					state === TrackPlayerState.Loading
 				) {
-					playerLog.debug('播放状态: 缓冲中/加载中', {
-						state: stateName,
-						trackId: currentTrack?.id,
-						title: currentTrack?.title,
-					})
+					// playerLog.debug('播放状态: 缓冲中/加载中', {
+					// 	state: stateName,
+					// 	trackId: currentTrack?.id,
+					// 	title: currentTrack?.title,
+					// })
 					setter((state) => ({ ...state, isBuffering: true }))
 				} else if (state === TrackPlayerState.Ready) {
-					playerLog.debug('播放状态: 就绪', {
-						trackId: currentTrack?.id,
-						title: currentTrack?.title,
-					})
+					// playerLog.debug('播放状态: 就绪', {
+					// 	trackId: currentTrack?.id,
+					// 	title: currentTrack?.title,
+					// })
 					setter((state) => ({ ...state, isBuffering: false }))
 				}
 			},
