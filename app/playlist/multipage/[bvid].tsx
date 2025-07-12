@@ -21,7 +21,7 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -42,7 +42,6 @@ export default function MultipagePage() {
 	const [refreshing, setRefreshing] = useState(false)
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
-	const [tracksData, setTracksData] = useState<Track[]>([])
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const insets = useSafeAreaInsets()
 	const [modalVisible, setModalVisible] = useState(false)
@@ -61,10 +60,16 @@ export default function MultipagePage() {
 		isPending: isVideoDataPending,
 	} = useGetVideoDetails(bvid)
 
-	const multipageData = rawMultipageData?.map((item) => ({
-		...item,
-		first_frame: videoData?.pic || '',
-	}))
+	const tracksData = useMemo(() => {
+		if (!rawMultipageData || !videoData) {
+			return []
+		}
+		const multipageData = rawMultipageData.map((item) => ({
+			...item,
+			first_frame: videoData?.pic || '',
+		}))
+		return transformMultipageVideosToTracks(multipageData, videoData)
+	}, [rawMultipageData, videoData])
 
 	const playNext = useCallback(
 		async (track: Track) => {
@@ -155,15 +160,6 @@ export default function MultipagePage() {
 	}, [])
 
 	useEffect(() => {
-		if (multipageData && videoData) {
-			setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
-		}
-
-		// eslint-disable-next-line react-compiler/react-compiler
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- multipageData 是 rawMultipageData 的派生数据
-	}, [rawMultipageData, videoData])
-
-	useEffect(() => {
 		if (typeof bvid !== 'string') {
 			navigation.replace('NotFound')
 		}
@@ -201,9 +197,7 @@ export default function MultipagePage() {
 						<PlaylistHeader
 							coverUri={videoData.pic}
 							title={videoData.title}
-							subtitle={`${videoData.owner.name} • ${
-								(multipageData ?? []).length
-							} 首歌曲`}
+							subtitle={`${videoData.owner.name} • ${tracksData.length} 首歌曲`}
 							description={videoData.desc}
 							onPlayAll={() => playAll()}
 						/>
