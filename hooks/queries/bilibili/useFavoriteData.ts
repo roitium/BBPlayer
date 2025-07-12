@@ -1,3 +1,9 @@
+import appStore from '@/hooks/stores/appStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { BilibiliApiError, CsrfError } from '@/utils/errors'
+import log from '@/utils/log'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import toast from '@/utils/toast'
 import {
 	skipToken,
 	useInfiniteQuery,
@@ -5,12 +11,6 @@ import {
 	useQuery,
 	useQueryClient,
 } from '@tanstack/react-query'
-import appStore from '@/hooks/stores/appStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
-import { BilibiliApiError, CsrfError } from '@/utils/errors'
-import log from '@/utils/log'
-import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import toast from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
@@ -177,7 +177,8 @@ export const useCollectionAllContents = (collectionId: number) => {
  * 获取包含指定视频的收藏夹列表
  */
 export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!userMid
+	const enabled =
+		!!appStore.getState().bilibiliCookieString && !!userMid && bvid.length > 0
 	return useQuery({
 		queryKey: favoriteListQueryKeys.favoriteForOneVideo(bvid, userMid),
 		queryFn: userMid
@@ -186,7 +187,8 @@ export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
 						bilibiliApi.getTargetVideoFavoriteStatus(userMid, bvid),
 					)
 			: skipToken,
-		staleTime: 1,
+		staleTime: 0,
+		gcTime: 0,
 		enabled: enabled,
 	})
 }

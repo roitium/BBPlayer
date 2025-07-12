@@ -1,22 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { Image } from 'expo-image'
-import { useCallback, useEffect, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Button,
-	Text,
-	useTheme,
-} from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -28,6 +10,20 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { Divider, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
@@ -105,7 +101,7 @@ export default function CollectionPage() {
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: playNext,
+				onPress: () => playNext(item),
 			},
 			TrackMenuItemDividerToken,
 			{
@@ -158,48 +154,19 @@ export default function CollectionPage() {
 	}, [id, navigation])
 
 	if (typeof id !== 'string') {
-		return
+		return null
 	}
 
 	if (isCollectionDataPending) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
-	if (isCollectionDataError || !collectionData) {
+	if (isCollectionDataError) {
 		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					padding: 16,
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center', marginBottom: 16 }}
-				>
-					加载收藏夹内容失败
-				</Text>
-				<Button
-					onPress={() => refetch()}
-					mode='contained'
-				>
-					重试
-				</Button>
-			</View>
+			<PlaylistError
+				text='加载收藏夹内容失败'
+				onRetry={refetch}
+			/>
 		)
 	}
 
@@ -210,37 +177,23 @@ export default function CollectionPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			{/* App Bar */}
-			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 10 }}>
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
-			</Appbar.Header>
+			<PlaylistAppBar />
 
-			{/* 顶部背景图 */}
-			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
-				<Image
-					source={{ uri: collectionData?.info.cover }}
-					style={{
-						width: '100%',
-						height: '100%',
-						opacity: 0.15,
-					}}
-					blurRadius={15}
-				/>
-			</View>
-
-			{/* Content Area */}
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
 				}}
 			>
-				<FlatList
+				<LegendList
 					data={collectionData.medias}
 					renderItem={renderItem}
+					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}
 					showsVerticalScrollIndicator={false}
-					contentContainerStyle={{ paddingTop: 0 }}
+					contentContainerStyle={{
+						paddingTop: 0,
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={collectionData.info.cover}
@@ -264,7 +217,10 @@ export default function CollectionPage() {
 					ListFooterComponent={
 						<Text
 							variant='titleMedium'
-							style={{ textAlign: 'center', paddingTop: 10 }}
+							style={{
+								textAlign: 'center',
+								paddingTop: 10,
+							}}
 						>
 							•
 						</Text>
@@ -277,18 +233,6 @@ export default function CollectionPage() {
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
 			/>
-
-			{/* Now Playing Bar */}
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

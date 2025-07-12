@@ -84,9 +84,9 @@ class AudioStreamError extends ApiCallingError {
 }
 
 export {
+	ApiCallingError,
+	AudioStreamError,
 	BilibiliApiError,
 	CsrfError,
-	AudioStreamError,
 	NeteaseApiError,
-	ApiCallingError,
 }

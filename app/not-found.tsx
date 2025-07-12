@@ -1,7 +1,7 @@
+import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Button, StyleSheet, Text, View } from 'react-native'
-import type { RootStackParamList } from '@/types/navigation'
 
 const NotFoundScreen: React.FC = () => {
 	const navigation =

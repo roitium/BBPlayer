@@ -1,4 +1,10 @@
+import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import type { Track } from '@/types/core/media'
+import { isTargetTrack } from '@/utils/player'
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet'
+import { usePreventRemove } from '@react-navigation/native'
 import { memo, type RefObject, useCallback, useState } from 'react'
 import { View } from 'react-native'
 import {
@@ -8,12 +14,6 @@ import {
 	TouchableRipple,
 	useTheme,
 } from 'react-native-paper'
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import type { Track } from '@/types/core/media'
-import { isTargetTrack } from '@/utils/player'
-import { usePreventRemove } from '@react-navigation/native'
 
 const TrackItem = memo(
 	({
@@ -86,7 +86,11 @@ const TrackItem = memo(
 
 TrackItem.displayName = 'TrackItem'
 
-function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
+function PlayerQueueModal({
+	sheetRef,
+}: {
+	sheetRef: RefObject<BottomSheet | null>
+}) {
 	const queue = useCurrentQueue()
 	const removeTrack = usePlayerStore((state) => state.removeTrack)
 	const currentTrack = useCurrentTrack()

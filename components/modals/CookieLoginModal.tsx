@@ -1,3 +1,7 @@
+import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/useFavoriteData'
+import { userQueryKeys } from '@/hooks/queries/bilibili/useUserData'
+import useAppStore from '@/hooks/stores/useAppStore'
+import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useState } from 'react'
 import {
@@ -8,10 +12,6 @@ import {
 	Text,
 	TextInput,
 } from 'react-native-paper'
-import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/useFavoriteData'
-import { userQueryKeys } from '@/hooks/queries/bilibili/useUserData'
-import useAppStore from '@/hooks/stores/useAppStore'
-import toast from '@/utils/toast'
 
 function SetCookieDialog({
 	visible,

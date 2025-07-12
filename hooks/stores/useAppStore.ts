@@ -1,9 +1,9 @@
-import * as parseCookie from 'cookie'
-import { err, ok, type Result } from 'neverthrow'
-import { create } from 'zustand'
 import type { AppState } from '@/types/core/appStore'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
+import * as parseCookie from 'cookie'
+import { err, ok, type Result } from 'neverthrow'
+import { create } from 'zustand'
 
 const parseCookieString = (
 	cookie?: string,

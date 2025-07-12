@@ -1,46 +1,29 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useState } from 'react'
-import { FlatList, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
-import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
+import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
+import { PlaylistError } from '@/components/playlist/PlaylistError'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import log from '@/utils/log'
-import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
+import { type RouteProp, useRoute } from '@react-navigation/native'
+import { useCallback } from 'react'
+import { View } from 'react-native'
+import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
-
-const searchLog = log.extend('SEARCH_RESULTS/FAV')
+import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
-	const navigation =
-		useNavigation<
-			NativeStackNavigationProp<RootStackParamList, 'SearchResultFav'>
-		>()
 	const route = useRoute<RouteProp<RootStackParamList, 'SearchResultFav'>>()
 	const { query } = route.params
 	const currentTrack = useCurrentTrack()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalBvid, setCurrentModalBvid] = useState('')
 	const insets = useSafeAreaInsets()
 
 	const { data: userData } = usePersonalInformation()
@@ -54,79 +37,16 @@ export default function SearchResultsPage() {
 	} = useInfiniteSearchFavoriteItems(
 		'all',
 		query,
-		favoriteFolderList?.at(0) ? favoriteFolderList?.at(0)?.id : undefined,
+		favoriteFolderList?.at(0)?.id,
 	)
 
-	const playNext = useCallback(
-		async (track: Track) => {
-			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: false,
-					clearQueue: false,
-					playNext: true,
-				})
-				toast.success('添加到下一首播放成功')
-			} catch (error) {
-				searchLog.sentry('添加到队列失败', error)
-				toast.show('添加到队列失败')
-			}
-		},
-		[addToQueue],
-	)
-
-	const onTrackPress = useCallback(
-		async (track: Track) => {
-			if (
-				MULTIPAGE_VIDEO_KEYWORDS.some((keyword) =>
-					track.title?.includes(keyword),
-				)
-			) {
-				navigation.navigate('PlaylistMultipage', { bvid: track.id })
-				return
-			}
-			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: true,
-					clearQueue: false,
-					playNext: false,
-				})
-			} catch (error) {
-				searchLog.sentry('播放失败', error)
-				toast.show('播放失败')
-			}
-		},
-		[addToQueue, navigation],
-	)
-
-	const trackMenuItems = useCallback(
-		(item: Track) => [
-			{
-				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
-				onPress: playNext,
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '作为分P视频展示',
-				leadingIcon: 'eye-outline',
-				onPress: async () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.id })
-				},
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '添加到收藏夹',
-				leadingIcon: 'plus',
-				onPress: () => {
-					setCurrentModalBvid(item.id)
-					setModalVisible(true)
-				},
-			},
-		],
-		[playNext, navigation],
-	)
+	const {
+		modalVisible,
+		currentModalBvid,
+		setModalVisible,
+		onTrackPress,
+		trackMenuItems,
+	} = useSearchInteractions()
 
 	const renderSearchResultItem = useCallback(
 		({ item, index }: { item: Track; index: number }) => {
@@ -145,38 +65,11 @@ export default function SearchResultsPage() {
 	const keyExtractor = useCallback((item: Track) => item.id, [])
 
 	if (isPendingSearchData) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
 	if (isErrorSearchData) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
-		)
+		return <PlaylistError text='加载失败' />
 	}
 
 	return (
@@ -184,26 +77,17 @@ export default function SearchResultsPage() {
 			style={{
 				flex: 1,
 				backgroundColor: colors.background,
-				paddingBottom: currentTrack ? 80 : 0,
 			}}
 		>
-			{/* Header with Back Button and Title */}
-			<Appbar.Header
-				style={{ backgroundColor: colors.surface }}
-				elevated
-			>
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
-				<Appbar.Content
-					title={`搜索: ${query}`}
-					titleStyle={{ fontSize: 18 }}
-				/>
-			</Appbar.Header>
+			<PlaylistAppBar title={`搜索结果 - ${query}`} />
 
-			{/* Content Area */}
-			<FlatList
-				contentContainerStyle={{ paddingBottom: 20 }}
+			<LegendList
+				contentContainerStyle={{
+					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+				}}
 				data={searchData?.pages.flatMap((page) => page.tracks)}
 				renderItem={renderSearchResultItem}
+				ItemSeparatorComponent={() => <Divider />}
 				keyExtractor={keyExtractor}
 				ListFooterComponent={
 					hasNextPage ? (
@@ -246,17 +130,6 @@ export default function SearchResultsPage() {
 				visible={modalVisible}
 				setVisible={setModalVisible}
 			/>
-
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

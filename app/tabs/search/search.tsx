@@ -1,3 +1,5 @@
+import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
+import log from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
@@ -11,9 +13,6 @@ import {
 	useTheme,
 } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import NowPlayingBar from '@/components/NowPlayingBar'
-import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
-import log from '@/utils/log'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH')
@@ -235,9 +234,6 @@ export default function SearchPage() {
 					)}
 				</View>
 			</ScrollView>
-
-			{/* 底部播放栏 */}
-			<NowPlayingBar />
 		</View>
 	)
 }

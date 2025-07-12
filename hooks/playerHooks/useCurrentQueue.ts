@@ -1,5 +1,5 @@
-import { useShallow } from 'zustand/shallow'
 import type { Track } from '@/types/core/media'
+import { useShallow } from 'zustand/shallow'
 import { usePlayerStore } from '../stores/usePlayerStore'
 
 /**

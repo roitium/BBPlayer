@@ -1,5 +1,5 @@
-import TrackPlayer, { Event } from 'react-native-track-player'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import TrackPlayer, { Event } from 'react-native-track-player'
 
 export const PlaybackService = async () => {
 	// 播放控制

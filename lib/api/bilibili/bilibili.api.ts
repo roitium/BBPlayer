@@ -1,4 +1,3 @@
-import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import useAppStore from '@/hooks/stores/useAppStore'
 import {
 	type BilibiliAudioStreamParams,
@@ -28,6 +27,7 @@ import {
 	CsrfError,
 } from '@/utils/errors'
 import log from '@/utils/log'
+import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './bilibili.client'
 import {
 	transformCollectionAllContentsToTracks,
@@ -86,7 +86,6 @@ export const createBilibiliApi = () => ({
 	searchVideos(
 		keyword: string,
 		page: number,
-		page_size: number,
 	): ResultAsync<{ tracks: Track[]; numPages: number }, BilibiliApiError> {
 		return bilibiliApiClient
 			.get<{
@@ -96,7 +95,6 @@ export const createBilibiliApi = () => ({
 				keyword,
 				search_type: 'video',
 				page: page.toString(),
-				page_size: page_size.toString(),
 			})
 			.map((response) => ({
 				tracks: transformSearchResultsToTracks(response.result),
