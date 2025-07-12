@@ -87,7 +87,7 @@ export default function SearchResultsPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<PlaylistAppBar />
+			<PlaylistAppBar title={`搜索结果 - ${query}`} />
 
 			<LegendList
 				contentContainerStyle={{
