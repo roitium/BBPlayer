@@ -33,15 +33,26 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const navigationState = useNavigationState((state) => state)
 	const insets = useSafeAreaInsets()
+	const [displayTrack, setDisplayTrack] = useState(currentTrack)
 
-	// 仅当不在播放器页且有歌曲在播放时，才显示 NowPlayingBar
+	useEffect(() => {
+		let timer: string | number | NodeJS.Timeout | undefined
+		if (currentTrack) {
+			setDisplayTrack(currentTrack)
+		} else {
+			timer = setTimeout(() => setDisplayTrack(null), 150)
+		}
+		return () => clearTimeout(timer)
+	}, [currentTrack])
+
+	// 仅当不在播放器页且有歌曲在播放时，才显示 NowPlayingBar（应用冷启动时不知道为什么 routes 会是 undefined，所以需要用三元判断一下）
 	const onTabView = navigationState
 		? navigationState.routes[navigationState.index]?.name === 'MainTabs'
 		: true
 	const shouldShowNowPlayingBar =
 		(navigationState
 			? navigationState.routes[navigationState.index]?.name !== 'Player'
-			: false) && !!currentTrack
+			: true) && !!displayTrack
 
 	const marginBottom = useSharedValue(
 		onTabView ? insets.bottom + 90 : insets.bottom + 10,
@@ -124,7 +135,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 				}}
 			>
 				<Image
-					source={{ uri: currentTrack.cover }}
+					source={{ uri: displayTrack.cover }}
 					style={{
 						height: 48,
 						width: 48,
@@ -147,14 +158,14 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						numberOfLines={1}
 						style={{ color: colors.onSurface }}
 					>
-						{currentTrack.title}
+						{displayTrack.title}
 					</Text>
 					<Text
 						variant='bodySmall'
 						numberOfLines={1}
 						style={{ color: colors.onSurfaceVariant }}
 					>
-						{currentTrack.artist}
+						{displayTrack.artist}
 					</Text>
 				</View>
 
