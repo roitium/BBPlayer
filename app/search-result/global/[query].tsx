@@ -1,4 +1,6 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
+import { PlaylistError } from '@/components/playlist/PlaylistError'
 import {
 	TrackListItem,
 	TrackMenuItemDividerToken,
@@ -21,7 +23,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import {
 	ActivityIndicator,
-	Appbar,
 	Button,
 	Text,
 	TextInput,
@@ -59,11 +60,11 @@ export default function SearchResultsPage() {
 		}
 	}, [query])
 
-	const { data: searchData, isLoading: isLoadingResults } = useSearchResults(
-		searchQuery,
-		currentPage,
-		pageSize,
-	)
+	const {
+		data: searchData,
+		isPending: isPendingSearchData,
+		isError: isErrorSearchData,
+	} = useSearchResults(searchQuery, currentPage, pageSize)
 
 	const searchResults = searchData?.tracks || []
 	const totalPages = searchData?.numPages || 1
@@ -199,7 +200,7 @@ export default function SearchResultsPage() {
 					<Button
 						mode='outlined'
 						onPress={() => handlePageChange(currentPage - 1)}
-						disabled={currentPage <= 1 || isLoadingResults}
+						disabled={currentPage <= 1 || isPendingSearchData}
 						icon='chevron-left'
 					>
 						上一页
@@ -208,7 +209,7 @@ export default function SearchResultsPage() {
 					<Button
 						mode='outlined'
 						onPress={() => handlePageChange(currentPage + 1)}
-						disabled={currentPage >= totalPages || isLoadingResults}
+						disabled={currentPage >= totalPages || isPendingSearchData}
 						icon='chevron-right'
 						contentStyle={{ flexDirection: 'row-reverse' }}
 					>
@@ -247,7 +248,7 @@ export default function SearchResultsPage() {
 						mode='contained'
 						onPress={handlePageJump}
 						disabled={
-							isLoadingResults ||
+							isPendingSearchData ||
 							!pageInputValue ||
 							Number.parseInt(pageInputValue, 10) === currentPage
 						}
@@ -263,13 +264,17 @@ export default function SearchResultsPage() {
 			handlePageChange,
 			handlePageInputChange,
 			handlePageJump,
-			isLoadingResults,
+			isPendingSearchData,
 			pageInputValue,
 			totalPages,
 		],
 	)
 
 	const keyExtractor = useCallback((item: Track) => item.id, [])
+
+	if (isErrorSearchData) {
+		return <PlaylistError text='加载失败' />
+	}
 
 	return (
 		<View
@@ -278,20 +283,10 @@ export default function SearchResultsPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			{/* Header with Back Button and Title */}
-			<Appbar.Header
-				style={{ backgroundColor: colors.surface }}
-				elevated
-			>
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
-				<Appbar.Content
-					title={`搜索: ${searchQuery}`}
-					titleStyle={{ fontSize: 18 }}
-				/>
-			</Appbar.Header>
+			<PlaylistAppBar title={`搜索: ${searchQuery}`} />
 
 			{/* Content Area */}
-			{isLoadingResults ? (
+			{isPendingSearchData ? (
 				<ActivityIndicator
 					size='large'
 					style={{ marginTop: 32 }}

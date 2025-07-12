@@ -22,14 +22,11 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
@@ -49,7 +46,6 @@ export default function UploaderPage() {
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
-	// 播放
 	const playTrack = useCallback(
 		async (track: Track, playNow = false) => {
 			try {
@@ -139,66 +135,20 @@ export default function UploaderPage() {
 	}, [mid, navigation])
 
 	if (typeof mid !== 'string') {
-		return
+		return null
 	}
 
 	if (isUploadedVideosPending || isUserInfoPending) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
 	if (isUploadedVideosError || isUserInfoError) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
-		)
+		return <PlaylistError text='加载失败' />
 	}
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
-				<Appbar.BackAction
-					onPress={() => {
-						navigation.goBack()
-					}}
-				/>
-			</Appbar.Header>
-
-			{/* 顶部背景图 */}
-			{/* <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
-				<Image
-					source={{ uri: uploaderUserInfo?.face }}
-					style={{
-						width: '100%',
-						height: '100%',
-						opacity: 0.15,
-					}}
-					blurRadius={15}
-				/>
-			</View> */}
+			<PlaylistAppBar />
 
 			<View
 				style={{

@@ -23,14 +23,11 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/FAVORITE')
@@ -51,7 +48,6 @@ export default function FavoritePage() {
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
-	// 下一首播放
 	const playNext = useCallback(
 		async (track: Track) => {
 			try {
@@ -69,7 +65,6 @@ export default function FavoritePage() {
 		[addToQueue],
 	)
 
-	// 播放全部
 	const playAll = useCallback(
 		async (startFromId?: string) => {
 			try {
@@ -103,7 +98,6 @@ export default function FavoritePage() {
 		[addToQueue, id],
 	)
 
-	// 获取收藏夹数据
 	const {
 		data: favoriteData,
 		isPending: isFavoriteDataPending,
@@ -118,7 +112,7 @@ export default function FavoritePage() {
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: playNext,
+				onPress: () => playNext(item),
 			},
 			TrackMenuItemDividerToken,
 			{
@@ -181,83 +175,41 @@ export default function FavoritePage() {
 	}, [id, navigation])
 
 	if (typeof id !== 'string') {
-		return
+		return null
 	}
 
 	if (isFavoriteDataPending) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
 	if (isFavoriteDataError) {
 		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
+			<PlaylistError
+				text='加载收藏夹内容失败'
+				onRetry={refetch}
+			/>
 		)
 	}
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
-				<Appbar.BackAction
-					onPress={() => {
-						navigation.goBack()
-					}}
-				/>
-			</Appbar.Header>
-
-			{/* 顶部背景图 */}
-			{/* <View style={{ position: 'absolute', height: '100%', width: '100%' }}>
-				<Image
-					source={{ uri: favoriteData?.pages[0].favoriteMeta.cover }}
-					style={{
-						width: '100%',
-						height: '100%',
-						opacity: 0.15,
-					}}
-					blurRadius={15}
-				/>
-			</View> */}
+			<PlaylistAppBar />
 
 			<View
 				style={{
 					flex: 1,
-					// paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
 				}}
 			>
 				<LegendList
-					data={favoriteData?.pages.flatMap((page) => page.tracks)}
+					data={favoriteData.pages.flatMap((page) => page.tracks)}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={
 						<PlaylistHeader
-							coverUri={favoriteData?.pages[0].favoriteMeta.cover}
-							title={favoriteData?.pages[0].favoriteMeta.title}
-							subtitle={`${favoriteData?.pages[0].favoriteMeta.upper.name} • ${favoriteData?.pages[0].favoriteMeta.media_count} 首歌曲`}
-							description={favoriteData?.pages[0].favoriteMeta.intro}
+							coverUri={favoriteData.pages[0].favoriteMeta.cover}
+							title={favoriteData.pages[0].favoriteMeta.title}
+							subtitle={`${favoriteData.pages[0].favoriteMeta.upper.name} • ${favoriteData.pages[0].favoriteMeta.media_count} 首歌曲`}
+							description={favoriteData.pages[0].favoriteMeta.intro}
 							onPlayAll={() => playAll()}
 						/>
 					}

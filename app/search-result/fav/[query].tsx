@@ -1,8 +1,11 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
+import { PlaylistError } from '@/components/playlist/PlaylistError'
 import {
 	TrackListItem,
 	TrackMenuItemDividerToken,
 } from '@/components/playlist/PlaylistItem'
+import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
@@ -23,13 +26,7 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
@@ -151,38 +148,11 @@ export default function SearchResultsPage() {
 	const keyExtractor = useCallback((item: Track) => item.id, [])
 
 	if (isPendingSearchData) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
 	if (isErrorSearchData) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
-		)
+		return <PlaylistError text='加载失败' />
 	}
 
 	return (
@@ -192,17 +162,7 @@ export default function SearchResultsPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			{/* Header with Back Button and Title */}
-			<Appbar.Header
-				style={{ backgroundColor: colors.surface }}
-				elevated
-			>
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
-				<Appbar.Content
-					title={`搜索: ${query}`}
-					titleStyle={{ fontSize: 18 }}
-				/>
-			</Appbar.Header>
+			<PlaylistAppBar title={`搜索: ${query}`} />
 
 			{/* Content Area */}
 			<LegendList
