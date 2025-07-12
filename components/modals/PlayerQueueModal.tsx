@@ -86,7 +86,11 @@ const TrackItem = memo(
 
 TrackItem.displayName = 'TrackItem'
 
-function PlayerQueueModal({ sheetRef }: { sheetRef: RefObject<BottomSheet> }) {
+function PlayerQueueModal({
+	sheetRef,
+}: {
+	sheetRef: RefObject<BottomSheet | null>
+}) {
 	const queue = useCurrentQueue()
 	const removeTrack = usePlayerStore((state) => state.removeTrack)
 	const currentTrack = useCurrentTrack()
