@@ -9,6 +9,8 @@ import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
+import { DataFetchingError } from '../shared/DataFetchingError'
+import { DataFetchingPending } from '../shared/DataFetchingPending'
 import MultiPageVideosItem from './MultiPageVideosItem'
 
 const MultiPageVideosListComponent = memo(() => {
@@ -21,13 +23,16 @@ const MultiPageVideosListComponent = memo(() => {
 		data: playlists,
 		isPending: playlistsIsPending,
 		isError: playlistsIsError,
+		isRefetching: playlistsIsRefetching,
+		refetch: refetchPlaylists,
 	} = useGetFavoritePlaylists(userInfo?.mid)
 	const {
 		data: favoriteData,
 		isError: isFavoriteDataError,
 		isPending: isFavoriteDataPending,
+		isRefetching: isFavoriteDataRefetching,
 		fetchNextPage,
-		refetch,
+		refetch: refetchFavoriteData,
 		hasNextPage,
 	} = useInfiniteFavoriteList(
 		playlists?.find((item) => item.title.startsWith('[mp]'))?.id,
@@ -41,28 +46,20 @@ const MultiPageVideosListComponent = memo(() => {
 
 	const onRefresh = async () => {
 		setRefreshing(true)
-		await refetch()
+		await Promise.all([refetchPlaylists(), refetchFavoriteData()])
 		setRefreshing(false)
 	}
 
 	if (playlistsIsPending || isFavoriteDataPending) {
-		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <DataFetchingPending />
 	}
 
 	if (playlistsIsError || isFavoriteDataError) {
 		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
+			<DataFetchingError
+				text='加载失败'
+				onRetry={() => onRefresh()}
+			/>
 		)
 	}
 
@@ -108,7 +105,9 @@ const MultiPageVideosListComponent = memo(() => {
 				keyExtractor={keyExtractor}
 				refreshControl={
 					<RefreshControl
-						refreshing={refreshing}
+						refreshing={
+							refreshing || playlistsIsRefetching || isFavoriteDataRefetching
+						}
 						onRefresh={onRefresh}
 						colors={[colors.primary]}
 						progressViewOffset={50}

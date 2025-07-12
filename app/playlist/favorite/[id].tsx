@@ -259,6 +259,7 @@ export default function FavoritePage() {
 			</View>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}

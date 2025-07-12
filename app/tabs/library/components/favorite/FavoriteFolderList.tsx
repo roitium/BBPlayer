@@ -7,13 +7,10 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import {
-	ActivityIndicator,
-	Searchbar,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Searchbar, Text, useTheme } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../../types/navigation'
+import { DataFetchingError } from '../shared/DataFetchingError'
+import { DataFetchingPending } from '../shared/DataFetchingPending'
 import FavoriteFolderListItem from './FavoriteFolderListItem'
 
 const FavoriteFolderListComponent = memo(() => {
@@ -28,6 +25,7 @@ const FavoriteFolderListComponent = memo(() => {
 	const {
 		data: playlists,
 		isPending: playlistsIsPending,
+		isRefetching: playlistsIsRefetching,
 		refetch,
 		isError: playlistsIsError,
 	} = useGetFavoritePlaylists(userInfo?.mid)
@@ -45,23 +43,15 @@ const FavoriteFolderListComponent = memo(() => {
 	}
 
 	if (playlistsIsPending) {
-		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <DataFetchingPending />
 	}
 
 	if (playlistsIsError) {
 		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
+			<DataFetchingError
+				text='加载失败'
+				onRetry={() => onRefresh()}
+			/>
 		)
 	}
 
@@ -115,7 +105,7 @@ const FavoriteFolderListComponent = memo(() => {
 				renderItem={renderPlaylistItem}
 				refreshControl={
 					<RefreshControl
-						refreshing={refreshing}
+						refreshing={refreshing || playlistsIsRefetching}
 						onRefresh={onRefresh}
 						colors={[colors.primary]}
 						progressViewOffset={50}

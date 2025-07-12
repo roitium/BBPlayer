@@ -6,6 +6,8 @@ import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
+import { DataFetchingError } from '../shared/DataFetchingError'
+import { DataFetchingPending } from '../shared/DataFetchingPending'
 import CollectionListItem from './CollectionListItem'
 
 const CollectionListComponent = memo(() => {
@@ -18,6 +20,7 @@ const CollectionListComponent = memo(() => {
 		data: collections,
 		isPending: collectionsIsPending,
 		isError: collectionsIsError,
+		isRefetching: collectionsIsRefetching,
 		refetch,
 		hasNextPage,
 		fetchNextPage,
@@ -41,23 +44,15 @@ const CollectionListComponent = memo(() => {
 	}
 
 	if (collectionsIsPending) {
-		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <DataFetchingPending />
 	}
 
 	if (collectionsIsError) {
 		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
+			<DataFetchingError
+				text='加载失败'
+				onRetry={() => onRefresh()}
+			/>
 		)
 	}
 
@@ -86,7 +81,7 @@ const CollectionListComponent = memo(() => {
 				renderItem={renderCollectionItem}
 				refreshControl={
 					<RefreshControl
-						refreshing={refreshing}
+						refreshing={refreshing || collectionsIsRefetching}
 						onRefresh={onRefresh}
 						colors={[colors.primary]}
 						progressViewOffset={50}

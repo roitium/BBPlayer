@@ -1,4 +1,3 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { Track } from '@/types/core/media'
 import { RootStackParamList } from '@/types/navigation'
@@ -16,12 +15,14 @@ const homeLog = log.extend('HOME')
 
 const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 	item,
+	setModalVisible,
+	setCurrentModalBvid,
 }: {
 	item: Track
+	setModalVisible: (visible: boolean) => void
+	setCurrentModalBvid: (bvid: string) => void
 }) {
-	// 在组件内部创建自己的菜单可见性 state
 	const [isMenuVisible, setMenuVisible] = useState(false)
-	const [modalVisible, setModalVisible] = useState(false)
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
@@ -136,6 +137,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 								leadingIcon='plus'
 								onPress={() => {
 									setModalVisible(true)
+									setCurrentModalBvid(item.id)
 									handleDismissMenu()
 								}}
 								title='添加到收藏夹'
@@ -153,11 +155,6 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 					</View>
 				</Surface>
 			</TouchableOpacity>
-			<AddToFavoriteListsModal
-				visible={modalVisible}
-				bvid={item.id}
-				setVisible={setModalVisible}
-			/>
 		</>
 	)
 })

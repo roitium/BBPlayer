@@ -1,3 +1,4 @@
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import { useRecentlyPlayed } from '@/hooks/queries/bilibili/useUserData'
 import type { Track } from '@/types/core/media'
 import { LegendList } from '@legendapp/list'
@@ -9,6 +10,8 @@ import RecentlyPlayedItem from './RecentlyPlayedItem'
 export default function RecentlyPlayed() {
 	const { colors } = useTheme()
 	const [refreshing, setRefreshing] = useState(false)
+	const [modalVisible, setModalVisible] = useState(false)
+	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
 	const {
 		data: recentlyPlayed,
@@ -19,7 +22,13 @@ export default function RecentlyPlayed() {
 	} = useRecentlyPlayed()
 
 	const renderItem = useCallback(
-		({ item }: { item: Track }) => <RecentlyPlayedItem item={item} />,
+		({ item }: { item: Track }) => (
+			<RecentlyPlayedItem
+				item={item}
+				setModalVisible={setModalVisible}
+				setCurrentModalBvid={setCurrentModalBvid}
+			/>
+		),
 		[],
 	)
 
@@ -88,6 +97,11 @@ export default function RecentlyPlayed() {
 								progressViewOffset={50}
 							/>
 						}
+					/>
+					<AddToFavoriteListsModal
+						visible={modalVisible}
+						bvid={currentModalBvid}
+						setVisible={setModalVisible}
 					/>
 				</View>
 			)}
