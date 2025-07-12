@@ -87,7 +87,7 @@ function HomePage() {
 					style={{
 						paddingHorizontal: 16,
 						paddingTop: insets.top + 8,
-						paddingBottom: 16,
+						paddingBottom: 8,
 					}}
 				>
 					<View
