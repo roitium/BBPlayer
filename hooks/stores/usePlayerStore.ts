@@ -1,12 +1,12 @@
 import { PRELOAD_TRACKS } from '@/constants/player'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
 import type { Track } from '@/types/core/media'
 import type {
 	addToQueueParams,
 	PlayerState,
 	PlayerStore,
 } from '@/types/core/playerStore'
-import type { BilibiliApiError } from '@/utils/errors'
 import log from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
 import {
