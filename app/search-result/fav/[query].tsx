@@ -126,6 +126,7 @@ export default function SearchResultsPage() {
 			/>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				bvid={currentModalBvid}
 				visible={modalVisible}
 				setVisible={setModalVisible}

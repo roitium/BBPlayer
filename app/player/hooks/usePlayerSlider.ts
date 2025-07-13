@@ -1,49 +1,46 @@
-import {
-	usePlaybackProgress,
-	usePlayerStore,
-} from '@/hooks/stores/usePlayerStore'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import TrackPlayer, { useProgress } from 'react-native-track-player'
 
 export function usePlayerSlider() {
-	const seekTo = usePlayerStore((state) => state.seekTo)
-	const { position, duration } = usePlaybackProgress(100)
+	const { position, duration } = useProgress(100)
+	// 设计这个 state 的主要目的是避免在释放进度条时，有短暂的「闪烁回原位置」的问题
+	const [overridePosition, setOverridePosition] = useState<number | null>(null)
+	const resyncTimer = useRef<NodeJS.Timeout | null>(null)
 
-	const [isSeeking, setIsSeeking] = useState(false)
-	const [seekValue, setSeekValue] = useState(0)
+	const currentSliderPosition = overridePosition ?? position
 
 	const handleSlidingStart = useCallback(() => {
-		if (duration > 0) {
-			setIsSeeking(true)
-			setSeekValue(position)
+		if (resyncTimer.current) {
+			clearTimeout(resyncTimer.current)
 		}
-	}, [position, duration])
+		setOverridePosition(position)
+	}, [position])
 
 	const handleSlidingChange = useCallback((value: number) => {
-		setSeekValue(value)
+		setOverridePosition(value)
 	}, [])
 
-	const handleSlidingComplete = useCallback(
-		(value: number) => {
-			setIsSeeking(false)
-			if (duration > 0) {
-				seekTo(value)
-			}
-		},
-		[seekTo, duration],
-	)
+	const handleSlidingComplete = useCallback(async (value: number) => {
+		setOverridePosition(value)
+		await TrackPlayer.seekTo(value)
 
-	const isSliderEnabled = duration > 0 && !Number.isNaN(duration)
-	const currentSliderPosition = isSeeking
-		? seekValue
-		: isSliderEnabled
-			? Math.min(position, duration)
-			: 0
-	const maxSliderValue = isSliderEnabled ? duration : 1
+		resyncTimer.current = setTimeout(() => {
+			setOverridePosition(null)
+		}, 500)
+	}, [])
+
+	useEffect(() => {
+		return () => {
+			if (resyncTimer.current) {
+				clearTimeout(resyncTimer.current)
+			}
+		}
+	}, [])
 
 	return {
-		isSliderEnabled,
+		isSliderEnabled: duration > 0,
+		maxSliderValue: duration > 0 ? duration : 1,
 		currentSliderPosition,
-		maxSliderValue,
 		handleSlidingStart,
 		handleSlidingChange,
 		handleSlidingComplete,

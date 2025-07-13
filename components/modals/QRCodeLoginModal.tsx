@@ -4,11 +4,88 @@ import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useReducer } from 'react'
 import { Pressable } from 'react-native'
 import { Button, Dialog, Portal, Text } from 'react-native-paper'
 import QRCode from 'react-native-qrcode-svg'
 import * as setCookieParser from 'set-cookie-parser'
+
+type Status =
+	| 'prompting'
+	| 'generating'
+	| 'polling'
+	| 'expired'
+	| 'success'
+	| 'error'
+
+interface State {
+	status: Status
+	statusText: string
+	qrcodeKey: string
+	qrcodeUrl: string
+}
+
+type Action =
+	| { type: 'START_LOGIN' }
+	| { type: 'RESET' }
+	| {
+			type: 'GENERATE_SUCCESS'
+			payload: { qrcode_key: string; url: string }
+	  }
+	| { type: 'GENERATE_FAILURE'; payload: string }
+	| { type: 'POLL_UPDATE'; payload: { code: number } }
+	| { type: 'LOGIN_SUCCESS' }
+
+const initialState: State = {
+	status: 'prompting',
+	statusText: '是否开始扫码登录？',
+	qrcodeKey: '',
+	qrcodeUrl: '',
+}
+
+function reducer(state: State, action: Action): State {
+	switch (action.type) {
+		case 'START_LOGIN':
+			return { ...state, status: 'generating', statusText: '正在生成二维码...' }
+		case 'RESET':
+			return initialState
+		case 'GENERATE_SUCCESS':
+			return {
+				...state,
+				status: 'polling',
+				statusText: '等待扫码',
+				qrcodeKey: action.payload.qrcode_key,
+				qrcodeUrl: action.payload.url,
+			}
+		case 'GENERATE_FAILURE':
+			return {
+				...state,
+				status: 'error',
+				statusText: `获取二维码失败: ${action.payload}`,
+			}
+		case 'POLL_UPDATE':
+			switch (action.payload.code) {
+				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_WAIT:
+					return { ...state, statusText: '等待扫码' }
+				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SCANNED_BUT_NOT_CONFIRMED:
+					return { ...state, statusText: '等待确认' }
+				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_QRCODE_EXPIRED:
+					return {
+						...state,
+						status: 'expired',
+						statusText: '二维码已过期，请重新打开窗口',
+						qrcodeKey: '',
+						qrcodeUrl: '',
+					}
+				default:
+					return state
+			}
+		case 'LOGIN_SUCCESS':
+			return { ...state, status: 'success', statusText: '登录成功' }
+		default:
+			return state
+	}
+}
 
 const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	visible,
@@ -18,119 +95,81 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	setVisible: (visible: boolean) => void
 }) {
 	const queryClient = useQueryClient()
-	const [statusText, setStatusText] = useState<string>('')
-	const [qrcodeKey, setQrcodeKey] = useState('')
-	const [qrcodeUrl, setQrcodeUrl] = useState('')
-	const [startPolling, setStartPolling] = useState(false)
-	const [isExpired, setIsExpired] = useState(false)
-	const [startLogin, setStartLogin] = useState(false) // 用户是否开始登录
 	const setCookie = useAppStore((state) => state.setBilibiliCookie)
 
+	const [state, dispatch] = useReducer(reducer, initialState)
+	const { status, statusText, qrcodeKey, qrcodeUrl } = state
+
 	useEffect(() => {
-		if (!visible) return
-		if (!startLogin) return
-		const result = bilibiliApi.getLoginQrCode()
-		result.then((response) => {
+		if (status !== 'generating') return
+
+		const generateQrCode = async () => {
+			const response = await bilibiliApi.getLoginQrCode()
 			if (response.isErr()) {
-				toast.error('获取二维码失败', {
-					description: String(response.error),
-					id: 'bilibili-qrcode-login-error',
+				dispatch({ type: 'GENERATE_FAILURE', payload: String(response.error) })
+				toast.error('获取二维码失败', { id: 'bilibili-qrcode-login-error' })
+				setTimeout(() => setVisible(false), 2000)
+			} else {
+				dispatch({ type: 'GENERATE_SUCCESS', payload: response.value })
+			}
+		}
+		generateQrCode()
+	}, [status, setVisible])
+
+	useEffect(() => {
+		if (status !== 'polling' || !qrcodeKey) return
+
+		const interval = setInterval(async () => {
+			const response = await bilibiliApi.pollQrCodeLoginStatus(qrcodeKey)
+			if (response.isErr()) {
+				toast.error('获取二维码登录状态失败', {
+					id: 'bilibili-qrcode-login-status-error',
 				})
-				setVisible(false)
 				return
 			}
-			const { url, qrcode_key } = response.value
-			setQrcodeKey(qrcode_key)
-			setQrcodeUrl(url)
-			setStatusText('等待扫码')
-			setStartPolling(true)
-		})
-		return () => {
-			setStartPolling(false)
-			setQrcodeKey('')
-			setQrcodeUrl('')
-			setStatusText('')
-			setIsExpired(false)
-		}
-	}, [setVisible, visible, startLogin])
+
+			const pollData = response.value
+			if (
+				pollData.status ===
+				BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS
+			) {
+				clearInterval(interval) // 成功后立刻停止轮询
+				dispatch({ type: 'LOGIN_SUCCESS' })
+
+				const splitedCookie = setCookieParser.splitCookiesString(
+					pollData.cookies,
+				)
+				const parsedCookie = setCookieParser.parse(splitedCookie)
+				const finalCookie = parsedCookie.map((c) => ({
+					key: c.name,
+					value: c.value,
+				}))
+				setCookie(finalCookie)
+				toast.success('登录成功', { id: 'bilibili-qrcode-login-success' })
+				await queryClient.refetchQueries({ queryKey: ['bilibili'] })
+				setTimeout(() => setVisible(false), 1000)
+			} else {
+				dispatch({ type: 'POLL_UPDATE', payload: { code: pollData.status } })
+			}
+		}, 2000)
+
+		return () => clearInterval(interval)
+	}, [status, qrcodeKey, setCookie, queryClient, setVisible])
 
 	useEffect(() => {
-		if (startPolling && qrcodeKey && visible) {
-			const interval = setInterval(async () => {
-				const response = await bilibiliApi.pollQrCodeLoginStatus(qrcodeKey)
-				if (response.isErr()) {
-					toast.error('获取二维码登录状态失败，你可以继续尝试登录', {
-						description: String(response.error),
-						id: 'bilibili-qrcode-login-status-error',
-					})
-					return
-				}
-				if (
-					response.value.status ===
-					BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS
-				) {
-					setStartPolling(false)
-					setStatusText('登录成功')
-					const splitedCookie = setCookieParser.splitCookiesString(
-						response.value.cookies,
-					)
-					const parsedCookie = setCookieParser.parse(splitedCookie)
-					const finalCookie = parsedCookie.map((c) => {
-						return { key: c.name, value: c.value }
-					})
-					setCookie(finalCookie)
-					toast.success('登录成功', {
-						description: response.value.cookies,
-						id: 'bilibili-qrcode-login-success',
-					})
-					await queryClient.refetchQueries({ queryKey: ['bilibili'] })
-					setVisible(false)
-				}
-				switch (response.value.status) {
-					case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_WAIT:
-						setStatusText('等待扫码')
-						break
-					case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SCANNED_BUT_NOT_CONFIRMED:
-						setStatusText('等待确认')
-						break
-					case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS:
-						setStatusText('扫码成功')
-						break
-					case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_QRCODE_EXPIRED:
-						setStatusText('二维码已过期，请重新打开窗口')
-						setIsExpired(true)
-						setStartPolling(false)
-						break
-					default:
-						setStatusText('未知状态')
-						toast.error('未知的二维码登录状态', {
-							description: `状态码: ${response.value}`,
-							id: 'bilibili-qrcode-login-status-unknown',
-						})
-						return
-				}
-			}, 2000)
-			return () => clearInterval(interval)
+		if (!visible) {
+			dispatch({ type: 'RESET' })
 		}
-	}, [startPolling, qrcodeKey, visible, setCookie, queryClient, setVisible])
-
-	useEffect(() => {
-		if (isExpired) {
-			setQrcodeUrl('')
-			setQrcodeKey('')
-		}
-	}, [isExpired])
+	}, [visible])
 
 	const renderDialogContent = () => {
-		if (!startLogin) {
+		if (status === 'prompting') {
 			return (
 				<>
-					<Text style={{ textAlign: 'center', padding: 16 }}>
-						是否开始扫码登录？
-					</Text>
+					<Text style={{ textAlign: 'center', padding: 16 }}>{statusText}</Text>
 					<Button
 						mode='contained'
-						onPress={() => setStartLogin(true)}
+						onPress={() => dispatch({ type: 'START_LOGIN' })}
 					>
 						开始
 					</Button>
@@ -138,11 +177,9 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 			)
 		}
 
-		if (!qrcodeUrl) {
+		if (status === 'generating' || status === 'error' || status === 'expired') {
 			return (
-				<Text style={{ textAlign: 'center', padding: 16 }}>
-					正在生成二维码...
-				</Text>
+				<Text style={{ textAlign: 'center', padding: 16 }}>{statusText}</Text>
 			)
 		}
 
@@ -166,19 +203,11 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 		<Portal>
 			<Dialog
 				visible={visible}
-				onDismiss={() => {
-					setVisible(false)
-					setStartLogin(false)
-					setQrcodeUrl('')
-				}}
+				onDismiss={() => setVisible(false)}
 			>
 				<Dialog.Title>扫码登录</Dialog.Title>
 				<Dialog.Content
-					style={{
-						flexDirection: 'column',
-						justifyContent: 'center',
-						alignItems: 'center',
-					}}
+					style={{ justifyContent: 'center', alignItems: 'center' }}
 				>
 					{renderDialogContent()}
 				</Dialog.Content>

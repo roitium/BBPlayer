@@ -231,6 +231,7 @@ export default function MultipagePage() {
 			</View>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}

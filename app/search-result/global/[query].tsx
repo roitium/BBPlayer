@@ -8,7 +8,7 @@ import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import type { Track } from '@/types/core/media'
 import { LegendList } from '@legendapp/list'
 import { type RouteProp, useRoute } from '@react-navigation/native'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -22,21 +22,13 @@ export default function SearchResultsPage() {
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
 
-	const [searchQuery, setSearchQuery] = useState(query || '')
-
-	useEffect(() => {
-		if (query) {
-			setSearchQuery(query)
-		}
-	}, [query])
-
 	const {
 		data: searchData,
 		isPending: isPendingSearchData,
 		isError: isErrorSearchData,
 		hasNextPage,
 		fetchNextPage,
-	} = useSearchResults(searchQuery)
+	} = useSearchResults(query)
 
 	const {
 		modalVisible,
@@ -119,12 +111,13 @@ export default function SearchResultsPage() {
 							color: colors.onSurfaceVariant,
 						}}
 					>
-						没有找到与 &quot;{searchQuery}&rdquo; 相关的内容
+						没有找到与 &quot;{query}&rdquo; 相关的内容
 					</Text>
 				}
 			/>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				bvid={currentModalBvid}
 				visible={modalVisible}
 				setVisible={setModalVisible}

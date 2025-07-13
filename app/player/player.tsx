@@ -93,6 +93,7 @@ export default function PlayerPage() {
 			/>
 
 			<AddToFavoriteListsModal
+				key={currentTrack.id}
 				visible={favModalVisible}
 				setVisible={setFavModalVisible}
 				bvid={currentTrack.id}
