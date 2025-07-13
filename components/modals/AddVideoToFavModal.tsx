@@ -200,8 +200,6 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 						keyExtractor={keyExtractor}
 						style={{
 							height: 300,
-							borderColor: colors.elevation.level5,
-							borderWidth: 1,
 						}}
 						ListEmptyComponent={
 							<View
