@@ -229,6 +229,7 @@ export default function CollectionPage() {
 			</View>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}

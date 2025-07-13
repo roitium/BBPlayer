@@ -24,8 +24,8 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const currentTrack = useCurrentTrack()
 	const isPlaying = usePlayerStore((state) => state.isPlaying)
 	const progress = usePlaybackProgress(100)
-	const [internalProgressPosition, setInternalProgressPosition] = useState(0)
-	const [internalProgressDuration, setInternalProgressDuration] = useState(1) // 避免除零
+	const position = progress.position
+	const duration = progress.duration || 1 // 保证不为 0
 	const togglePlay = usePlayerStore((state) => state.togglePlay)
 	const skipToNext = usePlayerStore((state) => state.skipToNext)
 	const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
@@ -35,6 +35,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const insets = useSafeAreaInsets()
 	const [displayTrack, setDisplayTrack] = useState(currentTrack)
 
+	// 延迟切换 track，避免在切换歌曲时因 currentTrack 短暂变为 null，导致重播入场动画效果
 	useEffect(() => {
 		let timer: string | number | NodeJS.Timeout | undefined
 		if (currentTrack) {
@@ -87,16 +88,6 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 		// eslint-disable-next-line react-compiler/react-compiler
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [shouldShowNowPlayingBar])
-
-	useEffect(() => {
-		setInternalProgressPosition(0)
-		setInternalProgressDuration(1)
-	}, [currentTrack])
-
-	useEffect(() => {
-		setInternalProgressPosition(progress.position)
-		setInternalProgressDuration(progress.duration)
-	}, [progress.position, progress.duration])
 
 	if (!shouldShowNowPlayingBar) return null
 
@@ -214,7 +205,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 				}}
 			>
 				<ProgressBar
-					animatedValue={internalProgressPosition / internalProgressDuration}
+					animatedValue={position / duration}
 					color={colors.primary}
 					style={{ height: 0.8, backgroundColor: colors.elevation.level2 }}
 				/>

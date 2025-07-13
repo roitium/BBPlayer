@@ -138,10 +138,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		personalInfo?.mid,
 	])
 
-	const handleDismiss = () => {
-		if (isMutating) return
-		setVisible(false)
-	}
+	const handleDismiss = () => setVisible(false)
 
 	const renderFavoriteListItem = useCallback(
 		({ item }: { item: BilibiliPlaylist }) => (
@@ -180,7 +177,12 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 						</Text>
 					</Dialog.Content>
 					<Dialog.Actions>
-						<Button onPress={handleDismiss}>关闭</Button>
+						<Button
+							onPress={handleDismiss}
+							disabled={isMutating}
+						>
+							关闭
+						</Button>
 						<Button onPress={() => refetch()}>重试</Button>
 					</Dialog.Actions>
 				</>
