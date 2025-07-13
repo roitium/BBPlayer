@@ -1,6 +1,6 @@
 import useAppStore from '@/hooks/stores/useAppStore'
-import { BilibiliApiError, BilibiliApiErrorType } from '@/utils/errors'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
+import { BilibiliApiError, BilibiliApiErrorType } from './bilibili.errors'
 
 type ReqResponse<T> = {
 	code: number
@@ -28,12 +28,10 @@ class ApiClient {
 		const cookie = useAppStore.getState().bilibiliCookieString
 		if (!cookie && !allowMissingCookie) {
 			return errAsync(
-				new BilibiliApiError(
-					'未设置 bilibili Cookie，请先登录',
-					0,
-					null,
-					BilibiliApiErrorType.NoCookie,
-				),
+				new BilibiliApiError({
+					message: '未设置 bilibili Cookie，请先登录',
+					type: BilibiliApiErrorType.NoCookie,
+				}),
 			)
 		}
 
@@ -50,44 +48,39 @@ class ApiClient {
 				headers,
 			}),
 			(error) =>
-				new BilibiliApiError(
-					error instanceof Error ? error.message : String(error),
-					0,
-					null,
-					BilibiliApiErrorType.RequestFailed,
-				),
+				new BilibiliApiError({
+					message: error instanceof Error ? error.message : String(error),
+					type: BilibiliApiErrorType.RequestFailed,
+				}),
 		)
 			.andThen((response) => {
 				if (!response.ok) {
 					return errAsync(
-						new BilibiliApiError(
-							`请求 bilibili API 失败: ${response.status} ${response.statusText}`,
-							response.status,
-							null,
-							BilibiliApiErrorType.RequestFailed,
-						),
+						new BilibiliApiError({
+							message: `请求 bilibili API 失败: ${response.status} ${response.statusText}`,
+							msgCode: response.status,
+							type: BilibiliApiErrorType.RequestFailed,
+						}),
 					)
 				}
 				return ResultAsync.fromPromise(
 					response.json() as Promise<ReqResponse<T>>,
 					(error) =>
-						new BilibiliApiError(
-							error instanceof Error ? error.message : String(error),
-							0,
-							null,
-							BilibiliApiErrorType.ResponseFailed,
-						),
+						new BilibiliApiError({
+							message: error instanceof Error ? error.message : String(error),
+							type: BilibiliApiErrorType.ResponseFailed,
+						}),
 				)
 			})
 			.andThen((data) => {
 				if (data.code !== 0) {
 					return errAsync(
-						new BilibiliApiError(
-							data.message,
-							data.code,
-							data.data,
-							BilibiliApiErrorType.ResponseFailed,
-						),
+						new BilibiliApiError({
+							message: data.message,
+							msgCode: data.code,
+							rawData: data.data,
+							type: BilibiliApiErrorType.ResponseFailed,
+						}),
 					)
 				}
 				return okAsync(data.data)

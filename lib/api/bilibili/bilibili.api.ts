@@ -1,4 +1,5 @@
 import useAppStore from '@/hooks/stores/useAppStore'
+import { ApiCallingError } from '@/lib/core/errors'
 import {
 	type BilibiliAudioStreamParams,
 	type BilibiliAudioStreamResponse,
@@ -19,16 +20,10 @@ import {
 	type BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
 import type { Playlist, Track } from '@/types/core/media'
-import {
-	ApiCallingError,
-	AudioStreamError,
-	BilibiliApiError,
-	BilibiliApiErrorType,
-	CsrfError,
-} from '@/utils/errors'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './bilibili.client'
+import { BilibiliApiError, BilibiliApiErrorType } from './bilibili.errors'
 import {
 	transformCollectionAllContentsToTracks,
 	transformFavoriteContentsToTracks,
@@ -123,7 +118,7 @@ export const createBilibiliApi = () => ({
 	 */
 	getAudioStream(
 		params: BilibiliAudioStreamParams,
-	): ResultAsync<Track['biliStreamUrl'], ApiCallingError> {
+	): ResultAsync<Track['biliStreamUrl'], BilibiliApiError> {
 		const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params
 		return bilibiliApiClient
 			.get<BilibiliAudioStreamResponse>('/x/player/wbi/playurl', {
@@ -159,7 +154,12 @@ export const createBilibiliApi = () => ({
 
 				if (!dash?.audio || dash.audio.length === 0) {
 					bilibiliApiLog.error('未找到有效的音频流数据', { response })
-					return errAsync(new AudioStreamError('未找到有效的音频流数据'))
+					return errAsync(
+						new BilibiliApiError({
+							message: '未找到有效的音频流数据',
+							type: BilibiliApiErrorType.AudioStreamError,
+						}),
+					)
 				}
 
 				let stream: Track['biliStreamUrl'] | null = null
@@ -197,18 +197,15 @@ export const createBilibiliApi = () => ({
 
 				if (!stream) {
 					bilibiliApiLog.error('未能确定任何可用的音频流', { response })
-					return errAsync(new AudioStreamError('未能确定任何可用的音频流'))
+					return errAsync(
+						new BilibiliApiError({
+							message: '未能确定任何可用的音频流',
+							type: BilibiliApiErrorType.AudioStreamError,
+						}),
+					)
 				}
 
 				return okAsync(stream)
-			})
-			.mapErr((e) => {
-				if (e instanceof AudioStreamError) {
-					return e
-				}
-				return new AudioStreamError(
-					`获取音频流失败: ${e instanceof Error ? e.message : String(e)}`,
-				)
 			})
 	},
 
@@ -245,12 +242,12 @@ export const createBilibiliApi = () => ({
 		})
 		if (!params) {
 			return errAsync(
-				new BilibiliApiError(
-					'未设置 bilibili Cookie，请先登录',
-					0,
-					null,
-					BilibiliApiErrorType.NoCookie,
-				),
+				new BilibiliApiError({
+					message: '未设置 bilibili Cookie，请先登录',
+					rawData: null,
+					msgCode: 0,
+					type: BilibiliApiErrorType.NoCookie,
+				}),
 			)
 		}
 		return params.andThen((params) => {
@@ -362,7 +359,12 @@ export const createBilibiliApi = () => ({
 			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
 
 		if (!csrfToken) {
-			return errAsync(new CsrfError('未找到 CSRF Token'))
+			return errAsync(
+				new BilibiliApiError({
+					message: '未找到 CSRF Token',
+					type: BilibiliApiErrorType.CsrfError,
+				}),
+			)
 		}
 
 		const data = {
@@ -447,7 +449,12 @@ export const createBilibiliApi = () => ({
 			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
 
 		if (!csrfToken) {
-			return errAsync(new CsrfError('未找到 CSRF Token'))
+			return errAsync(
+				new BilibiliApiError({
+					message: '未找到 CSRF Token',
+					type: BilibiliApiErrorType.CsrfError,
+				}),
+			)
 		}
 		const data = {
 			rid: String(avid),
@@ -499,7 +506,12 @@ export const createBilibiliApi = () => ({
 			.getState()
 			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
 		if (!csrfToken) {
-			return errAsync(new CsrfError('未找到 CSRF Token'))
+			return errAsync(
+				new BilibiliApiError({
+					message: '未找到 CSRF Token',
+					type: BilibiliApiErrorType.CsrfError,
+				}),
+			)
 		}
 		const data = {
 			aid: String(avid),
@@ -527,12 +539,12 @@ export const createBilibiliApi = () => ({
 		})
 		if (!params) {
 			return errAsync(
-				new BilibiliApiError(
-					'未设置 bilibili Cookie，请先登录',
-					0,
-					null,
-					BilibiliApiErrorType.NoCookie,
-				),
+				new BilibiliApiError({
+					message: '未设置 bilibili Cookie，请先登录',
+					msgCode: 0,
+					rawData: null,
+					type: BilibiliApiErrorType.NoCookie,
+				}),
 			)
 		}
 		return params.andThen((params) => {
@@ -579,23 +591,22 @@ export const createBilibiliApi = () => ({
 				},
 			)
 			if (!response.ok) {
-				throw new BilibiliApiError(
-					`请求 bilibili API 失败: ${response.status} ${response.statusText}`,
-					response.status,
-					null,
-					BilibiliApiErrorType.RequestFailed,
-				)
+				throw new BilibiliApiError({
+					message: `请求 bilibili API 失败: ${response.status} ${response.statusText}`,
+					msgCode: response.status,
+					type: BilibiliApiErrorType.RequestFailed,
+				})
 			}
 			const data: { data: { code: number }; code: number } =
 				await response.json()
 			bilibiliApiLog.debug('获取二维码登录状态响应数据', data)
 			if (data.code !== 0) {
-				throw new BilibiliApiError(
-					`获取二维码登录状态失败: ${data.code}`,
-					data.code,
-					data,
-					BilibiliApiErrorType.ResponseFailed,
-				)
+				throw new BilibiliApiError({
+					message: `获取二维码登录状态失败: ${data.code}`,
+					msgCode: data.code,
+					rawData: data,
+					type: BilibiliApiErrorType.ResponseFailed,
+				})
 			}
 			if (
 				data.data.code !== BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS
@@ -607,12 +618,12 @@ export const createBilibiliApi = () => ({
 			}
 			const combinedCookieHeader = response.headers.get('Set-Cookie')
 			if (!combinedCookieHeader) {
-				throw new BilibiliApiError(
-					'未获取到 Set-Cookie 头信息',
-					0,
-					null,
-					BilibiliApiErrorType.ResponseFailed,
-				)
+				throw new BilibiliApiError({
+					message: '未获取到 Set-Cookie 头信息',
+					msgCode: 0,
+					rawData: null,
+					type: BilibiliApiErrorType.ResponseFailed,
+				})
 			}
 			return {
 				status: BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS,
@@ -624,12 +635,12 @@ export const createBilibiliApi = () => ({
 			if (error instanceof ApiCallingError) {
 				return error
 			}
-			return new BilibiliApiError(
-				error instanceof Error ? error.message : String(error),
-				0,
-				null,
-				BilibiliApiErrorType.ResponseFailed,
-			)
+			return new BilibiliApiError({
+				message: error instanceof Error ? error.message : String(error),
+				msgCode: 0,
+				rawData: null,
+				type: BilibiliApiErrorType.ResponseFailed,
+			})
 		})
 	},
 })

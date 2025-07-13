@@ -1,10 +1,11 @@
 /* 这些代码从 https://github.com/nooblong/NeteaseCloudMusicApiBackup/ 抄的，但做了进一步封装和解耦，凑合着用 */
-import { NeteaseApiError } from '@/utils/errors'
-import * as Encrypt from './netease.crypto'
-import { cookieToJson, cookieObjToString, toBoolean } from './netease.utils'
-import { ResultAsync, err, ok, Result } from 'neverthrow'
+import { Result, ResultAsync, err, ok } from 'neverthrow'
 import * as setCookie from 'set-cookie-parser'
 import { URLSearchParams } from 'url'
+
+import * as Encrypt from './netease.crypto'
+import { NeteaseApiError } from './netease.errors'
+import { cookieObjToString, cookieToJson, toBoolean } from './netease.utils'
 
 interface AppConfig {
 	domain: string
@@ -127,11 +128,11 @@ const executeFetch = <TReturnBody>(
 		fetch(url, settings).then(async (res) => {
 			if (!res.ok) {
 				return err(
-					new NeteaseApiError(
-						`请求失败！http 状态码不符合预期！`,
-						res.status,
-						res.statusText,
-					),
+					new NeteaseApiError({
+						message: '请求失败！http 状态码不符合预期！',
+						msgCode: res.status,
+						rawData: res.statusText,
+					}),
 				)
 			}
 
@@ -155,11 +156,11 @@ const executeFetch = <TReturnBody>(
 		}),
 		(e: unknown) =>
 			// 按理来说不应该发生
-			new NeteaseApiError(
-				`请求失败！`,
-				500,
-				e instanceof Error ? e.message : String(e),
-			),
+			new NeteaseApiError({
+				message: '请求失败！',
+				msgCode: 500,
+				rawData: e instanceof Error ? e.message : String(e),
+			}),
 	).andThen((res) => res as Result<FetchResult<TReturnBody>, NeteaseApiError>)
 }
 

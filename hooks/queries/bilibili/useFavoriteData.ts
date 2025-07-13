@@ -1,6 +1,9 @@
 import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
-import { BilibiliApiError, CsrfError } from '@/utils/errors'
+import {
+	BilibiliApiError,
+	BilibiliApiErrorType,
+} from '@/lib/api/bilibili/bilibili.errors'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
@@ -125,10 +128,12 @@ export const useBatchDeleteFavoriteListContents = () => {
 		},
 		onError: (error) => {
 			let errorMessage = '删除失败，请稍后重试'
-			if (error instanceof CsrfError) {
-				errorMessage = '删除失败：安全验证过期，请检查 cookie 后重试'
-			} else if (error instanceof BilibiliApiError) {
-				errorMessage = `删除失败：${error.message} (${error.msgCode})`
+			if (error instanceof BilibiliApiError) {
+				if (error.type === BilibiliApiErrorType.CsrfError) {
+					errorMessage = '删除失败：csrf token 过期，请检查 cookie 后重试'
+				} else {
+					errorMessage = `删除失败：${error.message} (${error.msgCode})`
+				}
 			}
 
 			toast.error('操作失败', {
@@ -227,10 +232,12 @@ export const useDealFavoriteForOneVideo = () => {
 		},
 		onError: (error) => {
 			let errorMessage = '删除失败，请稍后重试'
-			if (error instanceof CsrfError) {
-				errorMessage = '删除失败：安全验证过期，请检查 cookie 后重试'
-			} else if (error instanceof BilibiliApiError) {
-				errorMessage = `删除失败：${error.message} (${error.msgCode})`
+			if (error instanceof BilibiliApiError) {
+				if (error.type === BilibiliApiErrorType.CsrfError) {
+					errorMessage = '删除失败：csrf token 过期，请检查 cookie 后重试'
+				} else {
+					errorMessage = `删除失败：${error.message} (${error.msgCode})`
+				}
 			}
 
 			toast.error('操作失败', {

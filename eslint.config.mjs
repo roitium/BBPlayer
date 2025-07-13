@@ -4,6 +4,7 @@ import eslintConfigPrettier from 'eslint-config-prettier/flat'
 import pluginReact from 'eslint-plugin-react'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
+import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
@@ -11,7 +12,10 @@ export default defineConfig([
 	{
 		files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
 		plugins: { js },
-		extends: ['js/recommended'],
+		extends: ['js/recommended', reactHooksExtra.configs.recommended],
+		rules: {
+			'react-hooks-extra/no-direct-set-state-in-use-effect': 'error',
+		},
 	},
 	tseslint.configs.recommended,
 	{
