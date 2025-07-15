@@ -1,44 +1,49 @@
-import { BottomTabParamList } from '@/types/navigation'
-import { RouteProp, useFocusEffect, useRoute } from '@react-navigation/native'
-import { useState } from 'react'
-import { View } from 'react-native'
-import { SegmentedButtons, Text, useTheme } from 'react-native-paper'
+import Icon from '@react-native-vector-icons/material-design-icons'
+import * as React from 'react'
+import { Dimensions, View } from 'react-native'
+import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SceneMap, TabBar, TabView } from 'react-native-tab-view'
 import CollectionListComponent from './components/collection/CollectionList'
 import FavoriteFolderListComponent from './components/favorite/FavoriteFolderList'
 import MultiPageVideosListComponent from './components/multipage/MultiPageVideosList'
 
-export enum Tabs {
-	Favorite = 'favorite',
-	Collection = 'collection',
-	Multipage = 'multipage',
-}
+const renderScene = SceneMap({
+	favorite: FavoriteFolderListComponent,
+	collection: CollectionListComponent,
+	multiPart: MultiPageVideosListComponent,
+})
 
-export default function LibraryScreen() {
-	const { colors } = useTheme()
+const routes = [
+	{ key: 'favorite', title: '收藏夹' },
+	{ key: 'collection', title: '合集' },
+	{ key: 'multiPart', title: '分 p' },
+]
+
+export default function TabViewExample() {
+	const [index, setIndex] = React.useState(0)
 	const insets = useSafeAreaInsets()
-	const route = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
-	const [value, setValue] = useState(route.params?.tab || Tabs.Favorite)
-
-	useFocusEffect(() => {
-		if (!route.params?.tab) return
-		setValue(route.params?.tab)
-	})
+	const colors = useTheme().colors
 
 	return (
-		<View style={{ flex: 1, backgroundColor: colors.background }}>
+		<View
+			style={{
+				flex: 1,
+				backgroundColor: colors.background,
+				paddingTop: insets.top + 8,
+			}}
+		>
 			<View
 				style={{
-					paddingTop: insets.top + 8,
-					paddingHorizontal: 16,
 					paddingBottom: 8,
+					flex: 1,
 				}}
 			>
 				<View
 					style={{
-						marginBottom: 16,
 						flexDirection: 'row',
 						alignItems: 'center',
+						marginHorizontal: 16,
 						justifyContent: 'space-between',
 					}}
 				>
@@ -49,27 +54,68 @@ export default function LibraryScreen() {
 						音乐库
 					</Text>
 				</View>
-
-				<SegmentedButtons
-					value={value}
-					onValueChange={setValue}
-					buttons={[
-						{ value: Tabs.Favorite, label: '收藏夹' },
-						{ value: Tabs.Collection, label: '合集' },
-						{ value: Tabs.Multipage, label: '分 p' },
-					]}
-					style={{
-						marginBottom: 16,
-						width: '100%',
-						alignSelf: 'center',
+				<TabView
+					style={{ flex: 1, backgroundColor: colors.background }}
+					navigationState={{ index, routes }}
+					renderScene={renderScene}
+					overScrollMode={'never'}
+					renderTabBar={(props) => (
+						<TabBar
+							{...props}
+							style={{
+								backgroundColor: colors.background,
+								overflow: 'hidden',
+								justifyContent: 'center',
+								maxHeight: 70,
+								marginBottom: 20,
+								marginTop: 20,
+								elevation: 0,
+							}}
+							indicatorStyle={{ backgroundColor: colors.onSecondaryContainer }}
+							activeColor={colors.onSecondaryContainer}
+							inactiveColor={colors.onSurface}
+						/>
+					)}
+					onIndexChange={setIndex}
+					initialLayout={{ width: Dimensions.get('window').width, height: 0 }}
+					options={{
+						favorite: {
+							icon: ({ focused }) => (
+								<Icon
+									name={
+										focused ? 'star-box-multiple' : 'star-box-multiple-outline'
+									}
+									size={20}
+									color={
+										focused ? colors.onSecondaryContainer : colors.onSurface
+									}
+								/>
+							),
+						},
+						collection: {
+							icon: ({ focused }) => (
+								<Icon
+									name={focused ? 'folder' : 'folder-outline'}
+									size={20}
+									color={
+										focused ? colors.onSecondaryContainer : colors.onSurface
+									}
+								/>
+							),
+						},
+						multiPart: {
+							icon: ({ focused }) => (
+								<Icon
+									name={focused ? 'folder-play' : 'folder-play-outline'}
+									size={20}
+									color={
+										focused ? colors.onSecondaryContainer : colors.onSurface
+									}
+								/>
+							),
+						},
 					}}
 				/>
-			</View>
-
-			<View style={{ flex: 1, paddingHorizontal: 16 }}>
-				{value === Tabs.Favorite && <FavoriteFolderListComponent />}
-				{value === Tabs.Collection && <CollectionListComponent />}
-				{value === Tabs.Multipage && <MultiPageVideosListComponent />}
 			</View>
 		</View>
 	)

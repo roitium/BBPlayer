@@ -57,7 +57,7 @@ const CollectionListComponent = memo(() => {
 	}
 
 	return (
-		<View style={{ flex: 1 }}>
+		<View style={{ flex: 1, marginHorizontal: 16 }}>
 			<View
 				style={{
 					marginBottom: 8,
