@@ -19,4 +19,5 @@ export type RootStackParamList = {
 	PlaylistMultipage: { bvid: string }
 	PlaylistUploader: { mid: string }
 	SearchResultFav: { query: string }
+	TestPager: undefined
 }

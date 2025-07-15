@@ -52,6 +52,7 @@ import PlaylistUploaderPage from './playlist/uploader/[mid]'
 import SearchResultFavPage from './search-result/fav/[query]'
 import SearchResultsPage from './search-result/global/[query]'
 import TabLayout from './tabs/layout'
+import MyPager from './test/tabs-view'
 import TestPage from './test/test'
 
 const rootLog = log.extend('ROOT')
@@ -253,6 +254,10 @@ function RootLayoutNav() {
 				<RootStack.Screen
 					name='SearchResultFav'
 					component={SearchResultFavPage}
+				/>
+				<RootStack.Screen
+					name='TestPager'
+					component={MyPager}
 				/>
 			</RootStack.Navigator>
 			<View
