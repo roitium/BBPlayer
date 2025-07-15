@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { ScrollView, TouchableOpacity, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
+import { Tabs } from '../../library/[tab]'
 import PlaylistItem from './PlaylistItem'
 
 export default function FavoriteList() {
@@ -19,7 +20,10 @@ export default function FavoriteList() {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const handleViewAll = () => {
-		navigation.navigate('MainTabs', { screen: 'Library' })
+		navigation.navigate('MainTabs', {
+			screen: 'Library',
+			params: { tab: Tabs.Favorite },
+		})
 	}
 
 	const filteredData = playlists?.filter(

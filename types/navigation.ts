@@ -1,9 +1,10 @@
+import { Tabs } from '@/app/tabs/library/[tab]'
 import type { NavigatorScreenParams } from '@react-navigation/native'
 
 export type BottomTabParamList = {
 	Home: undefined
 	Search: undefined
-	Library: undefined
+	Library: { tab: Tabs } | undefined
 	Settings: undefined
 }
 

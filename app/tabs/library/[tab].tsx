@@ -1,3 +1,5 @@
+import { BottomTabParamList } from '@/types/navigation'
+import { RouteProp, useFocusEffect, useRoute } from '@react-navigation/native'
 import { useState } from 'react'
 import { View } from 'react-native'
 import { SegmentedButtons, Text, useTheme } from 'react-native-paper'
@@ -6,10 +8,22 @@ import CollectionListComponent from './components/collection/CollectionList'
 import FavoriteFolderListComponent from './components/favorite/FavoriteFolderList'
 import MultiPageVideosListComponent from './components/multipage/MultiPageVideosList'
 
+export enum Tabs {
+	Favorite = 'favorite',
+	Collection = 'collection',
+	Multipage = 'multipage',
+}
+
 export default function LibraryScreen() {
 	const { colors } = useTheme()
 	const insets = useSafeAreaInsets()
-	const [value, setValue] = useState('favorite')
+	const route = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
+	const [value, setValue] = useState(route.params?.tab || Tabs.Favorite)
+
+	useFocusEffect(() => {
+		if (!route.params?.tab) return
+		setValue(route.params?.tab)
+	})
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -40,9 +54,9 @@ export default function LibraryScreen() {
 					value={value}
 					onValueChange={setValue}
 					buttons={[
-						{ value: 'favorite', label: '收藏夹' },
-						{ value: 'collection', label: '合集' },
-						{ value: 'multipage', label: '分 p' },
+						{ value: Tabs.Favorite, label: '收藏夹' },
+						{ value: Tabs.Collection, label: '合集' },
+						{ value: Tabs.Multipage, label: '分 p' },
 					]}
 					style={{
 						marginBottom: 16,
@@ -53,9 +67,9 @@ export default function LibraryScreen() {
 			</View>
 
 			<View style={{ flex: 1, paddingHorizontal: 16 }}>
-				{value === 'favorite' && <FavoriteFolderListComponent />}
-				{value === 'collection' && <CollectionListComponent />}
-				{value === 'multipage' && <MultiPageVideosListComponent />}
+				{value === Tabs.Favorite && <FavoriteFolderListComponent />}
+				{value === Tabs.Collection && <CollectionListComponent />}
+				{value === Tabs.Multipage && <MultiPageVideosListComponent />}
 			</View>
 		</View>
 	)
