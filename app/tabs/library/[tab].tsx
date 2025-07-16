@@ -1,3 +1,4 @@
+import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
 import { RouteProp, useFocusEffect, useRoute } from '@react-navigation/native'
@@ -39,6 +40,7 @@ export default function Library() {
 		if (tab === undefined) return
 		setIndex(tab)
 	})
+	useResetScreenOnBlur()
 
 	return (
 		<View
