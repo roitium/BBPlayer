@@ -1,5 +1,3 @@
-// file: lib/db/schema.ts
-
 import { relations, sql } from 'drizzle-orm'
 import {
 	integer,
@@ -29,17 +27,13 @@ type msTimestamp = number
 export const tracks = sqliteTable('tracks', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	bvid: text('bvid').notNull(),
-	cid: integer('cid').notNull(),
+	cid: integer('cid'),
 	title: text('title').notNull(),
 	artistId: integer('artist_id').references(() => artists.id, {
 		onDelete: 'set null', // 如果作者被删除，歌曲的作者ID设为NULL
 	}),
 	coverUrl: text('cover_url'),
 	duration: integer('duration'),
-	streamUrl: text('stream_url'),
-	streamQuality: integer('stream_quality'),
-	streamExpiresAt: integer('stream_expires_at', { mode: 'timestamp_ms' }),
-	lastPlayedAt: integer('last_played_at', { mode: 'timestamp_ms' }),
 	playCountSequence: text('play_count_sequence', {
 		// 每次播放的时间
 		mode: 'json',
@@ -64,7 +58,9 @@ export const playlists = sqliteTable('playlists', {
 	description: text('description'),
 	coverUrl: text('cover_url'),
 	itemCount: integer('item_count').notNull().default(0),
-	type: text('type', { enum: ['favorite', 'collection'] }).notNull(),
+	type: text('type', {
+		enum: ['favorite', 'collection', 'multi_page', 'local'],
+	}).notNull(),
 	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp_ms' }),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()

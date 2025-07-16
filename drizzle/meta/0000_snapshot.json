@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "9029ac42-c7fc-4557-8ebc-7221391cc113",
+	"id": "81739eb6-6932-4793-94af-5772e1e0f6cd",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"tables": {
 		"artists": {
@@ -251,7 +251,7 @@
 					"name": "cid",
 					"type": "integer",
 					"primaryKey": false,
-					"notNull": true,
+					"notNull": false,
 					"autoincrement": false
 				},
 				"title": {
@@ -282,32 +282,19 @@
 					"notNull": false,
 					"autoincrement": false
 				},
-				"stream_url": {
-					"name": "stream_url",
+				"play_count_sequence": {
+					"name": "play_count_sequence",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false,
-					"autoincrement": false
+					"autoincrement": false,
+					"default": "'[]'"
 				},
-				"stream_quality": {
-					"name": "stream_quality",
+				"is_multi_page": {
+					"name": "is_multi_page",
 					"type": "integer",
 					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
-				},
-				"stream_expires_at": {
-					"name": "stream_expires_at",
-					"type": "integer",
-					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
-				},
-				"last_played_at": {
-					"name": "last_played_at",
-					"type": "integer",
-					"primaryKey": false,
-					"notNull": false,
+					"notNull": true,
 					"autoincrement": false
 				},
 				"created_at": {
@@ -319,13 +306,7 @@
 					"default": "(unixepoch() * 1000)"
 				}
 			},
-			"indexes": {
-				"bvid_cid_unq": {
-					"name": "bvid_cid_unq",
-					"columns": ["bvid", "cid"],
-					"isUnique": true
-				}
-			},
+			"indexes": {},
 			"foreignKeys": {
 				"tracks_artist_id_artists_id_fk": {
 					"name": "tracks_artist_id_artists_id_fk",

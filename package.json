@@ -1,8 +1,8 @@
 {
 	"name": "bbplayer",
 	"main": "index.js",
-	"version": "0.0.7",
-	"versionCode": 50,
+	"version": "0.0.8",
+	"versionCode": 51,
 	"scripts": {
 		"start": "expo start",
 		"android": "expo run:android",
@@ -33,8 +33,8 @@
 		"babel-plugin-transform-remove-console": "^6.9.4",
 		"babel-preset-expo": "~13.0.0",
 		"cookie": "^1.0.2",
-		"eslint-plugin-react-hooks-extra": "^1.52.3",
 		"drizzle-orm": "^0.44.2",
+		"eslint-plugin-react-hooks-extra": "^1.52.3",
 		"expo": "~53.0.19",
 		"expo-application": "~6.1.5",
 		"expo-asset": "~11.1.7",
@@ -53,6 +53,7 @@
 		"expo-network": "~7.1.5",
 		"expo-splash-screen": "~0.30.10",
 		"expo-sqlite": "~15.2.13",
+		"expo-sqlite-devtools": "^0.0.2",
 		"expo-symbols": "~0.4.4",
 		"expo-system-ui": "~5.0.10",
 		"expo-updates": "~0.28.17",

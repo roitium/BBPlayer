@@ -38,17 +38,13 @@ CREATE UNIQUE INDEX `query_unq` ON `search_history` (`query`);--> statement-brea
 CREATE TABLE `tracks` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`bvid` text NOT NULL,
-	`cid` integer NOT NULL,
+	`cid` integer,
 	`title` text NOT NULL,
 	`artist_id` integer,
 	`cover_url` text,
 	`duration` integer,
-	`stream_url` text,
-	`stream_quality` integer,
-	`stream_expires_at` integer,
-	`last_played_at` integer,
+	`play_count_sequence` text DEFAULT '[]',
+	`is_multi_page` integer NOT NULL,
 	`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	FOREIGN KEY (`artist_id`) REFERENCES `artists`(`id`) ON UPDATE no action ON DELETE set null
 );
---> statement-breakpoint
-CREATE UNIQUE INDEX `bvid_cid_unq` ON `tracks` (`bvid`,`cid`);
