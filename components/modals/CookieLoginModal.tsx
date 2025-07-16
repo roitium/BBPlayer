@@ -23,21 +23,26 @@ function SetCookieDialog({
 	const queryClient = useQueryClient()
 	const cookie = useAppStore((state) => state.bilibiliCookieString)
 	const [inputCookie, setInputCookie] = useState(cookie)
-	const setBilibiliCookie = useAppStore(
-		(state) => state.setBilibiliCookieString,
-	)
+	const setBilibiliCookie = useAppStore((state) => state.setBilibiliCookie)
+	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 	const handleConfirm = () => {
+		if (!inputCookie || !inputCookie.trim()) {
+			clearBilibiliCookie()
+			setVisible(false)
+			// 清除所有缓存数据
+			queryClient.clear()
+			return
+		}
 		if (inputCookie === cookie) {
 			setVisible(false)
 			return
 		}
-		if (!inputCookie) {
-			toast.error('Cookie 不能为空')
+		const result = setBilibiliCookie(inputCookie)
+		if (result.isErr()) {
+			toast.error(result.error.message)
 			return
 		}
-		setBilibiliCookie(inputCookie)
 		setVisible(false)
-		// 刷新所有 b 站个人和收藏夹相关请求
 		queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all })
 		queryClient.refetchQueries({ queryKey: userQueryKeys.all })
 	}

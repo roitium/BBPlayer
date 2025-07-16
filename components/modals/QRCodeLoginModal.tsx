@@ -2,6 +2,7 @@ import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
+import * as Sentry from '@sentry/react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useEffect, useReducer } from 'react'
@@ -95,7 +96,7 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	setVisible: (visible: boolean) => void
 }) {
 	const queryClient = useQueryClient()
-	const setCookie = useAppStore((state) => state.setBilibiliCookie)
+	const setCookie = useAppStore((state) => state.setBilibiliCookieFromList)
 
 	const [state, dispatch] = useReducer(reducer, initialState)
 	const { status, statusText, qrcodeKey, qrcodeUrl } = state
@@ -144,7 +145,14 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 					key: c.name,
 					value: c.value,
 				}))
-				setCookie(finalCookie)
+				const result = setCookie(finalCookie)
+				if (result.isErr()) {
+					toast.error('保存 cookie 失败：' + result.error.message)
+					Sentry.captureException(result.error, {
+						tags: { Component: 'QrCodeLoginModal' },
+					})
+					return
+				}
 				toast.success('登录成功', { id: 'bilibili-qrcode-login-success' })
 				await queryClient.refetchQueries({ queryKey: ['bilibili'] })
 				setTimeout(() => setVisible(false), 1000)

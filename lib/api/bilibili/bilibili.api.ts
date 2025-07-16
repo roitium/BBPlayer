@@ -356,9 +356,17 @@ export const createBilibiliApi = () => ({
 
 		const csrfToken = useAppStore
 			.getState()
-			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
-
-		if (!csrfToken) {
+			.getBilibiliCookieList()
+			.map((cookieList) => cookieList.find((c) => c.key === 'bili_jct')?.value)
+		if (csrfToken.isErr()) {
+			return errAsync(
+				new BilibiliApiError({
+					message: '未找到 CSRF Token',
+					type: BilibiliApiErrorType.CsrfError,
+				}),
+			)
+		}
+		if (!csrfToken.value) {
 			return errAsync(
 				new BilibiliApiError({
 					message: '未找到 CSRF Token',
@@ -371,7 +379,7 @@ export const createBilibiliApi = () => ({
 			resources: resourcesIds.join(','),
 			media_id: String(favoriteId),
 			platform: 'web',
-			csrf: csrfToken,
+			csrf: csrfToken.value,
 		}
 
 		bilibiliApiLog.debug('批量删除收藏', new URLSearchParams(data).toString())
@@ -446,9 +454,17 @@ export const createBilibiliApi = () => ({
 		const delInFavoriteIdsCombined = delInFavoriteIds.join(',')
 		const csrfToken = useAppStore
 			.getState()
-			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
-
-		if (!csrfToken) {
+			.getBilibiliCookieList()
+			.map((cookieList) => cookieList.find((c) => c.key === 'bili_jct')?.value)
+		if (csrfToken.isErr()) {
+			return errAsync(
+				new BilibiliApiError({
+					message: '未找到 CSRF Token',
+					type: BilibiliApiErrorType.CsrfError,
+				}),
+			)
+		}
+		if (!csrfToken.value) {
 			return errAsync(
 				new BilibiliApiError({
 					message: '未找到 CSRF Token',
@@ -460,7 +476,7 @@ export const createBilibiliApi = () => ({
 			rid: String(avid),
 			add_media_ids: addToFavoriteIdsCombined,
 			del_media_ids: delInFavoriteIdsCombined,
-			csrf: csrfToken,
+			csrf: csrfToken.value,
 			type: '2',
 		}
 		return bilibiliApiClient.post<BilibiliDealFavoriteForOneVideoResponse>(
@@ -504,8 +520,17 @@ export const createBilibiliApi = () => ({
 		const avid = bv2av(bvid)
 		const csrfToken = useAppStore
 			.getState()
-			.bilibiliCookieList.find((cookie) => cookie.key === 'bili_jct')?.value
-		if (!csrfToken) {
+			.getBilibiliCookieList()
+			.map((cookieList) => cookieList.find((c) => c.key === 'bili_jct')?.value)
+		if (csrfToken.isErr()) {
+			return errAsync(
+				new BilibiliApiError({
+					message: '未找到 CSRF Token',
+					type: BilibiliApiErrorType.CsrfError,
+				}),
+			)
+		}
+		if (!csrfToken.value) {
 			return errAsync(
 				new BilibiliApiError({
 					message: '未找到 CSRF Token',
@@ -517,7 +542,7 @@ export const createBilibiliApi = () => ({
 			aid: String(avid),
 			cid: String(cid),
 			progress: '0', // 咱们只是为了上报播放记录，而非具体进度
-			csrf: csrfToken,
+			csrf: csrfToken.value,
 		}
 		return bilibiliApiClient.post<0>(
 			'/x/v2/history/report',

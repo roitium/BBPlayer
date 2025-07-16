@@ -5,24 +5,24 @@ import * as parseCookie from 'cookie'
 import { err, ok, type Result } from 'neverthrow'
 import { create } from 'zustand'
 
-const parseCookieString = (
+export const parseCookieString = (
 	cookie?: string,
 ): Result<Record<string, string>[], Error> => {
-	if (!cookie) {
-		return err(new Error('Cookie 字符串不能为空'))
-	}
-	if (!cookie.trim()) {
+	if (!cookie || !cookie.trim()) {
 		return ok([])
 	}
+
 	try {
 		const cookieObj = parseCookie.parse(cookie)
 		const cookieArray: Record<string, string>[] = []
+
 		for (const [key, value] of Object.entries(cookieObj)) {
 			if (value === undefined || value === null) {
-				throw new Error(`Cookie "${key}" 的值无效`)
+				return err(new Error(`Cookie "${key}" 的值无效`))
 			}
 			cookieArray.push({ key, value })
 		}
+
 		return ok(cookieArray)
 	} catch (error) {
 		return err(
@@ -33,31 +33,37 @@ const parseCookieString = (
 	}
 }
 
+const serializeCookieList = (cookieList: Record<string, string>[]): string => {
+	return cookieList
+		.map((c) => (c.key && c.value ? parseCookie.serialize(c.key, c.value) : ''))
+		.filter(Boolean)
+		.join('; ')
+}
+
 export const useAppStore = create<AppState>()((set, get) => {
 	const sendPlayHistory = storage.getBoolean('send_play_history') ?? true
 	const initialCookieString = storage.getString('bilibili_cookie')
 
-	const initialCookieList = parseCookieString(initialCookieString)
-	const initialCookieError = initialCookieList.isErr()
-		? initialCookieList.error
-		: null
-	const initialCookieListValue = initialCookieList.isOk()
-		? initialCookieList.value
-		: []
-
 	log.debug('AppStore Initializing', {
 		initialCookieString,
-		initialCookieList: initialCookieListValue,
-		initialCookieError: initialCookieError,
 		sendPlayHistory,
 	})
 
 	return {
 		bilibiliCookieString: initialCookieString,
-		bilibiliCookieList: initialCookieListValue,
-		bilibiliCookieError: initialCookieError,
+
 		settings: {
 			sendPlayHistory,
+		},
+
+		getBilibiliCookieList: () => {
+			const { bilibiliCookieString } = get()
+			return parseCookieString(bilibiliCookieString)
+		},
+
+		hasBilibiliCookie: () => {
+			const { bilibiliCookieString } = get()
+			return Boolean(bilibiliCookieString?.trim())
 		},
 
 		setEnableSendPlayHistory: (value: boolean) => {
@@ -67,25 +73,27 @@ export const useAppStore = create<AppState>()((set, get) => {
 			storage.set('send_play_history', value)
 		},
 
-		setBilibiliCookieString: (cookieString: string) => {
-			const cookieList = parseCookieString(cookieString)
-			const error = cookieList.isErr() ? cookieList.error : null
-			set({
-				bilibiliCookieString: cookieString,
-				bilibiliCookieList: cookieList.isOk() ? cookieList.value : [],
-				bilibiliCookieError: error,
-			})
+		setBilibiliCookie: (cookieString: string) => {
+			const result = parseCookieString(cookieString)
+
+			if (result.isErr()) {
+				return err(result.error)
+			}
+
+			set({ bilibiliCookieString: cookieString })
 			storage.set('bilibili_cookie', cookieString)
+
+			return ok(undefined)
 		},
 
-		setBilibiliCookie: (cookieList: Record<string, string>[]) => {
-			const cookieString = cookieList
-				.map((c) =>
-					c.key && c.value ? parseCookie.serialize(c.key, c.value) : '',
-				)
-				.filter(Boolean)
-				.join('; ')
-			get().setBilibiliCookieString(cookieString)
+		setBilibiliCookieFromList: (cookieList: Record<string, string>[]) => {
+			const cookieString = serializeCookieList(cookieList)
+			return get().setBilibiliCookie(cookieString)
+		},
+
+		clearBilibiliCookie: () => {
+			set({ bilibiliCookieString: undefined })
+			storage.delete('bilibili_cookie')
 		},
 	}
 })

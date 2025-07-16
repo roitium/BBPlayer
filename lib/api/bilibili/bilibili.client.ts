@@ -46,6 +46,9 @@ class ApiClient {
 			fetch(url, {
 				...options,
 				headers,
+				// react native 实现了 cookie 的自动注入，但我们正在自己管理 cookie，所以忽略
+				// TODO: 应该采用 react-native-cookie 库实现与原生请求库 cookie jar 的更紧密集成。但现阶段我们直接忽略原生注入的 cookie。
+				credentials: 'omit',
 			}),
 			(error) =>
 				new BilibiliApiError({

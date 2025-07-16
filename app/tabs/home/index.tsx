@@ -1,6 +1,7 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
 import toast from '@/utils/toast'
 import { Image } from 'expo-image'
 import { useEffect, useState } from 'react'
@@ -15,11 +16,13 @@ function HomePage() {
 	const insets = useSafeAreaInsets()
 	const bilibiliCookie = useAppStore((state) => state.bilibiliCookieString)
 	const [loginDialogVisible, setLoginDialogVisible] = useState(false)
+	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 
 	const {
 		data: personalInfo,
 		isPending: personalInfoPending,
 		isError: personalInfoError,
+		error: personalInfoErrorObject,
 	} = usePersonalInformation()
 
 	const getGreetingMsg = () => {
@@ -33,13 +36,19 @@ function HomePage() {
 
 	const greeting = getGreetingMsg()
 
-	// TODO: 还应该在用户登录状态失效时弹出提示
 	useEffect(() => {
 		if (!bilibiliCookie) {
 			toast.info('看起来你是第一次打开 BBPlayer，先登录一下吧！')
 			setLoginDialogVisible(true)
 		}
-	}, [bilibiliCookie])
+		if (personalInfoErrorObject instanceof BilibiliApiError) {
+			if (personalInfoErrorObject.msgCode === -101) {
+				toast.error('登录状态失效，已清空 cookie，请重新登录')
+				clearBilibiliCookie()
+				setLoginDialogVisible(true)
+			}
+		}
+	}, [bilibiliCookie, clearBilibiliCookie, personalInfoErrorObject])
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
