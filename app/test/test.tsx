@@ -1,6 +1,7 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { main } from '@/lib/db/seed'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -155,11 +156,20 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							setIsQrCodeLoginDialogVisible(true)
+							navigation.push('PlaylistLocal', { id: '84347579' })
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						测试扫码登录
+						跳转 local 播放列表
+					</Button>
+					<Button
+						mode='outlined'
+						onPress={() => {
+							main()
+						}}
+						style={{ marginBottom: 8 }}
+					>
+						生成数据库测试条目
 					</Button>
 				</View>
 

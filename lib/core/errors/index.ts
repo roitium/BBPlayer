@@ -25,3 +25,8 @@ export class FileSystemError extends CustomError {}
  * 表示数据解析或转换失败的错误。
  */
 export class DataParsingError extends CustomError {}
+
+/**
+ * 表示数据库操作失败的错误。
+ */
+export class DatabaseError extends CustomError {}

@@ -97,6 +97,7 @@
 	"devDependencies": {
 		"@babel/core": "^7.27.1",
 		"@eslint/js": "^9.25.1",
+		"@faker-js/faker": "^9.9.0",
 		"@react-native-community/cli": "latest",
 		"@tanstack/eslint-plugin-query": "^5.74.7",
 		"@testing-library/react-native": "^13.2.0",

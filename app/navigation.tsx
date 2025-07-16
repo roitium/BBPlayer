@@ -6,6 +6,7 @@ import NotFoundScreen from './not-found'
 import PlayerPage from './player/player'
 import PlaylistCollectionPage from './playlist/collection/[id]'
 import PlaylistFavoritePage from './playlist/favorite/[id]'
+import LocalPlaylistPage from './playlist/local/[id]'
 import PlaylistMultipagePage from './playlist/multipage/[bvid]'
 import PlaylistUploaderPage from './playlist/uploader/[mid]'
 import SearchResultFavPage from './search-result/fav/[query]'
@@ -64,6 +65,10 @@ export function RootLayoutNav() {
 				<RootStack.Screen
 					name='SearchResultFav'
 					component={SearchResultFavPage}
+				/>
+				<RootStack.Screen
+					name='PlaylistLocal'
+					component={LocalPlaylistPage}
 				/>
 			</RootStack.Navigator>
 			<View

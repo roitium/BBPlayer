@@ -44,6 +44,9 @@ export const tracks = sqliteTable('tracks', {
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
 		.default(sql`(unixepoch() * 1000)`),
+	source: text('source', {
+		enum: ['bilibili', 'local'],
+	}),
 })
 
 // ----------------------------------
