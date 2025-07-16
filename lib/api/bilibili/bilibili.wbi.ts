@@ -1,8 +1,8 @@
-import md5 from 'md5'
-import { fromSafePromise, type ResultAsync } from 'neverthrow'
-import type { BilibiliApiError } from '@/utils/errors'
+import type { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
+import md5 from 'md5'
+import { fromSafePromise, type ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './bilibili.client'
 
 const wbiLog = log.extend('BILIBILI_API/WBI')

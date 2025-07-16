@@ -1,15 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useState } from 'react'
-import { FlatList, Image, RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -25,6 +14,20 @@ import { transformMultipageVideosToTracks } from '@/lib/api/bilibili/bilibili.tr
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { Divider, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/MULTIPAGE')
@@ -37,9 +40,8 @@ export default function MultipagePage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistMultipage'>>()
 	const { bvid } = route.params
 	const [refreshing, setRefreshing] = useState(false)
-	const colors = useTheme().colors
+	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
-	const [tracksData, setTracksData] = useState<Track[]>([])
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const insets = useSafeAreaInsets()
 	const [modalVisible, setModalVisible] = useState(false)
@@ -58,12 +60,17 @@ export default function MultipagePage() {
 		isPending: isVideoDataPending,
 	} = useGetVideoDetails(bvid)
 
-	const multipageData = rawMultipageData?.map((item) => ({
-		...item,
-		first_frame: videoData?.pic || '',
-	}))
+	const tracksData = useMemo(() => {
+		if (!rawMultipageData || !videoData) {
+			return []
+		}
+		const multipageData = rawMultipageData.map((item) => ({
+			...item,
+			first_frame: videoData?.pic || '',
+		}))
+		return transformMultipageVideosToTracks(multipageData, videoData)
+	}, [rawMultipageData, videoData])
 
-	// 其他 Hooks
 	const playNext = useCallback(
 		async (track: Track) => {
 			try {
@@ -111,7 +118,7 @@ export default function MultipagePage() {
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: playNext,
+				onPress: () => playNext(item),
 			},
 			TrackMenuItemDividerToken,
 			{
@@ -153,96 +160,44 @@ export default function MultipagePage() {
 	}, [])
 
 	useEffect(() => {
-		if (multipageData && videoData) {
-			setTracksData(transformMultipageVideosToTracks(multipageData, videoData))
-		}
-		// multipageData 是基于 rawMultipageData 的派生数据，因此不应该在依赖中添加 multipageData
-		// eslint-disable-next-line react-compiler/react-compiler
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [rawMultipageData, videoData])
-
-	useEffect(() => {
 		if (typeof bvid !== 'string') {
 			navigation.replace('NotFound')
 		}
 	}, [bvid, navigation])
 
 	if (typeof bvid !== 'string') {
-		return
+		return null
 	}
 
 	if (isMultipageDataPending || isVideoDataPending) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
 	if (isMultipageDataError || isVideoDataError) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
-		)
+		return <PlaylistError text='加载失败' />
 	}
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
-				<Appbar.BackAction
-					onPress={() => {
-						navigation.goBack()
-					}}
-				/>
-			</Appbar.Header>
-
-			{/* 顶部背景图 */}
-			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
-				<Image
-					source={{ uri: videoData.pic }}
-					style={{
-						width: '100%',
-						height: '100%',
-						opacity: 0.15,
-					}}
-					blurRadius={15}
-				/>
-			</View>
+			<PlaylistAppBar />
 
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
 				}}
 			>
-				<FlatList
+				<LegendList
 					data={tracksData}
 					renderItem={renderItem}
+					ItemSeparatorComponent={() => <Divider />}
+					contentContainerStyle={{
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={videoData.pic}
 							title={videoData.title}
-							subtitle={`${videoData.owner.name} • ${(multipageData ?? []).length} 首歌曲`}
+							subtitle={`${videoData.owner.name} • ${tracksData.length} 首歌曲`}
 							description={videoData.desc}
 							onPlayAll={() => playAll()}
 						/>
@@ -264,7 +219,10 @@ export default function MultipagePage() {
 					ListFooterComponent={
 						<Text
 							variant='titleMedium'
-							style={{ textAlign: 'center', paddingTop: 10 }}
+							style={{
+								textAlign: 'center',
+								paddingTop: 10,
+							}}
 						>
 							•
 						</Text>
@@ -273,22 +231,11 @@ export default function MultipagePage() {
 			</View>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
 			/>
-
-			{/* 当前播放栏 */}
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

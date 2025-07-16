@@ -1,9 +1,9 @@
+import type { BilibiliApiError } from '@/utils/errors'
 import type { Result } from 'neverthrow'
 import type {
 	RepeatMode,
 	Track as RNTPTracker,
 } from 'react-native-track-player'
-import type { BilibiliApiError } from '@/utils/errors'
 import type { Track } from './media'
 
 // 播放器状态接口
@@ -71,4 +71,4 @@ interface PlayerActions {
 // 完整的播放器存储类型
 type PlayerStore = PlayerState & PlayerActions
 
-export type { PlayerState, PlayerActions, PlayerStore, addToQueueParams }
+export type { addToQueueParams, PlayerActions, PlayerState, PlayerStore }

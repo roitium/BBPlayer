@@ -1,3 +1,12 @@
+import appStore from '@/hooks/stores/appStore'
+import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import {
+	BilibiliApiError,
+	BilibiliApiErrorType,
+} from '@/lib/api/bilibili/bilibili.errors'
+import log from '@/utils/log'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import toast from '@/utils/toast'
 import {
 	skipToken,
 	useInfiniteQuery,
@@ -5,12 +14,6 @@ import {
 	useQuery,
 	useQueryClient,
 } from '@tanstack/react-query'
-import appStore from '@/hooks/stores/appStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
-import { BilibiliApiError, CsrfError } from '@/utils/errors'
-import log from '@/utils/log'
-import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import toast from '@/utils/toast'
 
 const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
@@ -125,10 +128,12 @@ export const useBatchDeleteFavoriteListContents = () => {
 		},
 		onError: (error) => {
 			let errorMessage = '删除失败，请稍后重试'
-			if (error instanceof CsrfError) {
-				errorMessage = '删除失败：安全验证过期，请检查 cookie 后重试'
-			} else if (error instanceof BilibiliApiError) {
-				errorMessage = `删除失败：${error.message} (${error.msgCode})`
+			if (error instanceof BilibiliApiError) {
+				if (error.type === BilibiliApiErrorType.CsrfError) {
+					errorMessage = '删除失败：csrf token 过期，请检查 cookie 后重试'
+				} else {
+					errorMessage = `删除失败：${error.message} (${error.msgCode})`
+				}
 			}
 
 			toast.error('操作失败', {
@@ -177,7 +182,8 @@ export const useCollectionAllContents = (collectionId: number) => {
  * 获取包含指定视频的收藏夹列表
  */
 export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!userMid
+	const enabled =
+		!!appStore.getState().bilibiliCookieString && !!userMid && bvid.length > 0
 	return useQuery({
 		queryKey: favoriteListQueryKeys.favoriteForOneVideo(bvid, userMid),
 		queryFn: userMid
@@ -186,7 +192,8 @@ export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
 						bilibiliApi.getTargetVideoFavoriteStatus(userMid, bvid),
 					)
 			: skipToken,
-		staleTime: 1,
+		staleTime: 0,
+		gcTime: 0,
 		enabled: enabled,
 	})
 }
@@ -225,10 +232,12 @@ export const useDealFavoriteForOneVideo = () => {
 		},
 		onError: (error) => {
 			let errorMessage = '删除失败，请稍后重试'
-			if (error instanceof CsrfError) {
-				errorMessage = '删除失败：安全验证过期，请检查 cookie 后重试'
-			} else if (error instanceof BilibiliApiError) {
-				errorMessage = `删除失败：${error.message} (${error.msgCode})`
+			if (error instanceof BilibiliApiError) {
+				if (error.type === BilibiliApiErrorType.CsrfError) {
+					errorMessage = '删除失败：csrf token 过期，请检查 cookie 后重试'
+				} else {
+					errorMessage = `删除失败：${error.message} (${error.msgCode})`
+				}
 			}
 
 			toast.error('操作失败', {

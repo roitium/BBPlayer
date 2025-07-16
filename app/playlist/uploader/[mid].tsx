@@ -1,16 +1,4 @@
-import {
-	type RouteProp,
-	useNavigation,
-	useRoute,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { Image } from 'expo-image'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -25,6 +13,20 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
+import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/UPLOADER')
@@ -44,7 +46,6 @@ export default function UploaderPage() {
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalBvid, setCurrentModalBvid] = useState('')
 
-	// 播放
 	const playTrack = useCallback(
 		async (track: Track, playNow = false) => {
 			try {
@@ -134,75 +135,31 @@ export default function UploaderPage() {
 	}, [mid, navigation])
 
 	if (typeof mid !== 'string') {
-		return
+		return null
 	}
 
 	if (isUploadedVideosPending || isUserInfoPending) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<ActivityIndicator size='large' />
-			</View>
-		)
+		return <PlaylistLoading />
 	}
 
 	if (isUploadedVideosError || isUserInfoError) {
-		return (
-			<View
-				style={{
-					flex: 1,
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: colors.background,
-				}}
-			>
-				<Text
-					variant='titleMedium'
-					style={{ textAlign: 'center' }}
-				>
-					加载失败
-				</Text>
-			</View>
-		)
+		return <PlaylistError text='加载失败' />
 	}
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<Appbar.Header style={{ backgroundColor: 'rgba(0,0,0,0)', zIndex: 500 }}>
-				<Appbar.BackAction
-					onPress={() => {
-						navigation.goBack()
-					}}
-				/>
-			</Appbar.Header>
-
-			{/* 顶部背景图 */}
-			<View style={{ position: 'absolute', height: '100%', width: '100%' }}>
-				<Image
-					source={{ uri: uploaderUserInfo?.face }}
-					style={{
-						width: '100%',
-						height: '100%',
-						opacity: 0.15,
-					}}
-					blurRadius={15}
-				/>
-			</View>
+			<PlaylistAppBar />
 
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 80 + insets.bottom : insets.bottom,
 				}}
 			>
-				<FlatList
+				<LegendList
 					data={tracks}
+					contentContainerStyle={{
+						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+					}}
 					renderItem={renderItem}
 					ListHeaderComponent={
 						<PlaylistHeader
@@ -226,6 +183,7 @@ export default function UploaderPage() {
 						/>
 					}
 					keyExtractor={keyExtractor}
+					ItemSeparatorComponent={() => <Divider />}
 					showsVerticalScrollIndicator={false}
 					onEndReached={hasNextPage ? () => fetchNextPage() : null}
 					ListFooterComponent={
@@ -243,7 +201,10 @@ export default function UploaderPage() {
 						) : (
 							<Text
 								variant='titleMedium'
-								style={{ textAlign: 'center', paddingTop: 10 }}
+								style={{
+									textAlign: 'center',
+									paddingTop: 10,
+								}}
 							>
 								•
 							</Text>
@@ -253,21 +214,11 @@ export default function UploaderPage() {
 			</View>
 
 			<AddToFavoriteListsModal
+				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
 			/>
-
-			<View
-				style={{
-					position: 'absolute',
-					right: 0,
-					bottom: insets.bottom,
-					left: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

@@ -1,20 +1,11 @@
-import { produce } from 'immer'
-import { err, ok, type Result } from 'neverthrow'
-import TrackPlayer, {
-	RepeatMode,
-	usePlaybackState,
-	useProgress,
-} from 'react-native-track-player'
-import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
 import type { Track } from '@/types/core/media'
 import type {
 	addToQueueParams,
 	PlayerState,
 	PlayerStore,
 } from '@/types/core/playerStore'
-import type { BilibiliApiError } from '@/utils/errors'
 import log from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
 import {
@@ -25,6 +16,15 @@ import {
 	reportPlaybackHistory,
 } from '@/utils/player'
 import toast from '@/utils/toast'
+import { produce } from 'immer'
+import { err, ok, type Result } from 'neverthrow'
+import TrackPlayer, {
+	RepeatMode,
+	usePlaybackState,
+	useProgress,
+} from 'react-native-track-player'
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 const playerLog = log.extend('PLAYER/STORE')
 

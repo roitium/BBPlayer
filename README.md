@@ -1,12 +1,19 @@
-# BBPlayer
+<div align="center">
+<img src="./assets/images/icon-large.png" alt="logo" width="50" />
+<h1>BBPlayer</h1>
 
-一个使用 React Native 构建的 Bilibili 音频播放器。可以更舒服的听歌，而不必使用臃肿的 Bilibili 客户端。
+![GitHub Release](https://img.shields.io/github/v/release/yanyao2333/bbplayer)
+![React Native](https://img.shields.io/badge/React%20Native-20232A?style=flat-square&logo=react&logoColor=sky)
+
+</div>
+
+一款使用 React Native 构建的 Bilibili 音频播放器。更轻量 & 舒服的听歌体验，远离臃肿卡顿的 Bilibili 客户端。
 
 ## 屏幕截图
 
-|                  首页                  |                   播放器                   |                    播放列表                    |                    搜索                    |
-| :------------------------------------: | :----------------------------------------: | :--------------------------------------------: | :----------------------------------------: |
-| ![home](./assets/screenshots/home.jpg) | ![player](./assets/screenshots/player.jpg) | ![playlist](./assets/screenshots/playlist.jpg) | ![search](./assets/screenshots/search.jpg) |
+|                  首页                  |                   播放器                   |                    播放列表                    |                    搜索                    |                    库页面                    |
+| :------------------------------------: | :----------------------------------------: | :--------------------------------------------: | :----------------------------------------: | :------------------------------------------: |
+| ![home](./assets/screenshots/home.jpg) | ![player](./assets/screenshots/player.jpg) | ![playlist](./assets/screenshots/playlist.jpg) | ![search](./assets/screenshots/search.jpg) | ![library](./assets/screenshots/library.jpg) |
 
 ## 主要功能
 

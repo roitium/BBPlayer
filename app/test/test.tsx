@@ -1,3 +1,7 @@
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as EXPOFS from 'expo-file-system'
@@ -7,10 +11,6 @@ import { ScrollView, View } from 'react-native'
 import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import toast from '@/utils/toast'
 import type { RootStackParamList } from '../../types/navigation'
 
 export default function TestPage() {
@@ -160,29 +160,6 @@ export default function TestPage() {
 						style={{ marginBottom: 8 }}
 					>
 						测试扫码登录
-					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							usePlayerStore.persist.rehydrate()
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						重新水合播放器 store
-					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							toast.info('这是一个测试 toast', {
-								duration: 3000,
-								text1: '测试 Toast',
-								text2:
-									'这是一个测试的 Toast 消息aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaasdhkisuvghaosvuohafdiubvhasfv\nasdasdasd\n\nhhhhhhhhhh',
-							})
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						弹出 toast
 					</Button>
 				</View>
 

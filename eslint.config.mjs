@@ -1,17 +1,23 @@
 import js from '@eslint/js'
 import pluginQuery from '@tanstack/eslint-plugin-query'
-import { defineConfig } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
 import pluginReact from 'eslint-plugin-react'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
+import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
+import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
 	{
 		files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
 		plugins: { js },
-		extends: ['js/recommended'],
+		extends: ['js/recommended', reactHooksExtra.configs.recommended],
+		rules: {
+			'react-hooks-extra/no-direct-set-state-in-use-effect': 'off',
+			'react-hooks-extra/no-unnecessary-use-prefix': 'error',
+			'react-hooks-extra/prefer-use-state-lazy-initialization': 'error',
+		},
 	},
 	tseslint.configs.recommended,
 	{

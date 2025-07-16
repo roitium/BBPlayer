@@ -1,7 +1,7 @@
-import { skipToken, useQuery } from '@tanstack/react-query'
 import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import { skipToken, useQuery } from '@tanstack/react-query'
 
 export const videoDataQueryKeys = {
 	all: ['bilibili', 'videoData'] as const,

@@ -1,19 +1,11 @@
+import log from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
 import { ScrollView, TouchableOpacity, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
-import {
-	ActivityIndicator,
-	Chip,
-	Searchbar,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Chip, Searchbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import NowPlayingBar from '@/components/NowPlayingBar'
-import { useHotSearches } from '@/hooks/queries/bilibili/useSearchData'
-import log from '@/utils/log'
 import type { RootStackParamList } from '../../../types/navigation'
 
 const searchLog = log.extend('SEARCH')
@@ -35,9 +27,6 @@ export default function SearchPage() {
 	const [searchQuery, setSearchQuery] = useState('')
 	const [searchHistory, setSearchHistory] =
 		useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
-
-	const { data: hotSearches = [], isLoading: isLoadingHotSearches } =
-		useHotSearches()
 
 	// 保存搜索历史到本地存储
 	const saveSearchHistory = useCallback(
@@ -208,36 +197,7 @@ export default function SearchPage() {
 						</Text>
 					)}
 				</View>
-
-				{/* 热门搜索 */}
-				<View style={{ marginBottom: 24 }}>
-					<Text
-						variant='titleMedium'
-						style={{ marginBottom: 8, fontWeight: 'bold' }}
-					>
-						热门搜索
-					</Text>
-					{isLoadingHotSearches ? (
-						<ActivityIndicator size='small' />
-					) : (
-						<View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-							{hotSearches.map((item) => (
-								<Chip
-									key={item.id}
-									onPress={() => handleSearchItemClick(item.text)}
-									style={{ marginRight: 8, marginBottom: 8 }}
-									mode='flat'
-								>
-									{item.text}
-								</Chip>
-							))}
-						</View>
-					)}
-				</View>
 			</ScrollView>
-
-			{/* 底部播放栏 */}
-			<NowPlayingBar />
 		</View>
 	)
 }

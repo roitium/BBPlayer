@@ -1,3 +1,5 @@
+import type { Result } from 'neverthrow'
+
 interface Settings {
 	// 是否向 bilibili 发送播放历史
 	sendPlayHistory: boolean
@@ -5,15 +7,21 @@ interface Settings {
 
 interface AppState {
 	bilibiliCookieString: string | undefined
-	bilibiliCookieList: Record<string, string>[] | []
-	bilibiliCookieError: Error | null
-	settings: {
-		sendPlayHistory: boolean
-	}
 
+	// Settings
+	settings: Settings
+
+	// Computed getters
+	getBilibiliCookieList: () => Result<Record<string, string>[], Error>
+	hasBilibiliCookie: () => boolean
+
+	// Actions
 	setEnableSendPlayHistory: (value: boolean) => void
-	setBilibiliCookieString: (cookieString: string) => void
-	setBilibiliCookie: (cookieList: Record<string, string>[]) => void
+	setBilibiliCookie: (cookieString: string) => Result<void, Error>
+	setBilibiliCookieFromList: (
+		cookieList: Record<string, string>[],
+	) => Result<void, Error>
+	clearBilibiliCookie: () => void
 }
 
 export type { AppState, Settings }
