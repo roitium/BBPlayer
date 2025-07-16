@@ -2,7 +2,7 @@ import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
 import { RouteProp, useFocusEffect, useRoute } from '@react-navigation/native'
-import * as React from 'react'
+import { useState } from 'react'
 import { Dimensions, View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -30,7 +30,7 @@ export enum Tabs {
 }
 
 export default function Library() {
-	const [index, setIndex] = React.useState(Tabs.Favorite)
+	const [index, setIndex] = useState(Tabs.Favorite)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
