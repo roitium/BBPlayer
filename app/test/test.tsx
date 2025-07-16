@@ -161,24 +161,6 @@ export default function TestPage() {
 					>
 						测试扫码登录
 					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							usePlayerStore.persist.rehydrate()
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						重新水合播放器 store
-					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							navigation.push('TestPager')
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						gogogo
-					</Button>
 				</View>
 
 				<Text

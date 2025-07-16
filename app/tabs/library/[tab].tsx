@@ -1,4 +1,6 @@
+import { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
+import { RouteProp, useFocusEffect, useRoute } from '@react-navigation/native'
 import * as React from 'react'
 import { Dimensions, View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
@@ -20,10 +22,23 @@ const routes = [
 	{ key: 'multiPart', title: '分 p' },
 ]
 
-export default function TabViewExample() {
-	const [index, setIndex] = React.useState(0)
+export enum Tabs {
+	Collection = 1,
+	Favorite = 0,
+	MultiPart = 2,
+}
+
+export default function Library() {
+	const [index, setIndex] = React.useState(Tabs.Favorite)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
+	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
+	const tab = router.params?.tab
+
+	useFocusEffect(() => {
+		if (tab === undefined) return
+		setIndex(tab)
+	})
 
 	return (
 		<View
