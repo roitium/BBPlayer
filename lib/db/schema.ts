@@ -6,31 +6,33 @@ import {
 	uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
 
-// ----------------------------------
-// 1. 艺术家/UP主 (artists)
-// ----------------------------------
-export const artists = sqliteTable('artists', {
-	id: integer('id').primaryKey(), // Bilibili MID
-	name: text('name').notNull(),
-	avatarUrl: text('avatar_url'),
-	signature: text('signature'),
-	createdAt: integer('created_at', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(unixepoch() * 1000)`), // 使用 unixepoch 获取毫秒时间戳
-})
-
-// ----------------------------------
-// 2. 歌曲 (tracks)
-// ----------------------------------
 type msTimestamp = number
+
+export const artists = sqliteTable(
+	'artists',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		name: text('name').notNull(),
+		avatarUrl: text('avatar_url'),
+		signature: text('signature'),
+		source: text('source', {
+			enum: ['bilibili', 'local'],
+		}).notNull(),
+		remoteId: text('remote_id'), // 比如 bilibili mid
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('source_remote_id_unq').on(table.source, table.remoteId),
+	],
+)
 
 export const tracks = sqliteTable('tracks', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
-	bvid: text('bvid').notNull(),
-	cid: integer('cid'),
 	title: text('title').notNull(),
 	artistId: integer('artist_id').references(() => artists.id, {
-		onDelete: 'set null', // 如果作者被删除，歌曲的作者ID设为NULL
+		onDelete: 'set null', // 如果作者被删除，歌曲的作者ID设为NULL，歌曲本身不删除
 	}),
 	coverUrl: text('cover_url'),
 	duration: integer('duration'),
@@ -40,7 +42,6 @@ export const tracks = sqliteTable('tracks', {
 	})
 		.$type<msTimestamp[]>()
 		.default(sql`'[]'`),
-	isMultiPage: integer('is_multi_page', { mode: 'boolean' }).notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
 		.default(sql`(unixepoch() * 1000)`),
@@ -49,14 +50,11 @@ export const tracks = sqliteTable('tracks', {
 	}),
 })
 
-// ----------------------------------
-// 3. 播放列表 (playlists)
-// ----------------------------------
 export const playlists = sqliteTable('playlists', {
-	id: integer('id').primaryKey(), // Bilibili favorite/collection ID
+	id: integer('id').primaryKey({ autoIncrement: true }), // 数据库内的唯一 id
 	title: text('title').notNull(),
 	authorId: integer('author_id').references(() => artists.id, {
-		onDelete: 'set null',
+		onDelete: 'set null', // 如果作者被删除，播放列表的作者ID设为NULL
 	}),
 	description: text('description'),
 	coverUrl: text('cover_url'),
@@ -64,15 +62,13 @@ export const playlists = sqliteTable('playlists', {
 	type: text('type', {
 		enum: ['favorite', 'collection', 'multi_page', 'local'],
 	}).notNull(),
+	remoteSyncId: integer('remote_sync_id'), // 当存在这个值时，这个 playlist 只能从远程同步，而不能从本地直接修改（或许也可以？因为我们已经实现了大量本地有关收藏夹的操作逻辑，先不管了~）
 	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp_ms' }),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
 		.default(sql`(unixepoch() * 1000)`),
 })
 
-// ----------------------------------
-// 4. 播放列表-歌曲关系表 (playlist_tracks)
-// ----------------------------------
 export const playlistTracks = sqliteTable('playlist_tracks', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	playlistId: integer('playlist_id')
@@ -80,29 +76,30 @@ export const playlistTracks = sqliteTable('playlist_tracks', {
 		.references(() => playlists.id, { onDelete: 'cascade' }), // 级联删除
 	trackId: integer('track_id')
 		.notNull()
-		.references(() => tracks.id, { onDelete: 'cascade' }), // 级联删除
+		.references(() => tracks.id, { onDelete: 'cascade' }),
 	order: integer('order'), // 歌曲在列表中的顺序
 })
 
-// ----------------------------------
-// 5. 搜索历史 (search_history)
-// ----------------------------------
-export const searchHistory = sqliteTable(
-	'search_history',
-	{
-		id: integer('id').primaryKey({ autoIncrement: true }),
-		query: text('query').notNull(),
-		timestamp: integer('timestamp', { mode: 'timestamp_ms' })
-			.notNull()
-			.default(sql`(unixepoch() * 1000)`),
-	},
-	(table) => [uniqueIndex('query_unq').on(table.query)],
-)
+export const bilibiliMetadata = sqliteTable('bilibili_metadata', {
+	trackId: integer('track_id')
+		.primaryKey()
+		.references(() => tracks.id, { onDelete: 'cascade' }),
+	bvid: text('bvid').notNull(),
+	cid: integer('cid'),
+	isMultiPart: integer('is_multi_part', { mode: 'boolean' }).notNull(),
+	createAt: integer('create_at', { mode: 'timestamp_ms' }).notNull(),
+})
+
+export const localMetadata = sqliteTable('local_metadata', {
+	trackId: integer('track_id')
+		.primaryKey()
+		.references(() => tracks.id, { onDelete: 'cascade' }),
+	localPath: text('local_path').notNull(),
+})
 
 // ##################################
 // RELATIONS
 // ##################################
-
 export const artistRelations = relations(artists, ({ many }) => ({
 	tracks: many(tracks),
 	authoredPlaylists: many(playlists),
@@ -114,6 +111,14 @@ export const trackRelations = relations(tracks, ({ one, many }) => ({
 		references: [artists.id],
 	}),
 	playlistLinks: many(playlistTracks),
+	bilibiliMetadata: one(bilibiliMetadata, {
+		fields: [tracks.id],
+		references: [bilibiliMetadata.trackId],
+	}),
+	localMetadata: one(localMetadata, {
+		fields: [tracks.id],
+		references: [localMetadata.trackId],
+	}),
 }))
 
 export const playlistRelations = relations(playlists, ({ one, many }) => ({
@@ -131,6 +136,23 @@ export const playlistTrackRelations = relations(playlistTracks, ({ one }) => ({
 	}),
 	track: one(tracks, {
 		fields: [playlistTracks.trackId],
+		references: [tracks.id],
+	}),
+}))
+
+export const bilibiliMetadataRelations = relations(
+	bilibiliMetadata,
+	({ one }) => ({
+		track: one(tracks, {
+			fields: [bilibiliMetadata.trackId],
+			references: [tracks.id],
+		}),
+	}),
+)
+
+export const localMetadataRelations = relations(localMetadata, ({ one }) => ({
+	track: one(tracks, {
+		fields: [localMetadata.trackId],
 		references: [tracks.id],
 	}),
 }))

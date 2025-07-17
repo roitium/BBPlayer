@@ -15,6 +15,13 @@
 			"when": 1752675517437,
 			"tag": "0001_fast_trauma",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1752730018660,
+			"tag": "0002_groovy_maximus",
+			"breakpoints": true
 		}
 	]
 }
