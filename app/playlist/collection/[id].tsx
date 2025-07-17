@@ -46,6 +46,8 @@ const mapApiItemToViewTrack = (apiItem: BilibiliMediaItemInCollection) => {
 	}
 }
 
+type UITrack = ReturnType<typeof mapApiItemToViewTrack>
+
 export default function CollectionPage() {
 	const navigation =
 		useNavigation<
@@ -120,7 +122,7 @@ export default function CollectionPage() {
 	)
 
 	const trackMenuItems = useCallback(
-		(item: ReturnType<typeof mapApiItemToViewTrack>) => [
+		(item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -155,13 +157,7 @@ export default function CollectionPage() {
 	)
 
 	const renderItem = useCallback(
-		({
-			item,
-			index,
-		}: {
-			item: ReturnType<typeof mapApiItemToViewTrack>
-			index: number
-		}) => {
+		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
 					item={item}
@@ -174,10 +170,7 @@ export default function CollectionPage() {
 		[handleTrackPress, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback(
-		(item: ReturnType<typeof mapApiItemToViewTrack>) => item.bvid,
-		[],
-	)
+	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
