@@ -1,4 +1,3 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -9,10 +8,9 @@ import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/useUserData'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { transformUserUploadedVideosToTracks } from '@/lib/api/bilibili/bilibili.transformers'
-import type { Track } from '@/types/core/media'
-import log from '@/utils/log'
+import { BilibiliUserUploadedVideosResponse } from '@/types/apis/bilibili'
+import { formatMMSSToSeconds } from '@/utils/times'
+import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
@@ -24,12 +22,31 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
-import { PlaylistError } from '../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
-import type { RootStackParamList } from '../../../types/navigation'
+import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
+import type { RootStackParamList } from '../../../../types/navigation'
 
-const playlistLog = log.extend('PLAYLIST/UPLOADER')
+const mapApiItemToViewTrack = (
+	apiItem: BilibiliUserUploadedVideosResponse['list']['vlist'][0],
+) => {
+	return {
+		id: apiItem.bvid,
+		bvid: apiItem.bvid,
+		title: apiItem.title,
+		artist: {
+			id: apiItem.aid,
+			name: apiItem.author,
+			source: 'bilibili',
+		},
+		coverUrl: apiItem.pic,
+		duration: formatMMSSToSeconds(apiItem.length),
+		source: 'bilibili', // 明确来源
+		isMultiPage: false,
+	}
+}
+
+type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
 export default function UploaderPage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistUploader'>>()
@@ -39,28 +56,27 @@ export default function UploaderPage() {
 		useNavigation<
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistUploader'>
 		>()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalBvid, setCurrentModalBvid] = useState('')
+	// const [modalVisible, setModalVisible] = useState(false)
+	// const [currentModalBvid, setCurrentModalBvid] = useState('')
 
-	const playTrack = useCallback(
-		async (track: Track, playNow = false) => {
-			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: playNow,
-					clearQueue: false,
-					playNext: !playNow,
-				})
-			} catch (error) {
-				playlistLog.sentry('添加到队列失败', error)
-			}
-		},
-		[addToQueue],
-	)
+	// const playTrack = useCallback(
+	// 	async (track: Track, playNow = false) => {
+	// 		try {
+	// 			await addToQueue({
+	// 				tracks: [track],
+	// 				playNow: playNow,
+	// 				clearQueue: false,
+	// 				playNext: !playNow,
+	// 			})
+	// 		} catch (error) {
+	// 			playlistLog.sentry('添加到队列失败', error)
+	// 		}
+	// 	},
+	// 	[addToQueue],
+	// )
 
 	const {
 		data: uploadedVideos,
@@ -79,25 +95,24 @@ export default function UploaderPage() {
 
 	const tracks = useMemo(() => {
 		if (!uploadedVideos) return []
-		return transformUserUploadedVideosToTracks(
-			uploadedVideos?.pages.flatMap((page) => page.list.vlist),
-		)
+		return uploadedVideos.pages
+			.flatMap((page) => page.list.vlist)
+			.map(mapApiItemToViewTrack)
 	}, [uploadedVideos])
 
 	const trackMenuItems = useCallback(
-		(item: Track) => [
+		(_item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: () => playTrack(item, false),
+				onPress: () => toast.show('暂未实现'),
 			},
 			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
 				onPress: () => {
-					setCurrentModalBvid(item.id)
-					setModalVisible(true)
+					toast.show('暂未实现')
 				},
 			},
 			TrackMenuItemDividerToken,
@@ -105,28 +120,29 @@ export default function UploaderPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: async () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.id })
+					// navigation.navigate('PlaylistMultipage', { bvid: item.id })
+					toast.show('暂未实现')
 				},
 			},
 		],
-		[playTrack, navigation],
+		[],
 	)
 
 	const renderItem = useCallback(
-		({ item, index }: { item: Track; index: number }) => {
+		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
 					item={item}
 					index={index}
-					onTrackPress={() => playTrack(item, true)}
+					onTrackPress={() => toast.show('暂未实现')}
 					menuItems={trackMenuItems(item)}
 				/>
 			)
 		},
-		[playTrack, trackMenuItems],
+		[trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: Track) => item.id, [])
+	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
 	useEffect(() => {
 		if (typeof mid !== 'string') {
@@ -213,12 +229,12 @@ export default function UploaderPage() {
 				/>
 			</View>
 
-			<AddToFavoriteListsModal
+			{/* <AddToFavoriteListsModal
 				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
-			/>
+			/> */}
 		</View>
 	)
 }

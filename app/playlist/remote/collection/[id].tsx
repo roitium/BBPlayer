@@ -1,4 +1,3 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -20,10 +19,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
-import { PlaylistError } from '../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
-import type { RootStackParamList } from '../../../types/navigation'
+import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
+import type { RootStackParamList } from '../../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
@@ -59,8 +58,8 @@ export default function CollectionPage() {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalBvid, setCurrentModalBvid] = useState('')
+	// const [modalVisible, setModalVisible] = useState(false)
+	// const [currentModalBvid, setCurrentModalBvid] = useState('')
 
 	const {
 		data: collectionData,
@@ -73,34 +72,34 @@ export default function CollectionPage() {
 		[collectionData],
 	)
 
-	const playAll = useCallback(
-		async (startFromId?: string) => {
-			try {
-				if (!collectionData?.medias) {
-					toast.error('播放全部失败', {
-						description: '无法加载收藏夹内容',
-					})
-					playlistLog.error(
-						'播放全部失败 - collectionData.medias 为空',
-						collectionData,
-					)
-					return
-				}
-				toast.info('暂未实现: ' + startFromId)
-				// await addToQueue({
-				// 	tracks: collectionData.medias,
-				// 	playNow: true,
-				// 	clearQueue: true,
-				// 	startFromId: startFromId,
-				// 	playNext: false,
-				// })
-			} catch (error) {
-				playlistLog.sentry('播放全部失败', error)
-				toast.error('播放全部失败', { description: '发生未知错误' })
-			}
-		},
-		[collectionData],
-	)
+	// const playAll = useCallback(
+	// 	async (startFromId?: string) => {
+	// 		try {
+	// 			if (!collectionData?.medias) {
+	// 				toast.error('播放全部失败', {
+	// 					description: '无法加载收藏夹内容',
+	// 				})
+	// 				playlistLog.error(
+	// 					'播放全部失败 - collectionData.medias 为空',
+	// 					collectionData,
+	// 				)
+	// 				return
+	// 			}
+	// 			toast.info('暂未实现: ' + startFromId)
+	// 			// await addToQueue({
+	// 			// 	tracks: collectionData.medias,
+	// 			// 	playNow: true,
+	// 			// 	clearQueue: true,
+	// 			// 	startFromId: startFromId,
+	// 			// 	playNext: false,
+	// 			// })
+	// 		} catch (error) {
+	// 			playlistLog.sentry('播放全部失败', error)
+	// 			toast.error('播放全部失败', { description: '发生未知错误' })
+	// 		}
+	// 	},
+	// 	[collectionData],
+	// )
 
 	const _playNext = useCallback(
 		async (track: BilibiliMediaItemInCollection) => {
@@ -122,7 +121,7 @@ export default function CollectionPage() {
 	)
 
 	const trackMenuItems = useCallback(
-		(item: UITrack) => [
+		(_item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -133,8 +132,9 @@ export default function CollectionPage() {
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
 				onPress: () => {
-					setCurrentModalBvid(item.bvid)
-					setModalVisible(true)
+					toast.show('暂未实现')
+					// setCurrentModalBvid(item.bvid)
+					// setModalVisible(true)
 				},
 			},
 			TrackMenuItemDividerToken,
@@ -142,19 +142,18 @@ export default function CollectionPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
+					// navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
+					toast.show('暂未实现')
 				},
 			},
 		],
-		[navigation],
+		[],
 	)
 
-	const handleTrackPress = useCallback(
-		({ id }: { id: string }) => {
-			playAll(id)
-		},
-		[playAll],
-	)
+	const handleTrackPress = useCallback(() => {
+		// playAll(id)
+		toast.show('暂未实现')
+	}, [])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: UITrack; index: number }) => {
@@ -225,7 +224,7 @@ export default function CollectionPage() {
 							title={collectionData.info.title}
 							subtitle={`${collectionData.info.upper.name} • ${collectionData.info.media_count} 首歌曲`}
 							description={collectionData.info.intro}
-							onPlayAll={() => playAll()}
+							onPlayAll={() => toast.show('暂未实现')}
 						/>
 					}
 					refreshControl={
@@ -253,12 +252,12 @@ export default function CollectionPage() {
 				/>
 			</View>
 
-			<AddToFavoriteListsModal
+			{/* <AddToFavoriteListsModal
 				key={currentModalBvid}
 				visible={modalVisible}
 				bvid={currentModalBvid}
 				setVisible={setModalVisible}
-			/>
+			/> */}
 		</View>
 	)
 }

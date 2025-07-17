@@ -18,10 +18,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
-import { PlaylistError } from '../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
-import type { RootStackParamList } from '../../../types/navigation'
+import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
+import { PlaylistError } from '../../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
+import type { RootStackParamList } from '../../../../types/navigation'
 
 // const playlistLog = log.extend('PLAYLIST/FAVORITE')
 
