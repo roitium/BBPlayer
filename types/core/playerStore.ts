@@ -1,4 +1,4 @@
-import type { BilibiliApiError } from '@/utils/errors'
+import type { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
 import type { Result } from 'neverthrow'
 import type {
 	RepeatMode,
@@ -9,11 +9,11 @@ import type { Track } from './media'
 // 播放器状态接口
 interface PlayerState {
 	// 队列相关
-	tracks: Record<string, Track> // 歌曲数据源，key 是 getTrackKey 的返回值
-	orderedList: string[] // 顺序播放列表，存储 key
-	shuffledList: string[] // 随机播放列表，存储 key
+	tracks: Record<string, Track> // 歌曲数据源，key 是 id
+	orderedList: string[] // 顺序播放列表，存储 id
+	shuffledList: string[] // 随机播放列表，存储 id
 
-	currentTrackKey: string | null // 当前播放歌曲的 key
+	currentTrackId: string | null // 当前播放歌曲的 id
 
 	// 播放状态
 	isPlaying: boolean
@@ -26,7 +26,7 @@ interface addToQueueParams {
 	tracks: Track[]
 	playNow: boolean
 	clearQueue: boolean
-	startFromKey?: string
+	startFromId?: string
 	playNext: boolean
 }
 
@@ -42,13 +42,13 @@ interface PlayerActions {
 		tracks,
 		playNow,
 		clearQueue,
-		startFromKey,
+		startFromId,
 		playNext,
 	}: addToQueueParams) => Promise<void>
 	resetStore: () => Promise<void>
 	skipToTrack: (index: number) => Promise<void>
 	rntpQueue: () => Promise<RNTPTracker[]>
-	removeTrack: (id: string, cid?: number) => Promise<void>
+	removeTrack: (id: string) => Promise<void>
 
 	// 播放控制
 	togglePlay: () => Promise<void>
@@ -61,7 +61,7 @@ interface PlayerActions {
 	toggleShuffleMode: () => void
 
 	// 音频流处理
-	patchMetadataAndAudio: (
+	patchAudio: (
 		track: Track,
 	) => Promise<
 		Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | unknown>

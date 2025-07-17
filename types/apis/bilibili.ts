@@ -50,8 +50,11 @@ interface BilibiliHistoryVideo {
 	bvid: string
 	title: string
 	pic: string
+	pubdate: number
 	owner: {
 		name: string
+		mid: number
+		face: string
 	}
 	duration: number
 }

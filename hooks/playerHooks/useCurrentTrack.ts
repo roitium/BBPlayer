@@ -3,9 +3,7 @@ import { usePlayerStore } from '../stores/usePlayerStore'
 
 const useCurrentTrack = (): Track | null => {
 	return usePlayerStore((state) =>
-		state.currentTrackKey
-			? (state.tracks[state.currentTrackKey] ?? null)
-			: null,
+		state.currentTrackId ? (state.tracks[state.currentTrackId] ?? null) : null,
 	)
 }
 

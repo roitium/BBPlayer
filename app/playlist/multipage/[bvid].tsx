@@ -103,7 +103,7 @@ export default function MultipagePage() {
 					tracks: tracksData,
 					playNow: true,
 					clearQueue: true,
-					startFromKey: startFromCid ? `${bvid}-${startFromCid}` : undefined,
+					startFromId: startFromCid ? `${bvid}-${startFromCid}` : undefined,
 					playNext: false,
 				})
 			} catch (error) {

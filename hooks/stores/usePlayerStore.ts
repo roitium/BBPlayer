@@ -1,4 +1,3 @@
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
 import { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
 import type { Track } from '@/types/core/media'
 import type {
@@ -12,7 +11,6 @@ import {
 	checkAndUpdateAudioStream,
 	checkBilibiliAudioExpiry,
 	convertToRNTPTrack,
-	getTrackKey,
 	reportPlaybackHistory,
 } from '@/utils/player'
 import toast from '@/utils/toast'
@@ -47,7 +45,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				tracks: {},
 				orderedList: [],
 				shuffledList: [],
-				currentTrackKey: null,
+				currentTrackId: null,
 				isPlaying: false,
 				isBuffering: false,
 				repeatMode: RepeatMode.Off,
@@ -63,14 +61,14 @@ export const usePlayerStore = create<PlayerStore>()(
 				},
 
 				_getCurrentTrack: (): Track | null => {
-					const { tracks, currentTrackKey } = get()
+					const { tracks, currentTrackId: currentTrackKey } = get()
 					return currentTrackKey ? (tracks[currentTrackKey] ?? null) : null
 				},
 
 				_getCurrentIndex: (): number => {
-					const { currentTrackKey } = get()
-					if (!currentTrackKey) return -1
-					return get()._getActiveList().indexOf(currentTrackKey)
+					const { currentTrackId } = get()
+					if (!currentTrackId) return -1
+					return get()._getActiveList().indexOf(currentTrackId)
 				},
 
 				resetPlayer: async () => {
@@ -89,14 +87,19 @@ export const usePlayerStore = create<PlayerStore>()(
 					return currentTrack ? [currentTrack] : []
 				},
 
-				removeTrack: async (id: string, cid: number | undefined) => {
-					playerLog.debug('removeTrack()', { id, cid })
-					const { tracks, currentTrackKey: initialCurrentKey } = get()
+				removeTrack: async (id: string) => {
+					playerLog.debug('removeTrack()', { id })
+					const { tracks, currentTrackId: initialCurrentKey } = get()
 
-					// 根据 id 和 cid 找到 key
+					// // 根据 id 和 cid 找到 key
+					// const keyToRemove = Object.keys(tracks).find((key) => {
+					// 	const track = tracks[key]
+					// 	return track.id === id && (!track.isMultiPage || track.cid === cid)
+					// })
+					const numberId = Number(id)
 					const keyToRemove = Object.keys(tracks).find((key) => {
 						const track = tracks[key]
-						return track.id === id && (!track.isMultiPage || track.cid === cid)
+						return track.id === numberId
 					})
 
 					if (!keyToRemove) {
@@ -149,7 +152,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							if (shuffledIndex > -1)
 								state.shuffledList.splice(shuffledIndex, 1)
 
-							state.currentTrackKey = nextTrackKeyToPlay
+							state.currentTrackId = nextTrackKeyToPlay
 						}),
 					)
 
@@ -178,7 +181,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					tracks,
 					playNow,
 					clearQueue,
-					startFromKey,
+					startFromId,
 					playNext,
 				}: addToQueueParams) => {
 					if (!checkPlayerReady() || tracks.length === 0) return
@@ -186,29 +189,26 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					const existingTracks = get().tracks
 					// 找出需要新加入的 tracks
-					const newTracks = tracks.filter((track) => {
-						const key = getTrackKey(track)
-						return !existingTracks[key]
-					})
+					const newTracks = tracks.filter((track) => !existingTracks[track.id])
 
 					// 没有新歌加入，但需要跳转播放
 					if (newTracks.length === 0) {
-						if (playNow && startFromKey) {
+						if (playNow && startFromId) {
 							// 直接在当前播放列表中找到 key 对应的索引
-							const targetIndex = get()._getActiveList().indexOf(startFromKey)
+							const targetIndex = get()._getActiveList().indexOf(startFromId)
 							if (targetIndex !== -1) {
 								await get().skipToTrack(targetIndex)
 							} else {
-								playerLog.warn('指定的 startFromKey 在当前队列中不存在', {
-									key: startFromKey,
+								playerLog.warn('指定的 startFromId 在当前队列中不存在', {
+									key: startFromId,
 								})
 							}
 						}
 						return
 					}
 
-					// Case 2: 有新歌加入
-					const newKeys = newTracks.map(getTrackKey)
+					// 有新歌加入
+					const newKeys = newTracks.map((track) => String(track.id))
 					set(
 						produce((state: PlayerState) => {
 							// 1. 把新歌数据加进去
@@ -217,7 +217,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							})
 
 							// 2. 计算插入位置
-							const currentKey = state.currentTrackKey
+							const currentKey = state.currentTrackId
 							let orderedInsertIdx = state.orderedList.length
 							let shuffledInsertIdx = state.shuffledList.length
 							if (playNext && currentKey) {
@@ -235,21 +235,21 @@ export const usePlayerStore = create<PlayerStore>()(
 								let keyToPlay = newKeys[0]
 
 								// 如果提供了 startFromKey，并且这个 key 属于本次新添加的歌曲，则使用它
-								if (startFromKey && newKeys.includes(startFromKey)) {
-									keyToPlay = startFromKey
+								if (startFromId && newKeys.includes(startFromId)) {
+									keyToPlay = startFromId
 								}
-								state.currentTrackKey = keyToPlay
+								state.currentTrackId = keyToPlay
 							} else if (
-								!state.currentTrackKey &&
+								!state.currentTrackId &&
 								state.orderedList.length > 0
 							) {
-								state.currentTrackKey = state.orderedList[0]
+								state.currentTrackId = state.orderedList[0]
 							}
 						}),
 					)
 
 					if (playNow) {
-						const keyToPlay = get().currentTrackKey
+						const keyToPlay = get().currentTrackId
 						if (!keyToPlay) {
 							playerLog.error('播放器异常，无法找到当前播放的 key')
 							return
@@ -285,7 +285,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							}
 
 							playerLog.debug('音频流已过期, 正在更新...')
-							const result = await get().patchMetadataAndAudio(currentTrack)
+							const result = await get().patchAudio(currentTrack)
 							if (result.isErr()) {
 								playerLog.sentry('更新音频流失败', result.error)
 								return
@@ -370,7 +370,11 @@ export const usePlayerStore = create<PlayerStore>()(
 				},
 
 				toggleShuffleMode: () => {
-					const { shuffleMode, orderedList, currentTrackKey } = get()
+					const {
+						shuffleMode,
+						orderedList,
+						currentTrackId: currentTrackKey,
+					} = get()
 					if (!checkPlayerReady()) return
 
 					const newShuffleMode = !shuffleMode
@@ -410,7 +414,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					set((state) => ({ ...initialState, repeatMode: state.repeatMode }))
 				},
 
-				patchMetadataAndAudio: async (
+				patchAudio: async (
 					track: Track,
 				): Promise<
 					Result<
@@ -418,67 +422,66 @@ export const usePlayerStore = create<PlayerStore>()(
 						BilibiliApiError | unknown
 					>
 				> => {
-					const oldKey = getTrackKey(track)
+					// const oldKey = String(track.id)
 
 					try {
-						let trackAfterMeta = track
-						// 1. 获取元数据 (如果需要)
-						if (!track.hasMetadata) {
-							playerLog.debug('获取元数据', { id: track.id, cid: track.cid })
-							const metadata = await bilibiliApi.getVideoDetails(track.id)
-							if (metadata.isErr()) return err(metadata.error)
+						// 新的架构不会出现 metadata 为空的情况
+						// let trackAfterMeta = track
+						// // 1. 获取元数据 (如果需要)
+						// if (!track.bilibiliMetadata.) {
+						// 	playerLog.debug('获取元数据', { id: track.id, cid: track.cid })
+						// 	const metadata = await bilibiliApi.getVideoDetails(track.id)
+						// 	if (metadata.isErr()) return err(metadata.error)
 
-							trackAfterMeta = {
-								...track,
-								title: metadata.value.title,
-								artist: metadata.value.owner.name,
-								cover: metadata.value.pic,
-								duration: metadata.value.duration,
-								createTime: metadata.value.pubdate,
-								cid: metadata.value.cid,
-								hasMetadata: true,
-							}
+						// 	trackAfterMeta = {
+						// 		...track,
+						// 		title: metadata.value.title,
+						// 		artist: metadata.value.owner.name,
+						// 		coverUrl: metadata.value.pic,
+						// 		duration: metadata.value.duration,
+						// 		createAt: metadata.value.pubdate,
+						// 		cid: metadata.value.cid,
+						// 		hasMetadata: true,
+						// 	}
 
-							const newKey = getTrackKey(trackAfterMeta)
+						// 	const newKey = getTrackKey(trackAfterMeta)
 
-							set(
-								produce((state: PlayerState) => {
-									// ✨ 处理 key 可能变化的关键逻辑
-									if (oldKey !== newKey) {
-										// 如果 key 变了，需要更新 key 列表和 tracks 字典
-										const orderedIndex = state.orderedList.indexOf(oldKey)
-										if (orderedIndex > -1)
-											state.orderedList[orderedIndex] = newKey
+						// 	set(
+						// 		produce((state: PlayerState) => {
+						// 			// ✨ 处理 key 可能变化的关键逻辑
+						// 			if (oldKey !== newKey) {
+						// 				// 如果 key 变了，需要更新 key 列表和 tracks 字典
+						// 				const orderedIndex = state.orderedList.indexOf(oldKey)
+						// 				if (orderedIndex > -1)
+						// 					state.orderedList[orderedIndex] = newKey
 
-										const shuffledIndex = state.shuffledList.indexOf(oldKey)
-										if (shuffledIndex > -1)
-											state.shuffledList[shuffledIndex] = newKey
+						// 				const shuffledIndex = state.shuffledList.indexOf(oldKey)
+						// 				if (shuffledIndex > -1)
+						// 					state.shuffledList[shuffledIndex] = newKey
 
-										if (state.currentTrackKey === oldKey) {
-											state.currentTrackKey = newKey
-										}
+						// 				if (state.currentTrackId === oldKey) {
+						// 					state.currentTrackId = newKey
+						// 				}
 
-										delete state.tracks[oldKey]
-										state.tracks[newKey] = trackAfterMeta
-									} else {
-										// 如果 key 不变，直接更新
-										state.tracks[oldKey] = trackAfterMeta
-									}
-								}),
-							)
-						}
+						// 				delete state.tracks[oldKey]
+						// 				state.tracks[newKey] = trackAfterMeta
+						// 			} else {
+						// 				// 如果 key 不变，直接更新
+						// 				state.tracks[oldKey] = trackAfterMeta
+						// 			}
+						// 		}),
+						// 	)
+						// }
 
 						// 2. 获取和更新音频流
-						const result = await checkAndUpdateAudioStream(trackAfterMeta)
+						const result = await checkAndUpdateAudioStream(track)
 						if (result.isErr()) return err(result.error)
 
 						const { track: finalTrack, needsUpdate } = result.value
 						if (needsUpdate) {
-							// 这里 key 不会再变，因为 id 和 cid 不会再被修改
-							const finalKey = getTrackKey(finalTrack)
 							set(
 								produce((state: PlayerState) => {
-									state.tracks[finalKey] = finalTrack
+									state.tracks[track.id] = finalTrack
 								}),
 							)
 						}
@@ -511,23 +514,21 @@ export const usePlayerStore = create<PlayerStore>()(
 					playerLog.debug(
 						`跳转到曲目: index=${index}, key=${keyToPlay}, title=${initialTrack.title}`,
 					)
-					set({ currentTrackKey: keyToPlay, isBuffering: true })
+					set({ currentTrackId: keyToPlay, isBuffering: true })
 
-					// 1. 获取最新的元数据和音频流
-					const updatedTrackResult =
-						await get().patchMetadataAndAudio(initialTrack)
+					// 1. 获取最新的音频流
+					const updatedTrackResult = await get().patchAudio(initialTrack)
 					if (updatedTrackResult.isErr()) {
 						playerLog.sentry('更新音频流失败', updatedTrackResult.error)
 						await TrackPlayer.pause()
 						toast.error('播放失败: 更新音频流失败', {
-							/* ... */
+							description: String(updatedTrackResult.error),
 						})
 						return
 					}
 
 					// 2. 使用最终的、最新的 track 对象进行播放
 					const finalTrack = updatedTrackResult.value.track
-					const finalKey = getTrackKey(finalTrack) // 获取最终的 key
 
 					const rntpTrackResult = convertToRNTPTrack(finalTrack)
 					if (rntpTrackResult.isErr()) {
@@ -542,7 +543,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					)
 
 					set({
-						currentTrackKey: finalKey,
+						currentTrackId: String(finalTrack.id),
 						isPlaying: true,
 						isBuffering: false,
 					})

@@ -1,7 +1,7 @@
 import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
-import type { Track } from '@/types/core/media'
+import type { BilibiliTrack, Track } from '@/types/core/media'
 import { err, ok, type Result } from 'neverthrow'
 import type { Track as RNTPTrack } from 'react-native-track-player'
 import log from './log'
@@ -21,13 +21,13 @@ function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
 	})
 
 	let url = ''
-	if (track.source === 'bilibili' && track.biliStreamUrl) {
-		url = track.biliStreamUrl.url
+	if (track.source === 'bilibili' && track.bilibiliMetadata.bilibiliStreamUrl) {
+		url = track.bilibiliMetadata.bilibiliStreamUrl.url
 		playerLog.debug('使用 B 站音频流 URL', {
-			quality: track.biliStreamUrl.quality,
+			quality: track.bilibiliMetadata.bilibiliStreamUrl.quality,
 		})
-	} else if (track.source === 'local' && track.localStreamUrl) {
-		url = track.localStreamUrl
+	} else if (track.source === 'local' && track.localMetadata) {
+		url = track.localMetadata.localPath
 		playerLog.debug('使用本地音频流 URL', { url })
 	}
 
@@ -42,8 +42,8 @@ function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
 		id: track.id,
 		url,
 		title: track.title,
-		artist: track.artist,
-		artwork: track.cover,
+		artist: track.artist?.name,
+		artwork: track.artist?.avatarUrl ?? undefined,
 		duration: track.duration,
 		userAgent:
 			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
@@ -64,15 +64,16 @@ function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
  * @param track - 内部 Track 对象。
  * @returns 如果音频流不存在或已过期，则返回 true，否则返回 false。
  */
-function checkBilibiliAudioExpiry(track: Track): boolean {
+function checkBilibiliAudioExpiry(_track: Track): boolean {
 	const now = Date.now()
+	const track = _track as BilibiliTrack
 	const isExpired =
-		!track.biliStreamUrl ||
-		now - track.biliStreamUrl.getTime > STREAM_EXPIRY_TIME
+		!track.bilibiliMetadata.bilibiliStreamUrl ||
+		now - track.bilibiliMetadata.bilibiliStreamUrl.getTime > STREAM_EXPIRY_TIME
 	playerLog.debug('检查 B 站音频流过期状态', {
 		trackId: track.id,
-		hasStream: !!track.biliStreamUrl,
-		// streamAge: track.biliStreamUrl ? now - track.biliStreamUrl.getTime : 'N/A',
+		hasStream: !!track.bilibiliMetadata.bilibiliStreamUrl,
+		// streamAge: track.bilibiliStreamUrl ? now - track.bilibiliStreamUrl.getTime : 'N/A',
 		isExpired,
 		// expiryTime: STREAM_EXPIRY_TIME,
 	})
@@ -107,8 +108,8 @@ async function checkAndUpdateAudioStream(
 		if (!needsUpdate) {
 			// playerLog.debug('B 站音频流仍然有效，无需更新', {
 			// 	trackId: track.id,
-			// 	getTime: track.biliStreamUrl
-			// 		? new Date(track.biliStreamUrl.getTime).toISOString()
+			// 	getTime: track.bilibiliStreamUrl
+			// 		? new Date(track.bilibiliStreamUrl.getTime).toISOString()
 			// 		: 'N/A',
 			// })
 			return ok({ track, needsUpdate: false }) // 流有效，返回 ok
@@ -117,8 +118,8 @@ async function checkAndUpdateAudioStream(
 		// 3. 需要更新 Bilibili 音频流
 		playerLog.debug('需要更新 B 站音频流', { trackId: track.id })
 		try {
-			const bvid = track.id
-			let cid = track.cid
+			const bvid = track.bilibiliMetadata.bvid
+			let cid = track.bilibiliMetadata.cid
 
 			// 3.1 获取 CID (如果需要)
 			if (!cid) {
@@ -190,7 +191,7 @@ async function checkAndUpdateAudioStream(
 					const updatedTrack = {
 						...track,
 						cid: cid, // 确保 cid 更新
-						biliStreamUrl: {
+						bilibiliStreamUrl: {
 							url: streamInfo.url,
 							quality: streamInfo.quality || 0,
 							getTime: Date.now(),
@@ -201,8 +202,8 @@ async function checkAndUpdateAudioStream(
 					// playerLog.debug('Track 对象已更新音频流信息', {
 					// 	trackId: updatedTrack.id,
 					// 	title: updatedTrack.title,
-					// 	streamUrl: updatedTrack.biliStreamUrl.url,
-					// 	getTime: new Date(updatedTrack.biliStreamUrl.getTime).toISOString(),
+					// 	streamUrl: updatedTrack.bilibiliStreamUrl.url,
+					// 	getTime: new Date(updatedTrack.bilibiliStreamUrl.getTime).toISOString(),
 					// })
 
 					return ok({ track: updatedTrack, needsUpdate: true })
@@ -221,27 +222,27 @@ async function checkAndUpdateAudioStream(
 		}
 	}
 
-	const unknownSourceError = new Error(`未知的 Track source: ${track.source}`)
+	const unknownSourceError = new Error(`未知的 Track source: ${track}`)
 	return err(unknownSourceError)
 }
 
-function isTargetTrack(
-	track: Track,
-	targetId: string | undefined,
-	targetCid: number | undefined,
-) {
-	if (track.isMultiPage) {
-		return track.cid === targetCid
-	}
-	return track.id === targetId
-}
+// function isTargetTrack(
+// 	track: Track,
+// 	// targetId: string | undefined,
+// 	// targetCid: number | undefined,
+// ) {
+// 	// if (track.isMultiPage) {
+// 	// 	return track.cid === targetCid
+// 	// }
+// 	// return track.id === targetId
+// }
 
-function getTrackKey(track: Track): string {
-	if (track.isMultiPage && track.cid) {
-		return `${track.id}-${track.cid}`
-	}
-	return track.id
-}
+// function getTrackKey(track: Track): string {
+// 	if (track.isMultiPage && track.cid) {
+// 		return `${track.id}-${track.cid}`
+// 	}
+// 	return track.id
+// }
 
 /**
  * 上报播放记录
@@ -249,19 +250,25 @@ function getTrackKey(track: Track): string {
  */
 async function reportPlaybackHistory(track: Track): Promise<void> {
 	if (!useAppStore.getState().settings.sendPlayHistory) return
-	if (!track.cid || !track.id || !(track.source === 'bilibili')) {
+	if (
+		track.source !== 'bilibili' ||
+		!track.bilibiliMetadata.cid ||
+		!track.bilibiliMetadata.bvid
+	)
 		return
-	}
 	playerLog.debug('上报播放记录', {
-		bvid: track.id,
-		cid: track.cid,
+		bvid: track.bilibiliMetadata.bvid,
+		cid: track.bilibiliMetadata.cid,
 	})
-	const result = await bilibiliApi.reportPlaybackHistory(track.id, track.cid)
+	const result = await bilibiliApi.reportPlaybackHistory(
+		track.bilibiliMetadata.bvid,
+		track.bilibiliMetadata.cid,
+	)
 	if (result.isErr()) {
 		playerLog.warn('上报播放记录到 bilibili 失败', {
 			params: {
-				bvid: track.id,
-				cid: track.cid,
+				bvid: track.bilibiliMetadata.bvid,
+				cid: track.bilibiliMetadata.cid,
 			},
 			error: result.error,
 		})
@@ -273,7 +280,5 @@ export {
 	checkAndUpdateAudioStream,
 	checkBilibiliAudioExpiry,
 	convertToRNTPTrack,
-	getTrackKey,
-	isTargetTrack,
 	reportPlaybackHistory,
 }

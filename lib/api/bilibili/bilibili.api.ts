@@ -19,7 +19,7 @@ import {
 	type BilibiliUserUploadedVideosResponse,
 	type BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
-import type { Playlist, Track } from '@/types/core/media'
+import type { BilibiliTrack, Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './bilibili.client'
@@ -118,7 +118,10 @@ export const createBilibiliApi = () => ({
 	 */
 	getAudioStream(
 		params: BilibiliAudioStreamParams,
-	): ResultAsync<Track['biliStreamUrl'], BilibiliApiError> {
+	): ResultAsync<
+		BilibiliTrack['bilibiliMetadata']['bilibiliStreamUrl'],
+		BilibiliApiError
+	> {
 		const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params
 		return bilibiliApiClient
 			.get<BilibiliAudioStreamResponse>('/x/player/wbi/playurl', {
@@ -162,7 +165,9 @@ export const createBilibiliApi = () => ({
 					)
 				}
 
-				let stream: Track['biliStreamUrl'] | null = null
+				let stream:
+					| BilibiliTrack['bilibiliMetadata']['bilibiliStreamUrl']
+					| null = null
 				const getTime = Date.now() + 60 * 1000 // 加 60s 提前量
 
 				// 尝试找到指定质量的音频流

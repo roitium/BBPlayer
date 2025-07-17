@@ -178,17 +178,15 @@ const PlayerLogic = {
 					playerLog.sentry('播放错误', data)
 				}
 				const state = usePlayerStore.getState()
-				const nowTrack = state.currentTrackKey
-					? (state.tracks[state.currentTrackKey] ?? null)
+				const nowTrack = state.currentTrackId
+					? (state.tracks[state.currentTrackId] ?? null)
 					: null
 				if (nowTrack) {
 					playerLog.debug('当前播放的曲目', {
 						trackId: nowTrack.id,
 						title: nowTrack.title,
 					})
-					const track = await usePlayerStore
-						.getState()
-						.patchMetadataAndAudio(nowTrack)
+					const track = await usePlayerStore.getState().patchAudio(nowTrack)
 					if (track.isErr()) {
 						playerLog.sentry('更新音频流失败', track.error)
 						return

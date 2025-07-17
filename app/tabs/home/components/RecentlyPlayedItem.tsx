@@ -71,7 +71,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 						style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
 					>
 						<Image
-							source={{ uri: item.cover }}
+							source={{ uri: item.coverUrl }}
 							style={{ width: 48, height: 48, borderRadius: 4 }}
 							transition={300}
 							cachePolicy={'none'}

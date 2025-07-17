@@ -79,7 +79,7 @@ export default function LocalPlaylistPage() {
 					tracks: playlistData,
 					playNow: true,
 					clearQueue: true,
-					startFromKey: startFromId,
+					startFromId: startFromId,
 					playNext: false,
 				})
 			} catch (error) {

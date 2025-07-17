@@ -19,7 +19,7 @@ interface BaseTrack {
 	duration: number
 }
 
-interface BilibiliTrack extends BaseTrack {
+export interface BilibiliTrack extends BaseTrack {
 	source: 'bilibili'
 	bilibiliMetadata: {
 		bvid: string

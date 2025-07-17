@@ -27,7 +27,7 @@ export function TrackInfo({
 			>
 				<TouchableOpacity activeOpacity={0.8}>
 					<Image
-						source={{ uri: currentTrack.cover }}
+						source={{ uri: currentTrack.coverUrl }}
 						style={{
 							width: screenWidth - 80,
 							height: screenWidth - 80,

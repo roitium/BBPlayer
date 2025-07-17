@@ -67,7 +67,7 @@ export default function CollectionPage() {
 					tracks: collectionData.medias,
 					playNow: true,
 					clearQueue: true,
-					startFromKey: startFromId,
+					startFromId: startFromId,
 					playNext: false,
 				})
 			} catch (error) {

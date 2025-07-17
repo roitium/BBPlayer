@@ -126,7 +126,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 				}}
 			>
 				<Image
-					source={{ uri: displayTrack.cover }}
+					source={{ uri: displayTrack.coverUrl }}
 					style={{
 						height: 48,
 						width: 48,

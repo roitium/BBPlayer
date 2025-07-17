@@ -25,7 +25,7 @@ export const PlaybackService = async () => {
 
 	// 停止控制
 	TrackPlayer.addEventListener(Event.RemoteStop, () => {
-		usePlayerStore.getState().resetPlayer()
+		usePlayerStore.getState().resetStore()
 	})
 
 	// TrackPlayer.addEventListener(Event.RemoteJumpForward, async (event) => {
