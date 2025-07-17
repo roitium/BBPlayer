@@ -25,7 +25,6 @@ export interface BilibiliTrack extends BaseTrack {
 		bvid: string
 		cid: number | null
 		isMultiPart: boolean
-		createAt: number
 		// 运行时产生的数据，在获取流后才会存在
 		bilibiliStreamUrl?: {
 			url: string
@@ -36,7 +35,7 @@ export interface BilibiliTrack extends BaseTrack {
 	}
 }
 
-interface LocalTrack extends BaseTrack {
+export interface LocalTrack extends BaseTrack {
 	source: 'local'
 	localMetadata: {
 		localPath: string

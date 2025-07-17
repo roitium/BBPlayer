@@ -1,5 +1,6 @@
 import { relations, sql } from 'drizzle-orm'
 import {
+	index,
 	integer,
 	sqliteTable,
 	text,
@@ -80,15 +81,20 @@ export const playlistTracks = sqliteTable('playlist_tracks', {
 	order: integer('order'), // 歌曲在列表中的顺序
 })
 
-export const bilibiliMetadata = sqliteTable('bilibili_metadata', {
-	trackId: integer('track_id')
-		.primaryKey()
-		.references(() => tracks.id, { onDelete: 'cascade' }),
-	bvid: text('bvid').notNull(),
-	cid: integer('cid'),
-	isMultiPart: integer('is_multi_part', { mode: 'boolean' }).notNull(),
-	createAt: integer('create_at', { mode: 'timestamp_ms' }).notNull(),
-})
+export const bilibiliMetadata = sqliteTable(
+	'bilibili_metadata',
+	{
+		trackId: integer('track_id')
+			.primaryKey()
+			.references(() => tracks.id, { onDelete: 'cascade' }),
+		bvid: text('bvid').notNull(),
+		cid: integer('cid'),
+		isMultiPart: integer('is_multi_part', { mode: 'boolean' }).notNull(),
+	},
+	(table) => [
+		index('bilibili_metadata_bvid_cid_idx').on(table.bvid, table.cid),
+	],
+)
 
 export const localMetadata = sqliteTable('local_metadata', {
 	trackId: integer('track_id')

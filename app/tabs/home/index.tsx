@@ -8,8 +8,6 @@ import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import FavoriteList from './components/FavoriteList'
-import RecentlyPlayed from './components/RecentlyPlayed'
 
 function HomePage() {
 	const { colors } = useTheme()
@@ -101,13 +99,12 @@ function HomePage() {
 					</View>
 				</View>
 
-				<View style={{ marginTop: 16, marginBottom: 24 }}>
+				{/* <View style={{ marginTop: 16, marginBottom: 24 }}>
 					<FavoriteList />
 				</View>
-				{/* Recently Played */}
 				<View style={{ marginBottom: 24, paddingHorizontal: 16 }}>
 					<RecentlyPlayed />
-				</View>
+				</View> */}
 			</View>
 
 			<QrCodeLoginModal

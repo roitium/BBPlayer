@@ -1,4 +1,3 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -9,15 +8,36 @@ import {
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { Track } from '@/types/core/media'
+import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import { type RouteProp, useRoute } from '@react-navigation/native'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
+
+const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
+	return {
+		id: apiItem.bvid, // 仅仅用于列表的 key，不会作为真实 id 传递
+		cid: apiItem.id,
+		bvid: apiItem.bvid,
+		title: apiItem.title,
+		artist: {
+			id: apiItem.id,
+			name: apiItem.upper.name,
+			source: 'bilibili',
+		},
+		coverUrl: apiItem.cover,
+		duration: apiItem.duration,
+		source: 'bilibili', // 明确来源
+		isMultiPage: false, // 收藏夹里的视频不当作分P处理
+	}
+}
+
+type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
@@ -39,30 +59,31 @@ export default function SearchResultsPage() {
 		query,
 		favoriteFolderList?.at(0)?.id,
 	)
+	const tracksForDisplay = useMemo(
+		() =>
+			searchData?.pages
+				.flatMap((page) => page.medias)
+				.map(mapApiItemToViewTrack) ?? [],
+		[searchData],
+	)
 
-	const {
-		modalVisible,
-		currentModalBvid,
-		setModalVisible,
-		onTrackPress,
-		trackMenuItems,
-	} = useSearchInteractions()
+	const { trackMenuItems } = useSearchInteractions()
 
 	const renderSearchResultItem = useCallback(
-		({ item, index }: { item: Track; index: number }) => {
+		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
 					item={item}
 					index={index}
-					onTrackPress={onTrackPress}
-					menuItems={trackMenuItems(item)}
+					onTrackPress={() => toast.show('暂未实现')}
+					menuItems={trackMenuItems()}
 				/>
 			)
 		},
-		[trackMenuItems, onTrackPress],
+		[trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: Track) => item.id, [])
+	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
 	if (isPendingSearchData) {
 		return <PlaylistLoading />
@@ -85,7 +106,7 @@ export default function SearchResultsPage() {
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
-				data={searchData?.pages.flatMap((page) => page.tracks)}
+				data={tracksForDisplay}
 				renderItem={renderSearchResultItem}
 				ItemSeparatorComponent={() => <Divider />}
 				keyExtractor={keyExtractor}
@@ -125,12 +146,12 @@ export default function SearchResultsPage() {
 				showsVerticalScrollIndicator={false}
 			/>
 
-			<AddToFavoriteListsModal
+			{/* <AddToFavoriteListsModal
 				key={currentModalBvid}
 				bvid={currentModalBvid}
 				visible={modalVisible}
 				setVisible={setModalVisible}
-			/>
+			/> */}
 		</View>
 	)
 }

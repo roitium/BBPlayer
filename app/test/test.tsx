@@ -1,7 +1,6 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { main } from '@/lib/db/seed'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -162,15 +161,6 @@ export default function TestPage() {
 					>
 						跳转 local 播放列表
 					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							main()
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						生成数据库测试条目
-					</Button>
 				</View>
 
 				<Text
@@ -181,14 +171,12 @@ export default function TestPage() {
 				</Text>
 				{queue.map((track) => (
 					<Card
-						key={`${track.id}-${track.cid}`}
+						key={`${track.id}`}
 						style={{ marginBottom: 8 }}
 					>
 						<Card.Title
-							title={track.hasMetadata ? track.title : track.id}
-							subtitle={
-								track.hasMetadata ? track.artist : '该视频还未获取元数据'
-							}
+							title={track.title}
+							subtitle={track.artist?.name ?? '该视频还未获取元数据'}
 						/>
 					</Card>
 				))}
