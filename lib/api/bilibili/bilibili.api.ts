@@ -5,7 +5,6 @@ import {
 	type BilibiliAudioStreamResponse,
 	type BilibiliCollection,
 	type BilibiliCollectionAllContents,
-	type BilibiliCollectionInfo,
 	type BilibiliDealFavoriteForOneVideoResponse,
 	type BilibiliFavoriteListAllContents,
 	type BilibiliFavoriteListContents,
@@ -19,20 +18,11 @@ import {
 	type BilibiliUserUploadedVideosResponse,
 	type BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
-import type { BilibiliTrack, Playlist, Track } from '@/types/core/media'
+import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './bilibili.client'
 import { BilibiliApiError, BilibiliApiErrorType } from './bilibili.errors'
-import {
-	transformCollectionAllContentsToTracks,
-	transformFavoriteContentsToTracks,
-	transformFavoriteListsToPlaylists,
-	transformHistoryVideosToTracks,
-	transformHotSearches,
-	transformSearchResultsToTracks,
-	transformVideoDetailsToTracks,
-} from './bilibili.transformers'
 import { bv2av, convertToFormDataString } from './bilibili.utils'
 import getWbiEncodedParams from './bilibili.wbi'
 
@@ -45,21 +35,26 @@ export const createBilibiliApi = () => ({
 	/**
 	 * 获取用户观看历史记录
 	 */
-	getHistory(): ResultAsync<Track[], BilibiliApiError> {
-		return bilibiliApiClient
-			.get<BilibiliHistoryVideo[]>('/x/v2/history', undefined)
-			.map(transformHistoryVideosToTracks)
+	getHistory(): ResultAsync<BilibiliHistoryVideo[], BilibiliApiError> {
+		return bilibiliApiClient.get<BilibiliHistoryVideo[]>(
+			'/x/v2/history',
+			undefined,
+		)
+		// .map(transformHistoryVideosToTracks)
 	},
 
 	/**
 	 * 获取分区热门视频
 	 */
-	getPopularVideos(partition: string): ResultAsync<Track[], BilibiliApiError> {
+	getPopularVideos(
+		partition: string,
+	): ResultAsync<BilibiliVideoDetails[], BilibiliApiError> {
 		return bilibiliApiClient
 			.get<{
 				list: BilibiliVideoDetails[]
 			}>(`/x/web-interface/ranking/v2?rid=${partition}`, undefined)
-			.map((response) => transformVideoDetailsToTracks(response.list))
+			.map((response) => response.list)
+		// .map((response) => transformVideoDetailsToTracks(response.list))
 	},
 
 	/**
@@ -67,12 +62,14 @@ export const createBilibiliApi = () => ({
 	 */
 	getFavoritePlaylists(
 		userMid: number,
-	): ResultAsync<Playlist[], BilibiliApiError> {
+	): ResultAsync<BilibiliPlaylist[], BilibiliApiError> {
 		return bilibiliApiClient
 			.get<{
 				list: BilibiliPlaylist[] | null
 			}>(`/x/v3/fav/folder/created/list-all?up_mid=${userMid}`, undefined)
-			.map((response) => transformFavoriteListsToPlaylists(response.list))
+			.map((response) => response.list)
+			.map((list) => list ?? [])
+		// .map((response) => transformFavoriteListsToPlaylists(response.list))
 	},
 
 	/**
@@ -81,36 +78,36 @@ export const createBilibiliApi = () => ({
 	searchVideos(
 		keyword: string,
 		page: number,
-	): ResultAsync<{ tracks: Track[]; numPages: number }, BilibiliApiError> {
-		return bilibiliApiClient
-			.get<{
-				result: BilibiliSearchVideo[]
-				numPages: number
-			}>('/x/web-interface/wbi/search/type', {
-				keyword,
-				search_type: 'video',
-				page: page.toString(),
-			})
-			.map((response) => ({
-				tracks: transformSearchResultsToTracks(response.result),
-				numPages: response.numPages,
-			}))
+	): ResultAsync<
+		{ result: BilibiliSearchVideo[]; numPages: number },
+		BilibiliApiError
+	> {
+		return bilibiliApiClient.get<{
+			result: BilibiliSearchVideo[]
+			numPages: number
+		}>('/x/web-interface/wbi/search/type', {
+			keyword,
+			search_type: 'video',
+			page: page.toString(),
+		})
+		// .map((response) => ({
+		// 	tracks: transformSearchResultsToTracks(response.result),
+		// 	numPages: response.numPages,
+		// }))
 	},
 
 	/**
 	 * 获取热门搜索关键词
 	 */
-	getHotSearches(): ResultAsync<
-		{ id: string; text: string }[],
-		BilibiliApiError
-	> {
+	getHotSearches(): ResultAsync<BilibiliHotSearch[], BilibiliApiError> {
 		return bilibiliApiClient
 			.get<{
 				trending: { list: BilibiliHotSearch[] }
 			}>('/x/web-interface/search/square', {
 				limit: '10',
 			})
-			.map((response) => transformHotSearches(response.trending.list))
+			.map((response) => response.trending.list)
+		// .map((response) => transformHotSearches(response.trending.list))
 	},
 
 	/**
@@ -237,7 +234,6 @@ export const createBilibiliApi = () => ({
 
 	/**
 	 * 获取别人用户信息
-	 * （目前采用请求「用户名片信息」接口实现，因为获取个人信息的接口需要 Wbi 鉴权，我还没实现）
 	 */
 	getOtherUserInfo(
 		mid: number,
@@ -269,25 +265,20 @@ export const createBilibiliApi = () => ({
 	getFavoriteListContents(
 		favoriteId: number,
 		pn: number,
-	): ResultAsync<
-		{
-			tracks: Track[]
-			hasMore: boolean
-			favoriteMeta: BilibiliFavoriteListContents['info']
-		},
-		BilibiliApiError
-	> {
-		return bilibiliApiClient
-			.get<BilibiliFavoriteListContents>('/x/v3/fav/resource/list', {
+	): ResultAsync<BilibiliFavoriteListContents, BilibiliApiError> {
+		return bilibiliApiClient.get<BilibiliFavoriteListContents>(
+			'/x/v3/fav/resource/list',
+			{
 				media_id: favoriteId.toString(),
 				pn: pn.toString(),
 				ps: '40',
-			})
-			.map((response) => ({
-				tracks: transformFavoriteContentsToTracks(response.medias),
-				hasMore: response.has_more,
-				favoriteMeta: response.info,
-			}))
+			},
+		)
+		// .map((response) => ({
+		// 	tracks: transformFavoriteContentsToTracks(response.medias),
+		// 	hasMore: response.has_more,
+		// 	favoriteMeta: response.info,
+		// }))
 	},
 
 	/**
@@ -299,27 +290,22 @@ export const createBilibiliApi = () => ({
 		scope: 'all' | 'this',
 		pn: number,
 		keyword: string,
-	): ResultAsync<
-		{
-			tracks: Track[]
-			hasMore: boolean
-			favoriteMeta: BilibiliFavoriteListContents['info']
-		},
-		BilibiliApiError
-	> {
-		return bilibiliApiClient
-			.get<BilibiliFavoriteListContents>('/x/v3/fav/resource/list', {
+	): ResultAsync<BilibiliFavoriteListContents, BilibiliApiError> {
+		return bilibiliApiClient.get<BilibiliFavoriteListContents>(
+			'/x/v3/fav/resource/list',
+			{
 				media_id: favoriteId.toString(),
 				pn: pn.toString(),
 				ps: '40',
 				keyword,
 				type: scope === 'this' ? '0' : '1',
-			})
-			.map((response) => ({
-				tracks: transformFavoriteContentsToTracks(response.medias),
-				hasMore: response.has_more,
-				favoriteMeta: response.info,
-			}))
+			},
+		)
+		// .map((response) => ({
+		// 	tracks: transformFavoriteContentsToTracks(response.medias),
+		// 	hasMore: response.has_more,
+		// 	favoriteMeta: response.info,
+		// }))
 	},
 
 	/**
@@ -421,6 +407,11 @@ export const createBilibiliApi = () => ({
 				count: response.count,
 				hasMore: response.has_more,
 			}))
+		// .map((response) => ({
+		// 	list: response.list ?? [],
+		// 	count: response.count,
+		// 	hasMore: response.has_more,
+		// }))
 	},
 
 	/**
@@ -428,22 +419,21 @@ export const createBilibiliApi = () => ({
 	 */
 	getCollectionAllContents(
 		collectionId: number,
-	): ResultAsync<
-		{ info: BilibiliCollectionInfo; medias: Track[] },
-		BilibiliApiError
-	> {
-		return bilibiliApiClient
-			.get<BilibiliCollectionAllContents>('/x/space/fav/season/list', {
+	): ResultAsync<BilibiliCollectionAllContents, BilibiliApiError> {
+		return bilibiliApiClient.get<BilibiliCollectionAllContents>(
+			'/x/space/fav/season/list',
+			{
 				season_id: collectionId.toString(),
 				ps: '20', // Page size, adjust if needed
 				pn: '1', // Start from page 1
-			})
-			.map((response) => {
-				return {
-					info: response.info,
-					medias: transformCollectionAllContentsToTracks(response.medias),
-				}
-			})
+			},
+		)
+		// .map((response) => {
+		// 	return {
+		// 		info: response.info,
+		// 		medias: transformCollectionAllContentsToTracks(response.medias),
+		// 	}
+		// })
 	},
 
 	/**
