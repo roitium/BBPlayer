@@ -1,4 +1,4 @@
-import type { BilibiliApiError } from '@/lib/api/bilibili/bilibili.errors'
+import type { BilibiliApiError } from '@/lib/api/bilibili/errors'
 import type { Result } from 'neverthrow'
 import type {
 	RepeatMode,

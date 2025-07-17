@@ -10,7 +10,7 @@ import {
 	useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { bilibiliApi } from '@/lib/api/bilibili/api'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import toast from '@/utils/toast'

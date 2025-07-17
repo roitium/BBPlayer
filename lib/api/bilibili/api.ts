@@ -21,10 +21,10 @@ import {
 import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
-import { bilibiliApiClient } from './bilibili.client'
-import { BilibiliApiError, BilibiliApiErrorType } from './bilibili.errors'
-import { bv2av, convertToFormDataString } from './bilibili.utils'
-import getWbiEncodedParams from './bilibili.wbi'
+import { bilibiliApiClient } from './client'
+import { BilibiliApiError, BilibiliApiErrorType } from './errors'
+import { bv2av, convertToFormDataString } from './utils'
+import getWbiEncodedParams from './wbi'
 
 const bilibiliApiLog = log.extend('BILIBILI_API/API')
 

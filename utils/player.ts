@@ -1,6 +1,6 @@
 import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/hooks/stores/useAppStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { bilibiliApi } from '@/lib/api/bilibili/api'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import { err, ok, type Result } from 'neverthrow'
 import type { Track as RNTPTrack } from 'react-native-track-player'

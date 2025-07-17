@@ -6,8 +6,7 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import type { Track } from '@/types/core/media'
+import { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -17,7 +16,7 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -28,6 +27,25 @@ import type { RootStackParamList } from '../../../types/navigation'
 
 const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
+const mapApiItemToViewTrack = (apiItem: BilibiliMediaItemInCollection) => {
+	return {
+		id: apiItem.bvid, // 仅仅用于列表的 key，不会作为真实 id 传递
+		cid: apiItem.id,
+		bvid: apiItem.bvid,
+		title: apiItem.title,
+		artist: {
+			id: apiItem.id,
+			name: apiItem.upper.name,
+			remoteId: apiItem.upper.mid.toString(),
+			source: 'bilibili',
+		},
+		coverUrl: apiItem.cover,
+		duration: apiItem.duration,
+		source: 'bilibili', // 明确来源
+		isMultiPage: false, // 合集里的视频不当作分P处理
+	}
+}
+
 export default function CollectionPage() {
 	const navigation =
 		useNavigation<
@@ -36,7 +54,6 @@ export default function CollectionPage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistCollection'>>()
 	const { id } = route.params
 	const { colors } = useTheme()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
@@ -49,6 +66,10 @@ export default function CollectionPage() {
 		isError: isCollectionDataError,
 		refetch,
 	} = useCollectionAllContents(Number(id))
+	const tracksForDisplay = useMemo(
+		() => collectionData?.medias.map(mapApiItemToViewTrack) ?? [],
+		[collectionData],
+	)
 
 	const playAll = useCallback(
 		async (startFromId?: string) => {
@@ -63,52 +84,54 @@ export default function CollectionPage() {
 					)
 					return
 				}
-				await addToQueue({
-					tracks: collectionData.medias,
-					playNow: true,
-					clearQueue: true,
-					startFromId: startFromId,
-					playNext: false,
-				})
+				toast.info('暂未实现: ' + startFromId)
+				// await addToQueue({
+				// 	tracks: collectionData.medias,
+				// 	playNow: true,
+				// 	clearQueue: true,
+				// 	startFromId: startFromId,
+				// 	playNext: false,
+				// })
 			} catch (error) {
 				playlistLog.sentry('播放全部失败', error)
 				toast.error('播放全部失败', { description: '发生未知错误' })
 			}
 		},
-		[addToQueue, collectionData],
+		[collectionData],
 	)
 
-	const playNext = useCallback(
-		async (track: Track) => {
+	const _playNext = useCallback(
+		async (track: BilibiliMediaItemInCollection) => {
 			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: false,
-					clearQueue: false,
-					playNext: true,
-				})
-				toast.success('添加到下一首播放成功')
+				toast.info('暂未实现: ' + track.id)
+				// await addToQueue({
+				// 	tracks: [track],
+				// 	playNow: false,
+				// 	clearQueue: false,
+				// 	playNext: true,
+				// })
+				// toast.success('添加到下一首播放成功')
 			} catch (error) {
 				playlistLog.sentry('添加到队列失败', error)
 				toast.error('添加到队列失败')
 			}
 		},
-		[addToQueue],
+		[],
 	)
 
 	const trackMenuItems = useCallback(
-		(item: Track) => [
+		(item: ReturnType<typeof mapApiItemToViewTrack>) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: () => playNext(item),
+				onPress: () => toast.show('暂未实现'),
 			},
 			TrackMenuItemDividerToken,
 			{
 				title: '添加到收藏夹',
 				leadingIcon: 'plus',
 				onPress: () => {
-					setCurrentModalBvid(item.id)
+					setCurrentModalBvid(item.bvid)
 					setModalVisible(true)
 				},
 			},
@@ -117,22 +140,28 @@ export default function CollectionPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.id })
+					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
 				},
 			},
 		],
-		[playNext, navigation],
+		[navigation],
 	)
 
 	const handleTrackPress = useCallback(
-		(track: Track) => {
-			playAll(track.id)
+		({ id }: { id: string }) => {
+			playAll(id)
 		},
 		[playAll],
 	)
 
 	const renderItem = useCallback(
-		({ item, index }: { item: Track; index: number }) => {
+		({
+			item,
+			index,
+		}: {
+			item: ReturnType<typeof mapApiItemToViewTrack>
+			index: number
+		}) => {
 			return (
 				<TrackListItem
 					item={item}
@@ -145,7 +174,10 @@ export default function CollectionPage() {
 		[handleTrackPress, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: Track) => item.id, [])
+	const keyExtractor = useCallback(
+		(item: ReturnType<typeof mapApiItemToViewTrack>) => item.bvid,
+		[],
+	)
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
@@ -185,7 +217,7 @@ export default function CollectionPage() {
 				}}
 			>
 				<LegendList
-					data={collectionData.medias}
+					data={tracksForDisplay}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}

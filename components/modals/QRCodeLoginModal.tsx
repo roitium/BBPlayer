@@ -1,5 +1,5 @@
 import useAppStore from '@/hooks/stores/useAppStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'

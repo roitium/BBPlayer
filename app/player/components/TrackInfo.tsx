@@ -27,7 +27,7 @@ export function TrackInfo({
 			>
 				<TouchableOpacity activeOpacity={0.8}>
 					<Image
-						source={{ uri: currentTrack.coverUrl }}
+						source={{ uri: currentTrack.coverUrl ?? undefined }}
 						style={{
 							width: screenWidth - 80,
 							height: screenWidth - 80,
@@ -59,7 +59,7 @@ export function TrackInfo({
 							style={{ color: colors.onSurfaceVariant }}
 							numberOfLines={1}
 						>
-							{currentTrack.artist}
+							{currentTrack.artist?.name ?? ''}
 						</Text>
 					</View>
 					<IconButton

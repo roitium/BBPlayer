@@ -33,14 +33,16 @@ export function FunctionalMenu({
 			onDismiss={() => setMenuVisible(false)}
 			anchor={{ x: screenWidth - 24, y: insets.top + 24 }}
 		>
-			<Menu.Item
-				onPress={() => {
-					setMenuVisible(false)
-					setFavModalVisible(true)
-				}}
-				title='添加到收藏夹'
-				leadingIcon='playlist-plus'
-			/>
+			{currentTrack?.source === 'bilibili' && (
+				<Menu.Item
+					onPress={() => {
+						setMenuVisible(false)
+						setFavModalVisible(true)
+					}}
+					title='添加到 bilibili 收藏夹'
+					leadingIcon='playlist-plus'
+				/>
+			)}
 			<Menu.Item
 				onPress={() => {
 					setMenuVisible(false)

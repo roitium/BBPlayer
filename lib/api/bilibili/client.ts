@@ -1,6 +1,6 @@
 import useAppStore from '@/hooks/stores/useAppStore'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
-import { BilibiliApiError, BilibiliApiErrorType } from './bilibili.errors'
+import { BilibiliApiError, BilibiliApiErrorType } from './errors'
 
 type ReqResponse<T> = {
 	code: number

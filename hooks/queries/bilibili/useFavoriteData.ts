@@ -1,9 +1,9 @@
 import appStore from '@/hooks/stores/appStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { bilibiliApi } from '@/lib/api/bilibili/api'
 import {
 	BilibiliApiError,
 	BilibiliApiErrorType,
-} from '@/lib/api/bilibili/bilibili.errors'
+} from '@/lib/api/bilibili/errors'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
@@ -81,7 +81,7 @@ export const useInfiniteFavoriteList = (favoriteId?: number) => {
 			: skipToken,
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-			lastPage.hasMore ? lastPageParam + 1 : undefined,
+			lastPage.has_more ? lastPageParam + 1 : undefined,
 		staleTime: 5 * 60 * 1000,
 		enabled: enabled,
 	})
@@ -282,7 +282,7 @@ export const useInfiniteSearchFavoriteItems = (
 				: skipToken,
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-			lastPage.hasMore ? lastPageParam + 1 : undefined,
+			lastPage.has_more ? lastPageParam + 1 : undefined,
 		staleTime: 1,
 		enabled: enabled,
 	})

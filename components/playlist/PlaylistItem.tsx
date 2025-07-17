@@ -1,4 +1,3 @@
-import type { Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/times'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
@@ -12,36 +11,52 @@ import {
 	TouchableRipple,
 } from 'react-native-paper'
 
-export interface TrackMenuItem {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface TrackMenuItem<T = any> {
 	title: string
 	leadingIcon: string
-	onPress: (track: Track) => void
+	onPress: (track: T) => void
 }
 
-export const TrackMenuItemDividerToken = {
+export const TrackMenuItemDividerToken: TrackMenuItem = {
 	title: 'divider',
 	leadingIcon: '',
 	onPress: () => {},
 }
 
-interface TrackListItemProps {
-	item: Track
+// 定义最小的 track 接口，支持不同的数据源
+export interface TrackDisplayItem {
+	title: string
+	id: string
+	duration: number
+	coverUrl?: string | null
+	artist?: {
+		name: string
+		avatarUrl?: string | null
+	} | null
+}
+
+interface TrackListItemProps<T extends TrackDisplayItem> {
+	item: T
 	index: number
-	onTrackPress: (track: Track) => void
-	menuItems: TrackMenuItem[]
+	onTrackPress: (track: T) => void
+	menuItems: TrackMenuItem<T>[]
 	showCoverImage?: boolean
 }
 
 /**
  * 可复用的播放列表项目组件。
+ * 支持任何符合 TrackDisplayItem 接口的数据类型。
  */
-export const TrackListItem = memo(function TrackListItem({
+export const TrackListItem = memo(function TrackListItem<
+	T extends TrackDisplayItem,
+>({
 	item,
 	index,
 	onTrackPress,
 	menuItems,
 	showCoverImage = true,
-}: TrackListItemProps) {
+}: TrackListItemProps<T>) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
 	const closeMenu = () => setIsMenuVisible(false)
@@ -83,7 +98,9 @@ export const TrackListItem = memo(function TrackListItem({
 					{/* Cover Image */}
 					{showCoverImage ? (
 						<Image
-							source={{ uri: item.coverUrl }}
+							source={{
+								uri: item.coverUrl ?? item.artist?.avatarUrl ?? undefined,
+							}}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
 							transition={300}
 							cachePolicy={'none'}
@@ -107,7 +124,7 @@ export const TrackListItem = memo(function TrackListItem({
 										variant='bodySmall'
 										numberOfLines={1}
 									>
-										{item.artist}
+										{item.artist.name ?? '未知'}
 									</Text>
 									<Text
 										style={{ marginHorizontal: 4 }}

@@ -240,7 +240,7 @@ interface BilibiliCollectionInfo {
 /**
  * 合集内单个内容
  */
-interface BilibiliMediaItem {
+interface BilibiliMediaItemInCollection {
 	id: number
 	title: string
 	cover: string
@@ -264,7 +264,7 @@ interface BilibiliMediaItem {
  */
 interface BilibiliCollectionAllContents {
 	info: BilibiliCollectionInfo
-	medias: BilibiliMediaItem[]
+	medias: BilibiliMediaItemInCollection[]
 }
 
 /**
@@ -330,7 +330,7 @@ export type {
 	BilibiliFavoriteListContents,
 	BilibiliHistoryVideo,
 	BilibiliHotSearch,
-	BilibiliMediaItem,
+	BilibiliMediaItemInCollection,
 	BilibiliMultipageVideo,
 	BilibiliPlaylist,
 	BilibiliSearchVideo,
