@@ -3,6 +3,7 @@ import {
 	CreateTrackPayload,
 	UpdateTrackPayload,
 } from '@/types/services/track'
+import log from '@/utils/log'
 import { eq } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
@@ -11,6 +12,8 @@ import db from '../db/db'
 import * as schema from '../db/schema'
 import { DatabaseError, TrackNotFoundError, ValidationError } from './errors'
 import generateUniqueTrackKey from './genKey'
+
+const logger = log.extend('Service/Track')
 
 export class TrackService {
 	private readonly db: ExpoSQLiteDatabase<typeof schema>
@@ -40,15 +43,13 @@ export class TrackService {
 			coverUrl: dbTrack.coverUrl,
 			duration: dbTrack.duration,
 			playCountSequence: dbTrack.playCountSequence || [],
-			createdAt: dbTrack.createdAt,
+			createdAt: dbTrack.createdAt.getTime(),
 			source: dbTrack.source as 'bilibili' | 'local',
 		}
 
 		if (dbTrack.source === 'bilibili' && dbTrack.bilibiliMetadata) {
 			return {
 				...baseTrack,
-				createdAt: dbTrack.createdAt.getTime(),
-				source: 'bilibili',
 				bilibiliMetadata: dbTrack.bilibiliMetadata,
 			} as BilibiliTrack
 		}
@@ -56,36 +57,33 @@ export class TrackService {
 		if (dbTrack.source === 'local' && dbTrack.localMetadata) {
 			return {
 				...baseTrack,
-				createdAt: dbTrack.createdAt.getTime(),
-				source: 'local',
 				localMetadata: dbTrack.localMetadata,
 			} as LocalTrack
 		}
 
-		console.warn(
-			`Track with id ${dbTrack.id} has inconsistent source and metadata.`,
-		)
+		logger.warn(`track ${dbTrack.id} 存在不一致的 source 和 metadata。`)
 		return null
 	}
 
 	/**
-	 * 创建一个新的音轨。
-	 * **你或许应该调用 findOrCreateTrack 而非这个方法。**
-	 * @param payload - 创建音轨所需的数据。
+	 * 创建一个新的 track
+	 * @param payload - 创建 track 所需的数据。
 	 * @returns ResultAsync 包含成功创建的 Track 或一个错误。
 	 */
-	public _createTrack(
+	private _createTrack(
 		payload: CreateTrackPayload,
 	): ResultAsync<Track, ValidationError | DatabaseError | TrackNotFoundError> {
 		// validate
 		if (payload.source === 'bilibili' && !payload.bilibiliMetadata) {
 			return errAsync(
-				new ValidationError('Bilibili source tracks require bilibiliMetadata.'),
+				new ValidationError(
+					'当 source 为 bilibili 时，bilibiliMetadata 不能为空。',
+				),
 			)
 		}
 		if (payload.source === 'local' && !payload.localMetadata) {
 			return errAsync(
-				new ValidationError('Local source tracks require localMetadata.'),
+				new ValidationError('当 source 为 local 时，localMetadata 不能为空。'),
 			)
 		}
 
@@ -96,7 +94,7 @@ export class TrackService {
 
 		const transactionResult = ResultAsync.fromPromise(
 			this.db.transaction(async (tx) => {
-				// 创建音轨
+				// 创建 track
 				const [newTrack] = await tx
 					.insert(schema.tracks)
 					.values({
@@ -126,7 +124,7 @@ export class TrackService {
 
 				return trackId
 			}),
-			(e) => new DatabaseError('Transaction failed during track creation.', e),
+			(e) => new DatabaseError('创建 track 事务失败', e),
 		)
 
 		return transactionResult.andThen((newTrackId) =>
@@ -135,8 +133,8 @@ export class TrackService {
 	}
 
 	/**
-	 * 更新一个现有的音轨。
-	 * @param payload - 更新音轨所需的数据。
+	 * 更新一个现有的 track 。
+	 * @param payload - 更新 track 所需的数据。
 	 * @returns ResultAsync 包含更新后的 Track 或一个错误。
 	 */
 	public updateTrack(
@@ -149,15 +147,15 @@ export class TrackService {
 				.update(schema.tracks)
 				.set(dataToUpdate)
 				.where(eq(schema.tracks.id, id)),
-			(e) => new DatabaseError(`更新音轨失败：${id}`, e),
+			(e) => new DatabaseError(`更新 track 失败：${id}`, e),
 		)
 
 		return updateResult.andThen(() => this.getTrackById(id))
 	}
 
 	/**
-	 * 通过 ID 获取单个音轨的完整信息。
-	 * @param id - 音轨的数据库 ID。
+	 * 通过 ID 获取单个 track 的完整信息。
+	 * @param id -  track 的数据库 ID。
 	 * @returns ResultAsync
 	 */
 	public getTrackById(
@@ -172,7 +170,7 @@ export class TrackService {
 					localMetadata: true,
 				},
 			}),
-			(e) => new DatabaseError(`查找音轨失败：${id}`, e),
+			(e) => new DatabaseError(`查找 track 失败：${id}`, e),
 		).andThen((dbTrack) => {
 			const result = this._formatTrack(dbTrack)
 			if (!result) {
@@ -183,8 +181,8 @@ export class TrackService {
 	}
 
 	/**
-	 * 删除一个音轨。
-	 * @param id - 要删除的音轨的 ID。
+	 * 删除一个 track。
+	 * @param id - 要删除的 track 的 ID。
 	 * @returns ResultAsync
 	 */
 	public deleteTrack(
@@ -195,7 +193,7 @@ export class TrackService {
 				.delete(schema.tracks)
 				.where(eq(schema.tracks.id, id))
 				.returning({ deletedId: schema.tracks.id }),
-			(e) => new DatabaseError(`删除音轨失败：${id}`, e),
+			(e) => new DatabaseError(`删除 track 失败：${id}`, e),
 		).andThen((results) => {
 			const result = results[0]
 			if (!result) {
@@ -206,50 +204,52 @@ export class TrackService {
 	}
 
 	/**
-	 * 为音轨增加一次播放记录。
-	 * @param trackId - 音轨的 ID。
+	 * 为 track 增加一次播放记录。
+	 * @param trackId -  track 的 ID。
 	 * @returns ResultAsync 包含 true 或一个错误。
 	 */
 	public addPlayRecord(
 		trackId: number,
 	): ResultAsync<true, TrackNotFoundError | DatabaseError> {
 		return ResultAsync.fromPromise(
-			this.db.query.tracks.findFirst({
-				where: eq(schema.tracks.id, trackId),
-				columns: { playCountSequence: true },
-			}),
-			(e) => new DatabaseError(`查找音轨失败：${trackId}`, e),
-		)
-			.andThen((track) => {
+			this.db.transaction(async (tx) => {
+				const track = await tx.query.tracks.findFirst({
+					where: eq(schema.tracks.id, trackId),
+					columns: { playCountSequence: true },
+				})
+
 				if (!track) {
-					return errAsync(new TrackNotFoundError(trackId))
+					throw new TrackNotFoundError(trackId)
 				}
 
 				const sequence = track.playCountSequence || []
 				sequence.push(Date.now())
 
-				return ResultAsync.fromPromise(
-					this.db
-						.update(schema.tracks)
-						.set({ playCountSequence: sequence })
-						.where(eq(schema.tracks.id, trackId)),
-					(e) => new DatabaseError(`更新播放记录失败：${trackId}`, e),
-				)
-			})
-			.map(() => true)
+				await tx
+					.update(schema.tracks)
+					.set({ playCountSequence: sequence })
+					.where(eq(schema.tracks.id, trackId))
+
+				return true
+			}),
+			(e) =>
+				e instanceof TrackNotFoundError
+					? e
+					: new DatabaseError(`增加播放记录的事务失败：${trackId}`, e),
+		)
 	}
 
 	/**
-	 * 根据 Bilibili 的元数据获取音轨。
+	 * 根据 Bilibili 的元数据获取 track 。
 	 * @param bilibiliMeatadata
 	 * @returns
 	 */
 	public getTrackByBilibiliMetadata(
-		bilibiliMeatadata: BilibiliMetadataPayload,
+		bilibiliMetadata: BilibiliMetadataPayload,
 	): ResultAsync<Track, TrackNotFoundError | DatabaseError | ValidationError> {
 		const identifier = generateUniqueTrackKey({
 			source: 'bilibili',
-			bilibiliMetadata: bilibiliMeatadata,
+			bilibiliMetadata: bilibiliMetadata,
 		})
 		if (identifier.isErr()) {
 			return errAsync(identifier.error)
@@ -263,9 +263,9 @@ export class TrackService {
 					localMetadata: true,
 				},
 			}),
-			(e) => new DatabaseError('根据 Bilibili 元数据查找音轨失败', e),
+			(e) => new DatabaseError('根据 Bilibili 元数据查找 track 失败', e),
 		).andThen((track) => {
-			if (track) {
+			if (!track) {
 				return errAsync(new TrackNotFoundError(`uniqueKey=${identifier.value}`))
 			}
 
@@ -273,7 +273,7 @@ export class TrackService {
 			if (!formattedTrack) {
 				return errAsync(
 					new ValidationError(
-						`根据 Bilibili 元数据查找音轨失败：元数据不匹配。`,
+						`根据 Bilibili 元数据查找 track 失败：元数据不匹配。`,
 					),
 				)
 			}
@@ -283,35 +283,51 @@ export class TrackService {
 	}
 
 	/**
-	 * 查找音轨，如果不存在则根据提供的 payload 创建一个新的。
+	 * 查找 track ，如果不存在则根据提供的 payload 创建一个新的。
 	 * 唯一性检查基于 generateUniqueTrackKey 生成的唯一标识符。
-	 * @param payload - 创建音轨所需的数据。
+	 * @param payload - 创建 track 所需的数据。
 	 * @returns ResultAsync
 	 */
 	public findOrCreateTrack(
 		payload: CreateTrackPayload,
-	): ResultAsync<Track, ValidationError | DatabaseError | TrackNotFoundError> {
-		let findTrackResult: ResultAsync<Track, TrackNotFoundError | DatabaseError>
-
-		if (payload.source === 'bilibili' && payload.bilibiliMetadata) {
-			findTrackResult = this.getTrackByBilibiliMetadata(
-				payload.bilibiliMetadata,
-			)
-		} else if (payload.source === 'local' && payload.localMetadata) {
-			return errAsync(new ValidationError('基于本地文件的 Track 还没实现。'))
-		} else {
-			return errAsync(
-				new ValidationError('传入的 payload 不完整，未包含统一的 metadata。'),
-			)
+	): ResultAsync<Track, ValidationError | DatabaseError> {
+		const uniqueKeyResult = generateUniqueTrackKey(payload)
+		if (uniqueKeyResult.isErr()) {
+			return errAsync(uniqueKeyResult.error)
 		}
+		const uniqueKey = uniqueKeyResult.value
 
-		return findTrackResult.orElse((error) => {
-			if (error instanceof TrackNotFoundError) {
-				return this._createTrack(payload)
-			}
-
-			return errAsync(error)
-		})
+		return ResultAsync.fromPromise(
+			this.db.query.tracks.findFirst({
+				where: (track, { eq }) => eq(track.uniqueKey, uniqueKey),
+				with: {
+					artist: true,
+					bilibiliMetadata: true,
+					localMetadata: true,
+				},
+			}),
+			(e) => new DatabaseError('根据 uniqueKey 查找 track 失败', e),
+		)
+			.andThen((dbTrack) => {
+				if (dbTrack) {
+					const formattedTrack = this._formatTrack(dbTrack)
+					if (formattedTrack) {
+						return okAsync(formattedTrack)
+					}
+					return errAsync(
+						new ValidationError(
+							`已存在的 track ${dbTrack.id} source 与 metadata 不匹配`,
+						),
+					)
+				}
+				return errAsync(new TrackNotFoundError(uniqueKey))
+			})
+			.orElse((error) => {
+				if (error instanceof TrackNotFoundError) {
+					return this._createTrack(payload)
+				}
+				return errAsync(error)
+			})
 	}
 }
 
