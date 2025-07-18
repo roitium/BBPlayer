@@ -226,24 +226,6 @@ async function checkAndUpdateAudioStream(
 	return err(unknownSourceError)
 }
 
-// function isTargetTrack(
-// 	track: Track,
-// 	// targetId: string | undefined,
-// 	// targetCid: number | undefined,
-// ) {
-// 	// if (track.isMultiPage) {
-// 	// 	return track.cid === targetCid
-// 	// }
-// 	// return track.id === targetId
-// }
-
-// function getTrackKey(track: Track): string {
-// 	if (track.isMultiPage && track.cid) {
-// 		return `${track.id}-${track.cid}`
-// 	}
-// 	return track.id
-// }
-
 /**
  * 上报播放记录
  * 由于这只是一个非常边缘的功能，我们不关心他是否出错，所以发生报错时只写个 log，返回 void

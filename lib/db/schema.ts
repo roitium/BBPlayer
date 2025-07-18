@@ -2,6 +2,7 @@ import { relations, sql } from 'drizzle-orm'
 import {
 	index,
 	integer,
+	primaryKey,
 	sqliteTable,
 	text,
 	uniqueIndex,
@@ -26,60 +27,88 @@ export const artists = sqliteTable(
 	},
 	(table) => [
 		uniqueIndex('source_remote_id_unq').on(table.source, table.remoteId),
+		index('artists_name_idx').on(table.name),
 	],
 )
 
-export const tracks = sqliteTable('tracks', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	title: text('title').notNull(),
-	artistId: integer('artist_id').references(() => artists.id, {
-		onDelete: 'set null', // 如果作者被删除，歌曲的作者ID设为NULL，歌曲本身不删除
-	}),
-	coverUrl: text('cover_url'),
-	duration: integer('duration'),
-	playCountSequence: text('play_count_sequence', {
-		// 每次播放的时间
-		mode: 'json',
-	})
-		.$type<msTimestamp[]>()
-		.default(sql`'[]'`),
-	createdAt: integer('created_at', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(unixepoch() * 1000)`),
-	source: text('source', {
-		enum: ['bilibili', 'local'],
-	}),
-})
+export const tracks = sqliteTable(
+	'tracks',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		uniqueKey: text('unique_key').unique().notNull(), // 唯一标识符，用于判断是否已存在，基于 source 和其对应的唯一字段生成
+		title: text('title').notNull(),
+		artistId: integer('artist_id').references(() => artists.id, {
+			onDelete: 'set null', // 如果作者被删除，歌曲的作者ID设为NULL，歌曲本身不删除
+		}),
+		coverUrl: text('cover_url'),
+		duration: integer('duration'),
+		playCountSequence: text('play_count_sequence', {
+			// 每次播放的时间
+			mode: 'json',
+		})
+			.$type<msTimestamp[]>()
+			.default(sql`'[]'`),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`),
+		source: text('source', {
+			enum: ['bilibili', 'local'],
+		}).notNull(),
+	},
+	(table) => [
+		index('tracks_artist_idx').on(table.artistId),
+		index('tracks_title_idx').on(table.title),
+		index('tracks_source_idx').on(table.source),
+	],
+)
 
-export const playlists = sqliteTable('playlists', {
-	id: integer('id').primaryKey({ autoIncrement: true }), // 数据库内的唯一 id
-	title: text('title').notNull(),
-	authorId: integer('author_id').references(() => artists.id, {
-		onDelete: 'set null', // 如果作者被删除，播放列表的作者ID设为NULL
-	}),
-	description: text('description'),
-	coverUrl: text('cover_url'),
-	itemCount: integer('item_count').notNull().default(0),
-	type: text('type', {
-		enum: ['favorite', 'collection', 'multi_page', 'local'],
-	}).notNull(),
-	remoteSyncId: integer('remote_sync_id'), // 当存在这个值时，这个 playlist 只能从远程同步，而不能从本地直接修改（或许也可以？因为我们已经实现了大量本地有关收藏夹的操作逻辑，先不管了~）
-	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp_ms' }),
-	createdAt: integer('created_at', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(unixepoch() * 1000)`),
-})
+export const playlists = sqliteTable(
+	'playlists',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }), // 数据库内的唯一 id
+		title: text('title').notNull(),
+		authorId: integer('author_id').references(() => artists.id, {
+			onDelete: 'set null', // 如果作者被删除，播放列表的作者ID设为NULL
+		}),
+		description: text('description'),
+		coverUrl: text('cover_url'),
+		itemCount: integer('item_count').notNull().default(0),
+		type: text('type', {
+			enum: ['favorite', 'collection', 'multi_page', 'local'],
+		}).notNull(),
+		remoteSyncId: integer('remote_sync_id'), // 当存在这个值时，这个 playlist 只能从远程同步，而不能从本地直接修改（或许也可以？因为我们已经实现了大量本地有关收藏夹的操作逻辑，先不管了~）
+		lastSyncedAt: integer('last_synced_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`),
+	},
+	(table) => [
+		index('playlists_title_idx').on(table.title),
+		index('playlists_type_idx').on(table.type),
+		index('playlists_author_idx').on(table.authorId),
+	],
+)
 
-export const playlistTracks = sqliteTable('playlist_tracks', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	playlistId: integer('playlist_id')
-		.notNull()
-		.references(() => playlists.id, { onDelete: 'cascade' }), // 级联删除
-	trackId: integer('track_id')
-		.notNull()
-		.references(() => tracks.id, { onDelete: 'cascade' }),
-	order: integer('order'), // 歌曲在列表中的顺序
-})
+export const playlistTracks = sqliteTable(
+	'playlist_tracks',
+	{
+		playlistId: integer('playlist_id')
+			.notNull()
+			.references(() => playlists.id, { onDelete: 'cascade' }), // 级联删除
+		trackId: integer('track_id')
+			.notNull()
+			.references(() => tracks.id, { onDelete: 'cascade' }),
+		order: integer('order').notNull(), // 歌曲在列表中的顺序
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`),
+	},
+	(table) => [
+		primaryKey({ columns: [table.playlistId, table.trackId] }),
+		index('playlist_tracks_playlist_idx').on(table.playlistId),
+		index('playlist_tracks_track_idx').on(table.trackId),
+	],
+)
 
 export const bilibiliMetadata = sqliteTable(
 	'bilibili_metadata',
