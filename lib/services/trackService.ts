@@ -22,7 +22,12 @@ export class TrackService {
 		this.db = db
 	}
 
-	private _formatTrack(
+	/**
+	 * 基本上是为了让 Typescript 开心
+	 * @param dbTrack
+	 * @returns
+	 */
+	public formatTrack(
 		dbTrack:
 			| (typeof schema.tracks.$inferSelect & {
 					artist: typeof schema.artists.$inferSelect | null
@@ -172,7 +177,7 @@ export class TrackService {
 			}),
 			(e) => new DatabaseError(`查找 track 失败：${id}`, e),
 		).andThen((dbTrack) => {
-			const result = this._formatTrack(dbTrack)
+			const result = this.formatTrack(dbTrack)
 			if (!result) {
 				return errAsync(new TrackNotFoundError(id))
 			}
@@ -269,7 +274,7 @@ export class TrackService {
 				return errAsync(new TrackNotFoundError(`uniqueKey=${identifier.value}`))
 			}
 
-			const formattedTrack = this._formatTrack(track)
+			const formattedTrack = this.formatTrack(track)
 			if (!formattedTrack) {
 				return errAsync(
 					new ValidationError(
@@ -310,7 +315,7 @@ export class TrackService {
 		)
 			.andThen((dbTrack) => {
 				if (dbTrack) {
-					const formattedTrack = this._formatTrack(dbTrack)
+					const formattedTrack = this.formatTrack(dbTrack)
 					if (formattedTrack) {
 						return okAsync(formattedTrack)
 					}
