@@ -19,7 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			monochromeImage: './assets/images/adaptive-icon.png',
 			backgroundColor: '#ffffff',
 		},
-		package: 'com.roitium.BBPlayer',
+		package: 'com.roitium.bbplayer',
 		versionCode: versionCode,
 		edgeToEdgeEnabled: true,
 		runtimeVersion: version,
@@ -92,6 +92,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 		url: 'https://u.expo.dev/1cbd8d50-e322-4ead-98b6-4ee8b6f2a707',
 	},
 	ios: {
-		bundleIdentifier: 'com.roitium.BBPlayer',
+		bundleIdentifier: 'com.roitium.bbplayer',
 	},
 })
