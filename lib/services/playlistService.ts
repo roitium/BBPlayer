@@ -419,6 +419,52 @@ export class PlaylistService {
 			(e) => new DatabaseError('获取 playlist 元数据失败', e),
 		)
 	}
+
+	/**
+	 * 根据 remoteSyncId 和 type 查找或创建一个本地同步的远程播放列表。
+	 * @param payload - 创建播放列表所需的数据。
+	 * @returns ResultAsync 包含找到的或新创建的 Playlist，或一个 DatabaseError。
+	 */
+	public findOrCreateRemotePlaylist(
+		payload: CreatePlaylistPayload,
+	): ResultAsync<
+		typeof schema.playlists.$inferSelect,
+		DatabaseError | ValidationError
+	> {
+		const { remoteSyncId, type } = payload
+		if (!remoteSyncId || type === 'local') {
+			return errAsync(
+				new ValidationError(
+					'无效的 remoteSyncId 或 type，调用 findOrCreateRemotePlaylist 时必须提供 remoteSyncId 和非 local 的 type',
+				),
+			)
+		}
+		return ResultAsync.fromPromise(
+			this.db.transaction(async (tx) => {
+				const existingPlaylist = await tx.query.playlists.findFirst({
+					where: and(
+						eq(schema.playlists.remoteSyncId, remoteSyncId),
+						eq(schema.playlists.type, type),
+					),
+				})
+
+				if (existingPlaylist) {
+					return existingPlaylist
+				}
+
+				const [newPlaylist] = await tx
+					.insert(schema.playlists)
+					.values({
+						...payload,
+						itemCount: 0,
+					})
+					.returning()
+
+				return newPlaylist
+			}),
+			(e) => new DatabaseError('查找或创建播放列表的事务失败', e),
+		)
+	}
 }
 
 export const playlistService = new PlaylistService(db, trackService)

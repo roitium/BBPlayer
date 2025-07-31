@@ -1,8 +1,6 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import drizzleDb from '@/lib/db/db'
-import { seedDatabase } from '@/lib/db/seed'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -162,17 +160,6 @@ export default function TestPage() {
 						style={{ marginBottom: 8 }}
 					>
 						跳转 local 播放列表
-					</Button>
-					<Button
-						mode='outlined'
-						onPress={async () => {
-							setLoading(true)
-							await seedDatabase(drizzleDb)
-							setLoading(false)
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						随机填充数据库
 					</Button>
 				</View>
 
