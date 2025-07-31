@@ -56,9 +56,3 @@ export class DatabaseError extends CustomError {
 		this.originalError = originalError
 	}
 }
-
-export type TrackServiceError =
-	| ValidationError
-	| TrackNotFoundError
-	| DatabaseError
-	| ArtistNotFoundError

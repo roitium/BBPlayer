@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -354,6 +354,7 @@ export class PlaylistService {
 		return ResultAsync.fromPromise(
 			this.db.query.playlistTracks.findMany({
 				where: eq(schema.playlistTracks.playlistId, playlistId),
+				orderBy: asc(schema.playlistTracks.order),
 				with: {
 					track: {
 						with: {
