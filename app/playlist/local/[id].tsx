@@ -1,8 +1,5 @@
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaylistContents,
@@ -96,33 +93,13 @@ export default function LocalPlaylistPage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: () => playNext(item),
 			},
-			TrackMenuItemDividerToken,
-			{
-				title: '从收藏夹中删除',
-				leadingIcon: 'playlist-remove',
-				onPress: async () => {
-					// mutate({ bvids: [item.id], favoriteId: Number(id) })
-					// setRefreshing(true)
-					// await refetch()
-					// setRefreshing(false)
-					toast.show('unimplemented')
-				},
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '作为分P视频展示',
-				leadingIcon: 'eye-outline',
-				onPress: () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.id })
-				},
-			},
 		],
-		[playNext, navigation],
+		[playNext],
 	)
 
 	const handleTrackPress = useCallback(
 		(track: Track) => {
-			playAll(track.id)
+			playAll(String(track.id))
 		},
 		[playAll],
 	)
@@ -131,17 +108,24 @@ export default function LocalPlaylistPage() {
 		({ item, index }: { item: Track; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
-					onTrackPress={handleTrackPress}
+					onTrackPress={() => handleTrackPress(item)}
 					menuItems={trackMenuItems(item)}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						artistCover: item.artist?.avatarUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},
 		[handleTrackPress, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: Track) => item.id, [])
+	const keyExtractor = useCallback((item: Track) => String(item.id), [])
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
@@ -161,6 +145,10 @@ export default function LocalPlaylistPage() {
 		return <PlaylistError text='加载播放列表内容失败' />
 	}
 
+	if (!playlistMetadata) {
+		return <PlaylistError text='未找到播放列表元数据' />
+	}
+
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<PlaylistAppBar />
@@ -178,7 +166,7 @@ export default function LocalPlaylistPage() {
 						<PlaylistHeader
 							coverUri={playlistMetadata.coverUrl as string | undefined}
 							title={playlistMetadata.title}
-							subtitle={`${playlistMetadata.author?.name} • ${playlistMetadata.count} 首歌曲`}
+							subtitle={`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount} 首歌曲`}
 							description={
 								playlistMetadata.description
 									? playlistMetadata.description

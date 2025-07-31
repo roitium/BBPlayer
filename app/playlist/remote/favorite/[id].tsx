@@ -5,6 +5,7 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/useFavoriteData'
+import { bv2av } from '@/lib/api/bilibili/utils'
 import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -23,11 +24,9 @@ import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
 
-// const playlistLog = log.extend('PLAYLIST/FAVORITE')
-
 const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
 	return {
-		id: apiItem.bvid, // 仅仅用于列表的 key，不会作为真实 id 传递
+		id: bv2av(apiItem.bvid), // 仅仅用于列表的 key，不会作为真实 id 传递
 		cid: apiItem.id,
 		bvid: apiItem.bvid,
 		title: apiItem.title,
@@ -177,10 +176,16 @@ export default function FavoritePage() {
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
 					onTrackPress={handleTrackPress}
 					menuItems={trackMenuItems()}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},

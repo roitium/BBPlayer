@@ -1,9 +1,6 @@
-import { DatabaseError } from '@/lib/core/errors'
-import drizzleDb from '@/lib/db/db'
-import { playlists } from '@/lib/db/schema'
-import { Track } from '@/types/core/media'
+import { playlistService } from '@/lib/services/playlistService'
+import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import { useQuery } from '@tanstack/react-query'
-import { eq } from 'drizzle-orm'
 
 export const playlistKeys = {
 	all: ['db', 'playlists'] as const,
@@ -17,9 +14,7 @@ export const playlistKeys = {
 export const usePlaylistLists = () => {
 	return useQuery({
 		queryKey: playlistKeys.playlistLists(),
-		queryFn: () => {
-			return drizzleDb.select().from(playlists).all()
-		},
+		queryFn: () => returnOrThrowAsync(playlistService.getAllPlaylists(), true),
 		staleTime: 0,
 	})
 }
@@ -27,28 +22,8 @@ export const usePlaylistLists = () => {
 export const usePlaylistContents = (playlistId: number) => {
 	return useQuery({
 		queryKey: playlistKeys.playlistContents(playlistId),
-		queryFn: async () => {
-			const playlist = await drizzleDb.query.playlists.findFirst({
-				where: eq(playlists.id, playlistId),
-				with: {
-					trackLinks: {
-						with: {
-							track: true,
-						},
-					},
-				},
-			})
-			if (!playlist) {
-				throw new DatabaseError('Playlist not found')
-			}
-			return playlist?.trackLinks.map((trackLink) => {
-				return {
-					...trackLink.track,
-					id: trackLink.track.bvid,
-					hasMetadata: true,
-				} as Track
-			})
-		},
+		queryFn: () =>
+			returnOrThrowAsync(playlistService.getPlaylistTracks(playlistId), true),
 		staleTime: 0,
 	})
 }
@@ -56,22 +31,8 @@ export const usePlaylistContents = (playlistId: number) => {
 export const usePlaylistMetadata = (playlistId: number) => {
 	return useQuery({
 		queryKey: playlistKeys.playlistMetadata(playlistId),
-		queryFn: async () => {
-			const playlist = await drizzleDb.query.playlists.findFirst({
-				where: eq(playlists.id, playlistId),
-				with: {
-					author: true,
-				},
-			})
-			if (!playlist) {
-				throw new DatabaseError('Playlist not found')
-			}
-			return {
-				...playlist,
-				count: playlist.itemCount,
-				source: playlist.type === 'local' ? 'local' : 'bilibili',
-			}
-		},
+		queryFn: () =>
+			returnOrThrowAsync(playlistService.getPlaylistMetadata(playlistId), true),
 		staleTime: 0,
 	})
 }

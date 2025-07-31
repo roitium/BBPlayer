@@ -8,6 +8,7 @@ import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/useUserData'
+import { bv2av } from '@/lib/api/bilibili/utils'
 import { BilibiliUserUploadedVideosResponse } from '@/types/apis/bilibili'
 import { formatMMSSToSeconds } from '@/utils/times'
 import toast from '@/utils/toast'
@@ -31,7 +32,7 @@ const mapApiItemToViewTrack = (
 	apiItem: BilibiliUserUploadedVideosResponse['list']['vlist'][0],
 ) => {
 	return {
-		id: apiItem.bvid,
+		id: bv2av(apiItem.bvid),
 		bvid: apiItem.bvid,
 		title: apiItem.title,
 		artist: {
@@ -132,10 +133,16 @@ export default function UploaderPage() {
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
 					onTrackPress={() => toast.show('暂未实现')}
 					menuItems={trackMenuItems(item)}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},

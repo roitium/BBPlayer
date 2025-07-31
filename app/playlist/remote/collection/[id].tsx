@@ -5,6 +5,7 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
+import { bv2av } from '@/lib/api/bilibili/utils'
 import { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
@@ -28,7 +29,7 @@ const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 const mapApiItemToViewTrack = (apiItem: BilibiliMediaItemInCollection) => {
 	return {
-		id: apiItem.bvid, // 仅仅用于列表的 key，不会作为真实 id 传递
+		id: bv2av(apiItem.bvid),
 		cid: apiItem.id,
 		bvid: apiItem.bvid,
 		title: apiItem.title,
@@ -71,35 +72,6 @@ export default function CollectionPage() {
 		() => collectionData?.medias.map(mapApiItemToViewTrack) ?? [],
 		[collectionData],
 	)
-
-	// const playAll = useCallback(
-	// 	async (startFromId?: string) => {
-	// 		try {
-	// 			if (!collectionData?.medias) {
-	// 				toast.error('播放全部失败', {
-	// 					description: '无法加载收藏夹内容',
-	// 				})
-	// 				playlistLog.error(
-	// 					'播放全部失败 - collectionData.medias 为空',
-	// 					collectionData,
-	// 				)
-	// 				return
-	// 			}
-	// 			toast.info('暂未实现: ' + startFromId)
-	// 			// await addToQueue({
-	// 			// 	tracks: collectionData.medias,
-	// 			// 	playNow: true,
-	// 			// 	clearQueue: true,
-	// 			// 	startFromId: startFromId,
-	// 			// 	playNext: false,
-	// 			// })
-	// 		} catch (error) {
-	// 			playlistLog.sentry('播放全部失败', error)
-	// 			toast.error('播放全部失败', { description: '发生未知错误' })
-	// 		}
-	// 	},
-	// 	[collectionData],
-	// )
 
 	const _playNext = useCallback(
 		async (track: BilibiliMediaItemInCollection) => {
@@ -159,10 +131,16 @@ export default function CollectionPage() {
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
 					onTrackPress={handleTrackPress}
 					menuItems={trackMenuItems(item)}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},

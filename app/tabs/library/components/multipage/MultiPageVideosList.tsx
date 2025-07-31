@@ -4,7 +4,7 @@ import {
 	useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { Track } from '@/types/core/media'
+import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
@@ -39,10 +39,15 @@ const MultiPageVideosListComponent = memo(() => {
 	)
 
 	const renderPlaylistItem = useCallback(
-		({ item }: { item: Track }) => <MultiPageVideosItem item={item} />,
+		({ item }: { item: BilibiliFavoriteListContent }) => (
+			<MultiPageVideosItem item={item} />
+		),
 		[],
 	)
-	const keyExtractor = useCallback((item: Track) => item.id.toString(), [])
+	const keyExtractor = useCallback(
+		(item: BilibiliFavoriteListContent) => item.bvid,
+		[],
+	)
 
 	const onRefresh = async () => {
 		setRefreshing(true)
@@ -93,14 +98,14 @@ const MultiPageVideosListComponent = memo(() => {
 					分P视频
 				</Text>
 				<Text variant='bodyMedium'>
-					{favoriteData.pages[0]?.favoriteMeta?.media_count ?? 0} 个分P视频
+					{favoriteData.pages[0]?.info?.media_count ?? 0} 个分P视频
 				</Text>
 			</View>
 			<LegendList
 				style={{ flex: 1 }}
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
-				data={favoriteData.pages.flatMap((page) => page.tracks) ?? []}
+				data={favoriteData.pages.flatMap((page) => page.medias) ?? []}
 				renderItem={renderPlaylistItem}
 				keyExtractor={keyExtractor}
 				refreshControl={

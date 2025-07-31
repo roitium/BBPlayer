@@ -1,7 +1,7 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { Playlist } from '@/types/core/media'
+import { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { LegendList } from '@legendapp/list'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -31,10 +31,15 @@ const FavoriteFolderListComponent = memo(() => {
 	} = useGetFavoritePlaylists(userInfo?.mid)
 
 	const renderPlaylistItem = useCallback(
-		({ item }: { item: Playlist }) => <FavoriteFolderListItem item={item} />,
+		({ item }: { item: BilibiliPlaylist }) => (
+			<FavoriteFolderListItem item={item} />
+		),
 		[],
 	)
-	const keyExtractor = useCallback((item: Playlist) => item.id.toString(), [])
+	const keyExtractor = useCallback(
+		(item: BilibiliPlaylist) => item.id.toString(),
+		[],
+	)
 
 	const onRefresh = async () => {
 		setRefreshing(true)

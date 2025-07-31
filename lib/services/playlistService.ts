@@ -384,6 +384,41 @@ export class PlaylistService {
 			return okAsync(newTracks)
 		})
 	}
+
+	/**
+	 * 获取所有 playlists
+	 */
+	public getAllPlaylists(): ResultAsync<
+		(typeof schema.playlists.$inferSelect)[],
+		DatabaseError
+	> {
+		return ResultAsync.fromPromise(
+			this.db.query.playlists.findMany(),
+			(e) => new DatabaseError('获取所有 playlists 失败', e),
+		)
+	}
+
+	/**
+	 * 获取指定 playlist 的元数据
+	 * @param playlistId
+	 */
+	public getPlaylistMetadata(playlistId: number): ResultAsync<
+		| (typeof schema.playlists.$inferSelect & {
+				author: typeof schema.artists.$inferSelect | null
+		  })
+		| undefined,
+		DatabaseError
+	> {
+		return ResultAsync.fromPromise(
+			this.db.query.playlists.findFirst({
+				where: eq(schema.playlists.id, playlistId),
+				with: {
+					author: true,
+				},
+			}),
+			(e) => new DatabaseError('获取 playlist 元数据失败', e),
+		)
+	}
 }
 
 export const playlistService = new PlaylistService(db, trackService)

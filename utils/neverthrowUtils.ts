@@ -8,9 +8,13 @@ import { type Result, ResultAsync } from 'neverthrow'
  */
 export async function returnOrThrowAsync<T, E>(
 	resultAsync: ResultAsync<T, E>,
+	throwWhenResultIsUndefined = false,
 ): Promise<T> {
 	const result = await resultAsync
 	if (result.isOk()) {
+		if (throwWhenResultIsUndefined && result.value === undefined) {
+			throw new Error('Result is undefined')
+		}
 		return result.value
 	}
 	throw result.error

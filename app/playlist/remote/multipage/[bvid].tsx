@@ -34,7 +34,7 @@ const mapApiItemToViewTrack = (
 	video: BilibiliVideoDetails,
 ) => {
 	return {
-		id: String(mp.cid), // 仅仅用于列表的 key，不会作为真实 id 传递
+		id: mp.cid, // 仅仅用于列表的 key，不会作为真实 id 传递
 		cid: mp.cid,
 		bvid: video.bvid,
 		title: mp.part,
@@ -163,11 +163,17 @@ export default function MultipagePage() {
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
 					onTrackPress={handleTrackPress}
 					menuItems={trackMenuItems(item)}
 					showCoverImage={false}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},
@@ -175,7 +181,7 @@ export default function MultipagePage() {
 	)
 
 	const keyExtractor = useCallback((item: UITrack) => {
-		return item.id
+		return String(item.id)
 	}, [])
 
 	useEffect(() => {

@@ -22,7 +22,7 @@ export const queryClient = new QueryClient({
 				description: error.message,
 				duration: Number.POSITIVE_INFINITY,
 			})
-			rootLog.error(`请求 ${query.queryKey} 失败`, error)
+			rootLog.error(`请求 ${query.queryKey} 失败：`, error)
 
 			// 这个错误属于三方依赖的错误，不应该报告到 Sentry
 			if (error instanceof ApiCallingError) {

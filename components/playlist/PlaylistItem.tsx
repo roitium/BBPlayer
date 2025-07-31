@@ -11,11 +11,10 @@ import {
 	TouchableRipple,
 } from 'react-native-paper'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface TrackMenuItem<T = any> {
+export interface TrackMenuItem {
 	title: string
 	leadingIcon: string
-	onPress: (track: T) => void
+	onPress: () => void
 }
 
 export const TrackMenuItemDividerToken: TrackMenuItem = {
@@ -24,39 +23,33 @@ export const TrackMenuItemDividerToken: TrackMenuItem = {
 	onPress: () => {},
 }
 
-// 定义最小的 track 接口，支持不同的数据源
-export interface TrackDisplayItem {
+export type TrackNecessaryData = {
+	cover?: string
+	artistCover?: string
 	title: string
-	id: string
 	duration: number
-	coverUrl?: string | null
-	artist?: {
-		name: string
-		avatarUrl?: string | null
-	} | null
+	id: number
+	artistName?: string
 }
 
-interface TrackListItemProps<T extends TrackDisplayItem> {
-	item: T
+interface TrackListItemProps {
 	index: number
-	onTrackPress: (track: T) => void
-	menuItems: TrackMenuItem<T>[]
+	onTrackPress: () => void
+	menuItems: TrackMenuItem[]
 	showCoverImage?: boolean
+	data: TrackNecessaryData
 }
 
 /**
  * 可复用的播放列表项目组件。
- * 支持任何符合 TrackDisplayItem 接口的数据类型。
  */
-export const TrackListItem = memo(function TrackListItem<
-	T extends TrackDisplayItem,
->({
-	item,
+export const TrackListItem = memo(function TrackListItem({
 	index,
 	onTrackPress,
 	menuItems,
 	showCoverImage = true,
-}: TrackListItemProps<T>) {
+	data,
+}: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
 	const closeMenu = () => setIsMenuVisible(false)
@@ -64,7 +57,7 @@ export const TrackListItem = memo(function TrackListItem<
 	return (
 		<TouchableRipple
 			style={{ paddingVertical: 4 }}
-			onPress={() => onTrackPress(item)}
+			onPress={onTrackPress}
 		>
 			<Surface
 				style={{
@@ -99,7 +92,7 @@ export const TrackListItem = memo(function TrackListItem<
 					{showCoverImage ? (
 						<Image
 							source={{
-								uri: item.coverUrl ?? item.artist?.avatarUrl ?? undefined,
+								uri: data.cover ?? data.artistCover ?? undefined,
 							}}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
 							transition={300}
@@ -109,7 +102,7 @@ export const TrackListItem = memo(function TrackListItem<
 
 					{/* Title and Details */}
 					<View style={{ marginLeft: 12, flex: 1, marginRight: 4 }}>
-						<Text variant='bodySmall'>{item.title}</Text>
+						<Text variant='bodySmall'>{data.title}</Text>
 						<View
 							style={{
 								flexDirection: 'row',
@@ -118,13 +111,13 @@ export const TrackListItem = memo(function TrackListItem<
 							}}
 						>
 							{/* Display Artist if available */}
-							{item.artist && (
+							{data.artistName && (
 								<>
 									<Text
 										variant='bodySmall'
 										numberOfLines={1}
 									>
-										{item.artist.name ?? '未知'}
+										{data.artistName ?? '未知'}
 									</Text>
 									<Text
 										style={{ marginHorizontal: 4 }}
@@ -136,7 +129,7 @@ export const TrackListItem = memo(function TrackListItem<
 							)}
 							{/* Display Duration */}
 							<Text variant='bodySmall'>
-								{item.duration ? formatDurationToHHMMSS(item.duration) : ''}
+								{data.duration ? formatDurationToHHMMSS(data.duration) : ''}
 							</Text>
 						</View>
 					</View>
@@ -163,7 +156,7 @@ export const TrackListItem = memo(function TrackListItem<
 										key={menuItem.title}
 										leadingIcon={menuItem.leadingIcon}
 										onPress={() => {
-											menuItem.onPress(item)
+											menuItem.onPress()
 											closeMenu()
 										}}
 										title={menuItem.title}
