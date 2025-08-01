@@ -34,9 +34,9 @@
 - **UI**: Material Design 3 (React Native Paper)
 - **播放库**: React Native Track Player
 
-## 下一步计划（v1）
+## 下一步计划（v1: local-first）
 
-当前整个软件完全在线（所有数据都来源于 Bilibili，无本地存储），导致很多功能受限于 Bilibili api，下一步计划使用 Drizzle ORM + SQLite 拓展本地存储功能，详细进展可见：<https://github.com/yanyao2333/BBPlayer/pull/15>
+当前整个软件完全在线（所有数据都来源于 Bilibili，无本地存储），导致很多功能受限于 Bilibili api，下一步计划使用 Drizzle ORM + SQLite 重构为本地优先的播放器，详细进展可见：<https://github.com/yanyao2333/BBPlayer/pull/15>
 
 ## 开源许可
 
