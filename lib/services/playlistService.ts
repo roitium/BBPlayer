@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -9,8 +9,6 @@ import {
 	UpdatePlaylistPayload,
 } from '@/types/services/playlist'
 import { CreateTrackPayload } from '@/types/services/track'
-import db from '../db/db'
-import * as schema from '../db/schema'
 import {
 	DatabaseError,
 	PlaylistNotFoundError,
@@ -18,7 +16,9 @@ import {
 	TrackAlreadyExistsError,
 	TrackNotInPlaylistError,
 	ValidationError,
-} from './errors'
+} from '../core/errors/service'
+import db from '../db/db'
+import * as schema from '../db/schema'
 import { TrackService, trackService } from './trackService'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
@@ -149,7 +149,10 @@ export class PlaylistService {
 		trackPayload: CreateTrackPayload,
 	): ResultAsync<
 		typeof schema.playlistTracks.$inferSelect,
-		DatabaseError | ValidationError | ServiceError
+		| DatabaseError
+		| ValidationError
+		| TrackAlreadyExistsError
+		| PlaylistNotFoundError
 	> {
 		const trackResult = this.trackService.findOrCreateTrack(trackPayload)
 
@@ -183,11 +186,11 @@ export class PlaylistService {
 					// 获取新的排序号
 					const maxOrderResult = await this.db
 						.select({
-							maxOrder: sql<number>`MAX(${schema.playlistTracks.order})`,
+							maxOrder: sql<number | null>`MAX(${schema.playlistTracks.order})`,
 						})
 						.from(schema.playlistTracks)
 						.where(eq(schema.playlistTracks.playlistId, playlistId))
-					const nextOrder = (maxOrderResult[0]?.maxOrder ?? -1) + 1
+					const nextOrder = (maxOrderResult[0].maxOrder ?? -1) + 1
 
 					// 插入关联记录
 					const [newLink] = await this.db
@@ -266,10 +269,7 @@ export class PlaylistService {
 	public reorderSingleLocalPlaylistTrack(
 		playlistId: number,
 		payload: ReorderSingleTrackPayload,
-	): ResultAsync<
-		boolean,
-		DatabaseError | ServiceError | PlaylistNotFoundError
-	> {
+	): ResultAsync<true, DatabaseError | ServiceError | PlaylistNotFoundError> {
 		const { trackId, fromOrder, toOrder } = payload
 
 		if (fromOrder === toOrder) {
@@ -343,7 +343,7 @@ export class PlaylistService {
 						),
 					)
 
-				return true
+				return true as const
 			})(),
 			(e) => {
 				if (e instanceof ServiceError) return e
@@ -476,44 +476,41 @@ export class PlaylistService {
 	}
 
 	/**
-	 * 批量添加 track 到播放列表
+	 * 使用一个 track ID 数组**完全替换**一个播放列表的内容。
+	 * @param playlistId 要设置的播放列表 ID。
+	 * @param trackIds 有序的歌曲 ID 数组。
+	 * @returns ResultAsync
 	 */
-	public batchAddTracksToPlaylist(
+	public replacePlaylistAllTracks(
 		playlistId: number,
 		trackIds: number[],
-	): ResultAsync<boolean, DatabaseError | PlaylistNotFoundError> {
+	): ResultAsync<true, DatabaseError> {
 		return ResultAsync.fromPromise(
 			(async () => {
-				const playlist = await this.db.query.playlists.findFirst({
-					where: eq(schema.playlists.id, playlistId),
-					columns: { id: true },
-				})
-				if (!playlist) {
-					throw new PlaylistNotFoundError(playlistId)
+				await this.db
+					.delete(schema.playlistTracks)
+					.where(eq(schema.playlistTracks.playlistId, playlistId))
+
+				if (trackIds.length > 0) {
+					const newPlaylistTracks = trackIds.map((id, index) => ({
+						playlistId: playlistId,
+						trackId: id,
+						order: index,
+					}))
+					await this.db.insert(schema.playlistTracks).values(newPlaylistTracks)
 				}
 
-				const tracks = await this.db.query.tracks.findMany({
-					where: inArray(schema.tracks.id, trackIds),
-					orderBy: asc(schema.tracks.id),
-				})
+				await this.db
+					.update(schema.playlists)
+					.set({
+						itemCount: trackIds.length,
+						lastSyncedAt: new Date(),
+					})
+					.where(eq(schema.playlists.id, playlistId))
 
-				if (tracks.length !== trackIds.length) {
-					throw new DatabaseError(
-						`批量添加 track 到播放列表失败：找不到某些 track。`,
-					)
-				}
-
-				await this.db.insert(schema.playlistTracks).values(
-					tracks.map((track) => ({
-						playlistId,
-						trackId: track.id,
-						order: tracks.length,
-					})),
-				)
-
-				return true
+				return true as const
 			})(),
-			(e) => new DatabaseError('批量添加 track 到播放列表失败', e),
+			(e) => new DatabaseError(`设置播放列表歌曲失败 (ID: ${playlistId})`, e),
 		)
 	}
 }

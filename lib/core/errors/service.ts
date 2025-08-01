@@ -1,16 +1,6 @@
-import { CustomError } from '../core/errors'
+import { CustomError } from './index'
 
-export class ServiceError extends CustomError {
-	constructor(message: string) {
-		super(message)
-	}
-}
-
-export class ValidationError extends CustomError {
-	constructor(message: string) {
-		super(message)
-	}
-}
+export class ServiceError extends CustomError {}
 
 export class TrackNotFoundError extends ServiceError {
 	constructor(trackId: number | string) {
@@ -55,10 +45,9 @@ export class ArtistAlreadyExistsError extends ServiceError {
 }
 
 export class DatabaseError extends CustomError {
-	public readonly originalError?: unknown
 	constructor(message: string, originalError?: unknown) {
-		super(message)
-		this.name = 'DatabaseError'
-		this.originalError = originalError
+		super(message, originalError)
 	}
 }
+
+export class ValidationError extends CustomError {}

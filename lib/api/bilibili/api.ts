@@ -21,8 +21,11 @@ import {
 import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
+import {
+	BilibiliApiError,
+	BilibiliApiErrorType,
+} from '../../core/errors/bilibili'
 import { bilibiliApiClient } from './client'
-import { BilibiliApiError, BilibiliApiErrorType } from './errors'
 import { bv2av, convertToFormDataString } from './utils'
 import getWbiEncodedParams from './wbi'
 

@@ -98,7 +98,7 @@ export const playlistTracks = sqliteTable(
 		trackId: integer('track_id')
 			.notNull()
 			.references(() => tracks.id, { onDelete: 'cascade' }),
-		order: integer('order').notNull(), // 歌曲在列表中的顺序
+		order: integer('order').notNull(), // 歌曲在列表中的顺序，从 0 开始
 		createdAt: integer('created_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch() * 1000)`),

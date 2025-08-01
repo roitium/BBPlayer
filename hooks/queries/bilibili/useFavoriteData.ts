@@ -3,7 +3,7 @@ import { bilibiliApi } from '@/lib/api/bilibili/api'
 import {
 	BilibiliApiError,
 	BilibiliApiErrorType,
-} from '@/lib/api/bilibili/errors'
+} from '@/lib/core/errors/bilibili'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'

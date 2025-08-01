@@ -8,9 +8,13 @@ import { eq } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 import type { BilibiliTrack, LocalTrack, Track } from '../../types/core/media'
+import {
+	DatabaseError,
+	TrackNotFoundError,
+	ValidationError,
+} from '../core/errors/service'
 import db from '../db/db'
 import * as schema from '../db/schema'
-import { DatabaseError, TrackNotFoundError, ValidationError } from './errors'
 import generateUniqueTrackKey from './genKey'
 
 const logger = log.extend('Service/Track')

@@ -15,6 +15,6 @@ export interface UpdatePlaylistPayload {
 
 export interface ReorderSingleTrackPayload {
 	trackId: number
-	fromOrder: number
-	toOrder: number
+	fromOrder: number // 从 0 开始
+	toOrder: number // 从 0 开始
 }

@@ -7,14 +7,14 @@ import {
 	CreateArtistPayload,
 	UpdateArtistPayload,
 } from '@/types/services/artist'
-import db from '../db/db'
-import * as schema from '../db/schema'
 import {
 	ArtistNotFoundError,
 	DatabaseError,
 	ServiceError,
 	ValidationError,
-} from './errors'
+} from '../core/errors/service'
+import db from '../db/db'
+import * as schema from '../db/schema'
 import { TrackService, trackService } from './trackService'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]

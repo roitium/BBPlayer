@@ -2,12 +2,9 @@
  * 通用的自定义错误基类，用于统一处理错误名称和堆栈信息。
  */
 export class CustomError extends Error {
-	constructor(message: string) {
-		super(message)
+	constructor(message: string, cause?: unknown) {
+		super(message, { cause: cause })
 		this.name = this.constructor.name
-		if (Error.captureStackTrace) {
-			Error.captureStackTrace(this, this.constructor)
-		}
 	}
 }
 
