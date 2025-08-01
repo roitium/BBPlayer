@@ -48,6 +48,12 @@ export class TrackNotInPlaylistError extends ServiceError {
 	}
 }
 
+export class ArtistAlreadyExistsError extends ServiceError {
+	constructor(name: string) {
+		super(`音乐人 '${name}' 已存在`)
+	}
+}
+
 export class DatabaseError extends CustomError {
 	public readonly originalError?: unknown
 	constructor(message: string, originalError?: unknown) {

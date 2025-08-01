@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -21,19 +21,25 @@ import {
 } from './errors'
 import { TrackService, trackService } from './trackService'
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx
+
 /**
  * 对于内部 tracks 的增删改操作只有 local playlist 才可以，注意方法名。
  */
 export class PlaylistService {
-	private readonly db: ExpoSQLiteDatabase<typeof schema>
-	private readonly trackService: TrackService
-
 	constructor(
-		db: ExpoSQLiteDatabase<typeof schema>,
-		trackService: TrackService,
-	) {
-		this.db = db
-		this.trackService = trackService
+		private readonly db: DBLike,
+		private readonly trackService: TrackService,
+	) {}
+
+	/**
+	 * 返回一个使用新数据库连接（例如事务）的新实例。
+	 * @param conn - 新的数据库连接或事务。
+	 * @returns 一个新的实例。
+	 */
+	withDB(conn: DBLike) {
+		return new PlaylistService(conn, this.trackService.withDB(conn))
 	}
 
 	/**
@@ -72,9 +78,9 @@ export class PlaylistService {
 		DatabaseError | PlaylistNotFoundError
 	> {
 		return ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
+			(async () => {
 				// 验证播放列表是否存在且为 'local' 类型
-				const existing = await tx.query.playlists.findFirst({
+				const existing = await this.db.query.playlists.findFirst({
 					where: and(
 						eq(schema.playlists.id, playlistId),
 						eq(schema.playlists.type, 'local'),
@@ -84,14 +90,14 @@ export class PlaylistService {
 					throw new PlaylistNotFoundError(playlistId)
 				}
 
-				const [updated] = await tx
+				const [updated] = await this.db
 					.update(schema.playlists)
 					.set(payload)
 					.where(eq(schema.playlists.id, playlistId))
 					.returning()
 
 				return updated
-			}),
+			})(),
 			(e) => {
 				if (e instanceof PlaylistNotFoundError) return e
 				return new DatabaseError(`更新播放列表 ${playlistId} 失败`, e)
@@ -108,9 +114,9 @@ export class PlaylistService {
 		playlistId: number,
 	): ResultAsync<{ deletedId: number }, DatabaseError | PlaylistNotFoundError> {
 		return ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
+			(async () => {
 				// 验证播放列表是否存在
-				const existing = await tx.query.playlists.findFirst({
+				const existing = await this.db.query.playlists.findFirst({
 					where: and(eq(schema.playlists.id, playlistId)),
 					columns: { id: true },
 				})
@@ -118,13 +124,13 @@ export class PlaylistService {
 					throw new PlaylistNotFoundError(playlistId)
 				}
 
-				const [deleted] = await tx
+				const [deleted] = await this.db
 					.delete(schema.playlists)
 					.where(eq(schema.playlists.id, playlistId))
 					.returning({ deletedId: schema.playlists.id })
 
 				return deleted
-			}),
+			})(),
 			(e) => {
 				if (e instanceof PlaylistNotFoundError) return e
 				return new DatabaseError(`删除播放列表 ${playlistId} 失败`, e)
@@ -150,9 +156,9 @@ export class PlaylistService {
 		return trackResult.andThen((track) => {
 			// 在事务中处理播放列表的逻辑
 			return ResultAsync.fromPromise(
-				this.db.transaction(async (tx) => {
+				(async () => {
 					// 验证播放列表是否存在且为 'local'
-					const playlist = await tx.query.playlists.findFirst({
+					const playlist = await this.db.query.playlists.findFirst({
 						where: and(
 							eq(schema.playlists.id, playlistId),
 							eq(schema.playlists.type, 'local'),
@@ -164,7 +170,7 @@ export class PlaylistService {
 					}
 
 					// 检查歌曲是否已在列表中
-					const existingLink = await tx.query.playlistTracks.findFirst({
+					const existingLink = await this.db.query.playlistTracks.findFirst({
 						where: and(
 							eq(schema.playlistTracks.playlistId, playlistId),
 							eq(schema.playlistTracks.trackId, track.id),
@@ -175,7 +181,7 @@ export class PlaylistService {
 					}
 
 					// 获取新的排序号
-					const maxOrderResult = await tx
+					const maxOrderResult = await this.db
 						.select({
 							maxOrder: sql<number>`MAX(${schema.playlistTracks.order})`,
 						})
@@ -184,7 +190,7 @@ export class PlaylistService {
 					const nextOrder = (maxOrderResult[0]?.maxOrder ?? -1) + 1
 
 					// 插入关联记录
-					const [newLink] = await tx
+					const [newLink] = await this.db
 						.insert(schema.playlistTracks)
 						.values({
 							playlistId: playlistId,
@@ -194,13 +200,13 @@ export class PlaylistService {
 						.returning()
 
 					// 更新播放列表的 itemCount
-					await tx
+					await this.db
 						.update(schema.playlists)
 						.set({ itemCount: sql`${schema.playlists.itemCount} + 1` })
 						.where(eq(schema.playlists.id, playlistId))
 
 					return newLink
-				}),
+				})(),
 				(e) => {
 					if (e instanceof ServiceError) return e
 					return new DatabaseError('添加歌曲到播放列表的事务失败', e)
@@ -220,9 +226,9 @@ export class PlaylistService {
 		trackId: number,
 	): ResultAsync<{ trackId: number }, DatabaseError | TrackNotInPlaylistError> {
 		return ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
+			(async () => {
 				// 删除关联记录
-				const [deletedLink] = await tx
+				const [deletedLink] = await this.db
 					.delete(schema.playlistTracks)
 					.where(
 						and(
@@ -237,13 +243,13 @@ export class PlaylistService {
 				}
 
 				// 更新 itemCount (使用-1，并确保不会变为负数)
-				await tx
+				await this.db
 					.update(schema.playlists)
 					.set({ itemCount: sql`MAX(0, ${schema.playlists.itemCount} - 1)` })
 					.where(eq(schema.playlists.id, playlistId))
 
 				return deletedLink
-			}),
+			})(),
 			(e) => {
 				if (e instanceof ServiceError) return e
 				return new DatabaseError('从播放列表移除歌曲的事务失败', e)
@@ -260,7 +266,10 @@ export class PlaylistService {
 	public reorderSingleLocalPlaylistTrack(
 		playlistId: number,
 		payload: ReorderSingleTrackPayload,
-	): ResultAsync<true, DatabaseError | ServiceError | PlaylistNotFoundError> {
+	): ResultAsync<
+		boolean,
+		DatabaseError | ServiceError | PlaylistNotFoundError
+	> {
 		const { trackId, fromOrder, toOrder } = payload
 
 		if (fromOrder === toOrder) {
@@ -268,8 +277,8 @@ export class PlaylistService {
 		}
 
 		return ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
-				const playlist = await tx.query.playlists.findFirst({
+			(async () => {
+				const playlist = await this.db.query.playlists.findFirst({
 					where: and(
 						eq(schema.playlists.id, playlistId),
 						eq(schema.playlists.type, 'local'),
@@ -281,7 +290,7 @@ export class PlaylistService {
 				}
 
 				// 验证要移动的歌曲确实在 fromOrder 位置
-				const trackToMove = await tx.query.playlistTracks.findFirst({
+				const trackToMove = await this.db.query.playlistTracks.findFirst({
 					where: and(
 						eq(schema.playlistTracks.playlistId, playlistId),
 						eq(schema.playlistTracks.trackId, trackId),
@@ -298,7 +307,7 @@ export class PlaylistService {
 				if (toOrder > fromOrder) {
 					// 往列表尾部移动
 					// 把从 fromOrder+1 到 toOrder 的所有歌曲的 order 都减 1 (向上挪一位)
-					await tx
+					await this.db
 						.update(schema.playlistTracks)
 						.set({ order: sql`${schema.playlistTracks.order} - 1` })
 						.where(
@@ -311,7 +320,7 @@ export class PlaylistService {
 				} else {
 					// 往列表头部移动
 					// 把从 toOrder 到 fromOrder-1 的所有歌曲的 order 都加 1 (向下挪一位)
-					await tx
+					await this.db
 						.update(schema.playlistTracks)
 						.set({ order: sql`${schema.playlistTracks.order} + 1` })
 						.where(
@@ -324,7 +333,7 @@ export class PlaylistService {
 				}
 
 				// 把被移动的歌曲放到目标位置
-				await tx
+				await this.db
 					.update(schema.playlistTracks)
 					.set({ order: toOrder })
 					.where(
@@ -335,7 +344,7 @@ export class PlaylistService {
 					)
 
 				return true
-			}),
+			})(),
 			(e) => {
 				if (e instanceof ServiceError) return e
 				return new DatabaseError('重排序播放列表歌曲的事务失败', e)
@@ -440,8 +449,8 @@ export class PlaylistService {
 			)
 		}
 		return ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
-				const existingPlaylist = await tx.query.playlists.findFirst({
+			(async () => {
+				const existingPlaylist = await this.db.query.playlists.findFirst({
 					where: and(
 						eq(schema.playlists.remoteSyncId, remoteSyncId),
 						eq(schema.playlists.type, type),
@@ -452,7 +461,7 @@ export class PlaylistService {
 					return existingPlaylist
 				}
 
-				const [newPlaylist] = await tx
+				const [newPlaylist] = await this.db
 					.insert(schema.playlists)
 					.values({
 						...payload,
@@ -461,8 +470,50 @@ export class PlaylistService {
 					.returning()
 
 				return newPlaylist
-			}),
+			})(),
 			(e) => new DatabaseError('查找或创建播放列表的事务失败', e),
+		)
+	}
+
+	/**
+	 * 批量添加 track 到播放列表
+	 */
+	public batchAddTracksToPlaylist(
+		playlistId: number,
+		trackIds: number[],
+	): ResultAsync<boolean, DatabaseError | PlaylistNotFoundError> {
+		return ResultAsync.fromPromise(
+			(async () => {
+				const playlist = await this.db.query.playlists.findFirst({
+					where: eq(schema.playlists.id, playlistId),
+					columns: { id: true },
+				})
+				if (!playlist) {
+					throw new PlaylistNotFoundError(playlistId)
+				}
+
+				const tracks = await this.db.query.tracks.findMany({
+					where: inArray(schema.tracks.id, trackIds),
+					orderBy: asc(schema.tracks.id),
+				})
+
+				if (tracks.length !== trackIds.length) {
+					throw new DatabaseError(
+						`批量添加 track 到播放列表失败：找不到某些 track。`,
+					)
+				}
+
+				await this.db.insert(schema.playlistTracks).values(
+					tracks.map((track) => ({
+						playlistId,
+						trackId: track.id,
+						order: tracks.length,
+					})),
+				)
+
+				return true
+			})(),
+			(e) => new DatabaseError('批量添加 track 到播放列表失败', e),
 		)
 	}
 }

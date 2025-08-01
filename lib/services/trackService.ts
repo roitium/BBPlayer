@@ -14,12 +14,19 @@ import { DatabaseError, TrackNotFoundError, ValidationError } from './errors'
 import generateUniqueTrackKey from './genKey'
 
 const logger = log.extend('Service/Track')
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx
 
 export class TrackService {
-	private readonly db: ExpoSQLiteDatabase<typeof schema>
+	constructor(private readonly db: DBLike) {}
 
-	constructor(db: ExpoSQLiteDatabase<typeof schema>) {
-		this.db = db
+	/**
+	 * 返回一个使用新数据库连接（例如事务）的新实例。
+	 * @param conn - 新的数据库连接或事务。
+	 * @returns 一个新的实例。
+	 */
+	withDB(conn: DBLike) {
+		return new TrackService(conn)
 	}
 
 	/**
@@ -98,9 +105,9 @@ export class TrackService {
 		}
 
 		const transactionResult = ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
+			(async () => {
 				// 创建 track
-				const [newTrack] = await tx
+				const [newTrack] = await this.db
 					.insert(schema.tracks)
 					.values({
 						title: payload.title,
@@ -118,17 +125,17 @@ export class TrackService {
 
 				// 创建元数据
 				if (payload.source === 'bilibili') {
-					await tx
+					await this.db
 						.insert(schema.bilibiliMetadata)
 						.values({ trackId, ...payload.bilibiliMetadata! })
 				} else if (payload.source === 'local') {
-					await tx
+					await this.db
 						.insert(schema.localMetadata)
 						.values({ trackId, ...payload.localMetadata! })
 				}
 
 				return trackId
-			}),
+			})(),
 			(e) => new DatabaseError('创建 track 事务失败', e),
 		)
 
@@ -215,10 +222,10 @@ export class TrackService {
 	 */
 	public addPlayRecord(
 		trackId: number,
-	): ResultAsync<true, TrackNotFoundError | DatabaseError> {
+	): ResultAsync<boolean, TrackNotFoundError | DatabaseError> {
 		return ResultAsync.fromPromise(
-			this.db.transaction(async (tx) => {
-				const track = await tx.query.tracks.findFirst({
+			(async () => {
+				const track = await this.db.query.tracks.findFirst({
 					where: eq(schema.tracks.id, trackId),
 					columns: { playCountSequence: true },
 				})
@@ -230,13 +237,13 @@ export class TrackService {
 				const sequence = track.playCountSequence || []
 				sequence.push(Date.now())
 
-				await tx
+				await this.db
 					.update(schema.tracks)
 					.set({ playCountSequence: sequence })
 					.where(eq(schema.tracks.id, trackId))
 
 				return true
-			}),
+			})(),
 			(e) =>
 				e instanceof TrackNotFoundError
 					? e
