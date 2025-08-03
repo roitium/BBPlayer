@@ -43,7 +43,7 @@ function convertToRNTPTrack(track: Track): Result<RNTPTrack, Error> {
 		url,
 		title: track.title,
 		artist: track.artist?.name,
-		artwork: track.artist?.avatarUrl ?? undefined,
+		artwork: track.coverUrl ?? undefined,
 		duration: track.duration,
 		userAgent:
 			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
@@ -190,12 +190,15 @@ async function checkAndUpdateAudioStream(
 					// 更新 track 对象
 					const updatedTrack = {
 						...track,
-						cid: cid, // 确保 cid 更新
-						bilibiliStreamUrl: {
-							url: streamInfo.url,
-							quality: streamInfo.quality || 0,
-							getTime: Date.now(),
-							type: streamInfo.type || 'dash',
+						bilibiliMetadata: {
+							...track.bilibiliMetadata,
+							cid: cid, // 确保 cid 更新
+							bilibiliStreamUrl: {
+								url: streamInfo.url,
+								quality: streamInfo.quality || 0,
+								getTime: Date.now(),
+								type: streamInfo.type || 'dash',
+							},
 						},
 					}
 

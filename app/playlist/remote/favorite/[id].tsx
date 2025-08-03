@@ -236,7 +236,7 @@ export default function FavoritePage() {
 							title={favoriteData.pages[0].info.title}
 							subtitle={`${favoriteData.pages[0].info.upper.name} • ${favoriteData.pages[0].info.media_count} 首歌曲`}
 							description={favoriteData.pages[0].info.intro}
-							onPlayAll={() => toast.show('暂未实现')}
+							onClickMainButton={() => toast.show('暂未实现')}
 						/>
 					}
 					refreshControl={

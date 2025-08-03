@@ -126,7 +126,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 				}}
 			>
 				<Image
-					source={{ uri: displayTrack.coverUrl }}
+					source={{ uri: displayTrack.coverUrl ?? undefined }}
 					style={{
 						height: 48,
 						width: 48,
@@ -156,7 +156,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						numberOfLines={1}
 						style={{ color: colors.onSurfaceVariant }}
 					>
-						{displayTrack.artist}
+						{displayTrack.artist?.name ?? '未知'}
 					</Text>
 				</View>
 

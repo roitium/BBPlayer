@@ -224,7 +224,7 @@ export default function MultipagePage() {
 							title={videoData.title}
 							subtitle={`${videoData.owner.name} • ${tracksData.length} 首歌曲`}
 							description={videoData.desc}
-							onPlayAll={() => toast.show('暂未实现')}
+							onClickMainButton={() => toast.show('暂未实现')}
 						/>
 					}
 					refreshControl={

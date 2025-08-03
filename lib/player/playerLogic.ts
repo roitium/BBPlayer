@@ -93,7 +93,7 @@ const PlayerLogic = {
 				const { state } = data
 				const setter = usePlayerStore.setState
 				// const store = usePlayerStore.getState()
-				// const currentTrack = store.currentTrackKey
+				// const currentTrack = usePlayerStore.getState()._getCurrentTrack()
 				// 	? (store.tracks[store.currentTrackKey] ?? null)
 				// 	: null
 

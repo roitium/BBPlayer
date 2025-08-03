@@ -44,11 +44,7 @@ export class ArtistAlreadyExistsError extends ServiceError {
 	}
 }
 
-export class DatabaseError extends CustomError {
-	constructor(message: string, originalError?: unknown) {
-		super(message, originalError)
-	}
-}
+export class DatabaseError extends CustomError {}
 
 export class ValidationError extends CustomError {}
 

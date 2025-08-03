@@ -155,7 +155,7 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							navigation.push('PlaylistLocal', { id: '6' })
+							navigation.push('PlaylistLocal', { id: '10' })
 						}}
 						style={{ marginBottom: 8 }}
 					>

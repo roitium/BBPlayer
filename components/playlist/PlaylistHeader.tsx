@@ -2,13 +2,15 @@ import { Image } from 'expo-image'
 import { memo } from 'react'
 import { View } from 'react-native'
 import { Divider, IconButton, Text } from 'react-native-paper'
+import { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
 
 interface PlaylistHeaderProps {
 	coverUri: string | undefined
 	title: string | undefined
-	subtitle: string | undefined // 通常格式： "Author • n Tracks"
+	subtitles: string | string[] | undefined // 通常格式： "Author • n Tracks"
 	description: string | undefined
-	onPlayAll: (() => void) | undefined
+	onClickMainButton: (() => void) | undefined
+	mainButtonIcon?: IconSource
 }
 
 /**
@@ -17,9 +19,10 @@ interface PlaylistHeaderProps {
 export const PlaylistHeader = memo(function PlaylistHeader({
 	coverUri,
 	title,
-	subtitle,
+	subtitles,
 	description,
-	onPlayAll,
+	onClickMainButton,
+	mainButtonIcon,
 }: PlaylistHeaderProps) {
 	if (!coverUri || !title) return null
 	return (
@@ -40,9 +43,9 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					</Text>
 					<Text
 						variant='bodyMedium'
-						numberOfLines={1}
+						numberOfLines={Array.isArray(subtitles) ? subtitles.length : 1}
 					>
-						{subtitle || ''}
+						{Array.isArray(subtitles) ? subtitles.join('\n') : subtitles}
 					</Text>
 				</View>
 			</View>
@@ -63,12 +66,12 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					{description || '还没有简介哦~'}
 				</Text>
 
-				{onPlayAll && (
+				{onClickMainButton && (
 					<IconButton
 						mode='contained'
-						icon='play'
+						icon={mainButtonIcon ?? 'play'}
 						size={30}
-						onPress={() => onPlayAll()}
+						onPress={() => onClickMainButton()}
 					/>
 				)}
 			</View>

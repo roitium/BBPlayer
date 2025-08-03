@@ -9,6 +9,7 @@ import {
 	UpdatePlaylistPayload,
 } from '@/types/services/playlist'
 import { CreateTrackPayload } from '@/types/services/track'
+import log from '@/utils/log'
 import {
 	DatabaseError,
 	PlaylistNotFoundError,
@@ -360,6 +361,7 @@ export class PlaylistService {
 	public getPlaylistTracks(
 		playlistId: number,
 	): ResultAsync<Track[], DatabaseError | PlaylistNotFoundError> {
+		const start = performance.now()
 		return ResultAsync.fromPromise(
 			this.db.query.playlistTracks.findMany({
 				where: eq(schema.playlistTracks.playlistId, playlistId),
@@ -378,20 +380,25 @@ export class PlaylistService {
 				if (e instanceof ServiceError) return e
 				return new DatabaseError('获取播放列表歌曲的事务失败', e)
 			},
-		).andThen((data) => {
-			const newTracks = []
-			for (const track of data) {
-				const t = this.trackService.formatTrack(track.track)
-				if (!t)
-					return errAsync(
-						new ServiceError(
-							`在格式化歌曲：${track.track.id} 时出错，可能是原数据不存在或 source & metadata 不匹配`,
-						),
-					)
-				newTracks.push(t)
-			}
-			return okAsync(newTracks)
-		})
+		)
+			.andThen((data) => {
+				const newTracks = []
+				for (const track of data) {
+					const t = this.trackService.formatTrack(track.track)
+					if (!t)
+						return errAsync(
+							new ServiceError(
+								`在格式化歌曲：${track.track.id} 时出错，可能是原数据不存在或 source & metadata 不匹配`,
+							),
+						)
+					newTracks.push(t)
+				}
+				return okAsync(newTracks)
+			})
+			.andTee(() => {
+				const end = performance.now()
+				log.debug(`getPlaylistTracks 耗时：${(end - start).toFixed(2)} ms`)
+			})
 	}
 
 	/**

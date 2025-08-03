@@ -8,6 +8,7 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
+import { formatRelativeTime } from '@/utils/times'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -166,13 +167,16 @@ export default function LocalPlaylistPage() {
 						<PlaylistHeader
 							coverUri={playlistMetadata.coverUrl as string | undefined}
 							title={playlistMetadata.title}
-							subtitle={`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount} 首歌曲`}
+							subtitles={[
+								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount} 首歌曲`,
+								`最后同步：${playlistMetadata.lastSyncedAt ? formatRelativeTime(playlistMetadata.lastSyncedAt) : '未知'}`,
+							]}
 							description={
 								playlistMetadata.description
 									? playlistMetadata.description
 									: '暂无描述'
 							}
-							onPlayAll={() => playAll()}
+							onClickMainButton={() => playAll()}
 						/>
 					}
 					keyExtractor={keyExtractor}

@@ -295,10 +295,14 @@ export class ArtistService {
 
 				// 如果有需要创建的artist，则批量插入
 				if (artistsToCreate.length > 0) {
-					newlyCreatedArtists = await this.db
-						.insert(schema.artists)
-						.values(artistsToCreate)
-						.returning()
+					const _result = await ResultAsync.fromPromise(
+						this.db.insert(schema.artists).values(artistsToCreate).returning(),
+						(e) => new DatabaseError('批量创建 artist 失败', e),
+					)
+					if (_result.isErr()) {
+						throw _result.error
+					}
+					newlyCreatedArtists = _result.value
 				}
 
 				// 合并结果并返回
@@ -320,7 +324,10 @@ export class ArtistService {
 
 				return finalResultMap
 			})(),
-			(e) => new ServiceError('批量查找或创建artist的事务失败', e),
+			(e) =>
+				e instanceof DatabaseError
+					? e
+					: new ServiceError('批量查找或创建artist的事务失败', e),
 		)
 	}
 }

@@ -5,8 +5,17 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { bv2av } from '@/lib/api/bilibili/utils'
+import db from '@/lib/db/db'
+import { Facade } from '@/lib/facades/facade'
+import { artistService } from '@/lib/services/artistService'
+import { playlistService } from '@/lib/services/playlistService'
+import { trackService } from '@/lib/services/trackService'
 import { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
+import { Track } from '@/types/core/media'
+import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -48,6 +57,32 @@ const mapApiItemToViewTrack = (apiItem: BilibiliMediaItemInCollection) => {
 
 type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
+const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
+	return {
+		id: bv2av(apiItem.bvid),
+		source: 'bilibili',
+		title: apiItem.title,
+		artist: {
+			id: 1145141919810, // FIXME: Don't ask me why, bro.
+			name: apiItem.upper.name,
+			signature: '你所热爱的，就是你的生活',
+			remoteId: apiItem.upper.mid.toString(),
+			source: 'bilibili',
+			avatarUrl: null,
+			createdAt: apiItem.pubtime,
+		},
+		coverUrl: apiItem.cover,
+		duration: apiItem.duration,
+		playCountSequence: [],
+		createdAt: apiItem.pubtime,
+		bilibiliMetadata: {
+			bvid: apiItem.bvid,
+			cid: null,
+			isMultiPart: false,
+		},
+	}
+}
+
 export default function CollectionPage() {
 	const navigation =
 		useNavigation<
@@ -59,8 +94,7 @@ export default function CollectionPage() {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
-	// const [modalVisible, setModalVisible] = useState(false)
-	// const [currentModalBvid, setCurrentModalBvid] = useState('')
+	const addToQueue = usePlayerStore((state) => state.addToQueue)
 
 	const {
 		data: collectionData,
@@ -73,66 +107,48 @@ export default function CollectionPage() {
 		[collectionData],
 	)
 
-	const _playNext = useCallback(
-		async (track: BilibiliMediaItemInCollection) => {
-			try {
-				toast.info('暂未实现: ' + track.id)
-				// await addToQueue({
-				// 	tracks: [track],
-				// 	playNow: false,
-				// 	clearQueue: false,
-				// 	playNext: true,
-				// })
-				// toast.success('添加到下一首播放成功')
-			} catch (error) {
-				playlistLog.sentry('添加到队列失败', error)
-				toast.error('添加到队列失败')
-			}
+	const handlePlayTrack = useCallback(
+		(item: UITrack, playNext = false) => {
+			if (!collectionData?.medias) return
+			const apiItem = collectionData?.medias.find((m) => m.bvid === item.bvid)
+			if (!apiItem) return
+			const track = mapApiItemToTrack(apiItem)
+			addToQueue({
+				tracks: [track],
+				playNow: !playNext,
+				clearQueue: false,
+				playNext: playNext,
+			})
 		},
-		[],
+		[addToQueue, collectionData?.medias],
 	)
 
 	const trackMenuItems = useCallback(
-		(_item: UITrack) => [
+		(item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: () => toast.show('暂未实现'),
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '添加到收藏夹',
-				leadingIcon: 'plus',
-				onPress: () => {
-					toast.show('暂未实现')
-					// setCurrentModalBvid(item.bvid)
-					// setModalVisible(true)
-				},
+				onPress: () => handlePlayTrack(item, true),
 			},
 			TrackMenuItemDividerToken,
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					// navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
-					toast.show('暂未实现')
+					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
 				},
 			},
 		],
-		[],
+		[handlePlayTrack, navigation],
 	)
-
-	const handleTrackPress = useCallback(() => {
-		// playAll(id)
-		toast.show('暂未实现')
-	}, [])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
-					onTrackPress={handleTrackPress}
+					// FIXME: 这里使用箭头函数创建闭包，会不会导致引用不稳定而引发重渲染？
+					onTrackPress={() => handlePlayTrack(item)}
 					menuItems={trackMenuItems(item)}
 					data={{
 						cover: item.coverUrl ?? undefined,
@@ -144,10 +160,28 @@ export default function CollectionPage() {
 				/>
 			)
 		},
-		[handleTrackPress, trackMenuItems],
+		[handlePlayTrack, trackMenuItems],
 	)
 
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
+
+	const handleSync = async () => {
+		const facade = new Facade(
+			trackService,
+			bilibiliApi,
+			playlistService,
+			artistService,
+			db,
+		)
+		const result = await facade.syncCollection(Number(id))
+		if (result.isErr()) {
+			toast.error(flatErrorMessage(result.error))
+			playlistLog.error(result.error)
+			return
+		}
+		toast.success('同步成功')
+		navigation.replace('PlaylistLocal', { id: String(result.value) })
+	}
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
@@ -200,9 +234,10 @@ export default function CollectionPage() {
 						<PlaylistHeader
 							coverUri={collectionData.info.cover}
 							title={collectionData.info.title}
-							subtitle={`${collectionData.info.upper.name} • ${collectionData.info.media_count} 首歌曲`}
+							subtitles={`${collectionData.info.upper.name} • ${collectionData.info.media_count} 首歌曲`}
 							description={collectionData.info.intro}
-							onPlayAll={() => toast.show('暂未实现')}
+							onClickMainButton={handleSync}
+							mainButtonIcon={'sync'}
 						/>
 					}
 					refreshControl={
@@ -229,13 +264,6 @@ export default function CollectionPage() {
 					}
 				/>
 			</View>
-
-			{/* <AddToFavoriteListsModal
-				key={currentModalBvid}
-				visible={modalVisible}
-				bvid={currentModalBvid}
-				setVisible={setModalVisible}
-			/> */}
 		</View>
 	)
 }

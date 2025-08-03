@@ -190,7 +190,7 @@ export default function UploaderPage() {
 							title={uploaderUserInfo.name}
 							subtitle={`${uploadedVideos.pages[0].page.count} 首歌曲`}
 							description={uploaderUserInfo.sign}
-							onPlayAll={undefined}
+							onClickMainButton={undefined}
 						/>
 					}
 					refreshControl={
