@@ -51,3 +51,5 @@ export class DatabaseError extends CustomError {
 }
 
 export class ValidationError extends CustomError {}
+
+export class NotImplementedError extends CustomError {}

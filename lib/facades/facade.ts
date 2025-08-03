@@ -66,9 +66,7 @@ export class Facade {
 		const contents =
 			await this.bilibiliApi.getCollectionAllContents(collectionId)
 		if (contents.isErr()) return errAsync(contents.error)
-		logger.debug(
-			'step 1: fetch getCollectionAllContents from bilibili api done',
-		)
+		logger.debug('step 1: 调用 bilibiliapi getCollectionAllContents 完成')
 
 		return ResultAsync.fromPromise(
 			this.db.transaction(async (tx) => {
@@ -84,7 +82,7 @@ export class Facade {
 					remoteSyncId: collectionId,
 				})
 				if (playlistRes.isErr()) throw playlistRes.error
-				logger.debug('step 2: create playlist done', {
+				logger.debug('step 2: 创建 playlist 完成', {
 					id: playlistRes.value.id,
 				})
 
@@ -95,26 +93,22 @@ export class Facade {
 					}
 				}
 
-				const localArtistIdMap = new Map<number, number>()
-				for (const [remoteId, artistInfo] of uniqueArtists.entries()) {
-					// FIXME: service 层应该提供一个批量创建的接口
-					const artistRes = await artistSvc.findOrCreateArtist({
+				const artistRes = await artistSvc.findOrCreateManyRemoteArtists(
+					Array.from(uniqueArtists, ([remoteId, artistInfo]) => ({
 						name: artistInfo.name,
 						source: 'bilibili',
 						remoteId: String(remoteId),
 						avatarUrl: undefined,
-					})
-					if (artistRes.isErr()) throw artistRes.error
-					localArtistIdMap.set(remoteId, artistRes.value.id)
-				}
-				logger.debug('step 3: create artists done', {
+					})),
+				)
+				if (artistRes.isErr()) throw artistRes.error
+				const localArtistIdMap = artistRes.value
+				logger.debug('step 3: 创建 artist 完成', {
 					uniqueCount: uniqueArtists.size,
 				})
 
-				const trackIds: number[] = []
-				for (const v of contents.value.medias) {
-					// FIXME: service 层应该提供一个批量创建的接口
-					const trackRes = await trackSvc.findOrCreateTrack({
+				const trackIds = await trackSvc.findOrCreateManyTracks(
+					contents.value.medias.map((v) => ({
 						title: v.title,
 						source: 'bilibili',
 						bilibiliMetadata: {
@@ -124,15 +118,20 @@ export class Facade {
 						},
 						coverUrl: v.cover,
 						duration: v.duration,
-						artistId: localArtistIdMap.get(v.upper.mid),
-					})
-					if (trackRes.isErr()) throw trackRes.error
-					trackIds.push(trackRes.value.id)
-				}
-				logger.debug('step 4: create tracks done', { total: trackIds.length })
+						artistId: localArtistIdMap.get(String(v.upper.mid))?.id,
+					})),
+					'bilibili',
+				)
+				if (trackIds.isErr()) throw trackIds.error
+				logger.debug('step 4: 创建 tracks 完成', {
+					total: trackIds.value.length,
+				})
 
-				playlistSvc.replacePlaylistAllTracks(playlistRes.value.id, trackIds)
-				logger.debug('step 5: replace tracks done')
+				playlistSvc.replacePlaylistAllTracks(
+					playlistRes.value.id,
+					trackIds.value,
+				)
+				logger.debug('step 5: 替换 playlist 中所有 tracks 完成')
 				logger.info('同步合集完成', {
 					remoteId: contents.value.info.id,
 					playlistId: playlistRes.value.id,

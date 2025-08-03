@@ -1,15 +1,17 @@
 import {
 	BilibiliMetadataPayload,
+	CreateBilibiliTrackPayload,
 	CreateTrackPayload,
 	UpdateTrackPayload,
 } from '@/types/services/track'
 import log from '@/utils/log'
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
-import { ResultAsync, errAsync, okAsync } from 'neverthrow'
+import { Result, ResultAsync, err, errAsync, okAsync } from 'neverthrow'
 import type { BilibiliTrack, LocalTrack, Track } from '../../types/core/media'
 import {
 	DatabaseError,
+	NotImplementedError,
 	TrackNotFoundError,
 	ValidationError,
 } from '../core/errors/service'
@@ -20,6 +22,11 @@ import generateUniqueTrackKey from './genKey'
 const logger = log.extend('Service/Track')
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx
+type SelectTrackWithMetadata = typeof schema.tracks.$inferSelect & {
+	artist: typeof schema.artists.$inferSelect | null
+	bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
+	localMetadata: typeof schema.localMetadata.$inferSelect | null
+}
 
 export class TrackService {
 	constructor(private readonly db: DBLike) {}
@@ -39,14 +46,7 @@ export class TrackService {
 	 * @returns
 	 */
 	public formatTrack(
-		dbTrack:
-			| (typeof schema.tracks.$inferSelect & {
-					artist: typeof schema.artists.$inferSelect | null
-					bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
-					localMetadata: typeof schema.localMetadata.$inferSelect | null
-			  })
-			| undefined
-			| null,
+		dbTrack: SelectTrackWithMetadata | undefined | null,
 	): Track | null {
 		if (!dbTrack) {
 			return null
@@ -344,6 +344,135 @@ export class TrackService {
 				}
 				return errAsync(error)
 			})
+	}
+
+	/**
+	 * 创建多个 tracks。
+	 * @param tracksToCreate
+	 * @param source
+	 */
+	private _createManyTracks(
+		tracksToCreate: { uniqueKey: string; payload: CreateTrackPayload }[],
+		source: Track['source'],
+	): ResultAsync<number[], DatabaseError | NotImplementedError> {
+		return ResultAsync.fromPromise(
+			(async () => {
+				const newTrackValues = tracksToCreate.map(({ uniqueKey, payload }) => ({
+					...payload,
+					uniqueKey,
+					playCountSequence: [],
+					createdAt: new Date(),
+				}))
+
+				const newlyCreatedTracks = await this.db
+					.insert(schema.tracks)
+					.values(newTrackValues)
+					.returning({
+						id: schema.tracks.id,
+						uniqueKey: schema.tracks.uniqueKey,
+					})
+
+				const newlyCreatedTrackIds = newlyCreatedTracks.map((t) => t.id)
+				const newlyCreatedTracksDict = Object.fromEntries(
+					newlyCreatedTracks.map((t) => [t.uniqueKey, t.id]),
+				)
+
+				switch (source) {
+					case 'bilibili': {
+						const bilibiliMetadataValues = tracksToCreate.map(
+							({ uniqueKey, payload }) => ({
+								trackId: newlyCreatedTracksDict[uniqueKey],
+								...(payload as CreateBilibiliTrackPayload).bilibiliMetadata,
+							}),
+						)
+
+						if (bilibiliMetadataValues.length > 0) {
+							await this.db
+								.insert(schema.bilibiliMetadata)
+								.values(bilibiliMetadataValues)
+						}
+						break
+					}
+					case 'local': {
+						throw new NotImplementedError('处理 local source 的逻辑尚未实现')
+					}
+				}
+
+				return newlyCreatedTrackIds
+			})(),
+			(e) =>
+				e instanceof NotImplementedError
+					? e
+					: new DatabaseError('批量创建 tracks 失败', e),
+		)
+	}
+
+	/**
+	 * 批量查找或创建 tracks。目前为了简便起见，暂时只实现了创建来自同一个 source 的 tracks。
+	 * 如果有需要创建的 track，则批量插入。
+	 * @param payloads
+	 * @param source
+	 */
+	public findOrCreateManyTracks(
+		payloads: CreateTrackPayload[],
+		source: Track['source'],
+	): ResultAsync<
+		number[],
+		ValidationError | DatabaseError | NotImplementedError
+	> {
+		if (payloads.length === 0) {
+			return okAsync([])
+		}
+
+		const processedPayloadsResult = Result.combine(
+			payloads.map((p) => {
+				if (p.source !== source)
+					return err(new ValidationError('source 不一致'))
+				return generateUniqueTrackKey(p).map((uniqueKey) => ({
+					uniqueKey,
+					payload: p,
+				}))
+			}),
+		)
+
+		// 如果预处理失败，直接返回错误
+		if (processedPayloadsResult.isErr()) {
+			return errAsync(processedPayloadsResult.error)
+		}
+
+		const processedPayloads = processedPayloadsResult.value
+		const uniqueKeys = processedPayloads.map((p) => p.uniqueKey)
+
+		return ResultAsync.fromPromise(
+			this.db.query.tracks.findMany({
+				where: and(
+					eq(schema.tracks.source, source),
+					inArray(schema.tracks.uniqueKey, uniqueKeys),
+				),
+				columns: {
+					id: true,
+					uniqueKey: true,
+				},
+			}),
+			(e) => new DatabaseError('批量查找 tracks 失败', e),
+		).andThen((existingTracks) => {
+			const existingTrackIds = existingTracks.map((t) => t.id)
+			const existingUniqueKeys = new Set(existingTracks.map((t) => t.uniqueKey))
+
+			const tracksToCreate = processedPayloads.filter(
+				(p) => !existingUniqueKeys.has(p.uniqueKey),
+			)
+
+			if (tracksToCreate.length === 0) {
+				return okAsync(existingTrackIds)
+			}
+
+			return this._createManyTracks(tracksToCreate, source).map(
+				(newlyCreatedTrackIds) => {
+					return [...existingTrackIds, ...newlyCreatedTrackIds]
+				},
+			)
+		})
 	}
 }
 

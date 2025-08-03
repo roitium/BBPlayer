@@ -12,10 +12,10 @@ export interface CreateTrackPayloadBase {
 	title: string
 	artistId?: number
 	coverUrl?: string
-	duration?: number
+	duration: number
 }
 
-interface CreateBilibiliTrackPayload extends CreateTrackPayloadBase {
+export interface CreateBilibiliTrackPayload extends CreateTrackPayloadBase {
 	source: 'bilibili'
 	bilibiliMetadata: BilibiliMetadataPayload
 }
