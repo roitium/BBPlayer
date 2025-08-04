@@ -1,4 +1,4 @@
-import { ApiCallingError } from '@/lib/core/errors'
+import { ApiCallingError } from '@/lib/errors'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'

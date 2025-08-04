@@ -1,4 +1,4 @@
-import { ApiCallingError } from '@/lib/core/errors'
+import { ApiCallingError } from '@/lib/errors'
 
 export enum BilibiliApiErrorType {
 	RequestFailed = 'RequestFailed',

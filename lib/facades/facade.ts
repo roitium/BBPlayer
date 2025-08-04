@@ -7,15 +7,15 @@ import {
 	bilibiliApi as BilibiliApiService,
 } from '../api/bilibili/api'
 import { bv2av } from '../api/bilibili/utils'
-import { BilibiliApiError } from '../core/errors/bilibili'
-import { FacadeError } from '../core/errors/facade'
+import db from '../db/db'
+import * as schema from '../db/schema'
+import { BilibiliApiError } from '../errors/bilibili'
+import { FacadeError } from '../errors/facade'
 import {
 	DatabaseError,
 	TrackNotFoundError,
 	ValidationError,
-} from '../core/errors/service'
-import db from '../db/db'
-import * as schema from '../db/schema'
+} from '../errors/service'
 import { artistService, ArtistService } from '../services/artistService'
 import { playlistService, PlaylistService } from '../services/playlistService'
 import { trackService, TrackService } from '../services/trackService'
@@ -74,6 +74,7 @@ export class Facade {
 	public syncCollection(
 		collectionId: number,
 	): ResultAsync<number, FacadeError | BilibiliApiError> {
+		logger = log.extend('[Facade/SyncCollection: ' + collectionId + ']')
 		logger.debug('syncCollection', { collectionId })
 		return this.bilibiliApi
 			.getCollectionAllContents(collectionId)
@@ -170,7 +171,7 @@ export class Facade {
 	 * @param bvid
 	 */
 	public syncMultiPageVideo(bvid: string): ResultAsync<number, FacadeError> {
-		// FIXME: 有空了需要统一一下日志格式，这种 monkeypatch 的方式太不好看了
+		// HACK: 有空了需要统一一下日志格式，这种 monkeypatch 的方式太不好看了
 		logger = log.extend('[Facade/SyncMultiPageVideo: ' + bvid + ']')
 		logger.info('syncMultiPageVideo', { bvid })
 		return this.bilibiliApi

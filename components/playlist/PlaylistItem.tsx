@@ -1,4 +1,4 @@
-import { formatDurationToHHMMSS } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'

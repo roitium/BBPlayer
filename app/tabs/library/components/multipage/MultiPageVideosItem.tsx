@@ -1,5 +1,5 @@
 import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import { formatDurationToHHMMSS } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/time'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'

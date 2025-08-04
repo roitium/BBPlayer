@@ -1,4 +1,4 @@
-import { formatDurationToHHMMSS } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/time'
 import Slider from '@react-native-community/slider'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'

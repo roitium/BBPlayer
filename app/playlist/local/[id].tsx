@@ -8,7 +8,7 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import { formatRelativeTime } from '@/utils/times'
+import { formatRelativeTime } from '@/utils/time'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {

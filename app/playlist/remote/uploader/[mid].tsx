@@ -10,7 +10,7 @@ import {
 } from '@/hooks/queries/bilibili/useUserData'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import { BilibiliUserUploadedVideosResponse } from '@/types/apis/bilibili'
-import { formatMMSSToSeconds } from '@/utils/times'
+import { formatMMSSToSeconds } from '@/utils/time'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {

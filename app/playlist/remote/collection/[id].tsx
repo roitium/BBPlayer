@@ -55,6 +55,7 @@ type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
 	return {
 		id: bv2av(apiItem.bvid),
+		uniqueKey: `collection::${apiItem.bvid}`,
 		source: 'bilibili',
 		title: apiItem.title,
 		artist: {
@@ -142,7 +143,7 @@ export default function CollectionPage() {
 			return (
 				<TrackListItem
 					index={index}
-					// FIXME: 这里使用箭头函数创建闭包，会不会导致引用不稳定而引发重渲染？
+					// HACK: 经过测试，这种做法并不会导致重渲染，但有没有更优雅的方式？比如新增一个 prop 传递 onTrackPress 需要的入参，然后在 TrackListItem 内部构造一个新的稳定的函数？
 					onTrackPress={() => handlePlayTrack(item)}
 					menuItems={trackMenuItems(item)}
 					data={{

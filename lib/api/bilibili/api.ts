@@ -1,5 +1,6 @@
 import useAppStore from '@/hooks/stores/useAppStore'
-import { ApiCallingError } from '@/lib/core/errors'
+import { ApiCallingError } from '@/lib/errors'
+import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
 import {
 	type BilibiliAudioStreamParams,
 	type BilibiliAudioStreamResponse,
@@ -21,10 +22,6 @@ import {
 import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
-import {
-	BilibiliApiError,
-	BilibiliApiErrorType,
-} from '../../core/errors/bilibili'
 import { bilibiliApiClient } from './client'
 import { bv2av, convertToFormDataString } from './utils'
 import getWbiEncodedParams from './wbi'

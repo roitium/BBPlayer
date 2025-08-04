@@ -20,7 +20,7 @@ export function initializeSentry() {
 		debug: false,
 		tracesSampleRate: 0.7,
 		sendDefaultPii: true,
-		integrations: [navigationIntegration, Sentry.mobileReplayIntegration()],
+		integrations: [navigationIntegration],
 		enableNativeFramesTracking: !isRunningInExpoGo(),
 		enabled: !developement,
 		environment: developement ? 'development' : 'production',

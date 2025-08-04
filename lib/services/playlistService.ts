@@ -10,6 +10,8 @@ import {
 } from '@/types/services/playlist'
 import { CreateTrackPayload } from '@/types/services/track'
 import log from '@/utils/log'
+import db from '../db/db'
+import * as schema from '../db/schema'
 import {
 	DatabaseError,
 	PlaylistNotFoundError,
@@ -17,9 +19,7 @@ import {
 	TrackAlreadyExistsError,
 	TrackNotInPlaylistError,
 	ValidationError,
-} from '../core/errors/service'
-import db from '../db/db'
-import * as schema from '../db/schema'
+} from '../errors/service'
 import { TrackService, trackService } from './trackService'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]

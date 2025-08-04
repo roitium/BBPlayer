@@ -10,7 +10,7 @@ import type {
 } from '@/types/apis/bilibili'
 import type { Artist, BilibiliTrack, Playlist, Track } from '@/types/core/media'
 import log from '@/utils/log'
-import { formatMMSSToSeconds } from '@/utils/times'
+import { formatMMSSToSeconds } from '@/utils/time'
 
 const bilibiliApiLog = log.extend('BILIBILI_API/TRANS')
 const PLACEHOLDER_NUM = 0
@@ -43,7 +43,7 @@ export const transformHistoryVideosToTracks = (
 				bilibiliMetadata: {
 					bvid: video.bvid,
 					isMultiPage: false,
-					createAt: video.pubdate, // FIXME: 核实是毫秒数还是秒数
+					createAt: video.pubdate,
 					cid: null,
 				},
 			}),

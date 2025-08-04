@@ -9,14 +9,14 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { Result, ResultAsync, err, errAsync, okAsync } from 'neverthrow'
 import type { BilibiliTrack, LocalTrack, Track } from '../../types/core/media'
+import db from '../db/db'
+import * as schema from '../db/schema'
 import {
 	DatabaseError,
 	NotImplementedError,
 	TrackNotFoundError,
 	ValidationError,
-} from '../core/errors/service'
-import db from '../db/db'
-import * as schema from '../db/schema'
+} from '../errors/service'
 import generateUniqueTrackKey from './genKey'
 
 const logger = log.extend('Service/Track')
@@ -54,6 +54,7 @@ export class TrackService {
 
 		const baseTrack = {
 			id: dbTrack.id,
+			uniqueKey: dbTrack.uniqueKey,
 			title: dbTrack.title,
 			artist: dbTrack.artist,
 			coverUrl: dbTrack.coverUrl,

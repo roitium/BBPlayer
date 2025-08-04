@@ -2,7 +2,6 @@ import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import { isTargetTrack } from '@/utils/player'
 import BottomSheet, {
 	BottomSheetFlatList,
 	BottomSheetFlatListMethods,
@@ -112,9 +111,8 @@ function PlayerQueueModal({
 	const flatListRef = useRef<BottomSheetFlatListMethods>(null)
 	const currentIndex = useMemo(() => {
 		if (!currentTrack || !queue.length) return -1
-		return queue.findIndex((t) =>
-			isTargetTrack(t, currentTrack.id, currentTrack.cid),
-		)
+		// HACK: 基于 uniqueKey 的比较是否可靠？
+		return queue.findIndex((t) => t.uniqueKey === currentTrack.uniqueKey)
 	}, [queue, currentTrack])
 
 	usePreventRemove(isVisible, () => {
@@ -123,9 +121,7 @@ function PlayerQueueModal({
 
 	const switchTrackHandler = useCallback(
 		(track: Track) => {
-			const index = queue.findIndex((t) =>
-				isTargetTrack(t, track.id, track.cid),
-			)
+			const index = queue.findIndex((t) => t.uniqueKey === track.uniqueKey)
 			if (index === -1) return
 			skipToTrack(index)
 		},
@@ -134,15 +130,12 @@ function PlayerQueueModal({
 
 	const removeTrackHandler = useCallback(
 		async (track: Track) => {
-			await removeTrack(track.id, track.cid)
+			await removeTrack(String(track.id))
 		},
 		[removeTrack],
 	)
 
-	const keyExtractor = useCallback(
-		(item: Track) => `${item.id}-${item.cid}`,
-		[],
-	)
+	const keyExtractor = useCallback((item: Track) => item.uniqueKey, [])
 
 	const renderItem = useCallback(
 		({ item }: { item: Track }) => (
@@ -150,11 +143,7 @@ function PlayerQueueModal({
 				track={item}
 				onSwitchTrack={switchTrackHandler}
 				onRemoveTrack={removeTrackHandler}
-				isCurrentTrack={
-					item.isMultiPage
-						? item.cid === currentTrack?.cid
-						: item.id === currentTrack?.id
-				}
+				isCurrentTrack={item.uniqueKey === currentTrack?.uniqueKey}
 			/>
 		),
 		[switchTrackHandler, removeTrackHandler, currentTrack],

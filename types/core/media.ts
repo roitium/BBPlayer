@@ -10,6 +10,7 @@ export interface Artist {
 
 interface BaseTrack {
 	id: number
+	uniqueKey: string
 	title: string
 	artist: Artist | null
 	coverUrl: string | null
