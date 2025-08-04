@@ -6,13 +6,8 @@ import {
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import db from '@/lib/db/db'
-import { Facade } from '@/lib/facades/facade'
-import { artistService } from '@/lib/services/artistService'
-import { playlistService } from '@/lib/services/playlistService'
-import { trackService } from '@/lib/services/trackService'
+import { facade } from '@/lib/facades/facade'
 import { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import { Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
@@ -165,14 +160,7 @@ export default function CollectionPage() {
 
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
-	const handleSync = async () => {
-		const facade = new Facade(
-			trackService,
-			bilibiliApi,
-			playlistService,
-			artistService,
-			db,
-		)
+	const handleSync = useCallback(async () => {
 		const result = await facade.syncCollection(Number(id))
 		if (result.isErr()) {
 			toast.error(flatErrorMessage(result.error))
@@ -181,7 +169,7 @@ export default function CollectionPage() {
 		}
 		toast.success('同步成功')
 		navigation.replace('PlaylistLocal', { id: String(result.value) })
-	}
+	}, [id, navigation])
 
 	useEffect(() => {
 		if (typeof id !== 'string') {

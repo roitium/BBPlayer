@@ -76,6 +76,16 @@ interface BilibiliVideoDetails {
 		face: string
 	}
 	cid: number
+	pages: BilibiliVideoDetailsPage[]
+}
+
+/**
+ * bilibili 视频详情接口获取到的 pages 字段
+ */
+interface BilibiliVideoDetailsPage {
+	part: string
+	duration: number
+	cid: number
 }
 
 /**

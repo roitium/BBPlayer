@@ -2,7 +2,11 @@ import { Track } from '@/types/core/media'
 import log from '@/utils/log'
 import { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync } from 'neverthrow'
-import { bilibiliApi as BilibiliApiService } from '../api/bilibili/api'
+import {
+	bilibiliApi,
+	bilibiliApi as BilibiliApiService,
+} from '../api/bilibili/api'
+import { bv2av } from '../api/bilibili/utils'
 import { BilibiliApiError } from '../core/errors/bilibili'
 import { FacadeError } from '../core/errors/facade'
 import {
@@ -10,12 +14,13 @@ import {
 	TrackNotFoundError,
 	ValidationError,
 } from '../core/errors/service'
+import db from '../db/db'
 import * as schema from '../db/schema'
-import { ArtistService } from '../services/artistService'
-import { PlaylistService } from '../services/playlistService'
-import { TrackService } from '../services/trackService'
+import { artistService, ArtistService } from '../services/artistService'
+import { playlistService, PlaylistService } from '../services/playlistService'
+import { trackService, TrackService } from '../services/trackService'
 
-const logger = log.extend('Facade')
+let logger = log.extend('Facade')
 
 export class Facade {
 	constructor(
@@ -29,7 +34,7 @@ export class Facade {
 	/**
 	 * 从 Bilibili API 获取视频信息，并创建一个新的音轨。
 	 * @param bvid
-	 * @param cid 基于 cid 是否存在判断 isMultiPart 的值
+	 * @param cid 基于 cid 是否存在判断 isMultiPage 的值
 	 * @returns
 	 */
 	public addTrackFromBilibiliApi(
@@ -47,7 +52,7 @@ export class Facade {
 				bilibiliMetadata: {
 					bvid,
 					cid,
-					isMultiPart: cid !== undefined,
+					isMultiPage: cid !== undefined,
 				},
 				coverUrl: data.pic,
 				duration: data.duration,
@@ -61,7 +66,14 @@ export class Facade {
 		})
 	}
 
-	public syncCollection(collectionId: number) {
+	/**
+	 * 同步合集内容
+	 * @param collectionId 合集 id
+	 * @returns ResultAsync<number, FacadeError>
+	 */
+	public syncCollection(
+		collectionId: number,
+	): ResultAsync<number, FacadeError | BilibiliApiError> {
 		logger.debug('syncCollection', { collectionId })
 		return this.bilibiliApi
 			.getCollectionAllContents(collectionId)
@@ -122,7 +134,7 @@ export class Facade {
 								source: 'bilibili',
 								bilibiliMetadata: {
 									bvid: v.bvid,
-									isMultiPart: false,
+									isMultiPage: false,
 									cid: undefined,
 								},
 								coverUrl: v.cover,
@@ -136,6 +148,7 @@ export class Facade {
 							total: trackIds.value.length,
 						})
 
+						// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
 						playlistSvc.replacePlaylistAllTracks(
 							playlistRes.value.id,
 							trackIds.value,
@@ -151,4 +164,91 @@ export class Facade {
 				)
 			})
 	}
+
+	/**
+	 * 同步多集视频
+	 * @param bvid
+	 */
+	public syncMultiPageVideo(bvid: string): ResultAsync<number, FacadeError> {
+		// FIXME: 有空了需要统一一下日志格式，这种 monkeypatch 的方式太不好看了
+		logger = log.extend('[Facade/SyncMultiPageVideo: ' + bvid + ']')
+		logger.info('syncMultiPageVideo', { bvid })
+		return this.bilibiliApi
+			.getVideoDetails(bvid)
+			.andTee(() =>
+				logger.debug('step 1: 调用 bilibiliapi getVideoDetails 完成'),
+			)
+			.andThen((data) => {
+				return ResultAsync.fromPromise(
+					this.db.transaction(async () => {
+						const playlistSvc = this.playlistService.withDB(this.db)
+						const trackSvc = this.trackService.withDB(this.db)
+						const artistSvc = this.artistService.withDB(this.db)
+
+						const playlistAuthor = await artistSvc.findOrCreateArtist({
+							name: data.owner.name,
+							source: 'bilibili',
+							remoteId: String(data.owner.mid),
+							avatarUrl: data.owner.face,
+						})
+						if (playlistAuthor.isErr()) throw playlistAuthor.error
+
+						const playlistRes = await playlistSvc.findOrCreateRemotePlaylist({
+							title: data.title,
+							description: data.desc,
+							coverUrl: data.pic,
+							type: 'multi_page',
+							remoteSyncId: bv2av(bvid),
+							authorId: playlistAuthor.value.id,
+						})
+						if (playlistRes.isErr()) throw playlistRes.error
+						logger.debug('step 2: 创建 playlist 和其对应的 artist 信息完成', {
+							id: playlistRes.value.id,
+						})
+
+						const trackIds = await trackSvc.findOrCreateManyTracks(
+							data.pages.map((page) => ({
+								title: page.part,
+								source: 'bilibili',
+								bilibiliMetadata: {
+									bvid: bvid,
+									isMultiPage: true,
+									cid: page.cid,
+								},
+								coverUrl: data.pic,
+								duration: page.duration,
+								artistId: playlistAuthor.value.id,
+							})),
+							'bilibili',
+						)
+						if (trackIds.isErr()) throw trackIds.error
+						logger.debug('step 3: 创建 tracks 完成', {
+							total: trackIds.value.length,
+						})
+
+						// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
+						playlistSvc.replacePlaylistAllTracks(
+							playlistRes.value.id,
+							trackIds.value,
+						)
+						logger.debug('step 4: 替换 playlist 中所有 tracks 完成')
+						logger.info('同步合集完成', {
+							remoteId: bv2av(bvid),
+							playlistId: playlistRes.value.id,
+						})
+
+						return playlistRes.value.id
+					}),
+					(e) => new FacadeError('同步多集视频失败', e),
+				)
+			})
+	}
 }
+
+export const facade = new Facade(
+	trackService,
+	bilibiliApi,
+	playlistService,
+	artistService,
+	db,
+)

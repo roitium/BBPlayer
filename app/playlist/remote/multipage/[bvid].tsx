@@ -1,17 +1,19 @@
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetMultiPageList,
 	useGetVideoDetails,
 } from '@/hooks/queries/bilibili/useVideoData'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { facade } from '@/lib/facades/facade'
 import {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
+import { Track } from '@/types/core/media'
+import { flatErrorMessage } from '@/utils/error'
+import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -34,7 +36,7 @@ const mapApiItemToViewTrack = (
 	video: BilibiliVideoDetails,
 ) => {
 	return {
-		id: mp.cid, // 仅仅用于列表的 key，不会作为真实 id 传递
+		id: mp.cid,
 		cid: mp.cid,
 		bvid: video.bvid,
 		title: mp.part,
@@ -45,12 +47,43 @@ const mapApiItemToViewTrack = (
 		},
 		coverUrl: mp.first_frame,
 		duration: mp.duration,
-		source: 'bilibili', // 明确来源
+		source: 'bilibili',
 		isMultiPage: true,
 	}
 }
 
 type UITrack = ReturnType<typeof mapApiItemToViewTrack>
+
+const mapApiItemToTrack = (
+	mp: BilibiliMultipageVideo,
+	video: BilibiliVideoDetails,
+): Track => {
+	return {
+		id: video.aid,
+		source: 'bilibili',
+		title: mp.part,
+		artist: {
+			id: 1145141919810, // FIXME: Don't ask me why, bro.
+			name: video.owner.name,
+			signature: '你所热爱的，就是你的生活',
+			remoteId: video.owner.mid.toString(),
+			source: 'bilibili',
+			avatarUrl: null,
+			createdAt: video.pubdate,
+		},
+		coverUrl: video.pic,
+		duration: mp.duration,
+		playCountSequence: [],
+		createdAt: video.pubdate,
+		bilibiliMetadata: {
+			bvid: video.bvid,
+			cid: mp.cid,
+			isMultiPage: true,
+		},
+	}
+}
+
+const playlistLog = log.extend('Playlist/Multipage')
 
 export default function MultipagePage() {
 	const navigation =
@@ -62,10 +95,8 @@ export default function MultipagePage() {
 	const [refreshing, setRefreshing] = useState(false)
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
-	// const addToQueue = usePlayerStore((state) => state.addToQueue)
+	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const insets = useSafeAreaInsets()
-	// const [modalVisible, setModalVisible] = useState(false)
-	// const [currentModalBvid, setCurrentModalBvid] = useState('')
 
 	const {
 		data: rawMultipageData,
@@ -84,87 +115,44 @@ export default function MultipagePage() {
 		if (!rawMultipageData || !videoData) {
 			return []
 		}
-		// const multipageData = rawMultipageData.map((item) => ({
-		// 	...item,
-		// 	first_frame: videoData?.pic || '',
-		// }))
-		// return transformMultipageVideosToTracks(multipageData, videoData)
 		return rawMultipageData.map((item) =>
 			mapApiItemToViewTrack(item, videoData),
 		)
 	}, [rawMultipageData, videoData])
 
-	// const playNext = useCallback(
-	// 	async (track: Track) => {
-	// 		try {
-	// 			await addToQueue({
-	// 				tracks: [track],
-	// 				playNow: false,
-	// 				clearQueue: false,
-	// 				playNext: true,
-	// 			})
-	// 			toast.success('添加到下一首播放成功')
-	// 		} catch (error) {
-	// 			playlistLog.sentry('添加到队列失败', error)
-	// 		}
-	// 	},
-	// 	[addToQueue],
-	// )
-
-	// const playAll = useCallback(
-	// 	async (startFromCid?: number) => {
-	// 		try {
-	// 			if (!tracksData || tracksData.length === 0) {
-	// 				toast.error('播放全部失败', {
-	// 					description: '未知错误，tracksData 为空',
-	// 				})
-	// 				playlistLog.error('未知错误，tracksData 为空', tracksData)
-	// 				return
-	// 			}
-	// 			playlistLog.debug('开始播放全部', { startFromCid })
-	// 			await addToQueue({
-	// 				tracks: tracksData,
-	// 				playNow: true,
-	// 				clearQueue: true,
-	// 				startFromId: startFromCid ? `${bvid}-${startFromCid}` : undefined,
-	// 				playNext: false,
-	// 			})
-	// 		} catch (error) {
-	// 			playlistLog.sentry('播放全部失败', error)
-	// 		}
-	// 	},
-	// 	[addToQueue, tracksData, bvid],
-	// )
+	const playTrack = useCallback(
+		(track: UITrack, playNext = false) => {
+			if (!rawMultipageData || !videoData) return
+			const apiItem = rawMultipageData.find((item) => item.cid === track.cid)
+			if (!apiItem) return
+			const trackToPlay = mapApiItemToTrack(apiItem, videoData)
+			addToQueue({
+				tracks: [trackToPlay],
+				playNow: !playNext,
+				clearQueue: false,
+				playNext: playNext,
+			})
+		},
+		[addToQueue, rawMultipageData, videoData],
+	)
 
 	const trackMenuItems = useCallback(
-		(_item: UITrack) => [
+		(item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: () => toast.show('暂未实现'),
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '添加到收藏夹',
-				leadingIcon: 'plus',
-				onPress: () => {
-					toast.show('暂未实现')
-				},
+				onPress: () => playTrack(item, true),
 			},
 		],
-		[],
+		[playTrack],
 	)
-
-	const handleTrackPress = useCallback(() => {
-		toast.show('暂未实现')
-	}, [])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
-					onTrackPress={handleTrackPress}
+					onTrackPress={() => playTrack(item)}
 					menuItems={trackMenuItems(item)}
 					showCoverImage={false}
 					data={{
@@ -177,8 +165,19 @@ export default function MultipagePage() {
 				/>
 			)
 		},
-		[handleTrackPress, trackMenuItems],
+		[playTrack, trackMenuItems],
 	)
+
+	const handleSync = useCallback(async () => {
+		const result = await facade.syncMultiPageVideo(bvid)
+		if (result.isErr()) {
+			toast.error(flatErrorMessage(result.error))
+			playlistLog.error(result.error)
+			return
+		}
+		toast.success('同步成功')
+		navigation.replace('PlaylistLocal', { id: String(result.value) })
+	}, [bvid, navigation])
 
 	const keyExtractor = useCallback((item: UITrack) => {
 		return String(item.id)
@@ -222,9 +221,10 @@ export default function MultipagePage() {
 						<PlaylistHeader
 							coverUri={videoData.pic}
 							title={videoData.title}
-							subtitle={`${videoData.owner.name} • ${tracksData.length} 首歌曲`}
+							subtitles={`${videoData.owner.name} • ${tracksData.length} 首歌曲`}
 							description={videoData.desc}
-							onClickMainButton={() => toast.show('暂未实现')}
+							onClickMainButton={handleSync}
+							mainButtonIcon={'sync'}
 						/>
 					}
 					refreshControl={
@@ -254,13 +254,6 @@ export default function MultipagePage() {
 					}
 				/>
 			</View>
-
-			{/* <AddToFavoriteListsModal
-				key={currentModalBvid}
-				visible={modalVisible}
-				bvid={currentModalBvid}
-				setVisible={setModalVisible}
-			/> */}
 		</View>
 	)
 }
