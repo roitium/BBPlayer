@@ -24,7 +24,7 @@ export interface BilibiliTrack extends BaseTrack {
 	bilibiliMetadata: {
 		bvid: string
 		cid: number | null
-		isMultiPart: boolean
+		isMultiPage: boolean
 		// 运行时产生的数据，在获取流后才会存在
 		bilibiliStreamUrl?: {
 			url: string

@@ -78,7 +78,7 @@ const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
 		bilibiliMetadata: {
 			bvid: apiItem.bvid,
 			cid: null,
-			isMultiPart: false,
+			isMultiPage: false,
 		},
 	}
 }

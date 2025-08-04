@@ -73,6 +73,7 @@ interface BilibiliVideoDetails {
 	owner: {
 		name: string
 		mid: number
+		face: string
 	}
 	cid: number
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `bilibili_metadata` RENAME COLUMN "is_multi_part" TO "is_multi_page";

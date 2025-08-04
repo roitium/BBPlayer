@@ -42,7 +42,7 @@ export const transformHistoryVideosToTracks = (
 				playCountSequence: [],
 				bilibiliMetadata: {
 					bvid: video.bvid,
-					isMultiPart: false,
+					isMultiPage: false,
 					createAt: video.pubdate, // FIXME: 核实是毫秒数还是秒数
 					cid: null,
 				},
@@ -79,7 +79,7 @@ export const transformVideoDetailsToTrack = (
 		playCountSequence: [],
 		bilibiliMetadata: {
 			bvid: video.bvid,
-			isMultiPart: video.pages.length > 1,
+			isMultiPage: video.pages.length > 1,
 			createAt: video.pubdate * 1000,
 			cid: video.cid,
 		},
@@ -153,7 +153,7 @@ export const transformSearchResultsToTracks = (
 					playCountSequence: [],
 					bilibiliMetadata: {
 						bvid: video.bvid,
-						isMultiPart: false, // 搜索结果不提供
+						isMultiPage: false, // 搜索结果不提供
 						createAt: video.senddate * 1000,
 						cid: null, // 搜索结果不提供
 					},
@@ -195,7 +195,7 @@ export const transformFavoriteContentsToTracks = (
 					playCountSequence: [],
 					bilibiliMetadata: {
 						bvid: content.bvid,
-						isMultiPart: content.page > 1,
+						isMultiPage: content.page > 1,
 						createAt: content.pubdate * 1000,
 						cid: content.cid,
 					},
@@ -238,7 +238,7 @@ export const transformMultipageVideosToTracks = (
 				playCountSequence: [],
 				bilibiliMetadata: {
 					bvid: mainVideo.bvid, // 使用主视频 bvid
-					isMultiPart: true,
+					isMultiPage: true,
 					createAt: mainVideo.pubdate * 1000,
 					cid: page.cid, // 每个分P独立的 cid
 				},
@@ -279,7 +279,7 @@ export const transformUserUploadedVideosToTracks = (
 				playCountSequence: [],
 				bilibiliMetadata: {
 					bvid: video.bvid,
-					isMultiPart: false,
+					isMultiPage: false,
 					createAt: video.created * 1000,
 					cid: null,
 				},

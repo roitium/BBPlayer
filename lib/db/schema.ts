@@ -118,7 +118,7 @@ export const bilibiliMetadata = sqliteTable(
 			.references(() => tracks.id, { onDelete: 'cascade' }),
 		bvid: text('bvid').notNull(),
 		cid: integer('cid'),
-		isMultiPart: integer('is_multi_part', { mode: 'boolean' }).notNull(),
+		isMultiPage: integer('is_multi_page', { mode: 'boolean' }).notNull(),
 	},
 	(table) => [
 		index('bilibili_metadata_bvid_cid_idx').on(table.bvid, table.cid),

@@ -1,6 +1,6 @@
 export interface BilibiliMetadataPayload {
 	bvid: string
-	isMultiPart: boolean
+	isMultiPage: boolean
 	cid?: number
 }
 

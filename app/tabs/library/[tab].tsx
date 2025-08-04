@@ -14,19 +14,19 @@ import MultiPageVideosListComponent from './components/multipage/MultiPageVideos
 const renderScene = SceneMap({
 	favorite: FavoriteFolderListComponent,
 	collection: CollectionListComponent,
-	multiPart: MultiPageVideosListComponent,
+	multiPage: MultiPageVideosListComponent,
 })
 
 const routes = [
 	{ key: 'favorite', title: '收藏夹' },
 	{ key: 'collection', title: '合集' },
-	{ key: 'multiPart', title: '分 p' },
+	{ key: 'multiPage', title: '分 p' },
 ]
 
 export enum Tabs {
 	Collection = 1,
 	Favorite = 0,
-	MultiPart = 2,
+	MultiPage = 2,
 }
 
 export default function Library() {
@@ -120,7 +120,7 @@ export default function Library() {
 								/>
 							),
 						},
-						multiPart: {
+						multiPage: {
 							icon: ({ focused }) => (
 								<Icon
 									name={focused ? 'folder-play' : 'folder-play-outline'}

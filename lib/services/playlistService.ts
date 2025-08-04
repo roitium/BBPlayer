@@ -483,7 +483,7 @@ export class PlaylistService {
 	}
 
 	/**
-	 * 使用一个 track ID 数组**完全替换**一个播放列表的内容。
+	 * 使用一个 track ID 数组**完全替换**一个播放列表的内容。并会更新播放列表的 itemCount 和 lastSyncedAt。
 	 * @param playlistId 要设置的播放列表 ID。
 	 * @param trackIds 有序的歌曲 ID 数组。
 	 * @returns ResultAsync

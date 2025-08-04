@@ -8,7 +8,7 @@ export default function generateUniqueTrackKey(
 	switch (payload.source) {
 		case 'bilibili': {
 			const biliMeta = payload.bilibiliMetadata
-			return biliMeta.isMultiPart
+			return biliMeta.isMultiPage
 				? ok(`${payload.source}::${biliMeta.bvid}::${biliMeta.cid}`)
 				: ok(`${payload.source}::${biliMeta.bvid}`)
 		}

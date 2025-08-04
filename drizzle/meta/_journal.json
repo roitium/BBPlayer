@@ -43,6 +43,13 @@
 			"when": 1752841803161,
 			"tag": "0005_spotty_exiles",
 			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1754280698628,
+			"tag": "0006_breezy_jigsaw",
+			"breakpoints": true
 		}
 	]
 }
