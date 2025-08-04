@@ -7,7 +7,7 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import { facade } from '@/lib/facades/facade'
+import { syncFacade } from '@/lib/facades/sync'
 import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import type { Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
@@ -162,14 +162,20 @@ export default function CollectionPage() {
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
 	const handleSync = useCallback(async () => {
-		const result = await facade.syncCollection(Number(id))
+		setRefreshing(true)
+		const result = await syncFacade.syncCollection(Number(id))
 		if (result.isErr()) {
 			toast.error(flatErrorMessage(result.error))
 			playlistLog.error(result.error)
+			setRefreshing(false)
 			return
 		}
-		toast.success('同步成功')
-		navigation.replace('PlaylistLocal', { id: String(result.value) })
+		toast.success('同步成功，稍后跳转到本地播放列表')
+		setRefreshing(false)
+		setTimeout(
+			() => navigation.replace('PlaylistLocal', { id: String(result.value) }),
+			2000,
+		)
 	}, [id, navigation])
 
 	useEffect(() => {

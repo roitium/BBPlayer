@@ -6,7 +6,7 @@ import {
 	useGetVideoDetails,
 } from '@/hooks/queries/bilibili/useVideoData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { facade } from '@/lib/facades/facade'
+import { syncFacade } from '@/lib/facades/sync'
 import type {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
@@ -170,14 +170,20 @@ export default function MultipagePage() {
 	)
 
 	const handleSync = useCallback(async () => {
-		const result = await facade.syncMultiPageVideo(bvid)
+		setRefreshing(true)
+		const result = await syncFacade.syncMultiPageVideo(bvid)
 		if (result.isErr()) {
 			toast.error(flatErrorMessage(result.error))
 			playlistLog.error(result.error)
+			setRefreshing(false)
 			return
 		}
-		toast.success('同步成功')
-		navigation.replace('PlaylistLocal', { id: String(result.value) })
+		toast.success('同步成功，稍后跳转到本地播放列表')
+		setRefreshing(false)
+		setTimeout(
+			() => navigation.replace('PlaylistLocal', { id: String(result.value) }),
+			2000,
+		)
 	}, [bvid, navigation])
 
 	const keyExtractor = useCallback((item: UITrack) => {

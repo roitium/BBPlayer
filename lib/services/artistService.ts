@@ -265,7 +265,7 @@ export class ArtistService {
 						)
 					return and(
 						eq(schema.artists.source, p.source),
-						eq(schema.artists.remoteId, p.remoteId!),
+						eq(schema.artists.remoteId, p.remoteId),
 					)
 				})
 
@@ -273,7 +273,7 @@ export class ArtistService {
 					where: or(...findConditions),
 				})
 
-				// 将已存在的artist放入一个 Map 中，用 "source:remoteId" 作为 key
+				// 将已存在的artist放入一个 Map 中，用 "source::remoteId" 作为 key
 				const existingArtistsMap = new Map<
 					string,
 					typeof schema.artists.$inferSelect

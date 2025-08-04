@@ -136,6 +136,7 @@ interface BilibiliFavoriteListContent {
 	id: number
 	bvid: string
 	upper: {
+		mid: number
 		name: string
 		face: string
 	}
@@ -161,6 +162,7 @@ interface BilibiliFavoriteListContents {
 		upper: {
 			name: string
 			face: string
+			mid: number
 		}
 	}
 	medias: BilibiliFavoriteListContent[]

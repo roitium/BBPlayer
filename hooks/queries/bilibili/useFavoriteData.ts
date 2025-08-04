@@ -1,9 +1,6 @@
 import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
-import {
-	BilibiliApiError,
-	BilibiliApiErrorType,
-} from '@/lib/core/errors/bilibili'
+import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
 import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'

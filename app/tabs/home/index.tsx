@@ -1,7 +1,7 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import useAppStore from '@/hooks/stores/useAppStore'
-import { BilibiliApiError } from '@/lib/core/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/bilibili'
 import toast from '@/utils/toast'
 import { Image } from 'expo-image'
 import { useEffect, useState } from 'react'

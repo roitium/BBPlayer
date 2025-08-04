@@ -2,7 +2,7 @@ import { and, asc, eq, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
-import type { Track } from '@/types/core/media'
+import type { Playlist, Track } from '@/types/core/media'
 import type {
 	CreatePlaylistPayload,
 	ReorderSingleTrackPayload,
@@ -519,6 +519,35 @@ export class PlaylistService {
 				return true as const
 			})(),
 			(e) => new DatabaseError(`设置播放列表歌曲失败 (ID: ${playlistId})`, e),
+		)
+	}
+
+	/**
+	 * 基于 type & remoteId 查询一个播放列表
+	 * @param type
+	 * @param remoteId
+	 */
+	public findPlaylistByTypeAndRemoteId(
+		type: Playlist['type'],
+		remoteId: number,
+	): ResultAsync<
+		| (typeof schema.playlists.$inferSelect & {
+				trackLinks: (typeof schema.playlistTracks.$inferSelect)[]
+		  })
+		| undefined,
+		DatabaseError
+	> {
+		return ResultAsync.fromPromise(
+			this.db.query.playlists.findFirst({
+				where: and(
+					eq(schema.playlists.type, type),
+					eq(schema.playlists.remoteSyncId, remoteId),
+				),
+				with: {
+					trackLinks: true,
+				},
+			}),
+			(e) => new DatabaseError('查询播放列表失败', e),
 		)
 	}
 }

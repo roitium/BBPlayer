@@ -1,4 +1,4 @@
-import type { BilibiliApiError } from '@/lib/core/errors/bilibili'
+import type { BilibiliApiError } from '@/lib/errors/bilibili'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import md5 from 'md5'

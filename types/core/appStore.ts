@@ -1,7 +1,9 @@
 import type { Result } from 'neverthrow'
 
 interface Settings {
-	// 是否向 bilibili 发送播放历史
+	/**
+	 * 向 bilibili 发送播放记录
+	 */
 	sendPlayHistory: boolean
 }
 

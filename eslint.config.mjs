@@ -1,7 +1,6 @@
 import js from '@eslint/js'
 import pluginQuery from '@tanstack/eslint-plugin-query'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
-import drizzle from 'eslint-plugin-drizzle'
 import pluginReact from 'eslint-plugin-react'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -61,12 +60,12 @@ export default defineConfig([
 	},
 	reactCompiler.configs.recommended,
 	eslintConfigPrettier,
-	{
-		plugins: {
-			drizzle,
-		},
-		rules: {
-			...drizzle.configs.recommended.rules,
-		},
-	},
+	// {
+	// 	plugins: {
+	// 		drizzle,
+	// 	},
+	// 	rules: {
+	// 		...drizzle.configs.recommended.rules,
+	// 	},
+	// },
 ])

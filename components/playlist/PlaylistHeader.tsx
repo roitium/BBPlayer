@@ -24,7 +24,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	onClickMainButton,
 	mainButtonIcon,
 }: PlaylistHeaderProps) {
-	if (!coverUri || !title) return null
+	if (!title) return null
 	return (
 		<View style={{ position: 'relative', flexDirection: 'column' }}>
 			{/* 收藏夹信息 */}

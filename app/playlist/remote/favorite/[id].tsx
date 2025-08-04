@@ -5,8 +5,13 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
+import { syncFacade } from '@/lib/facades/sync'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import type { Track } from '@/types/core/media'
+import { flatErrorMessage } from '@/utils/error'
+import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -23,6 +28,8 @@ import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
+
+const playlistLog = log.extend('Playlist/Favorite')
 
 const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
 	return {
@@ -44,6 +51,33 @@ const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
 
 type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
+const mapApiItemToTrack = (apiItem: BilibiliFavoriteListContent): Track => {
+	return {
+		id: bv2av(apiItem.bvid),
+		uniqueKey: `favorite::${apiItem.bvid}`,
+		source: 'bilibili',
+		title: apiItem.title,
+		artist: {
+			id: 1145141919810, // FIXME: Don't ask me why, bro.
+			name: apiItem.upper.name,
+			signature: '你所热爱的，就是你的生活',
+			remoteId: apiItem.upper.mid.toString(),
+			source: 'bilibili',
+			avatarUrl: null,
+			createdAt: apiItem.pubdate,
+		},
+		coverUrl: apiItem.cover,
+		duration: apiItem.duration,
+		playHistory: [],
+		createdAt: apiItem.pubdate,
+		bilibiliMetadata: {
+			bvid: apiItem.bvid,
+			cid: null,
+			isMultiPage: false,
+		},
+	}
+}
+
 export default function FavoritePage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistFavorite'>>()
 	const { id } = route.params
@@ -52,63 +86,10 @@ export default function FavoritePage() {
 		useNavigation<
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistFavorite'>
 		>()
-	// const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	// const { mutate } = useBatchDeleteFavoriteListContents()
 	const insets = useSafeAreaInsets()
-	// const [modalVisible, setModalVisible] = useState(false)
-	// const [currentModalBvid, setCurrentModalBvid] = useState('')
-
-	// const playNext = useCallback(
-	// 	async (track: Track) => {
-	// 		try {
-	// 			await addToQueue({
-	// 				tracks: [track],
-	// 				playNow: false,
-	// 				clearQueue: false,
-	// 				playNext: true,
-	// 			})
-	// 			toast.success('添加到下一首播放成功')
-	// 		} catch (error) {
-	// 			playlistLog.sentry('添加到队列失败', error)
-	// 		}
-	// 	},
-	// 	[addToQueue],
-	// )
-
-	// const playAll = useCallback(
-	// 	async (startFromId?: string) => {
-	// 		try {
-	// 			const allContentIds = await bilibiliApi.getFavoriteListAllContents(
-	// 				Number(id),
-	// 			)
-	// 			if (allContentIds.isErr()) {
-	// 				playlistLog.sentry('获取所有内容失败', allContentIds.error)
-	// 				toast.error('播放全部失败', {
-	// 					description: '获取收藏夹所有内容失败，无法播放',
-	// 				})
-	// 				return
-	// 			}
-	// 			const allTracks: Track[] = allContentIds.value.map((c) => ({
-	// 				id: c.bvid,
-	// 				source: 'bilibili' as const,
-	// 				hasMetadata: false,
-	// 				isMultiPage: false,
-	// 			}))
-	// 			await addToQueue({
-	// 				tracks: allTracks,
-	// 				playNow: true,
-	// 				clearQueue: true,
-	// 				startFromId: startFromId,
-	// 				playNext: false,
-	// 			})
-	// 		} catch (error) {
-	// 			playlistLog.sentry('播放全部失败', error)
-	// 		}
-	// 	},
-	// 	[addToQueue, id],
-	// )
+	const addToQueue = usePlayerStore((state) => state.addToQueue)
 
 	const {
 		data: favoriteData,
@@ -126,59 +107,71 @@ export default function FavoritePage() {
 		[favoriteData],
 	)
 
+	const handlePlayTrack = useCallback(
+		(item: UITrack, playNext = false) => {
+			if (!favoriteData) return
+			const apiItem = favoriteData.pages
+				.flatMap((page) => page.medias)
+				.find((m) => m.bvid === item.bvid)
+			if (!apiItem) return
+			const track = mapApiItemToTrack(apiItem)
+			addToQueue({
+				tracks: [track],
+				playNow: !playNext,
+				clearQueue: false,
+				playNext: playNext,
+			})
+		},
+		[addToQueue, favoriteData],
+	)
+
 	const trackMenuItems = useCallback(
-		() => [
+		(item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: () => toast.show('暂未实现'),
-			},
-			TrackMenuItemDividerToken,
-			{
-				title: '从收藏夹中删除',
-				leadingIcon: 'playlist-remove',
-				onPress: async () => {
-					// mutate({ bvids: [item.id], favoriteId: Number(id) })
-					// setRefreshing(true)
-					// await refetch()
-					// setRefreshing(false)
-					toast.show('暂未实现')
-				},
-			},
-			{
-				title: '添加到收藏夹',
-				leadingIcon: 'plus',
-				onPress: () => {
-					// setCurrentModalBvid(item.id)
-					// setModalVisible(true)
-					toast.show('暂未实现')
-				},
+				onPress: () => handlePlayTrack(item, true),
 			},
 			TrackMenuItemDividerToken,
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					// navigation.navigate('PlaylistMultipage', { bvid: item.id })
-					toast.show('暂未实现')
+					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
 				},
 			},
 		],
-		[],
+		[navigation, handlePlayTrack],
 	)
 
-	const handleTrackPress = useCallback(() => {
-		// playAll(track.id)
-		toast.show('暂未实现')
-	}, [])
+	const handleSync = useCallback(async () => {
+		if (favoriteData?.pages.flatMap((page) => page.medias).length === 0) {
+			toast.info('收藏夹为空，无需同步')
+			return
+		}
+		setRefreshing(true)
+		const result = await syncFacade.syncFavorite(Number(id))
+		if (result.isErr()) {
+			toast.error(flatErrorMessage(result.error))
+			playlistLog.error(flatErrorMessage(result.error))
+			setRefreshing(false)
+			return
+		}
+		toast.success('同步成功，稍后跳转到本地播放列表')
+		setRefreshing(false)
+		setTimeout(
+			() => navigation.replace('PlaylistLocal', { id: String(result.value) }),
+			2000,
+		)
+	}, [favoriteData?.pages, id, navigation])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
-					onTrackPress={handleTrackPress}
-					menuItems={trackMenuItems()}
+					onTrackPress={() => handlePlayTrack(item)}
+					menuItems={trackMenuItems(item)}
 					data={{
 						cover: item.coverUrl ?? undefined,
 						title: item.title,
@@ -189,7 +182,7 @@ export default function FavoritePage() {
 				/>
 			)
 		},
-		[handleTrackPress, trackMenuItems],
+		[handlePlayTrack, trackMenuItems],
 	)
 
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
@@ -236,7 +229,8 @@ export default function FavoritePage() {
 							title={favoriteData.pages[0].info.title}
 							subtitles={`${favoriteData.pages[0].info.upper.name} • ${favoriteData.pages[0].info.media_count} 首歌曲`}
 							description={favoriteData.pages[0].info.intro}
-							onClickMainButton={() => toast.show('暂未实现')}
+							onClickMainButton={handleSync}
+							mainButtonIcon={'sync'}
 						/>
 					}
 					refreshControl={
@@ -257,6 +251,17 @@ export default function FavoritePage() {
 					}}
 					showsVerticalScrollIndicator={false}
 					onEndReached={hasNextPage ? () => fetchNextPage() : null}
+					ListEmptyComponent={
+						<Text
+							style={{
+								paddingVertical: 32,
+								textAlign: 'center',
+							}}
+							variant='titleMedium'
+						>
+							收藏夹为空
+						</Text>
+					}
 					ListFooterComponent={
 						hasNextPage ? (
 							<View
@@ -283,13 +288,6 @@ export default function FavoritePage() {
 					}
 				/>
 			</View>
-
-			{/* <AddToFavoriteListsModal
-				key={currentModalBvid}
-				visible={modalVisible}
-				bvid={currentModalBvid}
-				setVisible={setModalVisible}
-			/> */}
 		</View>
 	)
 }
