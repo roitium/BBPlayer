@@ -307,7 +307,7 @@ export class TrackService {
 	 */
 	public findOrCreateTrack(
 		payload: CreateTrackPayload,
-	): ResultAsync<Track, ValidationError | DatabaseError> {
+	): ResultAsync<Track, TrackNotFoundError | DatabaseError | ValidationError> {
 		const uniqueKeyResult = generateUniqueTrackKey(payload)
 		if (uniqueKeyResult.isErr()) {
 			return errAsync(uniqueKeyResult.error)

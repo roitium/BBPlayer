@@ -42,7 +42,7 @@ export class Facade {
 		cid?: number,
 	): ResultAsync<
 		Track,
-		TrackNotFoundError | DatabaseError | BilibiliApiError | ValidationError
+		BilibiliApiError | TrackNotFoundError | DatabaseError | ValidationError
 	> {
 		const apiData = this.bilibiliApi.getVideoDetails(bvid)
 		return apiData.andThen((data) => {
@@ -73,7 +73,7 @@ export class Facade {
 	 */
 	public syncCollection(
 		collectionId: number,
-	): ResultAsync<number, FacadeError | BilibiliApiError> {
+	): ResultAsync<number, BilibiliApiError | FacadeError> {
 		logger = log.extend('[Facade/SyncCollection: ' + collectionId + ']')
 		logger.debug('syncCollection', { collectionId })
 		return this.bilibiliApi
@@ -170,7 +170,9 @@ export class Facade {
 	 * 同步多集视频
 	 * @param bvid
 	 */
-	public syncMultiPageVideo(bvid: string): ResultAsync<number, FacadeError> {
+	public syncMultiPageVideo(
+		bvid: string,
+	): ResultAsync<number, BilibiliApiError | FacadeError> {
 		// HACK: 有空了需要统一一下日志格式，这种 monkeypatch 的方式太不好看了
 		logger = log.extend('[Facade/SyncMultiPageVideo: ' + bvid + ']')
 		logger.info('syncMultiPageVideo', { bvid })
