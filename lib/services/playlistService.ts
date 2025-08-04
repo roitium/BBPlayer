@@ -2,13 +2,13 @@ import { and, asc, eq, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
-import { Track } from '@/types/core/media'
-import {
+import type { Track } from '@/types/core/media'
+import type {
 	CreatePlaylistPayload,
 	ReorderSingleTrackPayload,
 	UpdatePlaylistPayload,
 } from '@/types/services/playlist'
-import { CreateTrackPayload } from '@/types/services/track'
+import type { CreateTrackPayload } from '@/types/services/track'
 import log from '@/utils/log'
 import db from '../db/db'
 import * as schema from '../db/schema'
@@ -20,7 +20,8 @@ import {
 	TrackNotInPlaylistError,
 	ValidationError,
 } from '../errors/service'
-import { TrackService, trackService } from './trackService'
+import type { TrackService } from './trackService'
+import { trackService } from './trackService'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx

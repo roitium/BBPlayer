@@ -2,8 +2,8 @@ import { and, eq, or } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
-import { Track } from '@/types/core/media'
-import {
+import type { Track } from '@/types/core/media'
+import type {
 	CreateArtistPayload,
 	UpdateArtistPayload,
 } from '@/types/services/artist'
@@ -15,7 +15,8 @@ import {
 	ServiceError,
 	ValidationError,
 } from '../errors/service'
-import { TrackService, trackService } from './trackService'
+import type { TrackService } from './trackService'
+import { trackService } from './trackService'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx

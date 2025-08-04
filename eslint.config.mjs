@@ -21,6 +21,11 @@ export default defineConfig([
 		},
 	},
 	tseslint.configs.recommended,
+	tseslint.config({
+		rules: {
+			'@typescript-eslint/consistent-type-imports': 'error',
+		},
+	}),
 	{
 		...pluginReact.configs.flat.recommended,
 		settings: {

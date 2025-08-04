@@ -1,4 +1,4 @@
-import { BilibiliApiError } from '@/lib/errors/bilibili'
+import type { BilibiliApiError } from '@/lib/errors/bilibili'
 import type { Track } from '@/types/core/media'
 import type {
 	addToQueueParams,

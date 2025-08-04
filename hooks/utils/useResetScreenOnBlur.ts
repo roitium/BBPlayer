@@ -1,6 +1,6 @@
-import { RootStackParamList } from '@/types/navigation'
+import type { RootStackParamList } from '@/types/navigation'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback } from 'react'
 
 function useResetScreenOnBlur() {

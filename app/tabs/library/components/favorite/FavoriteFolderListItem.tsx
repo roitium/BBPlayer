@@ -1,4 +1,4 @@
-import { BilibiliPlaylist } from '@/types/apis/bilibili'
+import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { memo } from 'react'

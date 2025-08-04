@@ -4,7 +4,7 @@ import {
 	useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'

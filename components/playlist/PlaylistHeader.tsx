@@ -2,7 +2,7 @@ import { Image } from 'expo-image'
 import { memo } from 'react'
 import { View } from 'react-native'
 import { Divider, IconButton, Text } from 'react-native-paper'
-import { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
+import type { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
 
 interface PlaylistHeaderProps {
 	coverUri: string | undefined

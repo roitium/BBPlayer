@@ -1,24 +1,25 @@
-import { Track } from '@/types/core/media'
+import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
+import type { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync } from 'neverthrow'
-import {
-	bilibiliApi,
-	bilibiliApi as BilibiliApiService,
-} from '../api/bilibili/api'
+import type { bilibiliApi as BilibiliApiService } from '../api/bilibili/api'
+import { bilibiliApi } from '../api/bilibili/api'
 import { bv2av } from '../api/bilibili/utils'
 import db from '../db/db'
-import * as schema from '../db/schema'
-import { BilibiliApiError } from '../errors/bilibili'
+import type * as schema from '../db/schema'
+import type { BilibiliApiError } from '../errors/bilibili'
 import { FacadeError } from '../errors/facade'
-import {
+import type {
 	DatabaseError,
 	TrackNotFoundError,
 	ValidationError,
 } from '../errors/service'
-import { artistService, ArtistService } from '../services/artistService'
-import { playlistService, PlaylistService } from '../services/playlistService'
-import { trackService, TrackService } from '../services/trackService'
+import type { ArtistService } from '../services/artistService'
+import { artistService } from '../services/artistService'
+import type { PlaylistService } from '../services/playlistService'
+import { playlistService } from '../services/playlistService'
+import type { TrackService } from '../services/trackService'
+import { trackService } from '../services/trackService'
 
 let logger = log.extend('Facade')
 

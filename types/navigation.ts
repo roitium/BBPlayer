@@ -1,4 +1,4 @@
-import { Tabs } from '@/app/tabs/library/[tab]'
+import type { Tabs } from '@/app/tabs/library/[tab]'
 import type { NavigatorScreenParams } from '@react-navigation/native'
 
 export type BottomTabParamList = {

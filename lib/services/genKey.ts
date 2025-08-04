@@ -1,5 +1,6 @@
-import { TrackSourceData } from '@/types/services/track'
-import { err, ok, Result } from 'neverthrow'
+import type { TrackSourceData } from '@/types/services/track'
+import type { Result } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 import { ValidationError } from '../errors/service'
 
 export default function generateUniqueTrackKey(

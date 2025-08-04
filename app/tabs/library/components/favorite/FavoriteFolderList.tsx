@@ -1,7 +1,7 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import { BilibiliPlaylist } from '@/types/apis/bilibili'
+import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { LegendList } from '@legendapp/list'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'

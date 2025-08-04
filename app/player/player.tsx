@@ -1,7 +1,7 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
+import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useRef, useState } from 'react'

@@ -1,4 +1,4 @@
-import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
