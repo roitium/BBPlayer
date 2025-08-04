@@ -7,11 +7,11 @@ import {
 } from '@/hooks/queries/bilibili/useVideoData'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { facade } from '@/lib/facades/facade'
-import {
+import type {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
-import { Track } from '@/types/core/media'
+import type { Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
@@ -74,7 +74,7 @@ const mapApiItemToTrack = (
 		},
 		coverUrl: video.pic,
 		duration: mp.duration,
-		playCountSequence: [],
+		playHistory: [],
 		createdAt: video.pubdate,
 		bilibiliMetadata: {
 			bvid: video.bvid,

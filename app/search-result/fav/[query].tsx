@@ -8,7 +8,7 @@ import {
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import { type RouteProp, useRoute } from '@react-navigation/native'

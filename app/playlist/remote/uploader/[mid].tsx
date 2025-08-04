@@ -9,7 +9,7 @@ import {
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/useUserData'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import { BilibiliUserUploadedVideosResponse } from '@/types/apis/bilibili'
+import type { BilibiliUserUploadedVideosResponse } from '@/types/apis/bilibili'
 import { formatMMSSToSeconds } from '@/utils/time'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -188,7 +188,7 @@ export default function UploaderPage() {
 						<PlaylistHeader
 							coverUri={uploaderUserInfo.face}
 							title={uploaderUserInfo.name}
-							subtitle={`${uploadedVideos.pages[0].page.count} 首歌曲`}
+							subtitles={`${uploadedVideos.pages[0].page.count} 首歌曲`}
 							description={uploaderUserInfo.sign}
 							onClickMainButton={undefined}
 						/>

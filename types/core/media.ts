@@ -8,6 +8,12 @@ export interface Artist {
 	createdAt: number
 }
 
+export interface PlayRecord {
+	startTime: number // 播放开始的时间戳 (ms)
+	durationPlayed: number // 实际播放的秒数
+	completed: boolean // 是否完整播放
+}
+
 interface BaseTrack {
 	id: number
 	uniqueKey: string
@@ -15,7 +21,7 @@ interface BaseTrack {
 	artist: Artist | null
 	coverUrl: string | null
 	source: 'bilibili' | 'local'
-	playCountSequence: number[]
+	playHistory: PlayRecord[]
 	createdAt: number
 	duration: number
 }

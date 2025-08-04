@@ -8,8 +8,8 @@ import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteDa
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import { facade } from '@/lib/facades/facade'
-import { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
-import { Track } from '@/types/core/media'
+import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
+import type { Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
@@ -69,7 +69,7 @@ const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
 		},
 		coverUrl: apiItem.cover,
 		duration: apiItem.duration,
-		playCountSequence: [],
+		playHistory: [],
 		createdAt: apiItem.pubtime,
 		bilibiliMetadata: {
 			bvid: apiItem.bvid,

@@ -1,14 +1,19 @@
-import {
+import type {
 	BilibiliMetadataPayload,
 	CreateBilibiliTrackPayload,
 	CreateTrackPayload,
 	UpdateTrackPayload,
 } from '@/types/services/track'
 import log from '@/utils/log'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { Result, ResultAsync, err, errAsync, okAsync } from 'neverthrow'
-import type { BilibiliTrack, LocalTrack, Track } from '../../types/core/media'
+import type {
+	BilibiliTrack,
+	LocalTrack,
+	PlayRecord,
+	Track,
+} from '../../types/core/media'
 import db from '../db/db'
 import * as schema from '../db/schema'
 import {
@@ -59,7 +64,7 @@ export class TrackService {
 			artist: dbTrack.artist,
 			coverUrl: dbTrack.coverUrl,
 			duration: dbTrack.duration,
-			playCountSequence: dbTrack.playCountSequence || [],
+			playHistory: dbTrack.playHistory,
 			createdAt: dbTrack.createdAt.getTime(),
 			source: dbTrack.source as 'bilibili' | 'local',
 		}
@@ -120,7 +125,7 @@ export class TrackService {
 						artistId: payload.artistId,
 						coverUrl: payload.coverUrl,
 						duration: payload.duration,
-						playCountSequence: [],
+						playHistory: [],
 						createdAt: new Date(),
 						uniqueKey: uniqueKey.value,
 					})
@@ -223,36 +228,31 @@ export class TrackService {
 	/**
 	 * 为 track 增加一次播放记录。
 	 * @param trackId -  track 的 ID。
+	 * @param record - 播放记录。
 	 * @returns ResultAsync 包含 true 或一个错误。
 	 */
 	public addPlayRecord(
 		trackId: number,
-	): ResultAsync<boolean, TrackNotFoundError | DatabaseError> {
+		record: PlayRecord,
+	): ResultAsync<true, TrackNotFoundError | DatabaseError> {
 		return ResultAsync.fromPromise(
 			(async () => {
-				const track = await this.db.query.tracks.findFirst({
-					where: eq(schema.tracks.id, trackId),
-					columns: { playCountSequence: true },
-				})
-
-				if (!track) {
-					throw new TrackNotFoundError(trackId)
-				}
-
-				const sequence = track.playCountSequence || []
-				sequence.push(Date.now())
+				const recordJson = JSON.stringify(record)
 
 				await this.db
 					.update(schema.tracks)
-					.set({ playCountSequence: sequence })
+					.set({
+						playHistory: sql`json_insert(
+              play_history,
+              '$[#]',
+              json(${recordJson})
+            )`,
+					})
 					.where(eq(schema.tracks.id, trackId))
 
-				return true
+				return true as const
 			})(),
-			(e) =>
-				e instanceof TrackNotFoundError
-					? e
-					: new DatabaseError(`增加播放记录的事务失败：${trackId}`, e),
+			(e) => new DatabaseError(`增加播放记录失败：${trackId}`, e),
 		)
 	}
 

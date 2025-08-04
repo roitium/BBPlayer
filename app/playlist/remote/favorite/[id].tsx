@@ -6,7 +6,7 @@ import {
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/useFavoriteData'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -234,7 +234,7 @@ export default function FavoritePage() {
 						<PlaylistHeader
 							coverUri={favoriteData.pages[0].info.cover}
 							title={favoriteData.pages[0].info.title}
-							subtitle={`${favoriteData.pages[0].info.upper.name} • ${favoriteData.pages[0].info.media_count} 首歌曲`}
+							subtitles={`${favoriteData.pages[0].info.upper.name} • ${favoriteData.pages[0].info.media_count} 首歌曲`}
 							description={favoriteData.pages[0].info.intro}
 							onClickMainButton={() => toast.show('暂未实现')}
 						/>

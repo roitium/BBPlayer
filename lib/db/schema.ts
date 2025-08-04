@@ -1,3 +1,4 @@
+import type { PlayRecord } from '@/types/core/media'
 import { relations, sql } from 'drizzle-orm'
 import {
 	index,
@@ -7,8 +8,6 @@ import {
 	text,
 	uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
-
-type msTimestamp = number
 
 export const artists = sqliteTable(
 	'artists',
@@ -42,11 +41,11 @@ export const tracks = sqliteTable(
 		}),
 		coverUrl: text('cover_url'),
 		duration: integer('duration'),
-		playCountSequence: text('play_count_sequence', {
+		playHistory: text('play_history', {
 			// 每次播放的时间
 			mode: 'json',
 		})
-			.$type<msTimestamp[]>()
+			.$type<PlayRecord[]>()
 			.default(sql`'[]'`),
 		createdAt: integer('created_at', { mode: 'timestamp_ms' })
 			.notNull()
