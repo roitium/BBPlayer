@@ -292,6 +292,8 @@ export class SyncFacade {
 			this.syncingIds.add(`favorite::${favoriteId}`)
 			logger = log.extend('[Facade/SyncFavorite: ' + favoriteId + ']')
 			logger.debug('syncFavorite', { favoriteId })
+
+			// 从 bilibili 获取基本元数据和收藏夹所有 bvid
 			const bilibiliResult = await ResultAsync.combine([
 				this.bilibiliApi.getFavoriteListAllContents(favoriteId),
 				this.bilibiliApi.getFavoriteListContents(favoriteId, 1),
@@ -307,6 +309,7 @@ export class SyncFacade {
 				total: bilibiliFavoriteListAllBvids.length,
 			})
 
+			// 查询本地收藏夹元数据
 			const localPlaylist =
 				await this.playlistService.findPlaylistByTypeAndRemoteId(
 					'favorite',
@@ -319,14 +322,19 @@ export class SyncFacade {
 				localPlaylistId: localPlaylist.value?.id ?? '不存在',
 			})
 
-			let addedIdSet: Set<string>
-			let removeIdSet: Set<string>
+			// 开始计算 diff
+			let addedBvidSet: Set<string>
+			let removeBvidSet: Set<string>
+			const afterRemovedHiddenBvidsAllBvids = new Set<string>(
+				bilibiliFavoriteListAllBvids.map((item) => item.bvid),
+			) // 删除被隐藏的视频后的所有 bvid（在元数据请求完成后处理删除逻辑）
 
 			if (!localPlaylist.value || localPlaylist.value.itemCount === 0) {
-				addedIdSet = new Set(
+				// 本地收藏夹为空或没创建过，则全部添加
+				addedBvidSet = new Set(
 					bilibiliFavoriteListAllBvids.map((item) => item.bvid),
 				)
-				removeIdSet = new Set()
+				removeBvidSet = new Set()
 			} else {
 				const existTracks = await this.playlistService.getPlaylistTracks(
 					localPlaylist.value.id,
@@ -346,25 +354,26 @@ export class SyncFacade {
 					new Set(bilibiliFavoriteListAllBvids.map((item) => item.bvid)),
 					new Set(biliTracks.map((item) => item.bilibiliMetadata.bvid)),
 				)
-				addedIdSet = diff.added
-				removeIdSet = diff.removed
+				addedBvidSet = diff.added
+				removeBvidSet = diff.removed
 			}
 			logger.debug('step 3: 对远程和本地的 tracks 进行 diff 完成', {
-				added: addedIdSet.size,
-				removed: removeIdSet.size,
+				added: addedBvidSet.size,
+				removed: removeBvidSet.size,
 			})
-
-			if (addedIdSet.size === 0 && removeIdSet.size === 0) {
+			if (addedBvidSet.size === 0 && removeBvidSet.size === 0) {
 				logger.info('收藏夹为空或与上次相比无变化，无需同步')
 				return ok(localPlaylist.value?.id)
 			}
 
+			// 开始获取收藏夹新增部分 bvid 的详细元数据
+			// 从第一页（最新）开始获取，直到所有新增的 bvid 都获取完成
 			const addedTracksMetadata = new Set<BilibiliFavoriteListContent>()
 			let nowPageNumber = 0
 			let hasMore = true
 
 			while (hasMore) {
-				if (addedIdSet.size === 0) {
+				if (addedBvidSet.size === 0) {
 					break
 				}
 				nowPageNumber += 1
@@ -380,16 +389,20 @@ export class SyncFacade {
 				logger.debug(page.medias.length)
 				hasMore = page.has_more
 				for (const item of page.medias) {
-					if (addedIdSet.has(item.bvid)) {
+					if (addedBvidSet.has(item.bvid)) {
 						addedTracksMetadata.add(item)
-						addedIdSet.delete(item.bvid)
+						addedBvidSet.delete(item.bvid)
 					}
 				}
 			}
-			if (addedIdSet.size > 0) {
-				const tip = `Bilibili 隐藏了被 up 设置为仅自己可见的稿件，却没有更新索引，所以你会看到同步到的歌曲数量少于收藏夹实际显示的数量，具体隐藏稿件：${[...addedIdSet].join(',')}`
+			if (addedBvidSet.size > 0) {
+				const tip = `Bilibili 隐藏了被 up 设置为仅自己可见的稿件，却没有更新索引，所以你会看到同步到的歌曲数量少于收藏夹实际显示的数量，具体隐藏稿件：${[...addedBvidSet].join(',')}`
 				logger.warn(tip)
 				toast.info(tip)
+				// 在复制的 allBvids Set 中删除隐藏的视频
+				for (const bvid of addedBvidSet) {
+					afterRemovedHiddenBvidsAllBvids.delete(bvid)
+				}
 			}
 			logger.debug('step 4: 获取要添加的 tracks 元数据完成', {
 				added: addedTracksMetadata.size,
@@ -423,7 +436,7 @@ export class SyncFacade {
 					if (localPlaylist.isErr()) {
 						throw localPlaylist.error
 					}
-					logger.debug('step 5: 创建 playlist 和其对应的 artist 信息完成', {
+					logger.debug('step 5: 创建 playlist 和其对应的 author 信息完成', {
 						localPlaylistId: localPlaylist.value.id,
 						artistId: playlistAuthor.value.id,
 					})
@@ -431,7 +444,6 @@ export class SyncFacade {
 					const uniqueArtistPayloadsMap = new Map<string, CreateArtistPayload>()
 					for (const trackMeta of addedTracksMetadata) {
 						const remoteId = String(trackMeta.upper.mid)
-						// 如果这个 artist 还没有被添加，就把它加到 Map 里
 						if (!uniqueArtistPayloadsMap.has(remoteId)) {
 							uniqueArtistPayloadsMap.set(remoteId, {
 								name: trackMeta.upper.name,
@@ -498,12 +510,14 @@ export class SyncFacade {
 						},
 					)
 
+					// 在这里我们使用清洗过后的 afterRemovedHiddenBvidsAllBvids，而非原始的 bilibiliFavoriteListAllBvids
+					// 因为在原始数据中，可能存在隐藏的视频，但是在清洗后，这些视频已经被删除了
 					const orderedUniqueKeysResult = Result.combine(
-						bilibiliFavoriteListAllBvids.map((item) =>
+						Array.from(afterRemovedHiddenBvidsAllBvids).map((bvid) =>
 							generateUniqueTrackKey({
 								source: 'bilibili',
 								bilibiliMetadata: {
-									bvid: item.bvid,
+									bvid: bvid,
 									isMultiPage: false,
 									videoIsValid: true,
 								},

@@ -349,84 +349,11 @@ export class TrackService {
 	}
 
 	/**
-	 * 创建多个 tracks
-	 * @param tracksToCreate
-	 * @param source
-	 * @returns 创建的 track 的 uniqueKey -> id 的映射
-	 */
-	private _createManyTracks(
-		tracksToCreate: { uniqueKey: string; payload: CreateTrackPayload }[],
-		source: Track['source'],
-	): ResultAsync<Map<string, number>, DatabaseError | NotImplementedError> {
-		if (tracksToCreate.length === 0) {
-			return okAsync(new Map<string, number>())
-		}
-
-		return ResultAsync.fromPromise(
-			(async () => {
-				const newTrackValues = tracksToCreate.map(({ uniqueKey, payload }) => ({
-					...payload,
-					uniqueKey,
-					playCountSequence: [],
-					createdAt: new Date(),
-				}))
-
-				const newlyCreatedTracks = await this.db
-					.insert(schema.tracks)
-					.values(newTrackValues)
-					.returning({
-						id: schema.tracks.id,
-						uniqueKey: schema.tracks.uniqueKey,
-					})
-
-				const newlyCreatedTracksMap = new Map(
-					newlyCreatedTracks.map((t) => [t.uniqueKey, t.id]),
-				)
-
-				switch (source) {
-					case 'bilibili': {
-						const bilibiliMetadataValues = tracksToCreate.map(
-							({ uniqueKey, payload }) => {
-								const trackId = newlyCreatedTracksMap.get(uniqueKey)
-								if (!trackId) {
-									throw new ServiceError(
-										`无法根据 uniqueKey 查找到 trackId：${uniqueKey}`,
-									)
-								}
-								return {
-									trackId,
-									...(payload as CreateBilibiliTrackPayload).bilibiliMetadata,
-								}
-							},
-						)
-
-						if (bilibiliMetadataValues.length > 0) {
-							await this.db
-								.insert(schema.bilibiliMetadata)
-								.values(bilibiliMetadataValues)
-						}
-						break
-					}
-					case 'local': {
-						throw new NotImplementedError('处理 local source 的逻辑尚未实现')
-					}
-				}
-
-				return newlyCreatedTracksMap
-			})(),
-			(e) =>
-				e instanceof NotImplementedError
-					? e
-					: new DatabaseError('批量创建 tracks 失败', e),
-		)
-	}
-
-	/**
-	 * 批量查找或创建 tracks。目前为了简便起见，暂时只实现了创建来自同一个 source 的 tracks。
-	 * 如果有需要创建的 track，则批量插入。
-	 * @param payloads
-	 * @param source
-	 * @returns 创建的 track 的 uniqueKey -> id 的映射
+	 * 批量查找或创建 tracks，并处理其关联的元数据。
+	 *
+	 * @param payloads - 要创建或查找的 track 数据。
+	 * @param source - 所有 track 必须来自的同一个来源。
+	 * @returns 如果操作成功，其中包含一个从 uniqueKey -> track ID 的映射。
 	 */
 	public findOrCreateManyTracks(
 		payloads: CreateTrackPayload[],
@@ -450,7 +377,6 @@ export class TrackService {
 			}),
 		)
 
-		// 如果预处理失败，直接返回错误
 		if (processedPayloadsResult.isErr()) {
 			return errAsync(processedPayloadsResult.error)
 		}
@@ -459,37 +385,77 @@ export class TrackService {
 		const uniqueKeys = processedPayloads.map((p) => p.uniqueKey)
 
 		return ResultAsync.fromPromise(
-			this.db.query.tracks.findMany({
-				where: and(inArray(schema.tracks.uniqueKey, uniqueKeys)),
-				columns: {
-					id: true,
-					uniqueKey: true,
-				},
-			}),
-			(e) => new DatabaseError('批量查找 tracks 失败', e),
-		).andThen((existingTracks) => {
-			const uniqueKeyToIdMap = new Map<string, number>()
-			for (const track of existingTracks) {
-				uniqueKeyToIdMap.set(track.uniqueKey, track.id)
-			}
+			(async () => {
+				const trackValuesToInsert = processedPayloads.map(
+					({ uniqueKey, payload }) => ({
+						...payload,
+						uniqueKey,
+						playHistory: [],
+						createdAt: new Date(),
+					}),
+				)
 
-			const tracksToCreate = processedPayloads.filter(
-				(p) => !uniqueKeyToIdMap.has(p.uniqueKey),
-			)
+				if (trackValuesToInsert.length > 0) {
+					await this.db
+						.insert(schema.tracks)
+						.values(trackValuesToInsert)
+						.onConflictDoNothing()
+				}
 
-			if (tracksToCreate.length === 0) {
-				return okAsync(uniqueKeyToIdMap)
-			}
+				const allTracks = await this.db.query.tracks.findMany({
+					where: and(inArray(schema.tracks.uniqueKey, uniqueKeys)),
+					columns: {
+						id: true,
+						uniqueKey: true,
+					},
+				})
 
-			return this._createManyTracks(tracksToCreate, source).map(
-				(newlyCreatedMap) => {
-					for (const [key, id] of newlyCreatedMap.entries()) {
-						uniqueKeyToIdMap.set(key, id)
+				const finalUniqueKeyToIdMap = new Map(
+					allTracks.map((t) => [t.uniqueKey, t.id]),
+				)
+
+				if (finalUniqueKeyToIdMap.size !== uniqueKeys.length) {
+					throw new DatabaseError(
+						'创建或查找 tracks 后数据不一致，部分 track 未能成功写入或查询。',
+					)
+				}
+
+				switch (source) {
+					case 'bilibili': {
+						const bilibiliMetadataValues = processedPayloads.map(
+							({ uniqueKey, payload }) => {
+								const trackId = finalUniqueKeyToIdMap.get(uniqueKey)
+								if (!trackId) {
+									throw new ServiceError(
+										`该错误不应该出现，无法为 ${uniqueKey} 找到 trackId`,
+									)
+								}
+								return {
+									trackId,
+									...(payload as CreateBilibiliTrackPayload).bilibiliMetadata,
+								}
+							},
+						)
+
+						if (bilibiliMetadataValues.length > 0) {
+							await this.db
+								.insert(schema.bilibiliMetadata)
+								.values(bilibiliMetadataValues)
+								.onConflictDoNothing()
+						}
+						break
 					}
-					return uniqueKeyToIdMap
-				},
-			)
-		})
+					case 'local': {
+						throw new NotImplementedError('处理 local source 的逻辑尚未实现')
+					}
+				}
+
+				return finalUniqueKeyToIdMap
+			})(),
+			(e) => {
+				return new ServiceError('批量查找或创建 tracks 失败', e)
+			},
+		)
 	}
 
 	/**
