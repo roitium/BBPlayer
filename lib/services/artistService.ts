@@ -252,6 +252,7 @@ export class ArtistService {
 		Map<string, typeof schema.artists.$inferSelect>,
 		ServiceError
 	> {
+  // TODO: 可使用 onConflictDoNothing 来简化代码
 		if (payloads.length === 0) {
 			okAsync(new Map<string, typeof schema.artists.$inferSelect>())
 		}
