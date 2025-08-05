@@ -19,6 +19,7 @@ import * as schema from '../db/schema'
 import {
 	DatabaseError,
 	NotImplementedError,
+	ServiceError,
 	TrackNotFoundError,
 	ValidationError,
 } from '../errors/service'
@@ -348,14 +349,19 @@ export class TrackService {
 	}
 
 	/**
-	 * 创建多个 tracks。
+	 * 创建多个 tracks
 	 * @param tracksToCreate
 	 * @param source
+	 * @returns 创建的 track 的 uniqueKey -> id 的映射
 	 */
 	private _createManyTracks(
 		tracksToCreate: { uniqueKey: string; payload: CreateTrackPayload }[],
 		source: Track['source'],
-	): ResultAsync<number[], DatabaseError | NotImplementedError> {
+	): ResultAsync<Map<string, number>, DatabaseError | NotImplementedError> {
+		if (tracksToCreate.length === 0) {
+			return okAsync(new Map<string, number>())
+		}
+
 		return ResultAsync.fromPromise(
 			(async () => {
 				const newTrackValues = tracksToCreate.map(({ uniqueKey, payload }) => ({
@@ -373,18 +379,25 @@ export class TrackService {
 						uniqueKey: schema.tracks.uniqueKey,
 					})
 
-				const newlyCreatedTrackIds = newlyCreatedTracks.map((t) => t.id)
-				const newlyCreatedTracksDict = Object.fromEntries(
+				const newlyCreatedTracksMap = new Map(
 					newlyCreatedTracks.map((t) => [t.uniqueKey, t.id]),
 				)
 
 				switch (source) {
 					case 'bilibili': {
 						const bilibiliMetadataValues = tracksToCreate.map(
-							({ uniqueKey, payload }) => ({
-								trackId: newlyCreatedTracksDict[uniqueKey],
-								...(payload as CreateBilibiliTrackPayload).bilibiliMetadata,
-							}),
+							({ uniqueKey, payload }) => {
+								const trackId = newlyCreatedTracksMap.get(uniqueKey)
+								if (!trackId) {
+									throw new ServiceError(
+										`无法根据 uniqueKey 查找到 trackId：${uniqueKey}`,
+									)
+								}
+								return {
+									trackId,
+									...(payload as CreateBilibiliTrackPayload).bilibiliMetadata,
+								}
+							},
 						)
 
 						if (bilibiliMetadataValues.length > 0) {
@@ -399,7 +412,7 @@ export class TrackService {
 					}
 				}
 
-				return newlyCreatedTrackIds
+				return newlyCreatedTracksMap
 			})(),
 			(e) =>
 				e instanceof NotImplementedError
@@ -413,16 +426,17 @@ export class TrackService {
 	 * 如果有需要创建的 track，则批量插入。
 	 * @param payloads
 	 * @param source
+	 * @returns 创建的 track 的 uniqueKey -> id 的映射
 	 */
 	public findOrCreateManyTracks(
 		payloads: CreateTrackPayload[],
 		source: Track['source'],
 	): ResultAsync<
-		number[],
+		Map<string, number>,
 		ValidationError | DatabaseError | NotImplementedError
 	> {
 		if (payloads.length === 0) {
-			return okAsync([])
+			return okAsync(new Map<string, number>())
 		}
 
 		const processedPayloadsResult = Result.combine(
@@ -446,10 +460,7 @@ export class TrackService {
 
 		return ResultAsync.fromPromise(
 			this.db.query.tracks.findMany({
-				where: and(
-					eq(schema.tracks.source, source),
-					inArray(schema.tracks.uniqueKey, uniqueKeys),
-				),
+				where: and(inArray(schema.tracks.uniqueKey, uniqueKeys)),
 				columns: {
 					id: true,
 					uniqueKey: true,
@@ -457,22 +468,56 @@ export class TrackService {
 			}),
 			(e) => new DatabaseError('批量查找 tracks 失败', e),
 		).andThen((existingTracks) => {
-			const existingTrackIds = existingTracks.map((t) => t.id)
-			const existingUniqueKeys = new Set(existingTracks.map((t) => t.uniqueKey))
+			const uniqueKeyToIdMap = new Map<string, number>()
+			for (const track of existingTracks) {
+				uniqueKeyToIdMap.set(track.uniqueKey, track.id)
+			}
 
 			const tracksToCreate = processedPayloads.filter(
-				(p) => !existingUniqueKeys.has(p.uniqueKey),
+				(p) => !uniqueKeyToIdMap.has(p.uniqueKey),
 			)
 
 			if (tracksToCreate.length === 0) {
-				return okAsync(existingTrackIds)
+				return okAsync(uniqueKeyToIdMap)
 			}
 
 			return this._createManyTracks(tracksToCreate, source).map(
-				(newlyCreatedTrackIds) => {
-					return [...existingTrackIds, ...newlyCreatedTrackIds]
+				(newlyCreatedMap) => {
+					for (const [key, id] of newlyCreatedMap.entries()) {
+						uniqueKeyToIdMap.set(key, id)
+					}
+					return uniqueKeyToIdMap
 				},
 			)
+		})
+	}
+
+	/**
+	 * 根据 uniqueKey 批量查找 track 的 ID。
+	 * @param uniqueKeys
+	 * @returns 如果成功，即为找到的 track 的 uniqueKey -> id 映射
+	 */
+	public findTrackIdsByUniqueKeys(
+		uniqueKeys: string[],
+	): ResultAsync<Map<string, number>, DatabaseError> {
+		if (uniqueKeys.length === 0) {
+			return okAsync(new Map<string, number>())
+		}
+		return ResultAsync.fromPromise(
+			this.db.query.tracks.findMany({
+				where: and(inArray(schema.tracks.uniqueKey, uniqueKeys)),
+				columns: {
+					id: true,
+					uniqueKey: true,
+				},
+			}),
+			(e) => new DatabaseError('批量查找 tracks 失败', e),
+		).andThen((existingTracks) => {
+			const uniqueKeyToIdMap = new Map<string, number>()
+			for (const track of existingTracks) {
+				uniqueKeyToIdMap.set(track.uniqueKey, track.id)
+			}
+			return okAsync(uniqueKeyToIdMap)
 		})
 	}
 }

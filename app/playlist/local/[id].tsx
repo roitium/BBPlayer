@@ -190,7 +190,7 @@ export default function LocalPlaylistPage() {
 							coverUri={playlistMetadata.coverUrl as string | undefined}
 							title={playlistMetadata.title}
 							subtitles={[
-								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount}(${filteredPlaylistData.length}) 首歌曲`,
+								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount}${playlistMetadata.itemCount === filteredPlaylistData.length ? '' : `(${filteredPlaylistData.length})`} 首歌曲`,
 								`最后同步：${playlistMetadata.lastSyncedAt ? formatRelativeTime(playlistMetadata.lastSyncedAt) : '未知'}`,
 							]}
 							description={description}

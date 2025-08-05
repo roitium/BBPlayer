@@ -5,8 +5,7 @@ import log from '@/utils/log'
 import { diffSets } from '@/utils/set'
 import toast from '@/utils/toast'
 import type { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
-import type { Result } from 'neverthrow'
-import { err, errAsync, ok, ResultAsync } from 'neverthrow'
+import { err, errAsync, ok, Result, ResultAsync } from 'neverthrow'
 import type { bilibiliApi as BilibiliApiService } from '../api/bilibili/api'
 import { bilibiliApi } from '../api/bilibili/api'
 import { bv2av } from '../api/bilibili/utils'
@@ -21,6 +20,7 @@ import type {
 } from '../errors/service'
 import type { ArtistService } from '../services/artistService'
 import { artistService } from '../services/artistService'
+import generateUniqueTrackKey from '../services/genKey'
 import type { PlaylistService } from '../services/playlistService'
 import { playlistService } from '../services/playlistService'
 import type { TrackService } from '../services/trackService'
@@ -144,7 +144,7 @@ export class SyncFacade {
 								uniqueCount: uniqueArtists.size,
 							})
 
-							const trackIds = await trackSvc.findOrCreateManyTracks(
+							const tracksCreateResult = await trackSvc.findOrCreateManyTracks(
 								contents.medias.map((v) => ({
 									title: v.title,
 									source: 'bilibili',
@@ -160,15 +160,16 @@ export class SyncFacade {
 								})),
 								'bilibili',
 							)
-							if (trackIds.isErr()) throw trackIds.error
+							if (tracksCreateResult.isErr()) throw tracksCreateResult.error
+							const trackIds = Array.from(tracksCreateResult.value.values())
 							logger.debug('step 4: 创建 tracks 完成', {
-								total: trackIds.value.length,
+								total: trackIds.length,
 							})
 
 							// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
 							playlistSvc.replacePlaylistAllTracks(
 								playlistRes.value.id,
-								trackIds.value,
+								trackIds,
 							)
 							logger.debug('step 5: 替换 playlist 中所有 tracks 完成')
 							logger.info('同步合集完成', {
@@ -233,7 +234,7 @@ export class SyncFacade {
 								id: playlistRes.value.id,
 							})
 
-							const trackIds = await trackSvc.findOrCreateManyTracks(
+							const trackCreateResult = await trackSvc.findOrCreateManyTracks(
 								data.pages.map((page) => ({
 									title: page.part,
 									source: 'bilibili',
@@ -249,15 +250,16 @@ export class SyncFacade {
 								})),
 								'bilibili',
 							)
-							if (trackIds.isErr()) throw trackIds.error
+							if (trackCreateResult.isErr()) throw trackCreateResult.error
+							const trackIds = Array.from(trackCreateResult.value.values())
 							logger.debug('step 3: 创建 tracks 完成', {
-								total: trackIds.value.length,
+								total: trackIds.length,
 							})
 
 							// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
 							playlistSvc.replacePlaylistAllTracks(
 								playlistRes.value.id,
-								trackIds.value,
+								trackIds,
 							)
 							logger.debug('step 4: 替换 playlist 中所有 tracks 完成')
 							logger.info('同步合集完成', {
@@ -319,15 +321,12 @@ export class SyncFacade {
 
 			let addedIdSet: Set<string>
 			let removeIdSet: Set<string>
-			let remainingTrackIds: number[] // 去除掉应该移除的 track 后，剩下的本地 playlist 内的 track IDs
 
 			if (!localPlaylist.value || localPlaylist.value.itemCount === 0) {
-				// 这是一个不存在或为空的收藏夹，全量同步
 				addedIdSet = new Set(
 					bilibiliFavoriteListAllBvids.map((item) => item.bvid),
 				)
 				removeIdSet = new Set()
-				remainingTrackIds = []
 			} else {
 				const existTracks = await this.playlistService.getPlaylistTracks(
 					localPlaylist.value.id,
@@ -349,9 +348,6 @@ export class SyncFacade {
 				)
 				addedIdSet = diff.added
 				removeIdSet = diff.removed
-				remainingTrackIds = biliTracks
-					.filter((item) => !diff.removed.has(item.bilibiliMetadata.bvid))
-					.map((item) => item.id)
 			}
 			logger.debug('step 3: 对远程和本地的 tracks 进行 diff 完成', {
 				added: addedIdSet.size,
@@ -458,38 +454,104 @@ export class SyncFacade {
 						total: artistsMap.value.size,
 					})
 
-					const addedTrackIds = await trackSvc.findOrCreateManyTracks(
-						Array.from(addedTracksMetadata).map((v) => ({
+					const addedTrackPayloads = Array.from(addedTracksMetadata).map(
+						(v) => ({
 							title: v.title,
-							source: 'bilibili',
+							source: 'bilibili' as const,
 							bilibiliMetadata: {
 								bvid: v.bvid,
 								isMultiPage: false,
 								cid: undefined,
-								videoIsValid: v.attr === 0, // 只有在 attr 为 0 的视频才是有效的
+								videoIsValid: v.attr === 0,
 							},
 							coverUrl: v.cover,
 							duration: v.duration,
 							artistId: artistsMap.value.get(String(v.upper.mid))?.id,
-						})),
+						}),
+					)
+
+					const trackPayloadsWithKeysResult = Result.combine(
+						addedTrackPayloads.map((p) =>
+							generateUniqueTrackKey(p).map((uniqueKey) => ({
+								payload: p,
+								uniqueKey,
+							})),
+						),
+					)
+					if (trackPayloadsWithKeysResult.isErr()) {
+						throw trackPayloadsWithKeysResult.error
+					}
+					const trackPayloadsWithKeys = trackPayloadsWithKeysResult.value
+
+					const createdTracksMapResult = await trackSvc.findOrCreateManyTracks(
+						trackPayloadsWithKeys.map((p) => p.payload),
 						'bilibili',
 					)
-					if (addedTrackIds.isErr()) {
-						throw addedTrackIds.error
-					}
 
-					// FIXME: 应该考虑保证顺序和远端收藏夹相同，而不是新增的放在后面
-					const allTracks = [...remainingTrackIds, ...addedTrackIds.value]
-					logger.debug('step 7: 创建 tracks 完成', {
-						total: allTracks.length,
+					if (createdTracksMapResult.isErr()) {
+						throw createdTracksMapResult.error
+					}
+					logger.debug(
+						'step 7: 创建或查找 tracks 并获取 uniqueKey->id 映射完成',
+						{
+							total: createdTracksMapResult.value.size,
+						},
+					)
+
+					const orderedUniqueKeysResult = Result.combine(
+						bilibiliFavoriteListAllBvids.map((item) =>
+							generateUniqueTrackKey({
+								source: 'bilibili',
+								bilibiliMetadata: {
+									bvid: item.bvid,
+									isMultiPage: false,
+									videoIsValid: true,
+								},
+							}),
+						),
+					)
+					if (orderedUniqueKeysResult.isErr()) {
+						throw orderedUniqueKeysResult.error
+					}
+					const orderedUniqueKeys = orderedUniqueKeysResult.value
+					logger.debug(
+						'step 8: 为远程所有 tracks 生成了其对应的 uniqueKey 顺序列表',
+						{
+							total: orderedUniqueKeys.length,
+						},
+					)
+
+					const uniqueKeyToIdMapResult =
+						await trackSvc.findTrackIdsByUniqueKeys(orderedUniqueKeys)
+					if (uniqueKeyToIdMapResult.isErr()) {
+						throw uniqueKeyToIdMapResult.error
+					}
+					const uniqueKeyToIdMap = uniqueKeyToIdMapResult.value
+					logger.debug(
+						'step 9: 一次性获取所有 uniqueKey 到本地 ID 的映射完成',
+						{
+							total: uniqueKeyToIdMap.size,
+						},
+					)
+
+					const finalOrderedTrackIds = orderedUniqueKeys
+						.map((key) => uniqueKeyToIdMap.get(key))
+						.filter((id) => {
+							if (id === undefined)
+								throw new FacadeError(
+									'已完成 tracks 创建后，却依然没有找到 uniqueKey 对应的 ID',
+								)
+							return id !== undefined
+						})
+					logger.debug('step 10: 按 Bilibili 收藏夹顺序重排所有 tracks 完成', {
+						total: finalOrderedTrackIds.length,
 					})
 
-					// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
 					playlistSvc.replacePlaylistAllTracks(
 						localPlaylist.value.id,
-						allTracks,
+						finalOrderedTrackIds,
 					)
-					logger.debug('step 7: 替换 playlist 中所有 tracks 完成')
+					logger.debug('step 11: 替换 playlist 中所有 tracks 完成')
 					logger.info('同步收藏夹完成', {
 						remoteId: favoriteId,
 						playlistId: localPlaylist.value.id,
