@@ -1,7 +1,8 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import TrackPlayer, { Event } from 'react-native-track-player'
 
-export const PlaybackService = () => {
+// eslint-disable-next-line @typescript-eslint/require-await -- startHeadlessTask 要求传入的函数必须返回一个 Promise
+export const PlaybackService = async () => {
 	// 播放控制
 	TrackPlayer.addEventListener(Event.RemotePlay, () => {
 		if (usePlayerStore.getState().isPlaying) return
