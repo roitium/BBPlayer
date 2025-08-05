@@ -66,7 +66,7 @@ export class TrackService {
 			duration: dbTrack.duration,
 			playHistory: dbTrack.playHistory,
 			createdAt: dbTrack.createdAt.getTime(),
-			source: dbTrack.source as 'bilibili' | 'local',
+			source: dbTrack.source,
 		}
 
 		if (dbTrack.source === 'bilibili' && dbTrack.bilibiliMetadata) {
@@ -137,11 +137,11 @@ export class TrackService {
 				if (payload.source === 'bilibili') {
 					await this.db
 						.insert(schema.bilibiliMetadata)
-						.values({ trackId, ...payload.bilibiliMetadata! })
+						.values({ trackId, ...payload.bilibiliMetadata })
 				} else if (payload.source === 'local') {
 					await this.db
 						.insert(schema.localMetadata)
-						.values({ trackId, ...payload.localMetadata! })
+						.values({ trackId, ...payload.localMetadata })
 				}
 
 				return trackId

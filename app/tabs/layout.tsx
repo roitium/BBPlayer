@@ -9,7 +9,7 @@ import SettingsPage from './settings/index'
 
 const Tab = createNativeBottomTabNavigator<BottomTabParamList>()
 
-type nonNullableIcon = {
+interface nonNullableIcon {
 	uri: string
 	scale: number
 }

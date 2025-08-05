@@ -8,7 +8,7 @@ import { create } from 'zustand'
 export const parseCookieString = (
 	cookie?: string,
 ): Result<Record<string, string>[], Error> => {
-	if (!cookie || !cookie.trim()) {
+	if (!cookie?.trim()) {
 		return ok([])
 	}
 
@@ -93,7 +93,6 @@ export const useAppStore = create<AppState>()((set, get) => {
 
 		clearBilibiliCookie: () => {
 			set({ bilibiliCookieString: undefined })
-			// eslint-disable-next-line drizzle/enforce-delete-with-where -- wtf???
 			storage.delete('bilibili_cookie')
 		},
 	}

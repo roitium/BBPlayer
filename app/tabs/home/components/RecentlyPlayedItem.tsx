@@ -15,15 +15,15 @@ const homeLog = log.extend('HOME')
 
 const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 	item,
-	setModalVisible,
-	setCurrentModalBvid,
+	setModalVisible: _setModalVisible,
+	setCurrentModalBvid: _setCurrentModalBvid,
 }: {
 	item: Track
 	setModalVisible: (visible: boolean) => void
 	setCurrentModalBvid: (bvid: string) => void
 }) {
 	const [isMenuVisible, setMenuVisible] = useState(false)
-	const navigation =
+	const _navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
 	const playSingleTrack = async (track: Track) => {
@@ -35,7 +35,10 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 				playNext: false,
 			})
 		} catch (error) {
-			homeLog.sentry('播放单曲失败', error)
+			homeLog.error('播放单曲失败', error)
+			toast.error('播放单曲失败', {
+				description: error,
+			})
 		}
 	}
 
@@ -49,7 +52,10 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 			})
 			toast.success('添加到下一首播放成功')
 		} catch (error) {
-			homeLog.sentry('添加到队列失败', error)
+			homeLog.error('添加到队列失败', error)
+			toast.error('添加到队列失败', {
+				description: error,
+			})
 		}
 	}
 
@@ -71,7 +77,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 						style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
 					>
 						<Image
-							source={{ uri: item.coverUrl }}
+							source={{ uri: item.coverUrl ?? undefined }}
 							style={{ width: 48, height: 48, borderRadius: 4 }}
 							transition={300}
 							cachePolicy={'none'}
@@ -84,7 +90,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 								{item.title}
 							</Text>
 							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-								<Text variant='bodySmall'>{item.artist}</Text>
+								<Text variant='bodySmall'>{item.artist?.name ?? '未知'}</Text>
 								{item.duration != null && item.duration > 0 && (
 									<>
 										<Text
@@ -115,8 +121,11 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 							<Menu.Item
 								leadingIcon='play-circle-outline'
 								onPress={() => {
-									playSingleTrack(item).catch((error) => {
-										homeLog.sentry('播放单曲失败', error)
+									playSingleTrack(item).catch((error: unknown) => {
+										homeLog.error('播放单曲失败', error)
+										toast.error('播放单曲失败', {
+											description: error,
+										})
 									})
 									handleDismissMenu()
 								}}
@@ -125,15 +134,18 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 							<Menu.Item
 								leadingIcon='playlist-play'
 								onPress={() => {
-									playNext(item).catch((error) => {
-										homeLog.sentry('添加到队列失败', error)
+									playNext(item).catch((error: unknown) => {
+										homeLog.error('添加到队列失败', error)
+										toast.error('添加到队列失败', {
+											description: error,
+										})
 									})
 									handleDismissMenu()
 								}}
 								title='下一首播放'
 							/>
 							<Divider />
-							<Menu.Item
+							{/* <Menu.Item
 								leadingIcon='plus'
 								onPress={() => {
 									setModalVisible(true)
@@ -150,7 +162,7 @@ const RecentlyPlayedItem = memo(function RecentlyPlayedItem({
 									handleDismissMenu()
 								}}
 								title='作为分P视频展示'
-							/>
+							/> */}
 						</Menu>
 					</View>
 				</Surface>

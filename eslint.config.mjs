@@ -19,12 +19,6 @@ export default defineConfig([
 			'react-hooks-extra/prefer-use-state-lazy-initialization': 'error',
 		},
 	},
-	tseslint.configs.recommended,
-	tseslint.config({
-		rules: {
-			'@typescript-eslint/consistent-type-imports': 'error',
-		},
-	}),
 	{
 		...pluginReact.configs.flat.recommended,
 		settings: {
@@ -38,6 +32,7 @@ export default defineConfig([
 	reactHooks.configs['recommended-latest'],
 	{
 		rules: {
+			'no-unused-vars': 'off',
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{
@@ -53,19 +48,46 @@ export default defineConfig([
 		},
 	},
 	{
-		files: ['*.ts', '*.js'],
 		rules: {
 			'no-undef': 'off',
 		},
 	},
 	reactCompiler.configs.recommended,
 	eslintConfigPrettier,
-	// {
-	// 	plugins: {
-	// 		drizzle,
-	// 	},
-	// 	rules: {
-	// 		...drizzle.configs.recommended.rules,
-	// 	},
-	// },
+	tseslint.configs.recommendedTypeChecked,
+	{
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
+	tseslint.config(
+		tseslint.configs.recommended,
+		tseslint.configs.recommendedTypeChecked,
+		tseslint.configs.stylisticTypeChecked,
+		{
+			ignores: [
+				'dist/**/*.ts',
+				'dist/**',
+				'**/*.mjs',
+				'eslint.config.mjs',
+				'**/*.js',
+				'.expo/**',
+			],
+		},
+		{
+			rules: {
+				'@typescript-eslint/consistent-type-imports': 'error',
+				'@typescript-eslint/no-misused-promises': [
+					'error',
+					{
+						checksVoidReturn: false,
+					},
+				],
+				// '@typescript-eslint/no-unsafe-call': 'off',
+			},
+		},
+	),
 ])

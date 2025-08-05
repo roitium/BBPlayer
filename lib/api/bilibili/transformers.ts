@@ -1,3 +1,5 @@
+/* eslint-disable */
+// 这只是个遗留文件
 import type {
 	BilibiliFavoriteListContent,
 	BilibiliHistoryVideo,

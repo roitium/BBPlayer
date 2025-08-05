@@ -49,6 +49,7 @@ export function AppProviders({
 				style={{ flex: 1 }}
 			>
 				<Sentry.ErrorBoundary
+					// eslint-disable-next-line @typescript-eslint/unbound-method
 					fallback={({ error, resetError }) => (
 						<GlobalErrorFallback
 							error={error}

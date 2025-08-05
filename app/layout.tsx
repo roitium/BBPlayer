@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message'
 import migrations from '../drizzle/migrations'
 
 // Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync()
+void SplashScreen.preventAutoHideAsync()
 
 SplashScreen.setOptions({
 	duration: 200,
@@ -25,6 +25,7 @@ initializeSentry()
 export default Sentry.wrap(function RootLayout() {
 	const { appIsReady, onLayoutRootView, ref } = useAppSetup()
 	const { success, error } = useMigrations(drizzleDb, migrations)
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	useSQLiteDevTools(expoDb)
 
 	if (error) {

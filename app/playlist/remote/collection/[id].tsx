@@ -109,7 +109,7 @@ export default function CollectionPage() {
 			const apiItem = collectionData?.medias.find((m) => m.bvid === item.bvid)
 			if (!apiItem) return
 			const track = mapApiItemToTrack(apiItem)
-			addToQueue({
+			void addToQueue({
 				tracks: [track],
 				playNow: !playNext,
 				clearQueue: false,

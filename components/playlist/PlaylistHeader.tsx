@@ -63,7 +63,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					variant='bodyMedium'
 					style={{ maxWidth: 300 }}
 				>
-					{description || '还没有简介哦~'}
+					{description ?? '还没有简介哦~'}
 				</Text>
 
 				{onClickMainButton && (

@@ -18,6 +18,10 @@ export default function generateUniqueTrackKey(
 			return ok(`${payload.source}::${localMeta.localPath}`)
 		}
 		default:
-			return err(new ValidationError(`未知的 Track source: ${payload}}`))
+			return err(
+				new ValidationError(
+					`未知的 Track source: ${(payload as TrackSourceData).source}}`,
+				),
+			)
 	}
 }

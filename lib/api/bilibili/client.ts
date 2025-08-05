@@ -2,7 +2,7 @@ import useAppStore from '@/hooks/stores/useAppStore'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { BilibiliApiError, BilibiliApiErrorType } from '../../errors/bilibili'
 
-type ReqResponse<T> = {
+interface ReqResponse<T> {
 	code: number
 	message: string
 	data: T
@@ -24,7 +24,7 @@ class ApiClient {
 		fullUrl?: string,
 		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> => {
-		const url = fullUrl || `${this.baseUrl}${endpoint}`
+		const url = fullUrl ?? `${this.baseUrl}${endpoint}`
 		const cookie = useAppStore.getState().bilibiliCookieString
 		if (!cookie && !allowMissingCookie) {
 			return errAsync(

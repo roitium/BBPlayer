@@ -201,7 +201,7 @@ interface BilibiliCollection {
 /**
  * 追更合集/收藏夹内容
  */
-type BilibiliCollectionContent = {
+interface BilibiliCollectionContent {
 	info: {
 		id: number
 		season_type: number // 未知

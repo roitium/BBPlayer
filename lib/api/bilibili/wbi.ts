@@ -2,7 +2,7 @@ import type { BilibiliApiError } from '@/lib/errors/bilibili'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import md5 from 'md5'
-import { fromSafePromise, type ResultAsync } from 'neverthrow'
+import { okAsync, type ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './client'
 
 const wbiLog = log.extend('BILIBILI_API/WBI')
@@ -23,7 +23,7 @@ const getMixinKey = (orig: string) =>
 
 // 为请求参数进行 wbi 签名
 function encWbi(
-	params: { [key: string]: string | number | object },
+	params: Record<string, string | number | object>,
 	img_key: string,
 	sub_key: string,
 ) {
@@ -37,6 +37,7 @@ function encWbi(
 		.sort()
 		.map((key) => {
 			// 过滤 value 中的 "!'()*" 字符
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			const value = params[key].toString().replace(chr_filter, '')
 			return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
 		})
@@ -96,7 +97,7 @@ function getWbiKeys(): ResultAsync<
 		wbiLog.debug('从本地获取 wbi_keys')
 		if (isSameDayAsToday(localKeys.timestamp)) {
 			wbiLog.debug('本地 wbi_keys 有效')
-			return fromSafePromise(Promise.resolve(localKeys))
+			return okAsync(localKeys)
 		}
 		wbiLog.debug('本地 wbi_keys 已过期，重新获取')
 	}
@@ -121,9 +122,9 @@ function getWbiKeys(): ResultAsync<
 	})
 }
 
-export default function getWbiEncodedParams(params: {
-	[key: string]: string | number | object
-}) {
+export default function getWbiEncodedParams(
+	params: Record<string, string | number | object>,
+) {
 	const result = getWbiKeys()
 	return result.map(({ img_key, sub_key }) => encWbi(params, img_key, sub_key))
 }

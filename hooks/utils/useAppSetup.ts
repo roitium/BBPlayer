@@ -28,14 +28,12 @@ export function useAppSetup() {
 	const ref = useNavigationContainerRef()
 	const [appIsReady, setAppIsReady] = useState(false)
 
-	useEffect(() => {
-		onlineManager.setEventListener((setOnline) => {
-			const eventSubscription = Network.addNetworkStateListener((state) => {
-				setOnline(!!state.isConnected)
-			})
-			return eventSubscription.remove
+	onlineManager.setEventListener((setOnline) => {
+		const eventSubscription = Network.addNetworkStateListener((state) => {
+			setOnline(!!state.isConnected)
 		})
-	}, [])
+		return eventSubscription.remove.bind(eventSubscription)
+	})
 
 	useEffect(() => {
 		if (ref?.current) {
@@ -50,7 +48,7 @@ export function useAppSetup() {
 	}, [])
 
 	useEffect(() => {
-		async function prepare() {
+		function prepare() {
 			try {
 				useAppStore.getState()
 			} catch (error) {
@@ -61,10 +59,7 @@ export function useAppSetup() {
 			}
 		}
 
-		prepare().catch((error) => {
-			console.error('Initial preparation error:', error)
-			Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })
-		})
+		prepare()
 	}, [])
 
 	useEffect(() => {
@@ -79,7 +74,7 @@ export function useAppSetup() {
 					})
 				}
 			})
-			.catch((error) => {
+			.catch((error: Error) => {
 				console.error('检测更新失败', error)
 				toast.error('检测更新失败', {
 					description: error.message,

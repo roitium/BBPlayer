@@ -65,7 +65,7 @@ function reducer(state: State, action: Action): State {
 				statusText: `获取二维码失败: ${action.payload}`,
 			}
 		case 'POLL_UPDATE':
-			switch (action.payload.code) {
+			switch (action.payload.code as BilibiliQrCodeLoginStatus) {
 				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_WAIT:
 					return { ...state, statusText: '等待扫码' }
 				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SCANNED_BUT_NOT_CONFIRMED:
@@ -107,14 +107,17 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 		const generateQrCode = async () => {
 			const response = await bilibiliApi.getLoginQrCode()
 			if (response.isErr()) {
-				dispatch({ type: 'GENERATE_FAILURE', payload: String(response.error) })
+				dispatch({
+					type: 'GENERATE_FAILURE',
+					payload: String(response.error.message),
+				})
 				toast.error('获取二维码失败', { id: 'bilibili-qrcode-login-error' })
 				setTimeout(() => setVisible(false), 2000)
 			} else {
 				dispatch({ type: 'GENERATE_SUCCESS', payload: response.value })
 			}
 		}
-		generateQrCode()
+		void generateQrCode()
 	}, [status, setVisible])
 
 	useEffect(() => {

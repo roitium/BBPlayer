@@ -127,7 +127,7 @@ export default function MultipagePage() {
 			const apiItem = rawMultipageData.find((item) => item.cid === track.cid)
 			if (!apiItem) return
 			const trackToPlay = mapApiItemToTrack(apiItem, videoData)
-			addToQueue({
+			void addToQueue({
 				tracks: [trackToPlay],
 				playNow: !playNext,
 				clearQueue: false,

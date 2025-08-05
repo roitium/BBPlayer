@@ -1,4 +1,6 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { ProjectScope } from '@/types/core/scope'
+import { reportErrorToSentry } from '@/utils/error'
 import log from '@/utils/log'
 import { convertToRNTPTrack } from '@/utils/player'
 import TrackPlayer, {
@@ -70,14 +72,15 @@ const PlayerLogic = {
 				android: {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
+				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
 				icon: require('../../assets/images/icon-large.png'),
 			})
 			playerLog.debug('播放器能力设置完成')
 			// 设置重复模式为 Off
 			await TrackPlayer.setRepeatMode(RepeatMode.Off)
 		} catch (error: unknown) {
-			playerLog.sentry('初始化播放器失败', error)
+			playerLog.error('初始化播放器失败', error)
+			reportErrorToSentry(error, '初始化播放器失败', ProjectScope.PlayerStore)
 		}
 	},
 
@@ -89,7 +92,7 @@ const PlayerLogic = {
 		playerLog.debug('设置播放状态变化监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackState,
-			async (data: { state: TrackPlayerState }) => {
+			(data: { state: TrackPlayerState }) => {
 				const { state } = data
 				const setter = usePlayerStore.setState
 				// const store = usePlayerStore.getState()
@@ -175,7 +178,8 @@ const PlayerLogic = {
 						'播放错误：服务器返回了错误状态码，重新加载曲目，但不上报错误',
 					)
 				} else {
-					playerLog.sentry('播放错误', data)
+					playerLog.error('播放错误', data)
+					reportErrorToSentry(data, '播放错误', ProjectScope.PlayerStore)
 				}
 				const state = usePlayerStore.getState()
 				const nowTrack = state.currentTrackId
@@ -188,7 +192,7 @@ const PlayerLogic = {
 					})
 					const track = await usePlayerStore.getState().patchAudio(nowTrack)
 					if (track.isErr()) {
-						playerLog.sentry('更新音频流失败', track.error)
+						playerLog.error('更新音频流失败', track.error)
 						return
 					}
 					playerLog.debug('更新音频流成功', {
@@ -198,7 +202,7 @@ const PlayerLogic = {
 					// 使用 load 方法替换当前曲目
 					const rntpTrack = convertToRNTPTrack(track.value.track)
 					if (rntpTrack.isErr()) {
-						playerLog.sentry('更新音频流失败', rntpTrack.error)
+						playerLog.error('将 Track 转换为 RNTPTrack 失败', rntpTrack.error)
 						return
 					}
 					await TrackPlayer.load(rntpTrack.value)

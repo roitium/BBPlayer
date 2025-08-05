@@ -235,22 +235,10 @@ export const createBilibiliApi = () => ({
 	/**
 	 * 获取别人用户信息
 	 */
-	getOtherUserInfo(
-		mid: number,
-	): ResultAsync<BilibiliUserInfo, BilibiliApiError> {
+	getOtherUserInfo(mid: number) {
 		const params = getWbiEncodedParams({
 			mid: mid.toString(),
 		})
-		if (!params) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未设置 bilibili Cookie，请先登录',
-					rawData: null,
-					msgCode: 0,
-					type: BilibiliApiErrorType.NoCookie,
-				}),
-			)
-		}
 		return params.andThen((params) => {
 			return bilibiliApiClient.get<BilibiliUserInfo>(
 				'/x/space/wbi/acc/info',
@@ -557,16 +545,6 @@ export const createBilibiliApi = () => ({
 			pn: pn.toString(),
 			ps: '30',
 		})
-		if (!params) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未设置 bilibili Cookie，请先登录',
-					msgCode: 0,
-					rawData: null,
-					type: BilibiliApiErrorType.NoCookie,
-				}),
-			)
-		}
 		return params.andThen((params) => {
 			return bilibiliApiClient.get<BilibiliUserUploadedVideosResponse>(
 				'/x/space/wbi/arc/search',
@@ -617,8 +595,10 @@ export const createBilibiliApi = () => ({
 					type: BilibiliApiErrorType.RequestFailed,
 				})
 			}
-			const data: { data: { code: number }; code: number } =
-				await response.json()
+			const data = (await response.json()) as {
+				data: { code: number }
+				code: number
+			}
 			bilibiliApiLog.debug('获取二维码登录状态响应数据', data)
 			if (data.code !== 0) {
 				throw new BilibiliApiError({
@@ -628,11 +608,10 @@ export const createBilibiliApi = () => ({
 					type: BilibiliApiErrorType.ResponseFailed,
 				})
 			}
-			if (
-				data.data.code !== BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS
-			) {
+			const code = data.data.code as BilibiliQrCodeLoginStatus
+			if (code !== BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SUCCESS) {
 				return {
-					status: data.data.code as BilibiliQrCodeLoginStatus,
+					status: code,
 					cookies: '',
 				}
 			}

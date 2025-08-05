@@ -70,10 +70,7 @@ export const useInfiniteFavoriteList = (favoriteId?: number) => {
 		queryFn: favoriteId
 			? ({ pageParam }) =>
 					returnOrThrowAsync(
-						bilibiliApi.getFavoriteListContents(
-							favoriteId as number,
-							pageParam,
-						),
+						bilibiliApi.getFavoriteListContents(favoriteId, pageParam),
 					)
 			: skipToken,
 		initialPageParam: 1,
@@ -115,9 +112,9 @@ export const useBatchDeleteFavoriteListContents = () => {
 					params.bvids,
 				),
 			),
-		onSuccess: (_data, variables) => {
+		onSuccess: async (_data, variables) => {
 			toast.success('删除成功')
-			queryClient.refetchQueries({
+			await queryClient.refetchQueries({
 				queryKey: favoriteListQueryKeys.infiniteFavoriteList(
 					variables.favoriteId,
 				),
@@ -214,7 +211,7 @@ export const useDealFavoriteForOneVideo = () => {
 					params.delInFavoriteIds,
 				),
 			),
-		onSuccess: (_data, _value) => {
+		onSuccess: async (_data, _value) => {
 			toast.success('操作成功', {
 				description:
 					_data.toast_msg.length > 0
@@ -222,7 +219,7 @@ export const useDealFavoriteForOneVideo = () => {
 						: undefined,
 			})
 			// 只刷新当前显示的收藏夹
-			queryClient.refetchQueries({
+			await queryClient.refetchQueries({
 				queryKey: ['bilibili', 'favoriteList', 'infiniteFavoriteList'],
 				type: 'active',
 			})

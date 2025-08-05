@@ -57,7 +57,7 @@ export default function TestPage() {
 					description: '现在更新',
 				})
 				setTimeout(() => {
-					Updates.reloadAsync()
+					void Updates.reloadAsync()
 				}, 1000)
 			}
 		} catch (error) {
@@ -66,7 +66,7 @@ export default function TestPage() {
 		}
 	}
 
-	const openLogFile = async () => {
+	const openLogFile = () => {
 		let date = new Date()
 		const offset = date.getTimezoneOffset()
 		date = new Date(date.getTime() - offset * 60 * 1000)

@@ -121,7 +121,7 @@ function PlayerQueueModal({
 		(track: Track) => {
 			const index = queue.findIndex((t) => t.uniqueKey === track.uniqueKey)
 			if (index === -1) return
-			skipToTrack(index)
+			void skipToTrack(index)
 		},
 		[skipToTrack, queue],
 	)

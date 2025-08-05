@@ -253,7 +253,7 @@ export class ArtistService {
 		ServiceError
 	> {
 		if (payloads.length === 0) {
-			return ResultAsync.fromSafePromise(Promise.resolve(new Map()))
+			okAsync(new Map<string, typeof schema.artists.$inferSelect>())
 		}
 
 		return ResultAsync.fromPromise(

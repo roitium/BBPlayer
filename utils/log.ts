@@ -5,19 +5,17 @@ import {
 	fileAsyncTransport,
 	logger,
 	mapConsoleTransport,
-	sentryTransport,
 } from 'react-native-logs'
 
 // 创建 Logger 实例
 const config = {
 	severity: 'debug',
-	transport: [mapConsoleTransport, fileAsyncTransport, sentryTransport],
+	transport: [mapConsoleTransport, fileAsyncTransport],
 	levels: {
 		debug: 0,
 		info: 1,
 		warn: 2,
 		error: 3,
-		sentry: 4, // 只有使用这个级别才会被 Sentry 捕获为 error
 	},
 	transportOptions: {
 		SENTRY: Sentry,
@@ -30,10 +28,9 @@ const config = {
 			info: 'info',
 			warn: 'warn',
 			error: 'error',
-			sentry: 'error',
 		},
 	},
-	asyncFunc: InteractionManager.runAfterInteractions,
+	asyncFunc: InteractionManager.runAfterInteractions.bind(InteractionManager),
 	async: true,
 }
 

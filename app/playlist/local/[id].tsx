@@ -63,7 +63,10 @@ export default function LocalPlaylistPage() {
 				})
 				toast.success('添加到下一首播放成功')
 			} catch (error) {
-				playlistLog.sentry('添加到队列失败', error)
+				playlistLog.error('添加到队列失败', error)
+				toast.error('添加到队列失败', {
+					description: error,
+				})
 			}
 		},
 		[addToQueue],
@@ -81,7 +84,10 @@ export default function LocalPlaylistPage() {
 					playNext: false,
 				})
 			} catch (error) {
-				playlistLog.sentry('播放全部失败', error)
+				playlistLog.error('播放全部失败', error)
+				toast.error('播放全部失败', {
+					description: error,
+				})
 			}
 		},
 		[addToQueue, playlistData],
@@ -100,7 +106,7 @@ export default function LocalPlaylistPage() {
 
 	const handleTrackPress = useCallback(
 		(track: Track) => {
-			playAll(String(track.id))
+			void playAll(String(track.id))
 		},
 		[playAll],
 	)
@@ -171,11 +177,7 @@ export default function LocalPlaylistPage() {
 								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount} 首歌曲`,
 								`最后同步：${playlistMetadata.lastSyncedAt ? formatRelativeTime(playlistMetadata.lastSyncedAt) : '未知'}`,
 							]}
-							description={
-								playlistMetadata.description
-									? playlistMetadata.description
-									: '暂无描述'
-							}
+							description={playlistMetadata.description ?? '暂无描述'}
 							onClickMainButton={() => playAll()}
 						/>
 					}

@@ -26,7 +26,7 @@ function SetCookieDialog({
 	const setBilibiliCookie = useAppStore((state) => state.setBilibiliCookie)
 	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 	const handleConfirm = () => {
-		if (!inputCookie || !inputCookie.trim()) {
+		if (!inputCookie?.trim()) {
 			clearBilibiliCookie()
 			setVisible(false)
 			// 清除所有缓存数据
@@ -43,8 +43,11 @@ function SetCookieDialog({
 			return
 		}
 		setVisible(false)
-		queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all })
-		queryClient.refetchQueries({ queryKey: userQueryKeys.all })
+		const refetchs = Promise.all([
+			queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all }),
+			queryClient.refetchQueries({ queryKey: userQueryKeys.all }),
+		])
+		void refetchs
 	}
 
 	return (

@@ -1,10 +1,14 @@
 import type { BilibiliApiError } from '@/lib/errors/bilibili'
+import type { UnknownSourceError } from '@/lib/errors/player'
 import type { Track } from '@/types/core/media'
 import type {
 	addToQueueParams,
 	PlayerState,
 	PlayerStore,
 } from '@/types/core/playerStore'
+import { ProjectScope } from '@/types/core/scope'
+import type { RNTPTrack } from '@/types/rntp'
+import { flatErrorMessage, reportErrorToSentry } from '@/utils/error'
 import log from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
 import {
@@ -78,12 +82,18 @@ export const usePlayerStore = create<PlayerStore>()(
 						await TrackPlayer.reset()
 						set(initialState)
 					} catch (error) {
-						playerLog.sentry('重置播放器失败:', error)
+						playerLog.error('重置播放器失败', error)
+						reportErrorToSentry(
+							error,
+							'重置播放器失败',
+							ProjectScope.PlayerStore,
+						)
 					}
 				},
 
 				rntpQueue: async () => {
-					const currentTrack = await TrackPlayer.getActiveTrack()
+					// 在添加 Track 时附带的数据，重新获取时依然会存在
+					const currentTrack = (await TrackPlayer.getActiveTrack()) as RNTPTrack
 					return currentTrack ? [currentTrack] : []
 				},
 
@@ -91,11 +101,6 @@ export const usePlayerStore = create<PlayerStore>()(
 					playerLog.debug('removeTrack()', { id })
 					const { tracks, currentTrackId: initialCurrentKey } = get()
 
-					// // 根据 id 和 cid 找到 key
-					// const keyToRemove = Object.keys(tracks).find((key) => {
-					// 	const track = tracks[key]
-					// 	return track.id === id && (!track.isMultiPage || track.cid === cid)
-					// })
 					const numberId = Number(id)
 					const keyToRemove = Object.keys(tracks).find((key) => {
 						const track = tracks[key]
@@ -270,7 +275,7 @@ export const usePlayerStore = create<PlayerStore>()(
 
 						if (!(await get().rntpQueue()).length) {
 							const currentIndex = get()._getCurrentIndex()
-							if (currentIndex !== -1) get().skipToTrack(currentIndex)
+							if (currentIndex !== -1) void get().skipToTrack(currentIndex)
 							return
 						}
 
@@ -287,7 +292,11 @@ export const usePlayerStore = create<PlayerStore>()(
 							playerLog.debug('音频流已过期, 正在更新...')
 							const result = await get().patchAudio(currentTrack)
 							if (result.isErr()) {
-								playerLog.sentry('更新音频流失败', result.error)
+								reportErrorToSentry(
+									result.error,
+									'更新音频流失败',
+									ProjectScope.PlayerStore,
+								)
 								return
 							}
 
@@ -296,7 +305,12 @@ export const usePlayerStore = create<PlayerStore>()(
 								const { position } = await TrackPlayer.getProgress()
 								const rntpTrack = convertToRNTPTrack(track)
 								if (rntpTrack.isErr()) {
-									playerLog.sentry('转换为 RNTPTrack 失败', rntpTrack.error)
+									playerLog.error('转换为 RNTPTrack 失败', rntpTrack.error)
+									reportErrorToSentry(
+										rntpTrack.error,
+										'转换为 RNTPTrack 失败',
+										ProjectScope.PlayerStore,
+									)
 									return
 								}
 								await TrackPlayer.load(rntpTrack.value)
@@ -306,7 +320,12 @@ export const usePlayerStore = create<PlayerStore>()(
 						}
 						set({ isPlaying: !isPlaying })
 					} catch (error) {
-						playerLog.sentry('切换播放状态失败', error)
+						playerLog.error('切换播放状态失败', error)
+						reportErrorToSentry(
+							error,
+							'切换播放状态失败',
+							ProjectScope.PlayerStore,
+						)
 					}
 				},
 
@@ -419,77 +438,22 @@ export const usePlayerStore = create<PlayerStore>()(
 				): Promise<
 					Result<
 						{ track: Track; needsUpdate: boolean },
-						BilibiliApiError | unknown
+						BilibiliApiError | UnknownSourceError
 					>
 				> => {
-					// const oldKey = String(track.id)
+					const result = await checkAndUpdateAudioStream(track)
+					if (result.isErr()) return err(result.error)
 
-					try {
-						// 新的架构不会出现 metadata 为空的情况
-						// let trackAfterMeta = track
-						// // 1. 获取元数据 (如果需要)
-						// if (!track.bilibiliMetadata.) {
-						// 	playerLog.debug('获取元数据', { id: track.id, cid: track.cid })
-						// 	const metadata = await bilibiliApi.getVideoDetails(track.id)
-						// 	if (metadata.isErr()) return err(metadata.error)
-
-						// 	trackAfterMeta = {
-						// 		...track,
-						// 		title: metadata.value.title,
-						// 		artist: metadata.value.owner.name,
-						// 		coverUrl: metadata.value.pic,
-						// 		duration: metadata.value.duration,
-						// 		createAt: metadata.value.pubdate,
-						// 		cid: metadata.value.cid,
-						// 		hasMetadata: true,
-						// 	}
-
-						// 	const newKey = getTrackKey(trackAfterMeta)
-
-						// 	set(
-						// 		produce((state: PlayerState) => {
-						// 			// ✨ 处理 key 可能变化的关键逻辑
-						// 			if (oldKey !== newKey) {
-						// 				// 如果 key 变了，需要更新 key 列表和 tracks 字典
-						// 				const orderedIndex = state.orderedList.indexOf(oldKey)
-						// 				if (orderedIndex > -1)
-						// 					state.orderedList[orderedIndex] = newKey
-
-						// 				const shuffledIndex = state.shuffledList.indexOf(oldKey)
-						// 				if (shuffledIndex > -1)
-						// 					state.shuffledList[shuffledIndex] = newKey
-
-						// 				if (state.currentTrackId === oldKey) {
-						// 					state.currentTrackId = newKey
-						// 				}
-
-						// 				delete state.tracks[oldKey]
-						// 				state.tracks[newKey] = trackAfterMeta
-						// 			} else {
-						// 				// 如果 key 不变，直接更新
-						// 				state.tracks[oldKey] = trackAfterMeta
-						// 			}
-						// 		}),
-						// 	)
-						// }
-
-						// 2. 获取和更新音频流
-						const result = await checkAndUpdateAudioStream(track)
-						if (result.isErr()) return err(result.error)
-
-						const { track: finalTrack, needsUpdate } = result.value
-						if (needsUpdate) {
-							set(
-								produce((state: PlayerState) => {
-									state.tracks[track.id] = finalTrack
-								}),
-							)
-						}
-
-						return ok({ track: finalTrack, needsUpdate })
-					} catch (error) {
-						return err(error)
+					const { track: finalTrack, needsUpdate } = result.value
+					if (needsUpdate) {
+						set(
+							produce((state: PlayerState) => {
+								state.tracks[track.id] = finalTrack
+							}),
+						)
 					}
+
+					return ok({ track: finalTrack, needsUpdate })
 				},
 
 				skipToTrack: async (index: number) => {
@@ -519,10 +483,15 @@ export const usePlayerStore = create<PlayerStore>()(
 					// 1. 获取最新的音频流
 					const updatedTrackResult = await get().patchAudio(initialTrack)
 					if (updatedTrackResult.isErr()) {
-						playerLog.sentry('更新音频流失败', updatedTrackResult.error)
+						playerLog.error('更新音频流失败', updatedTrackResult.error)
+						reportErrorToSentry(
+							updatedTrackResult.error,
+							'更新音频流失败',
+							ProjectScope.PlayerStore,
+						)
 						await TrackPlayer.pause()
 						toast.error('播放失败: 更新音频流失败', {
-							description: String(updatedTrackResult.error),
+							description: flatErrorMessage(updatedTrackResult.error),
 						})
 						return
 					}
@@ -532,7 +501,12 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					const rntpTrackResult = convertToRNTPTrack(finalTrack)
 					if (rntpTrackResult.isErr()) {
-						playerLog.sentry('转换为 RNTPTrack 失败', rntpTrackResult.error)
+						playerLog.error('转换为 RNTPTrack 失败', rntpTrackResult.error)
+						reportErrorToSentry(
+							rntpTrackResult.error,
+							'转换为 RNTPTrack 失败',
+							ProjectScope.PlayerStore,
+						)
 						return
 					}
 

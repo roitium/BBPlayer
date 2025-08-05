@@ -14,9 +14,7 @@ const useCurrentQueue = (): Track[] => {
 				? state.shuffledList
 				: state.orderedList
 
-			return activeKeyList
-				.map((key) => state.tracks[key])
-				.filter(Boolean) as Track[]
+			return activeKeyList.map((key) => state.tracks[key]).filter(Boolean)
 		}),
 	)
 

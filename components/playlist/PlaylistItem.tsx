@@ -20,10 +20,10 @@ export interface TrackMenuItem {
 export const TrackMenuItemDividerToken: TrackMenuItem = {
 	title: 'divider',
 	leadingIcon: '',
-	onPress: () => {},
+	onPress: () => void 0,
 }
 
-export type TrackNecessaryData = {
+export interface TrackNecessaryData {
 	cover?: string
 	artistCover?: string
 	title: string

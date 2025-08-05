@@ -14,7 +14,7 @@ export const playlistKeys = {
 export const usePlaylistLists = () => {
 	return useQuery({
 		queryKey: playlistKeys.playlistLists(),
-		queryFn: () => returnOrThrowAsync(playlistService.getAllPlaylists(), true),
+		queryFn: () => returnOrThrowAsync(playlistService.getAllPlaylists()),
 		staleTime: 0,
 	})
 }
@@ -23,7 +23,7 @@ export const usePlaylistContents = (playlistId: number) => {
 	return useQuery({
 		queryKey: playlistKeys.playlistContents(playlistId),
 		queryFn: () =>
-			returnOrThrowAsync(playlistService.getPlaylistTracks(playlistId), true),
+			returnOrThrowAsync(playlistService.getPlaylistTracks(playlistId)),
 		staleTime: 0,
 	})
 }
@@ -32,7 +32,7 @@ export const usePlaylistMetadata = (playlistId: number) => {
 	return useQuery({
 		queryKey: playlistKeys.playlistMetadata(playlistId),
 		queryFn: () =>
-			returnOrThrowAsync(playlistService.getPlaylistMetadata(playlistId), true),
+			returnOrThrowAsync(playlistService.getPlaylistMetadata(playlistId)),
 		staleTime: 0,
 	})
 }

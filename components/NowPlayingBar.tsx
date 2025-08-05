@@ -171,7 +171,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						size={16}
 						onPress={(e) => {
 							e.stopPropagation()
-							skipToPrevious()
+							void skipToPrevious()
 						}}
 						iconColor={colors.onSurface}
 					/>
@@ -180,7 +180,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						size={24}
 						onPress={(e) => {
 							e.stopPropagation()
-							togglePlay()
+							void togglePlay()
 						}}
 						iconColor={colors.primary}
 						style={{ marginHorizontal: 0 }}
@@ -190,7 +190,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						size={16}
 						onPress={(e) => {
 							e.stopPropagation()
-							skipToNext()
+							void skipToNext()
 						}}
 						iconColor={colors.onSurface}
 					/>

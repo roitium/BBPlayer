@@ -59,10 +59,10 @@ export function FunctionalMenu({
 			/>
 			<Divider />
 			<Menu.Item
-				onPress={async () => {
+				onPress={() => {
 					setMenuVisible(false)
 					if (!currentTrack) return
-					await WebBrowser.openBrowserAsync(
+					void WebBrowser.openBrowserAsync(
 						`https://www.bilibili.com/video/${currentTrack.id}`,
 					)
 				}}

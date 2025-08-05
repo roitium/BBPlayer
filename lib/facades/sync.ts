@@ -316,7 +316,7 @@ export class SyncFacade {
 
 			let addedIdSet: Set<string>
 			let removeIdSet: Set<string>
-			let remainingTrackIds: Array<number> // 去除掉应该移除的 track 后，剩下的本地 playlist 内的 track IDs
+			let remainingTrackIds: number[] // 去除掉应该移除的 track 后，剩下的本地 playlist 内的 track IDs
 
 			if (!localPlaylist.value || localPlaylist.value.itemCount === 0) {
 				// 这是一个不存在或为空的收藏夹，全量同步

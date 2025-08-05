@@ -115,7 +115,7 @@ export default function FavoritePage() {
 				.find((m) => m.bvid === item.bvid)
 			if (!apiItem) return
 			const track = mapApiItemToTrack(apiItem)
-			addToQueue({
+			void addToQueue({
 				tracks: [track],
 				playNow: !playNext,
 				clearQueue: false,

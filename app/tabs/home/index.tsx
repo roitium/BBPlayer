@@ -87,6 +87,7 @@ function HomePage() {
 							<Image
 								style={{ width: 40, height: 40, borderRadius: 20 }}
 								source={
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 									!personalInfoPending &&
 									!personalInfoError &&
 									personalInfo?.face

@@ -1,9 +1,7 @@
 import type { BilibiliApiError } from '@/lib/errors/bilibili'
 import type { Result } from 'neverthrow'
-import type {
-	RepeatMode,
-	Track as RNTPTracker,
-} from 'react-native-track-player'
+import type { RepeatMode } from 'react-native-track-player'
+import type { RNTPTrack } from '../rntp'
 import type { Track } from './media'
 
 // 播放器状态接口
@@ -47,7 +45,7 @@ interface PlayerActions {
 	}: addToQueueParams) => Promise<void>
 	resetStore: () => Promise<void>
 	skipToTrack: (index: number) => Promise<void>
-	rntpQueue: () => Promise<RNTPTracker[]>
+	rntpQueue: () => Promise<RNTPTrack[]>
 	removeTrack: (id: string) => Promise<void>
 
 	// 播放控制
@@ -64,7 +62,7 @@ interface PlayerActions {
 	patchAudio: (
 		track: Track,
 	) => Promise<
-		Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | unknown>
+		Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | Error>
 	>
 }
 

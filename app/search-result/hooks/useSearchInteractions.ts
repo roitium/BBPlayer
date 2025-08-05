@@ -32,7 +32,7 @@ export function useSearchInteractions() {
 	// 	[addToQueue],
 	// )
 
-	const onTrackPress = useCallback(async (track: Track) => {
+	const onTrackPress = useCallback((track: Track) => {
 		if (
 			MULTIPAGE_VIDEO_KEYWORDS.some((keyword) => track.title?.includes(keyword))
 		) {
@@ -49,7 +49,7 @@ export function useSearchInteractions() {
 			// })
 			toast.show('暂未实现')
 		} catch (error) {
-			searchLog.sentry('播放失败', error)
+			searchLog.error('播放失败', error)
 			toast.show('播放失败')
 		}
 	}, [])
@@ -70,7 +70,7 @@ export function useSearchInteractions() {
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
-				onPress: async () => {
+				onPress: () => {
 					toast.show('暂未实现')
 					// navigation.navigate('PlaylistMultipage', { bvid: item.id })
 				},

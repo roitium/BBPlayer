@@ -102,7 +102,7 @@ export default function UploaderPage() {
 	}, [uploadedVideos])
 
 	const trackMenuItems = useCallback(
-		(_item: UITrack) => [
+		(item: UITrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -120,13 +120,12 @@ export default function UploaderPage() {
 			{
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
-				onPress: async () => {
-					// navigation.navigate('PlaylistMultipage', { bvid: item.id })
-					toast.show('暂未实现')
+				onPress: () => {
+					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
 				},
 			},
 		],
-		[],
+		[navigation],
 	)
 
 	const renderItem = useCallback(

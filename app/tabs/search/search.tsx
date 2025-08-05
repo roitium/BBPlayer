@@ -1,4 +1,5 @@
 import log from '@/utils/log'
+import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
@@ -34,7 +35,10 @@ export default function SearchPage() {
 			try {
 				setSearchHistory(history)
 			} catch (error) {
-				searchLog.sentry('保存搜索历史失败:', error)
+				searchLog.error('保存搜索历史失败:', error)
+				toast.error('保存搜索历史失败', {
+					description: error,
+				})
 			}
 		},
 		[setSearchHistory],
@@ -42,7 +46,7 @@ export default function SearchPage() {
 
 	// 添加搜索历史
 	const addSearchHistory = useCallback(
-		async (query: string) => {
+		(query: string) => {
 			if (!query.trim()) return
 
 			const newItem: SearchHistoryItem = {
@@ -51,7 +55,7 @@ export default function SearchPage() {
 				timestamp: Date.now(),
 			}
 
-			const currentHistory = searchHistory || []
+			const currentHistory = searchHistory ?? []
 
 			// 检查是否已存在相同的查询
 			const existingIndex = currentHistory.findIndex(
