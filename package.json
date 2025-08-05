@@ -1,8 +1,8 @@
 {
 	"name": "bbplayer",
 	"main": "index.js",
-	"version": "0.0.8",
-	"versionCode": 51,
+	"version": "1.0.0-beta.1",
+	"versionCode": 52,
 	"scripts": {
 		"start": "expo start",
 		"android": "expo run:android",
