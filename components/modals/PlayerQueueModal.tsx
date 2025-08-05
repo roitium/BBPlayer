@@ -70,14 +70,14 @@ const TrackItem = memo(
 								numberOfLines={1}
 								style={{ fontWeight: 'bold' }}
 							>
-								{track.title || track.id}
+								{track.title}
 							</Text>
 							<Text
 								variant='bodySmall'
 								style={{ fontWeight: 'thin' }}
 								numberOfLines={1}
 							>
-								{track.title || '待加载...'}
+								{track.artist?.name ?? '未知作者'}
 							</Text>
 						</View>
 						<IconButton

@@ -10,15 +10,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view'
 import CollectionListComponent from './components/collection/CollectionList'
 import FavoriteFolderListComponent from './components/favorite/FavoriteFolderList'
+import LocalPlaylistListComponent from './components/local/LocalPlaylistList'
 import MultiPageVideosListComponent from './components/multipage/MultiPageVideosList'
 
 const renderScene = SceneMap({
 	favorite: FavoriteFolderListComponent,
 	collection: CollectionListComponent,
 	multiPage: MultiPageVideosListComponent,
+	local: LocalPlaylistListComponent,
 })
 
 const routes = [
+	{ key: 'local', title: '播放列表' },
 	{ key: 'favorite', title: '收藏夹' },
 	{ key: 'collection', title: '合集' },
 	{ key: 'multiPage', title: '分 p' },
@@ -28,10 +31,11 @@ export enum Tabs {
 	Collection = 1,
 	Favorite = 0,
 	MultiPage = 2,
+	Local = 3,
 }
 
 export default function Library() {
-	const [index, setIndex] = useState(Tabs.Favorite)
+	const [index, setIndex] = useState(Tabs.Local)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
@@ -125,6 +129,17 @@ export default function Library() {
 							icon: ({ focused }) => (
 								<Icon
 									name={focused ? 'folder-play' : 'folder-play-outline'}
+									size={20}
+									color={
+										focused ? colors.onSecondaryContainer : colors.onSurface
+									}
+								/>
+							),
+						},
+						local: {
+							icon: ({ focused }) => (
+								<Icon
+									name={focused ? 'list-box' : 'list-box-outline'}
 									size={20}
 									color={
 										focused ? colors.onSecondaryContainer : colors.onSurface

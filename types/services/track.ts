@@ -2,6 +2,7 @@ export interface BilibiliMetadataPayload {
 	bvid: string
 	isMultiPage: boolean
 	cid?: number
+	videoIsValid: boolean
 }
 
 export interface LocalMetadataPayload {

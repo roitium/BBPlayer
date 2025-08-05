@@ -118,6 +118,9 @@ export const bilibiliMetadata = sqliteTable(
 		bvid: text('bvid').notNull(),
 		cid: integer('cid'),
 		isMultiPage: integer('is_multi_page', { mode: 'boolean' }).notNull(),
+		videoIsValid: integer('video_is_valid', { mode: 'boolean' })
+			.notNull()
+			.default(true), // 处理 bilibili 收藏夹中的被删除视频...
 	},
 	(table) => [
 		index('bilibili_metadata_bvid_cid_idx').on(table.bvid, table.cid),

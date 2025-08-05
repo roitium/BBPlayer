@@ -17,7 +17,7 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -45,6 +45,14 @@ export default function LocalPlaylistPage() {
 		isPending: isPlaylistDataPending,
 		isError: isPlaylistDataError,
 	} = usePlaylistContents(Number(id))
+	const filteredPlaylistData = useMemo(
+		() =>
+			playlistData?.filter(
+				(item) =>
+					item.source === 'bilibili' && item.bilibiliMetadata.videoIsValid,
+			) ?? [],
+		[playlistData],
+	)
 
 	const {
 		data: playlistMetadata,
@@ -75,9 +83,9 @@ export default function LocalPlaylistPage() {
 	const playAll = useCallback(
 		async (startFromId?: string) => {
 			try {
-				if (!playlistData) return
+				if (!filteredPlaylistData) return
 				await addToQueue({
-					tracks: playlistData,
+					tracks: filteredPlaylistData,
 					playNow: true,
 					clearQueue: true,
 					startFromId: startFromId,
@@ -90,7 +98,7 @@ export default function LocalPlaylistPage() {
 				})
 			}
 		},
-		[addToQueue, playlistData],
+		[addToQueue, filteredPlaylistData],
 	)
 
 	const trackMenuItems = useCallback(
@@ -118,6 +126,9 @@ export default function LocalPlaylistPage() {
 					index={index}
 					onTrackPress={() => handleTrackPress(item)}
 					menuItems={trackMenuItems(item)}
+					disabled={
+						item.source === 'bilibili' && !item.bilibiliMetadata.videoIsValid
+					}
 					data={{
 						cover: item.coverUrl ?? undefined,
 						artistCover: item.artist?.avatarUrl ?? undefined,
@@ -156,6 +167,11 @@ export default function LocalPlaylistPage() {
 		return <PlaylistError text='未找到播放列表元数据' />
 	}
 
+	const description =
+		playlistMetadata.description && playlistMetadata.description.length > 0
+			? playlistMetadata.description
+			: '暂无描述'
+
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<PlaylistAppBar />
@@ -174,10 +190,10 @@ export default function LocalPlaylistPage() {
 							coverUri={playlistMetadata.coverUrl as string | undefined}
 							title={playlistMetadata.title}
 							subtitles={[
-								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount} 首歌曲`,
+								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount}(${filteredPlaylistData.length}) 首歌曲`,
 								`最后同步：${playlistMetadata.lastSyncedAt ? formatRelativeTime(playlistMetadata.lastSyncedAt) : '未知'}`,
 							]}
-							description={playlistMetadata.description ?? '暂无描述'}
+							description={description}
 							onClickMainButton={() => playAll()}
 						/>
 					}

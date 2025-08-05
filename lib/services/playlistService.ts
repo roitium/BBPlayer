@@ -406,11 +406,17 @@ export class PlaylistService {
 	 * 获取所有 playlists
 	 */
 	public getAllPlaylists(): ResultAsync<
-		(typeof schema.playlists.$inferSelect)[],
+		(typeof schema.playlists.$inferSelect & {
+			author: typeof schema.artists.$inferSelect | null
+		})[],
 		DatabaseError
 	> {
 		return ResultAsync.fromPromise(
-			this.db.query.playlists.findMany(),
+			this.db.query.playlists.findMany({
+				with: {
+					author: true,
+				},
+			}),
 			(e) => new DatabaseError('获取所有 playlists 失败', e),
 		)
 	}

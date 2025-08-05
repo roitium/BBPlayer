@@ -8,4 +8,4 @@
 
 ## 日志
 
-针对 Service、Facade 层添加更详细的日志，并且
+针对 Service、Facade 层添加更详细的日志

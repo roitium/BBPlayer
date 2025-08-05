@@ -65,7 +65,7 @@ export class TrackService {
 			coverUrl: dbTrack.coverUrl,
 			duration: dbTrack.duration,
 			playHistory: dbTrack.playHistory,
-			createdAt: dbTrack.createdAt.getTime(),
+			createdAt: dbTrack.createdAt,
 			source: dbTrack.source,
 		}
 

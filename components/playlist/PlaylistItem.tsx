@@ -38,6 +38,7 @@ interface TrackListItemProps {
 	menuItems: TrackMenuItem[]
 	showCoverImage?: boolean
 	data: TrackNecessaryData
+	disabled?: boolean
 }
 
 /**
@@ -49,6 +50,7 @@ export const TrackListItem = memo(function TrackListItem({
 	menuItems,
 	showCoverImage = true,
 	data,
+	disabled = false,
 }: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
@@ -56,7 +58,10 @@ export const TrackListItem = memo(function TrackListItem({
 
 	return (
 		<TouchableRipple
-			style={{ paddingVertical: 4 }}
+			style={{
+				paddingVertical: 4,
+			}}
+			disabled={disabled}
 			onPress={onTrackPress}
 		>
 			<Surface
@@ -135,7 +140,7 @@ export const TrackListItem = memo(function TrackListItem({
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && (
+					{menuItems.length > 0 && !disabled && (
 						<Menu
 							visible={isMenuVisible}
 							onDismiss={closeMenu}

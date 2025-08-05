@@ -65,16 +65,17 @@ const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
 			remoteId: apiItem.upper.mid.toString(),
 			source: 'bilibili',
 			avatarUrl: null,
-			createdAt: apiItem.pubtime,
+			createdAt: new Date(apiItem.pubtime),
 		},
 		coverUrl: apiItem.cover,
 		duration: apiItem.duration,
 		playHistory: [],
-		createdAt: apiItem.pubtime,
+		createdAt: new Date(apiItem.pubtime),
 		bilibiliMetadata: {
 			bvid: apiItem.bvid,
 			cid: null,
 			isMultiPage: false,
+			videoIsValid: true,
 		},
 	}
 }

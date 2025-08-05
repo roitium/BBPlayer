@@ -70,16 +70,17 @@ const mapApiItemToTrack = (
 			remoteId: video.owner.mid.toString(),
 			source: 'bilibili',
 			avatarUrl: null,
-			createdAt: video.pubdate,
+			createdAt: new Date(video.pubdate),
 		},
 		coverUrl: video.pic,
 		duration: mp.duration,
 		playHistory: [],
-		createdAt: video.pubdate,
+		createdAt: new Date(video.pubdate),
 		bilibiliMetadata: {
 			bvid: video.bvid,
 			cid: mp.cid,
 			isMultiPage: true,
+			videoIsValid: true,
 		},
 	}
 }

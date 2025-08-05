@@ -1,7 +1,8 @@
 import type { Tabs } from '@/app/tabs/library/[tab]'
 import type { NavigatorScreenParams } from '@react-navigation/native'
 
-export interface BottomTabParamList {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- react navigation 指明了 RootStackParamList 必须使用 type alias
+export type BottomTabParamList = {
 	Home: undefined
 	Search: undefined
 	Library: { tab: Tabs } | undefined

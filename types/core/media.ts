@@ -5,7 +5,7 @@ export interface Artist {
 	signature: string | null
 	source: 'bilibili' | 'local'
 	remoteId: string | null
-	createdAt: number
+	createdAt: Date
 }
 
 export interface PlayRecord {
@@ -22,7 +22,7 @@ interface BaseTrack {
 	coverUrl: string | null
 	source: 'bilibili' | 'local'
 	playHistory: PlayRecord[]
-	createdAt: number
+	createdAt: Date
 	duration: number
 }
 
@@ -32,6 +32,7 @@ export interface BilibiliTrack extends BaseTrack {
 		bvid: string
 		cid: number | null
 		isMultiPage: boolean
+		videoIsValid: boolean
 		// 运行时产生的数据，在获取流后才会存在
 		bilibiliStreamUrl?: {
 			url: string
@@ -61,6 +62,6 @@ export interface Playlist {
 	contents?: Track[]
 	type: 'favorite' | 'collection' | 'multi_page' | 'local'
 	remoteSyncId: number | null
-	lastSyncedAt: number | null
-	createdAt: number
+	lastSyncedAt: Date | null
+	createdAt: Date
 }

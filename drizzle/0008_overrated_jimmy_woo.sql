@@ -1,0 +1,1 @@
+ALTER TABLE `bilibili_metadata` ADD `video_is_valid` integer DEFAULT true NOT NULL;
