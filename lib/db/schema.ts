@@ -25,7 +25,7 @@ export const artists = sqliteTable(
 			.default(sql`(unixepoch() * 1000)`),
 	},
 	(table) => [
-		uniqueIndex('source_remote_id_unq').on(table.source, table.remoteId),
+		uniqueIndex('source_remote_id_unq').on(table.source, table.remoteId), // TODO: 没有考虑到 remoteId 可能为空，这里唯一索引可靠吗？
 		index('artists_name_idx').on(table.name),
 	],
 )

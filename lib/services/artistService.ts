@@ -242,7 +242,7 @@ export class ArtistService {
 
 	/**
 	 * 批量查找或创建 remote artist。
-	 * 接收一个artist数据数组，返回一个从 remoteId 到完整artist对象的映射。
+	 * 接收一个 artist 数据数组，返回一个 remoteId -> artist 对象的映射。
 	 *
 	 * @param payloads - 一个包含多个 artist 创建信息的数组。
 	 */
@@ -250,86 +250,60 @@ export class ArtistService {
 		payloads: CreateArtistPayload[],
 	): ResultAsync<
 		Map<string, typeof schema.artists.$inferSelect>,
-		ServiceError
+		ServiceError | ValidationError
 	> {
-  // TODO: 可使用 onConflictDoNothing 来简化代码
 		if (payloads.length === 0) {
-			okAsync(new Map<string, typeof schema.artists.$inferSelect>())
+			return okAsync(new Map<string, typeof schema.artists.$inferSelect>())
+		}
+
+		for (const p of payloads) {
+			if (!p.source || !p.remoteId) {
+				return errAsync(
+					new ValidationError(
+						'payloads 中存在 source 或 remoteId 为空的对象，该方法仅用于处理 remote artist',
+					),
+				)
+			}
 		}
 
 		return ResultAsync.fromPromise(
 			(async () => {
-				const findConditions = payloads.map((p) => {
-					if (!p.source || !p.remoteId)
-						throw new ValidationError(
-							'payloads 中存在 source || remoteId 为空的 artist 对象，该方法只能创建 remote artist',
-						)
-					return and(
-						eq(schema.artists.source, p.source),
-						eq(schema.artists.remoteId, p.remoteId),
-					)
-				})
+				if (payloads.length > 0) {
+					await this.db
+						.insert(schema.artists)
+						.values(payloads)
+						.onConflictDoNothing()
+				}
 
-				const existingArtists = await this.db.query.artists.findMany({
+				const findConditions = payloads.map((p) =>
+					and(
+						eq(schema.artists.source, p.source),
+						eq(schema.artists.remoteId, p.remoteId!),
+					),
+				)
+
+				const allArtists = await this.db.query.artists.findMany({
 					where: or(...findConditions),
 				})
 
-				// 将已存在的artist放入一个 Map 中，用 "source::remoteId" 作为 key
-				const existingArtistsMap = new Map<
-					string,
-					typeof schema.artists.$inferSelect
-				>()
-				for (const artist of existingArtists) {
-					const compositeKey = `${artist.source}::${artist.remoteId}`
-					existingArtistsMap.set(compositeKey, artist)
-				}
-
-				// 筛选出需要创建的新artist
-				const artistsToCreate: CreateArtistPayload[] = []
-				for (const payload of payloads) {
-					const compositeKey = `${payload.source}::${payload.remoteId}`
-					if (!existingArtistsMap.has(compositeKey)) {
-						artistsToCreate.push(payload)
-					}
-				}
-
-				let newlyCreatedArtists: (typeof schema.artists.$inferSelect)[] = []
-
-				// 如果有需要创建的artist，则批量插入
-				if (artistsToCreate.length > 0) {
-					const _result = await ResultAsync.fromPromise(
-						this.db.insert(schema.artists).values(artistsToCreate).returning(),
-						(e) => new DatabaseError('批量创建 artist 失败', e),
+				if (allArtists.length !== payloads.length) {
+					throw new DatabaseError(
+						'创建或查找 artists 后数据不一致，部分 artist 未能成功写入或查询。',
 					)
-					if (_result.isErr()) {
-						throw _result.error
-					}
-					newlyCreatedArtists = _result.value
 				}
 
-				// 合并结果并返回
-				const finalResultMap = new Map<
-					string,
-					typeof schema.artists.$inferSelect
-				>()
-
-				// 添加已存在的
-				for (const artist of existingArtists) {
-					// 上面已经检查过 remoteId 了，所以这里直接断言
-					finalResultMap.set(artist.remoteId!, artist)
-				}
-
-				// 添加新创建的
-				for (const artist of newlyCreatedArtists) {
-					finalResultMap.set(artist.remoteId!, artist)
-				}
+				const finalResultMap = new Map(
+					allArtists.map((artist) => [artist.remoteId!, artist]),
+				)
 
 				return finalResultMap
 			})(),
-			(e) =>
-				e instanceof DatabaseError
-					? e
-					: new ServiceError('批量查找或创建artist的事务失败', e),
+			(e) => {
+				if (e instanceof DatabaseError || e instanceof ValidationError) {
+					return e
+				}
+				return new ServiceError('批量查找或创建 artist 失败', e)
+			},
 		)
 	}
 }
