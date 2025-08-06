@@ -1,28 +1,34 @@
+import { formatRelativeTime } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo } from 'react'
 import { View } from 'react-native'
 import { Divider, IconButton, Text } from 'react-native-paper'
-import type { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
 
 interface PlaylistHeaderProps {
-	coverUri: string | undefined
-	title: string | undefined
-	subtitles: string | string[] | undefined // 通常格式： "Author • n Tracks"
-	description: string | undefined
-	onClickMainButton: (() => void) | undefined
-	mainButtonIcon?: IconSource
+	coverUri?: string
+	title: string
+	description?: string
+	onClickPlayAll: () => void
+	onClickSync: () => void
+	lastSyncedAt?: Date
+	authorName?: string
+	trackCount: number
+	validTrackCount: number
 }
 
 /**
- * 可复用的播放列表头部组件。
+ * 播放列表头部组件。
  */
 export const PlaylistHeader = memo(function PlaylistHeader({
 	coverUri,
 	title,
-	subtitles,
 	description,
-	onClickMainButton,
-	mainButtonIcon,
+	lastSyncedAt,
+	authorName,
+	trackCount,
+	validTrackCount,
+	onClickPlayAll,
+	onClickSync,
 }: PlaylistHeaderProps) {
 	if (!title) return null
 	return (
@@ -44,9 +50,14 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					</Text>
 					<Text
 						variant='bodyMedium'
-						numberOfLines={Array.isArray(subtitles) ? subtitles.length : 1}
+						numberOfLines={2}
 					>
-						{Array.isArray(subtitles) ? subtitles.join('\n') : subtitles}
+						{authorName} • {trackCount}
+						{validTrackCount !== trackCount ? `(${validTrackCount})` : ''}{' '}
+						首歌曲
+						{'\n'}
+						{'最后同步：'}
+						{lastSyncedAt ? formatRelativeTime(lastSyncedAt) : '未知'}
 					</Text>
 				</View>
 			</View>
@@ -67,14 +78,21 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					{description ?? '还没有简介哦~'}
 				</Text>
 
-				{onClickMainButton && (
+				<View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
 					<IconButton
 						mode='contained'
-						icon={mainButtonIcon ?? 'play'}
-						size={30}
-						onPress={() => onClickMainButton()}
+						icon={'sync'}
+						size={20}
+						onPress={onClickSync}
 					/>
-				)}
+
+					<IconButton
+						mode='contained'
+						icon={'play'}
+						size={30}
+						onPress={onClickPlayAll}
+					/>
+				</View>
 			</View>
 
 			<Divider />

@@ -19,6 +19,32 @@ export function bv2av(bvid: string): number {
 	return Number((tmp & MASK_CODE) ^ XOR_CODE)
 }
 
+/**
+ * 将 AV 号转换为 BV 号。
+ * @param avid
+ * @returns bvid
+ */
+export function av2bv(avid: number | bigint): string {
+	const XOR_CODE = 23442827791579n
+	const MAX_AID = 2251799813685248n
+	const BASE = 58n
+	const MAGIC_STR = 'FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf'
+
+	let tempNum = (BigInt(avid) | MAX_AID) ^ XOR_CODE
+
+	const resultArray = Array.from('BV1000000000')
+
+	for (let i = 11; i >= 3; i--) {
+		resultArray[i] = MAGIC_STR[Number(tempNum % BASE)]
+		tempNum /= BASE
+	}
+
+	;[resultArray[3], resultArray[9]] = [resultArray[9], resultArray[3]]
+	;[resultArray[4], resultArray[7]] = [resultArray[7], resultArray[4]]
+
+	return resultArray.join('')
+}
+
 export function convertToFormDataString(data: Record<string, string>): string {
 	return Object.keys(data)
 		.map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)

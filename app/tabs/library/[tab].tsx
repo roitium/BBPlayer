@@ -14,10 +14,10 @@ import LocalPlaylistListComponent from './components/local/LocalPlaylistList'
 import MultiPageVideosListComponent from './components/multipage/MultiPageVideosList'
 
 const renderScene = SceneMap({
+	local: LocalPlaylistListComponent,
 	favorite: FavoriteFolderListComponent,
 	collection: CollectionListComponent,
 	multiPage: MultiPageVideosListComponent,
-	local: LocalPlaylistListComponent,
 })
 
 const routes = [
@@ -28,10 +28,10 @@ const routes = [
 ]
 
 export enum Tabs {
-	Collection = 1,
-	Favorite = 0,
-	MultiPage = 2,
-	Local = 3,
+	Local = 0,
+	Favorite = 1,
+	Collection = 2,
+	MultiPage = 3,
 }
 
 export default function Library() {

@@ -5,15 +5,14 @@ import {
 	useGetMultiPageList,
 	useGetVideoDetails,
 } from '@/hooks/queries/bilibili/useVideoData'
+import { usePlaylistSync } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { syncFacade } from '@/lib/facades/sync'
+import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
 import type { Track } from '@/types/core/media'
-import { flatErrorMessage } from '@/utils/error'
-import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -85,8 +84,6 @@ const mapApiItemToTrack = (
 	}
 }
 
-const playlistLog = log.extend('Playlist/Multipage')
-
 export default function MultipagePage() {
 	const navigation =
 		useNavigation<
@@ -121,6 +118,11 @@ export default function MultipagePage() {
 			mapApiItemToViewTrack(item, videoData),
 		)
 	}, [rawMultipageData, videoData])
+
+	const { mutateAsync: syncMultipage } = usePlaylistSync(
+		'multi_page',
+		bv2av(bvid),
+	)
 
 	const playTrack = useCallback(
 		(track: UITrack, playNext = false) => {
@@ -171,21 +173,19 @@ export default function MultipagePage() {
 	)
 
 	const handleSync = useCallback(async () => {
+		toast.show('同步中...')
 		setRefreshing(true)
-		const result = await syncFacade.syncMultiPageVideo(bvid)
-		if (result.isErr()) {
-			toast.error(flatErrorMessage(result.error))
-			playlistLog.error(result.error)
-			setRefreshing(false)
-			return
-		}
-		toast.success('同步成功，稍后跳转到本地播放列表')
+		await syncMultipage(undefined, {
+			onSuccess: (id) => {
+				if (!id) return
+				setTimeout(
+					() => navigation.replace('PlaylistLocal', { id: String(id) }),
+					2000,
+				)
+			},
+		})
 		setRefreshing(false)
-		setTimeout(
-			() => navigation.replace('PlaylistLocal', { id: String(result.value) }),
-			2000,
-		)
-	}, [bvid, navigation])
+	}, [navigation, syncMultipage])
 
 	const keyExtractor = useCallback((item: UITrack) => {
 		return String(item.id)

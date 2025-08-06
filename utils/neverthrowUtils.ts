@@ -6,7 +6,7 @@ import { type Result, ResultAsync } from 'neverthrow'
  * @returns Promise<T> which resolves with value T or rejects with error E.
  */
 export async function returnOrThrowAsync<T, E>(
-	resultAsync: ResultAsync<T, E>,
+	resultAsync: ResultAsync<T, E> | Promise<Result<T, E>>,
 ): Promise<Exclude<T, undefined | null>> {
 	const result = await resultAsync
 	if (result.isOk()) {

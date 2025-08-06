@@ -5,13 +5,11 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePlaylistSync } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import { syncFacade } from '@/lib/facades/sync'
 import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import type { Track } from '@/types/core/media'
-import { flatErrorMessage } from '@/utils/error'
-import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -28,8 +26,6 @@ import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
-
-const playlistLog = log.extend('PLAYLIST/COLLECTION')
 
 const mapApiItemToViewTrack = (apiItem: BilibiliMediaItemInCollection) => {
 	return {
@@ -162,22 +158,25 @@ export default function CollectionPage() {
 
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
+	const { mutateAsync: syncCollection } = usePlaylistSync(
+		'collection',
+		Number(id),
+	)
+
 	const handleSync = useCallback(async () => {
+		toast.show('同步中...')
 		setRefreshing(true)
-		const result = await syncFacade.syncCollection(Number(id))
-		if (result.isErr()) {
-			toast.error(flatErrorMessage(result.error))
-			playlistLog.error(result.error)
-			setRefreshing(false)
-			return
-		}
-		toast.success('同步成功，稍后跳转到本地播放列表')
+		await syncCollection(undefined, {
+			onSuccess: (id) => {
+				if (!id) return
+				setTimeout(
+					() => navigation.replace('PlaylistLocal', { id: String(id) }),
+					2000,
+				)
+			},
+		})
 		setRefreshing(false)
-		setTimeout(
-			() => navigation.replace('PlaylistLocal', { id: String(result.value) }),
-			2000,
-		)
-	}, [id, navigation])
+	}, [navigation, syncCollection])
 
 	useEffect(() => {
 		if (typeof id !== 'string') {

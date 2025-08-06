@@ -5,13 +5,11 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/useFavoriteData'
+import { usePlaylistSync } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import { syncFacade } from '@/lib/facades/sync'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import type { Track } from '@/types/core/media'
-import { flatErrorMessage } from '@/utils/error'
-import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -28,8 +26,6 @@ import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
-
-const playlistLog = log.extend('Playlist/Favorite')
 
 const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
 	return {
@@ -108,6 +104,8 @@ export default function FavoritePage() {
 		[favoriteData],
 	)
 
+	const { mutateAsync: syncFavorite } = usePlaylistSync('favorite', Number(id))
+
 	const handlePlayTrack = useCallback(
 		(item: UITrack, playNext = false) => {
 			if (!favoriteData) return
@@ -150,21 +148,19 @@ export default function FavoritePage() {
 			toast.info('收藏夹为空，无需同步')
 			return
 		}
+		toast.show('同步中...')
 		setRefreshing(true)
-		const result = await syncFacade.syncFavorite(Number(id))
-		if (result.isErr()) {
-			toast.error(flatErrorMessage(result.error))
-			playlistLog.error(flatErrorMessage(result.error))
-			setRefreshing(false)
-			return
-		}
-		toast.success('同步成功，稍后跳转到本地播放列表')
+		await syncFavorite(undefined, {
+			onSuccess: (id) => {
+				if (!id) return
+				setTimeout(
+					() => navigation.replace('PlaylistLocal', { id: String(id) }),
+					2000,
+				)
+			},
+		})
 		setRefreshing(false)
-		setTimeout(
-			() => navigation.replace('PlaylistLocal', { id: String(result.value) }),
-			2000,
-		)
-	}, [favoriteData?.pages, id, navigation])
+	}, [favoriteData?.pages, navigation, syncFavorite])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: UITrack; index: number }) => {

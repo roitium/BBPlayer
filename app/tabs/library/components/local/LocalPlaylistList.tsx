@@ -3,19 +3,14 @@ import { usePlaylistLists } from '@/hooks/queries/db/usePlaylist'
 import type { Playlist } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
-import { useNavigation } from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Searchbar, Text, useTheme } from 'react-native-paper'
-import type { RootStackParamList } from '../../../../../types/navigation'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
 import LocalPlaylistItem from './LocalPlaylistItem'
 
 const LocalPlaylistListComponent = memo(() => {
-	const _navigation =
-		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)

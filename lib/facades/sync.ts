@@ -1,14 +1,14 @@
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { BilibiliTrack, Playlist, Track } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import log from '@/utils/log'
 import { diffSets } from '@/utils/set'
 import toast from '@/utils/toast'
 import type { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
-import { err, errAsync, ok, Result, ResultAsync } from 'neverthrow'
+import { err, errAsync, ok, okAsync, Result, ResultAsync } from 'neverthrow'
 import type { bilibiliApi as BilibiliApiService } from '../api/bilibili/api'
 import { bilibiliApi } from '../api/bilibili/api'
-import { bv2av } from '../api/bilibili/utils'
+import { av2bv, bv2av } from '../api/bilibili/utils'
 import db from '../db/db'
 import type * as schema from '../db/schema'
 import type { BilibiliApiError } from '../errors/bilibili'
@@ -581,6 +581,29 @@ export class SyncFacade {
 			return ok(txResult.value)
 		} finally {
 			this.syncingIds.delete(`favorite::${favoriteId}`)
+		}
+	}
+
+	/**
+	 * 根据传入的同步 ID 和类型同步播放列表
+	 * @param remoteSyncId 远程同步 ID
+	 * @param type 播放列表类型
+	 * @returns
+	 */
+	public sync(remoteSyncId: number, type: Playlist['type']) {
+		switch (type) {
+			case 'favorite': {
+				return this.syncFavorite(remoteSyncId)
+			}
+			case 'collection': {
+				return this.syncCollection(remoteSyncId)
+			}
+			case 'multi_page': {
+				return this.syncMultiPageVideo(av2bv(remoteSyncId))
+			}
+			case 'local': {
+				return okAsync(undefined)
+			}
 		}
 	}
 }

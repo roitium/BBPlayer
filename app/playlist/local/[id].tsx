@@ -1,14 +1,12 @@
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaylistContents,
 	usePlaylistMetadata,
+	usePlaylistSync,
 } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import log from '@/utils/log'
-import { formatRelativeTime } from '@/utils/time'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -25,6 +23,8 @@ import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
+import { PlaylistHeader } from './LocalPlaylistHeader'
+import { TrackListItem } from './LocalPlaylistItem'
 
 const playlistLog = log.extend('PLAYLIST/LOCAL')
 
@@ -59,6 +59,16 @@ export default function LocalPlaylistPage() {
 		isPending: isPlaylistMetadataPending,
 		isError: isPlaylistMetadataError,
 	} = usePlaylistMetadata(Number(id))
+
+	const { mutateAsync: syncPlaylist } = usePlaylistSync(
+		playlistMetadata?.type ?? 'favorite', // 如果不存在，就随便填写一个，因为下面 remoteSyncId 为 0 会自动过滤
+		playlistMetadata?.remoteSyncId ?? 0,
+	)
+
+	const handleSync = useCallback(async () => {
+		toast.show('同步中...')
+		await syncPlaylist()
+	}, [syncPlaylist])
 
 	const playNext = useCallback(
 		async (track: Track) => {
@@ -187,14 +197,15 @@ export default function LocalPlaylistPage() {
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={
 						<PlaylistHeader
-							coverUri={playlistMetadata.coverUrl as string | undefined}
+							coverUri={playlistMetadata.coverUrl ?? undefined}
 							title={playlistMetadata.title}
-							subtitles={[
-								`${playlistMetadata.author?.name} • ${playlistMetadata.itemCount}${playlistMetadata.itemCount === filteredPlaylistData.length ? '' : `(${filteredPlaylistData.length})`} 首歌曲`,
-								`最后同步：${playlistMetadata.lastSyncedAt ? formatRelativeTime(playlistMetadata.lastSyncedAt) : '未知'}`,
-							]}
 							description={description}
-							onClickMainButton={() => playAll()}
+							onClickPlayAll={playAll}
+							onClickSync={handleSync}
+							authorName={playlistMetadata.author?.name}
+							trackCount={playlistMetadata.itemCount}
+							validTrackCount={filteredPlaylistData.length}
+							lastSyncedAt={playlistMetadata.lastSyncedAt ?? undefined}
 						/>
 					}
 					keyExtractor={keyExtractor}
