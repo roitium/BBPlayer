@@ -1,6 +1,7 @@
 import type { PlayRecord } from '@/types/core/media'
-import { relations, sql } from 'drizzle-orm'
+import { eq, ne, relations, sql } from 'drizzle-orm'
 import {
+	check,
 	index,
 	integer,
 	primaryKey,
@@ -23,10 +24,27 @@ export const artists = sqliteTable(
 		createdAt: integer('created_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch() * 1000)`),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`)
+			.$onUpdate(() => sql`(unixepoch() * 1000)`),
 	},
 	(table) => [
-		uniqueIndex('source_remote_id_unq').on(table.source, table.remoteId), // TODO: 没有考虑到 remoteId 可能为空，这里唯一索引可靠吗？
+		uniqueIndex('source_remote_id_unq')
+			.on(table.source, table.remoteId)
+			.where(ne(table.source, 'local')),
+		uniqueIndex('local_artist_unq')
+			.on(table.name)
+			.where(eq(table.source, 'local')), // 如果是 local artist，就基于 name 唯一索引
 		index('artists_name_idx').on(table.name),
+		check(
+			'source_integrity_check',
+			sql`
+        (source = 'local' AND remote_id IS NULL) 
+        OR 
+        (source != 'local' AND remote_id IS NOT NULL)
+      `,
+		),
 	],
 )
 
@@ -53,6 +71,10 @@ export const tracks = sqliteTable(
 		source: text('source', {
 			enum: ['bilibili', 'local'],
 		}).notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`)
+			.$onUpdate(() => sql`(unixepoch() * 1000)`),
 	},
 	(table) => [
 		index('tracks_artist_idx').on(table.artistId),
@@ -80,6 +102,10 @@ export const playlists = sqliteTable(
 		createdAt: integer('created_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch() * 1000)`),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`)
+			.$onUpdate(() => sql`(unixepoch() * 1000)`),
 	},
 	(table) => [
 		index('playlists_title_idx').on(table.title),

@@ -3,7 +3,7 @@ import db from '@/lib/db/db'
 import { playlistFacade } from '@/lib/facades/playlist'
 import { syncFacade } from '@/lib/facades/sync'
 import { playlistService } from '@/lib/services/playlistService'
-import type { Playlist, Track } from '@/types/core/media'
+import type { Playlist } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
@@ -16,12 +16,8 @@ export const playlistKeys = {
 		[...playlistKeys.all, 'playlistContents', playlistId] as const,
 	playlistMetadata: (playlistId: number) =>
 		[...playlistKeys.all, 'playlistMetadata', playlistId] as const,
-	syncPlaylist: (remoteId: number, type: Playlist['type']) =>
-		[...playlistKeys.all, 'syncPlaylist', remoteId, type] as const,
 	playlistsContainingTrack: (trackId: number) =>
 		[...playlistKeys.all, 'playlistsContainingTrack', trackId] as const,
-	updateLocalPlaylistTracks: (trackId: number) =>
-		[...playlistKeys.all, 'updateLocalPlaylistTracks', trackId] as const,
 }
 
 export const usePlaylistLists = () => {
@@ -50,13 +46,15 @@ export const usePlaylistMetadata = (playlistId: number) => {
 	})
 }
 
-export const usePlaylistSync = (
-	type: Playlist['type'],
-	remoteSyncId: number,
-) => {
+export const usePlaylistSync = () => {
 	return useMutation({
-		mutationKey: playlistKeys.syncPlaylist(remoteSyncId, type),
-		mutationFn: async () => {
+		mutationFn: async ({
+			remoteSyncId,
+			type,
+		}: {
+			remoteSyncId: number
+			type: Playlist['type']
+		}) => {
 			if (remoteSyncId === 0) throw new Error('remoteSyncId 不能为空')
 			const result = await syncFacade.sync(remoteSyncId, type)
 			if (result.isErr()) {
@@ -98,60 +96,61 @@ export const usePlaylistsContainingTrack = (trackId: number) => {
 	})
 }
 
-export const useUpdateLocalPlaylistTracks = (track: Track) => {
+export const useUpdateLocalPlaylistTracks = () => {
 	return useMutation({
-		mutationKey: playlistKeys.updateLocalPlaylistTracks(track.id),
 		mutationFn: async ({
 			toAddPlaylistIds,
 			toRemovePlaylistIds,
+			trackId,
 		}: {
 			toAddPlaylistIds: number[]
 			toRemovePlaylistIds: number[]
+			trackId: number
 		}) => {
-			if (!track) return
-
 			await db.transaction(async (tx) => {
-				const txPlaylistService = playlistService.withDB(tx)
+				const playlistSvc = playlistService.withDB(tx)
 				for (const playlistId of toAddPlaylistIds) {
-					await txPlaylistService.addTrackToLocalPlaylist(playlistId, track)
+					await playlistSvc.addTrackToLocalPlaylist(playlistId, trackId)
 				}
 				for (const playlistId of toRemovePlaylistIds) {
-					await txPlaylistService.removeTrackFromLocalPlaylist(
-						playlistId,
-						track.id,
-					)
+					await playlistSvc.removeTrackFromLocalPlaylist(playlistId, trackId)
 				}
 			})
-
-			return { toAddPlaylistIds, toRemovePlaylistIds }
 		},
-		onSuccess: (data) => {
-			if (!data) return
-			const { toAddPlaylistIds, toRemovePlaylistIds } = data
+		onSuccess: (_, variables) => {
+			const { toAddPlaylistIds, toRemovePlaylistIds, trackId } = variables
 			toast.success('操作成功')
-			void queryClient.invalidateQueries({
-				queryKey: playlistKeys.playlistsContainingTrack(track.id),
-			})
-			void queryClient.invalidateQueries({
-				queryKey: playlistKeys.playlistLists(),
-			})
+			const promises = []
+			promises.push(
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistsContainingTrack(trackId),
+				}),
+			)
 			for (const id of [...toAddPlaylistIds, ...toRemovePlaylistIds]) {
-				void queryClient.invalidateQueries({
-					queryKey: playlistKeys.playlistContents(id),
-				})
+				promises.push(
+					queryClient.invalidateQueries({
+						queryKey: playlistKeys.playlistContents(id),
+					}),
+				)
+				promises.push(
+					queryClient.invalidateQueries({
+						queryKey: playlistKeys.playlistMetadata(id),
+					}),
+				)
 			}
+			void Promise.all(promises)
 		},
 		onError: (error) => {
-			toast.error('操作失败', {
+			toast.error('操作音频收藏位置失败', {
 				description: flatErrorMessage(error),
 			})
 		},
 	})
 }
 
-export const useCopyRemotePlaylistToLocalPlaylist = (playlistId: number) => {
+export const useCopyRemotePlaylistToLocalPlaylist = () => {
 	return useMutation({
-		mutationFn: async () => {
+		mutationFn: async ({ playlistId }: { playlistId: number }) => {
 			if (playlistId === 0) return
 			const result =
 				await playlistFacade.copyRemotePlaylistToLocalPlaylist(playlistId)

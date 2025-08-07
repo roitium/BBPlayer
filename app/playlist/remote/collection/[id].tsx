@@ -62,11 +62,13 @@ const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
 			source: 'bilibili',
 			avatarUrl: null,
 			createdAt: new Date(apiItem.pubtime),
+			updatedAt: new Date(apiItem.pubtime),
 		},
 		coverUrl: apiItem.cover,
 		duration: apiItem.duration,
 		playHistory: [],
 		createdAt: new Date(apiItem.pubtime),
+		updatedAt: new Date(apiItem.pubtime),
 		bilibiliMetadata: {
 			bvid: apiItem.bvid,
 			cid: null,
@@ -158,25 +160,28 @@ export default function CollectionPage() {
 
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
-	const { mutateAsync: syncCollection } = usePlaylistSync(
-		'collection',
-		Number(id),
-	)
+	const { mutateAsync: syncCollection } = usePlaylistSync()
 
 	const handleSync = useCallback(async () => {
 		toast.show('同步中...')
 		setRefreshing(true)
-		await syncCollection(undefined, {
-			onSuccess: (id) => {
-				if (!id) return
-				setTimeout(
-					() => navigation.replace('PlaylistLocal', { id: String(id) }),
-					2000,
-				)
+		await syncCollection(
+			{
+				remoteSyncId: Number(id),
+				type: 'collection',
 			},
-		})
+			{
+				onSuccess: (id) => {
+					if (!id) return
+					setTimeout(
+						() => navigation.replace('PlaylistLocal', { id: String(id) }),
+						2000,
+					)
+				},
+			},
+		)
 		setRefreshing(false)
-	}, [navigation, syncCollection])
+	}, [id, navigation, syncCollection])
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
