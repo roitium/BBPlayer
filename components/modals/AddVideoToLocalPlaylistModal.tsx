@@ -29,8 +29,8 @@ const PlaylistListItem = memo(function PlaylistListItem({
 	checkedIds: number[]
 	setCheckedIds: (ids: number[]) => void
 }) {
-	const isDisabled = type !== 'local'
 	const isChecked = checkedIds.includes(id)
+	const isDisabled = type !== 'local' || (isChecked && checkedIds.length === 1) // 如果只有一个 track，则不允许取消选择
 
 	const handlePress = useCallback(() => {
 		if (isDisabled) return
@@ -53,7 +53,6 @@ const PlaylistListItem = memo(function PlaylistListItem({
 })
 PlaylistListItem.displayName = 'PlaylistListItem'
 
-// --- 重构后的主组件 ---
 const AddVideoToLocalPlaylistModal = memo(
 	function AddVideoToLocalPlaylistModal({
 		track,
@@ -89,15 +88,16 @@ const AddVideoToLocalPlaylistModal = memo(
 		const isLoading = isPlaylistsPending || isContainingTrackPending
 		const isError = isPlaylistsError || isContainingTrackError
 
-		const initialCheckedPlaylistIds = useMemo(() => {
+		const initialCheckedPlaylistIdSet = useMemo(() => {
 			if (!playlistsContainingTrack) return new Set<number>()
 			return new Set(playlistsContainingTrack.map((p) => p.id))
 		}, [playlistsContainingTrack])
+		const initialCheckedPlaylistIdList = Array.from(initialCheckedPlaylistIdSet)
 
 		useEffect(() => {
 			// 初始化组件的勾选状态
-			setCheckedPlaylistIds(Array.from(initialCheckedPlaylistIds))
-		}, [initialCheckedPlaylistIds])
+			setCheckedPlaylistIds(initialCheckedPlaylistIdList)
+		}, [initialCheckedPlaylistIdList])
 
 		const handleConfirm = useCallback(async () => {
 			if (isMutating) return
@@ -105,9 +105,9 @@ const AddVideoToLocalPlaylistModal = memo(
 			const currentCheckedIds = new Set(checkedPlaylistIds)
 
 			const toAddPlaylistIds = [...currentCheckedIds].filter(
-				(id) => !initialCheckedPlaylistIds.has(id),
+				(id) => !initialCheckedPlaylistIdSet.has(id),
 			)
-			const toRemovePlaylistIds = [...initialCheckedPlaylistIds].filter(
+			const toRemovePlaylistIds = [...initialCheckedPlaylistIdSet].filter(
 				(id) => !currentCheckedIds.has(id),
 			)
 
@@ -124,7 +124,7 @@ const AddVideoToLocalPlaylistModal = memo(
 		}, [
 			isMutating,
 			checkedPlaylistIds,
-			initialCheckedPlaylistIds,
+			initialCheckedPlaylistIdSet,
 			updateTracks,
 			setVisible,
 			track.id,
