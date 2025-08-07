@@ -1,5 +1,6 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
+	useCopyRemotePlaylistToLocalPlaylist,
 	usePlaylistContents,
 	usePlaylistMetadata,
 	usePlaylistSync,
@@ -64,6 +65,20 @@ export default function LocalPlaylistPage() {
 		playlistMetadata?.type ?? 'favorite', // 如果不存在，就随便填写一个，因为下面 remoteSyncId 为 0 会自动过滤
 		playlistMetadata?.remoteSyncId ?? 0,
 	)
+
+	const { mutateAsync: copyToLocalPlaylist } =
+		useCopyRemotePlaylistToLocalPlaylist(Number(id))
+
+	const onClickCopyToLocalPlaylist = useCallback(async () => {
+		toast.show('复制中...')
+		await copyToLocalPlaylist(undefined, {
+			onSuccess: (id) =>
+				setTimeout(
+					() => navigation.navigate('PlaylistLocal', { id: String(id) }),
+					1000,
+				),
+		})
+	}, [copyToLocalPlaylist, navigation])
 
 	const handleSync = useCallback(async () => {
 		toast.show('同步中...')
@@ -206,6 +221,7 @@ export default function LocalPlaylistPage() {
 							trackCount={playlistMetadata.itemCount}
 							validTrackCount={filteredPlaylistData.length}
 							lastSyncedAt={playlistMetadata.lastSyncedAt ?? undefined}
+							onClickCopyToLocalPlaylist={onClickCopyToLocalPlaylist}
 						/>
 					}
 					keyExtractor={keyExtractor}

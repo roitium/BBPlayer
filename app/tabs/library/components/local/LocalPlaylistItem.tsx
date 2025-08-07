@@ -35,7 +35,21 @@ const LocalPlaylistItem = memo(({ item }: { item: Playlist }) => {
 							>
 								{item.title}
 							</Text>
-							<Text variant='bodySmall'>{item.itemCount} 首歌曲</Text>
+							<View
+								style={{
+									flexDirection: 'row',
+									alignItems: 'flex-end',
+									gap: 4,
+									// justifyContent: 'space-between',
+								}}
+							>
+								<Text variant='bodySmall'>{item.itemCount} 首歌曲</Text>
+								<Icon
+									source={item.type === 'local' ? 'storage' : 'cloud'}
+									color={item.type === 'local' ? 'black' : '#87ceeb'}
+									size={13}
+								/>
+							</View>
 						</View>
 						<Icon
 							source='arrow-right'

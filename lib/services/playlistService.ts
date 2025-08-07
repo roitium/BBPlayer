@@ -159,7 +159,6 @@ export class PlaylistService {
 		const trackResult = this.trackService.findOrCreateTrack(trackPayload)
 
 		return trackResult.andThen((track) => {
-			// 在事务中处理播放列表的逻辑
 			return ResultAsync.fromPromise(
 				(async () => {
 					// 验证播放列表是否存在且为 'local'
@@ -550,6 +549,23 @@ export class PlaylistService {
 					eq(schema.playlists.remoteSyncId, remoteId),
 				),
 				with: {
+					trackLinks: true,
+				},
+			}),
+			(e) => new DatabaseError('查询播放列表失败', e),
+		)
+	}
+
+	/**
+	 * 根据 ID 获取播放列表
+	 * @param playlistId
+	 */
+	public getPlaylistById(playlistId: number) {
+		return ResultAsync.fromPromise(
+			this.db.query.playlists.findFirst({
+				where: eq(schema.playlists.id, playlistId),
+				with: {
+					author: true,
 					trackLinks: true,
 				},
 			}),

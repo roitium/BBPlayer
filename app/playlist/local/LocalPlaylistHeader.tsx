@@ -1,8 +1,8 @@
 import { formatRelativeTime } from '@/utils/time'
 import { Image } from 'expo-image'
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { View } from 'react-native'
-import { Divider, IconButton, Text } from 'react-native-paper'
+import { Divider, IconButton, Text, TouchableRipple } from 'react-native-paper'
 
 interface PlaylistHeaderProps {
 	coverUri?: string
@@ -14,6 +14,7 @@ interface PlaylistHeaderProps {
 	authorName?: string
 	trackCount: number
 	validTrackCount: number
+	onClickCopyToLocalPlaylist: () => void
 }
 
 /**
@@ -29,27 +30,41 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	validTrackCount,
 	onClickPlayAll,
 	onClickSync,
+	onClickCopyToLocalPlaylist,
 }: PlaylistHeaderProps) {
+	const [showFullTitle, setShowFullTitle] = useState(false)
+
 	if (!title) return null
 	return (
 		<View style={{ position: 'relative', flexDirection: 'column' }}>
 			{/* 收藏夹信息 */}
-			<View style={{ flexDirection: 'row', padding: 16 }}>
+			<View style={{ flexDirection: 'row', padding: 16, alignItems: 'center' }}>
 				<Image
 					source={{ uri: coverUri }}
-					contentFit='contain'
+					contentFit='cover'
 					style={{ width: 120, height: 120, borderRadius: 8 }}
 				/>
-				<View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
-					<Text
-						variant='titleLarge'
-						style={{ fontWeight: 'bold' }}
-						numberOfLines={2}
-					>
-						{title}
-					</Text>
+				<View
+					style={{
+						marginLeft: 16,
+						flex: 1,
+						justifyContent: 'center',
+						marginVertical: 8,
+					}}
+				>
+					<TouchableRipple onPress={() => setShowFullTitle(!showFullTitle)}>
+						<Text
+							variant='titleLarge'
+							style={{ fontWeight: 'bold' }}
+							numberOfLines={showFullTitle ? undefined : 2}
+						>
+							{title}
+						</Text>
+					</TouchableRipple>
+
 					<Text
 						variant='bodyMedium'
+						style={{ fontWeight: '100' }}
 						numberOfLines={2}
 					>
 						{authorName} • {trackCount}
@@ -67,33 +82,33 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 				style={{
 					flexDirection: 'row',
 					alignItems: 'center',
-					justifyContent: 'space-between',
-					padding: 16,
+					justifyContent: 'flex-start',
+					marginHorizontal: 16,
 				}}
 			>
-				<Text
-					variant='bodyMedium'
-					style={{ maxWidth: 300 }}
-				>
-					{description ?? '还没有简介哦~'}
-				</Text>
-
-				<View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-					<IconButton
-						mode='contained'
-						icon={'sync'}
-						size={20}
-						onPress={onClickSync}
-					/>
-
+				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
 					<IconButton
 						mode='contained'
 						icon={'play'}
 						size={30}
 						onPress={onClickPlayAll}
 					/>
+					<IconButton
+						mode='contained'
+						icon={'sync'}
+						size={20}
+						onPress={onClickSync}
+					/>
+					<IconButton
+						mode='contained'
+						icon={'copy'}
+						size={20}
+						onPress={onClickCopyToLocalPlaylist}
+					/>
 				</View>
 			</View>
+
+			<Text variant='bodyMedium'>{description ?? '还没有简介哦~'}</Text>
 
 			<Divider />
 		</View>

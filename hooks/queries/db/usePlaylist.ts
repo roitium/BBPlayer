@@ -1,4 +1,5 @@
 import { queryClient } from '@/lib/config/queryClient'
+import { playlistFacade } from '@/lib/facades/playlist'
 import { syncFacade } from '@/lib/facades/sync'
 import { playlistService } from '@/lib/services/playlistService'
 import type { Playlist } from '@/types/core/media'
@@ -75,6 +76,31 @@ export const usePlaylistSync = (
 		},
 		onError: (error) => {
 			toast.error('同步失败', {
+				description: flatErrorMessage(error),
+			})
+		},
+	})
+}
+
+export const useCopyRemotePlaylistToLocalPlaylist = (playlistId: number) => {
+	return useMutation({
+		mutationFn: async () => {
+			if (playlistId === 0) return
+			const result =
+				await playlistFacade.copyRemotePlaylistToLocalPlaylist(playlistId)
+			if (result.isErr()) {
+				throw result.error
+			}
+			return result.value
+		},
+		onSuccess: () => {
+			toast.success('复制成功')
+			void queryClient.refetchQueries({
+				queryKey: playlistKeys.playlistLists(),
+			})
+		},
+		onError: (error) => {
+			toast.error('复制失败', {
 				description: flatErrorMessage(error),
 			})
 		},
