@@ -1,4 +1,3 @@
-import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
@@ -8,20 +7,31 @@ import {
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/useFavoriteData'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
-import { type RouteProp, useRoute } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
+import {
+	ActivityIndicator,
+	Appbar,
+	Divider,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
 	return {
-		id: apiItem.bvid, // 仅仅用于列表的 key，不会作为真实 id 传递
+		id: bv2av(apiItem.bvid), // 仅仅用于列表的 key，不会作为真实 id 传递
 		cid: apiItem.id,
 		bvid: apiItem.bvid,
 		title: apiItem.title,
@@ -45,6 +55,7 @@ export default function SearchResultsPage() {
 	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
+	const navigation = useNavigation()
 
 	const { data: userData } = usePersonalInformation()
 	const { data: favoriteFolderList } = useGetFavoritePlaylists(userData?.mid)
@@ -73,10 +84,10 @@ export default function SearchResultsPage() {
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
 					onTrackPress={() => toast.show('暂未实现')}
 					menuItems={trackMenuItems()}
+					data={item}
 				/>
 			)
 		},
@@ -100,7 +111,10 @@ export default function SearchResultsPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<PlaylistAppBar title={`搜索结果 - ${query}`} />
+			<Appbar.Header elevated>
+				<Appbar.Content title={`搜索结果 - ${query}`} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
+			</Appbar.Header>
 
 			<LegendList
 				contentContainerStyle={{

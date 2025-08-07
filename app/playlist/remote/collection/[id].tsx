@@ -20,9 +20,8 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { Divider, Text, useTheme } from 'react-native-paper'
+import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
@@ -210,7 +209,10 @@ export default function CollectionPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<PlaylistAppBar />
+			<Appbar.Header elevated>
+				<Appbar.Content title={collectionData.info.title} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
+			</Appbar.Header>
 
 			<View
 				style={{

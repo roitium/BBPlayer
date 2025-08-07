@@ -19,28 +19,19 @@ import type { Playlist, Track } from '@/types/core/media'
 const PlaylistListItem = memo(function PlaylistListItem({
 	id,
 	title,
-	type,
-	checkedIds,
-	setCheckedIds,
+	isChecked,
+	isDisabled,
+	onPress,
 }: {
 	id: number
 	title: string
-	type: Playlist['type']
-	checkedIds: number[]
-	setCheckedIds: (ids: number[]) => void
+	onPress: (id: number) => void
+	isChecked: boolean
+	isDisabled: boolean
 }) {
-	const isChecked = checkedIds.includes(id)
-	const isDisabled = type !== 'local' || (isChecked && checkedIds.length === 1) // 如果只有一个 track，则不允许取消选择
-
 	const handlePress = useCallback(() => {
-		if (isDisabled) return
-
-		setCheckedIds(
-			isChecked
-				? checkedIds.filter((checkedId) => checkedId !== id)
-				: [...checkedIds, id],
-		)
-	}, [isChecked, checkedIds, id, isDisabled, setCheckedIds])
+		onPress(id)
+	}, [id, onPress])
 
 	return (
 		<Checkbox.Item
@@ -99,6 +90,19 @@ const AddVideoToLocalPlaylistModal = memo(
 			setCheckedPlaylistIds(initialCheckedPlaylistIdList)
 		}, [initialCheckedPlaylistIdList])
 
+		const shouldEnforceSingleItemRule = initialCheckedPlaylistIdSet.size > 0
+
+		const handleCheckboxPress = useCallback((playlistId: number) => {
+			setCheckedPlaylistIds((currentIds) => {
+				const isCurrentlyChecked = currentIds.includes(playlistId)
+				if (isCurrentlyChecked) {
+					return currentIds.filter((id) => id !== playlistId)
+				} else {
+					return [...currentIds, playlistId]
+				}
+			})
+		}, [])
+
 		const handleConfirm = useCallback(async () => {
 			if (isMutating) return
 
@@ -141,16 +145,25 @@ const AddVideoToLocalPlaylistModal = memo(
 		}
 
 		const renderPlaylistItem = useCallback(
-			({ item }: { item: Playlist }) => (
-				<PlaylistListItem
-					id={item.id}
-					title={item.title}
-					type={item.type}
-					checkedIds={checkedPlaylistIds}
-					setCheckedIds={setCheckedPlaylistIds}
-				/>
-			),
-			[checkedPlaylistIds],
+			({ item }: { item: Playlist }) => {
+				const isChecked = checkedPlaylistIds.includes(item.id)
+				const isDisabled =
+					item.type !== 'local' ||
+					(shouldEnforceSingleItemRule &&
+						isChecked &&
+						checkedPlaylistIds.length === 1)
+
+				return (
+					<PlaylistListItem
+						id={item.id}
+						title={item.title}
+						onPress={handleCheckboxPress}
+						isChecked={isChecked}
+						isDisabled={isDisabled}
+					/>
+				)
+			},
+			[checkedPlaylistIds, handleCheckboxPress, shouldEnforceSingleItemRule],
 		)
 
 		const keyExtractor = useCallback((item: Playlist) => item.id.toString(), [])

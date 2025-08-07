@@ -1,7 +1,7 @@
 import { Image } from 'expo-image'
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { View } from 'react-native'
-import { Divider, IconButton, Text } from 'react-native-paper'
+import { Button, Divider, Text, TouchableRipple } from 'react-native-paper'
 import type { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
 
 interface PlaylistHeaderProps {
@@ -9,8 +9,8 @@ interface PlaylistHeaderProps {
 	title: string | undefined
 	subtitles: string | string[] | undefined // 通常格式： "Author • n Tracks"
 	description: string | undefined
-	onClickMainButton: (() => void) | undefined
-	mainButtonIcon?: IconSource
+	onClickMainButton?: () => void
+	mainButtonIcon: IconSource
 }
 
 /**
@@ -24,24 +24,28 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	onClickMainButton,
 	mainButtonIcon,
 }: PlaylistHeaderProps) {
+	const [showFullTitle, setShowFullTitle] = useState(false)
 	if (!title) return null
+
 	return (
 		<View style={{ position: 'relative', flexDirection: 'column' }}>
 			{/* 收藏夹信息 */}
-			<View style={{ flexDirection: 'row', padding: 16 }}>
+			<View style={{ flexDirection: 'row', padding: 16, alignItems: 'center' }}>
 				<Image
 					source={{ uri: coverUri }}
-					contentFit='contain'
+					contentFit='cover'
 					style={{ width: 120, height: 120, borderRadius: 8 }}
 				/>
 				<View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
-					<Text
-						variant='titleLarge'
-						style={{ fontWeight: 'bold' }}
-						numberOfLines={2}
-					>
-						{title}
-					</Text>
+					<TouchableRipple onPress={() => setShowFullTitle(!showFullTitle)}>
+						<Text
+							variant='titleLarge'
+							style={{ fontWeight: 'bold' }}
+							numberOfLines={showFullTitle ? undefined : 2}
+						>
+							{title}
+						</Text>
+					</TouchableRipple>
 					<Text
 						variant='bodyMedium'
 						numberOfLines={Array.isArray(subtitles) ? subtitles.length : 1}
@@ -51,31 +55,32 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 				</View>
 			</View>
 
-			{/* 描述和操作按钮 */}
+			{/* 操作按钮 */}
 			<View
 				style={{
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'space-between',
-					padding: 16,
+					marginHorizontal: 16,
 				}}
 			>
-				<Text
-					variant='bodyMedium'
-					style={{ maxWidth: 300 }}
-				>
-					{description ?? '还没有简介哦~'}
-				</Text>
-
 				{onClickMainButton && (
-					<IconButton
+					<Button
 						mode='contained'
-						icon={mainButtonIcon ?? 'play'}
-						size={30}
+						icon={mainButtonIcon}
 						onPress={() => onClickMainButton()}
-					/>
+					>
+						同步
+					</Button>
 				)}
 			</View>
+
+			<Text
+				variant='bodyMedium'
+				style={{ margin: description ? 16 : 0 }}
+			>
+				{description ?? ''}
+			</Text>
 
 			<Divider />
 		</View>

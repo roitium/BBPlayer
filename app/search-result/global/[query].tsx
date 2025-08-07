@@ -1,4 +1,3 @@
-import { PlaylistAppBar } from '@/components/playlist/PlaylistAppBar'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
@@ -8,17 +7,21 @@ import type { BilibiliSearchVideo } from '@/types/apis/bilibili'
 import { formatMMSSToSeconds } from '@/utils/time'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
-import { type RouteProp, useRoute } from '@react-navigation/native'
+import {
+	type RouteProp,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 const mapApiItemToViewTrack = (apiItem: BilibiliSearchVideo) => {
 	return {
-		id: apiItem.bvid,
+		id: apiItem.aid,
 		bvid: apiItem.bvid,
 		title: apiItem.title,
 		artist: {
@@ -41,6 +44,7 @@ export default function SearchResultsPage() {
 	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
+	const navigation = useNavigation()
 
 	const {
 		data: searchData,
@@ -67,10 +71,10 @@ export default function SearchResultsPage() {
 		({ item, index }: { item: UITrack; index: number }) => {
 			return (
 				<TrackListItem
-					item={item}
 					index={index}
 					onTrackPress={() => toast.show('暂未实现')}
 					menuItems={trackMenuItems()}
+					data={item}
 				/>
 			)
 		},
@@ -94,7 +98,10 @@ export default function SearchResultsPage() {
 				backgroundColor: colors.background,
 			}}
 		>
-			<PlaylistAppBar title={`搜索结果 - ${query}`} />
+			<Appbar.Header elevated>
+				<Appbar.Content title={`搜索结果 - ${query}`} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
+			</Appbar.Header>
 
 			<LegendList
 				contentContainerStyle={{

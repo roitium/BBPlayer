@@ -21,9 +21,14 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Divider, Text, useTheme } from 'react-native-paper'
+import {
+	ActivityIndicator,
+	Appbar,
+	Divider,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistAppBar } from '../../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
@@ -60,24 +65,6 @@ export default function UploaderPage() {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
-	// const [modalVisible, setModalVisible] = useState(false)
-	// const [currentModalBvid, setCurrentModalBvid] = useState('')
-
-	// const playTrack = useCallback(
-	// 	async (track: Track, playNow = false) => {
-	// 		try {
-	// 			await addToQueue({
-	// 				tracks: [track],
-	// 				playNow: playNow,
-	// 				clearQueue: false,
-	// 				playNext: !playNow,
-	// 			})
-	// 		} catch (error) {
-	// 			playlistLog.sentry('添加到队列失败', error)
-	// 		}
-	// 	},
-	// 	[addToQueue],
-	// )
 
 	const {
 		data: uploadedVideos,
@@ -170,7 +157,10 @@ export default function UploaderPage() {
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<PlaylistAppBar />
+			<Appbar.Header elevated>
+				<Appbar.Content title={uploaderUserInfo.name} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
+			</Appbar.Header>
 
 			<View
 				style={{
@@ -190,6 +180,7 @@ export default function UploaderPage() {
 							subtitles={`${uploadedVideos.pages[0].page.count} 首歌曲`}
 							description={uploaderUserInfo.sign}
 							onClickMainButton={undefined}
+							mainButtonIcon={'sync'}
 						/>
 					}
 					refreshControl={

@@ -1,3 +1,4 @@
+import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useCopyRemotePlaylistToLocalPlaylist,
@@ -17,11 +18,10 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { Divider, Text, useTheme } from 'react-native-paper'
+import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistAppBar } from '../../../components/playlist/PlaylistAppBar'
 import { PlaylistError } from '../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
@@ -41,6 +41,10 @@ export default function LocalPlaylistPage() {
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
+	const [modalVisible, setModalVisible] = useState(false)
+	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
+		undefined,
+	)
 
 	const {
 		data: playlistData,
@@ -139,6 +143,14 @@ export default function LocalPlaylistPage() {
 				leadingIcon: 'play-circle-outline',
 				onPress: () => playNext(item),
 			},
+			{
+				title: '添加到本地歌单',
+				leadingIcon: 'playlist-plus',
+				onPress: () => {
+					setCurrentModalTrack(item)
+					setModalVisible(true)
+				},
+			},
 		],
 		[playNext],
 	)
@@ -198,14 +210,12 @@ export default function LocalPlaylistPage() {
 		return <PlaylistError text='未找到播放列表元数据' />
 	}
 
-	const description =
-		playlistMetadata.description && playlistMetadata.description.length > 0
-			? playlistMetadata.description
-			: '暂无描述'
-
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
-			<PlaylistAppBar />
+			<Appbar.Header elevated>
+				<Appbar.Content title={playlistMetadata.title} />
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
+			</Appbar.Header>
 
 			<View
 				style={{
@@ -218,17 +228,11 @@ export default function LocalPlaylistPage() {
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={
 						<PlaylistHeader
-							coverUri={playlistMetadata.coverUrl ?? undefined}
-							title={playlistMetadata.title}
-							description={description}
+							playlist={playlistMetadata}
 							onClickPlayAll={playAll}
 							onClickSync={handleSync}
-							authorName={playlistMetadata.author?.name}
-							trackCount={playlistMetadata.itemCount}
 							validTrackCount={filteredPlaylistData.length}
-							lastSyncedAt={playlistMetadata.lastSyncedAt ?? undefined}
 							onClickCopyToLocalPlaylist={onClickCopyToLocalPlaylist}
-							playlistType={playlistMetadata.type}
 						/>
 					}
 					keyExtractor={keyExtractor}
@@ -249,6 +253,14 @@ export default function LocalPlaylistPage() {
 					}
 				/>
 			</View>
+
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={modalVisible}
+					setVisible={setModalVisible}
+				/>
+			)}
 		</View>
 	)
 }

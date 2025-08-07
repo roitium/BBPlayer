@@ -100,12 +100,15 @@ function HomePage() {
 					</View>
 				</View>
 
-				{/* <View style={{ marginTop: 16, marginBottom: 24 }}>
-					<FavoriteList />
-				</View>
-				<View style={{ marginBottom: 24, paddingHorizontal: 16 }}>
-					<RecentlyPlayed />
-				</View> */}
+				<Text
+					variant='headlineMedium'
+					style={{
+						textAlign: 'center',
+						marginVertical: 'auto',
+					}}
+				>
+					这只是一个空白主页{'\n'}相关内容构建中~
+				</Text>
 			</View>
 
 			<QrCodeLoginModal
