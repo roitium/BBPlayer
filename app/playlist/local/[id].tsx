@@ -1,10 +1,13 @@
 import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
 import {
 	useCopyRemotePlaylistToLocalPlaylist,
+	usePlaylistSync,
+} from '@/hooks/mutations/db/playlist'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import {
 	usePlaylistContents,
 	usePlaylistMetadata,
-	usePlaylistSync,
 } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
@@ -41,10 +44,12 @@ export default function LocalPlaylistPage() {
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
-	const [modalVisible, setModalVisible] = useState(false)
+	const [addTrackModalVisible, setAddTrackModalVisible] = useState(false)
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,
 	)
+	const [editPlaylistModalVisible, setEditPlaylistModalVisible] =
+		useState(false)
 
 	const {
 		data: playlistData,
@@ -148,7 +153,7 @@ export default function LocalPlaylistPage() {
 				leadingIcon: 'playlist-plus',
 				onPress: () => {
 					setCurrentModalTrack(item)
-					setModalVisible(true)
+					setAddTrackModalVisible(true)
 				},
 			},
 		],
@@ -215,6 +220,10 @@ export default function LocalPlaylistPage() {
 			<Appbar.Header elevated>
 				<Appbar.Content title={playlistMetadata.title} />
 				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Action
+					icon='pencil'
+					onPress={() => setEditPlaylistModalVisible(true)}
+				/>
 			</Appbar.Header>
 
 			<View
@@ -257,10 +266,16 @@ export default function LocalPlaylistPage() {
 			{currentModalTrack && (
 				<AddVideoToLocalPlaylistModal
 					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
+					visible={addTrackModalVisible}
+					setVisible={setAddTrackModalVisible}
 				/>
 			)}
+
+			<EditPlaylistMetadataModal
+				playlist={playlistMetadata}
+				visiable={editPlaylistModalVisible}
+				setVisible={setEditPlaylistModalVisible}
+			/>
 		</View>
 	)
 }

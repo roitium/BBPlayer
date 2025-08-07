@@ -1,11 +1,11 @@
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetMultiPageList,
 	useGetVideoDetails,
 } from '@/hooks/queries/bilibili/useVideoData'
-import { usePlaylistSync } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {

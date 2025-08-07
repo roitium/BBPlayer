@@ -9,10 +9,10 @@ import {
 	useTheme,
 } from 'react-native-paper'
 
+import { useUpdateLocalPlaylistTracks } from '@/hooks/mutations/db/playlist'
 import {
 	usePlaylistLists,
 	usePlaylistsContainingTrack,
-	useUpdateLocalPlaylistTracks,
 } from '@/hooks/queries/db/usePlaylist'
 import type { Playlist, Track } from '@/types/core/media'
 

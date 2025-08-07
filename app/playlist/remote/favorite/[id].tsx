@@ -3,9 +3,9 @@ import {
 	TrackListItem,
 	TrackMenuItemDividerToken,
 } from '@/components/playlist/PlaylistItem'
+import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePlaylistSync } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'

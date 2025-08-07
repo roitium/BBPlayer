@@ -66,7 +66,7 @@ export class PlaylistService {
 	}
 
 	/**
-	 * 更新一个**本地**播放列表。
+	 * 更新一个**本地**播放列表元数据。
 	 * @param playlistId - 要更新的播放列表的 ID。
 	 * @param payload - 更新所需的数据。
 	 * @returns ResultAsync 包含更新后的 Playlist 或一个错误。
