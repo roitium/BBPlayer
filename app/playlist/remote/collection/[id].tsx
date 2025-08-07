@@ -173,10 +173,7 @@ export default function CollectionPage() {
 			{
 				onSuccess: (id) => {
 					if (!id) return
-					setTimeout(
-						() => navigation.replace('PlaylistLocal', { id: String(id) }),
-						2000,
-					)
+					navigation.replace('PlaylistLocal', { id: String(id) })
 				},
 			},
 		)

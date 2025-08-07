@@ -5,9 +5,12 @@ import { syncFacade } from '@/lib/facades/sync'
 import { playlistService } from '@/lib/services/playlistService'
 import type { Playlist } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
+import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
 import { useMutation, useQuery } from '@tanstack/react-query'
+
+const logger = log.extend('db/usePlaylist')
 
 export const playlistKeys = {
 	all: ['db', 'playlists'] as const,
@@ -77,7 +80,8 @@ export const usePlaylistSync = () => {
 				}),
 			])
 		},
-		onError: (error) => {
+		onError: (error, variables) => {
+			logger.error('同步失败: ', flatErrorMessage(error), variables)
 			toast.error('同步失败', {
 				description: flatErrorMessage(error),
 			})
@@ -140,7 +144,8 @@ export const useUpdateLocalPlaylistTracks = () => {
 			}
 			void Promise.all(promises)
 		},
-		onError: (error) => {
+		onError: (error, variables) => {
+			logger.error('操作音频收藏位置失败: ', flatErrorMessage(error), variables)
 			toast.error('操作音频收藏位置失败', {
 				description: flatErrorMessage(error),
 			})
@@ -165,7 +170,8 @@ export const useCopyRemotePlaylistToLocalPlaylist = () => {
 				queryKey: playlistKeys.playlistLists(),
 			})
 		},
-		onError: (error) => {
+		onError: (error, variables) => {
+			logger.error('复制失败: ', flatErrorMessage(error), variables)
 			toast.error('复制失败', {
 				description: flatErrorMessage(error),
 			})

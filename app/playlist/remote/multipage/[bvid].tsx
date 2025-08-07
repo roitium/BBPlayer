@@ -182,15 +182,12 @@ export default function MultipagePage() {
 			{
 				onSuccess: (id) => {
 					if (!id) return
-					setTimeout(
-						() => navigation.replace('PlaylistLocal', { id: String(id) }),
-						2000,
-					)
+					navigation.replace('PlaylistLocal', { id: String(id) })
 				},
 			},
 		)
 		setRefreshing(false)
-	}, [navigation, syncMultipage])
+	}, [bvid, navigation, syncMultipage])
 
 	const keyExtractor = useCallback((item: UITrack) => {
 		return String(item.id)

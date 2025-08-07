@@ -7,6 +7,7 @@ import {
 } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -67,17 +68,13 @@ export default function LocalPlaylistPage() {
 		useCopyRemotePlaylistToLocalPlaylist()
 
 	const onClickCopyToLocalPlaylist = useCallback(async () => {
-		toast.show('复制中...')
 		await copyToLocalPlaylist(
 			{
 				playlistId: Number(id),
 			},
 			{
 				onSuccess: (id) =>
-					setTimeout(
-						() => navigation.navigate('PlaylistLocal', { id: String(id) }),
-						1000,
-					),
+					navigation.navigate('PlaylistLocal', { id: String(id) }),
 			},
 		)
 	}, [copyToLocalPlaylist, id, navigation])
@@ -107,7 +104,7 @@ export default function LocalPlaylistPage() {
 			} catch (error) {
 				playlistLog.error('添加到队列失败', error)
 				toast.error('添加到队列失败', {
-					description: error,
+					description: flatErrorMessage(error as Error),
 				})
 			}
 		},
@@ -128,7 +125,7 @@ export default function LocalPlaylistPage() {
 			} catch (error) {
 				playlistLog.error('播放全部失败', error)
 				toast.error('播放全部失败', {
-					description: error,
+					description: flatErrorMessage(error as Error),
 				})
 			}
 		},
@@ -231,6 +228,7 @@ export default function LocalPlaylistPage() {
 							validTrackCount={filteredPlaylistData.length}
 							lastSyncedAt={playlistMetadata.lastSyncedAt ?? undefined}
 							onClickCopyToLocalPlaylist={onClickCopyToLocalPlaylist}
+							playlistType={playlistMetadata.type}
 						/>
 					}
 					keyExtractor={keyExtractor}

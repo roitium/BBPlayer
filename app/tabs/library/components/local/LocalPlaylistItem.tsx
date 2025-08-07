@@ -44,11 +44,13 @@ const LocalPlaylistItem = memo(({ item }: { item: Playlist }) => {
 								}}
 							>
 								<Text variant='bodySmall'>{item.itemCount} 首歌曲</Text>
-								<Icon
-									source={item.type === 'local' ? 'storage' : 'cloud'}
-									color={item.type === 'local' ? 'black' : '#87ceeb'}
-									size={13}
-								/>
+								{item.type === 'local' || (
+									<Icon
+										source={'cloud'}
+										color={'#87ceeb'}
+										size={13}
+									/>
+								)}
 							</View>
 						</View>
 						<Icon

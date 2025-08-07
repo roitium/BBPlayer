@@ -1,5 +1,5 @@
 import type { PlayRecord } from '@/types/core/media'
-import { eq, ne, relations, sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
 	check,
 	index,
@@ -27,15 +27,15 @@ export const artists = sqliteTable(
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch() * 1000)`)
-			.$onUpdate(() => sql`(unixepoch() * 1000)`),
+			.$onUpdate(() => new Date()),
 	},
 	(table) => [
 		uniqueIndex('source_remote_id_unq')
 			.on(table.source, table.remoteId)
-			.where(ne(table.source, 'local')),
+			.where(sql`source != 'local'`),
 		uniqueIndex('local_artist_unq')
 			.on(table.name)
-			.where(eq(table.source, 'local')), // 如果是 local artist，就基于 name 唯一索引
+			.where(sql`source = 'local'`), // 如果是 local artist，就基于 name 唯一索引
 		index('artists_name_idx').on(table.name),
 		check(
 			'source_integrity_check',
@@ -74,7 +74,7 @@ export const tracks = sqliteTable(
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch() * 1000)`)
-			.$onUpdate(() => sql`(unixepoch() * 1000)`),
+			.$onUpdate(() => new Date()),
 	},
 	(table) => [
 		index('tracks_artist_idx').on(table.artistId),
@@ -105,7 +105,7 @@ export const playlists = sqliteTable(
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch() * 1000)`)
-			.$onUpdate(() => sql`(unixepoch() * 1000)`),
+			.$onUpdate(() => new Date()),
 	},
 	(table) => [
 		index('playlists_title_idx').on(table.title),

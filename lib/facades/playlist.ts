@@ -50,7 +50,7 @@ export class PlaylistFacade {
 				logger.debug('step1: 获取并验证 remote 播放列表', playlistMetadata)
 
 				const localPlaylistResult = await playlistSvc.createPlaylist({
-					title: playlistMetadata.title,
+					title: playlistMetadata.title + '(duplicate)',
 					description: playlistMetadata.description ?? undefined,
 					coverUrl: playlistMetadata.coverUrl ?? undefined,
 					authorId: playlistMetadata.authorId ?? undefined,
@@ -63,16 +63,31 @@ export class PlaylistFacade {
 				const localPlaylist = localPlaylistResult.value
 				logger.debug('step2: 创建本地播放列表', localPlaylist)
 
+				const tracksMetadata = await playlistSvc.getPlaylistTracks(playlistId)
+				if (tracksMetadata.isErr()) {
+					throw tracksMetadata.error
+				}
+				const finalIds = tracksMetadata.value
+					.filter((t) => {
+						if (t.source === 'bilibili' && !t.bilibiliMetadata.videoIsValid)
+							return false
+						return true
+					})
+					.map((t) => t.id)
+				logger.debug(
+					'step3: 获取 remote 播放列表中的所有歌曲并清洗完成（对于 bilibili 音频，去除掉失效视频）',
+				)
+
 				const replaceResult = await playlistSvc.replacePlaylistAllTracks(
 					localPlaylist.id,
-					playlistMetadata.trackLinks.map((t) => t.trackId),
+					finalIds,
 				)
 				if (replaceResult.isErr()) {
 					throw replaceResult.error
 				}
-				logger.debug('step3: 替换本地播放列表中的所有歌曲')
+				logger.debug('step4: 替换本地播放列表中的所有歌曲')
 
-				logger.debug('创建或替换播放列表完成: ', localPlaylist.id)
+				logger.debug('将 remote 播放列表复制为 local 播放列表成功')
 
 				return localPlaylist.id
 			}),
