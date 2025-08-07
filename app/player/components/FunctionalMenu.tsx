@@ -14,6 +14,7 @@ export function FunctionalMenu({
 	viewMode,
 	uploaderMid,
 	setFavModalVisible,
+	setLocalPlaylistModalVisible,
 }: {
 	menuVisible: boolean
 	setMenuVisible: (visible: boolean) => void
@@ -21,6 +22,7 @@ export function FunctionalMenu({
 	viewMode: string
 	uploaderMid: number | undefined
 	setFavModalVisible: (visible: boolean) => void
+	setLocalPlaylistModalVisible: (visible: boolean) => void
 }) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
@@ -43,6 +45,14 @@ export function FunctionalMenu({
 					leadingIcon='playlist-plus'
 				/>
 			)}
+			<Menu.Item
+				onPress={() => {
+					setMenuVisible(false)
+					setLocalPlaylistModalVisible(true)
+				}}
+				title='添加到本地歌单'
+				leadingIcon='playlist-plus'
+			/>
 			<Menu.Item
 				onPress={() => {
 					setMenuVisible(false)

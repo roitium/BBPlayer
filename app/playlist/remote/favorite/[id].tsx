@@ -61,11 +61,13 @@ const mapApiItemToTrack = (apiItem: BilibiliFavoriteListContent): Track => {
 			source: 'bilibili',
 			avatarUrl: null,
 			createdAt: new Date(apiItem.pubdate),
+			updatedAt: new Date(apiItem.pubdate),
 		},
 		coverUrl: apiItem.cover,
 		duration: apiItem.duration,
 		playHistory: [],
 		createdAt: new Date(apiItem.pubdate),
+		updatedAt: new Date(apiItem.pubdate),
 		bilibiliMetadata: {
 			bvid: apiItem.bvid,
 			cid: null,
@@ -104,7 +106,7 @@ export default function FavoritePage() {
 		[favoriteData],
 	)
 
-	const { mutateAsync: syncFavorite } = usePlaylistSync('favorite', Number(id))
+	const { mutateAsync: syncFavorite } = usePlaylistSync()
 
 	const handlePlayTrack = useCallback(
 		(item: UITrack, playNext = false) => {
@@ -150,17 +152,20 @@ export default function FavoritePage() {
 		}
 		toast.show('同步中...')
 		setRefreshing(true)
-		await syncFavorite(undefined, {
-			onSuccess: (id) => {
-				if (!id) return
-				setTimeout(
-					() => navigation.replace('PlaylistLocal', { id: String(id) }),
-					2000,
-				)
+		await syncFavorite(
+			{
+				remoteSyncId: Number(id),
+				type: 'favorite',
 			},
-		})
+			{
+				onSuccess: (id) => {
+					if (!id) return
+					navigation.replace('PlaylistLocal', { id: String(id) })
+				},
+			},
+		)
 		setRefreshing(false)
-	}, [favoriteData?.pages, navigation, syncFavorite])
+	}, [favoriteData?.pages, id, navigation, syncFavorite])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: UITrack; index: number }) => {

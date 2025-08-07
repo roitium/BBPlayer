@@ -68,6 +68,7 @@ export class TrackService {
 			playHistory: dbTrack.playHistory,
 			createdAt: dbTrack.createdAt,
 			source: dbTrack.source,
+			updatedAt: dbTrack.updatedAt,
 		}
 
 		if (dbTrack.source === 'bilibili' && dbTrack.bilibiliMetadata) {
@@ -127,7 +128,7 @@ export class TrackService {
 						coverUrl: payload.coverUrl,
 						duration: payload.duration,
 						playHistory: [],
-						createdAt: new Date(),
+						// createdAt: new Date(), 直接让数据库自动生成
 						uniqueKey: uniqueKey.value,
 					})
 					.returning({ id: schema.tracks.id })
@@ -391,7 +392,7 @@ export class TrackService {
 						...payload,
 						uniqueKey,
 						playHistory: [],
-						createdAt: new Date(),
+						// createdAt: new Date(), 直接让数据库自动生成
 					}),
 				)
 

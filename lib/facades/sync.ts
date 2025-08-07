@@ -167,10 +167,13 @@ export class SyncFacade {
 							})
 
 							// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
-							playlistSvc.replacePlaylistAllTracks(
+							const replaceResult = await playlistSvc.replacePlaylistAllTracks(
 								playlistRes.value.id,
 								trackIds,
 							)
+							if (replaceResult.isErr()) {
+								throw replaceResult.error
+							}
 							logger.debug('step 5: 替换 playlist 中所有 tracks 完成')
 							logger.info('同步合集完成', {
 								remoteId: contents.info.id,
@@ -257,10 +260,13 @@ export class SyncFacade {
 							})
 
 							// 我们不需要去更新 lastSyncedAt 字段，因为在 replacePlaylistAllTracks 中会更新
-							playlistSvc.replacePlaylistAllTracks(
+							const replaceResult = await playlistSvc.replacePlaylistAllTracks(
 								playlistRes.value.id,
 								trackIds,
 							)
+							if (replaceResult.isErr()) {
+								throw replaceResult.error
+							}
 							logger.debug('step 4: 替换 playlist 中所有 tracks 完成')
 							logger.info('同步合集完成', {
 								remoteId: bv2av(bvid),
@@ -562,10 +568,13 @@ export class SyncFacade {
 						total: finalOrderedTrackIds.length,
 					})
 
-					playlistSvc.replacePlaylistAllTracks(
+					const replaceResult = await playlistSvc.replacePlaylistAllTracks(
 						localPlaylist.value.id,
 						finalOrderedTrackIds,
 					)
+					if (replaceResult.isErr()) {
+						throw replaceResult.error
+					}
 					logger.debug('step 11: 替换 playlist 中所有 tracks 完成')
 					logger.info('同步收藏夹完成', {
 						remoteId: favoriteId,

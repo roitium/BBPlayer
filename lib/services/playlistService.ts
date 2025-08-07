@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -8,7 +8,6 @@ import type {
 	ReorderSingleTrackPayload,
 	UpdatePlaylistPayload,
 } from '@/types/services/playlist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import log from '@/utils/log'
 import db from '../db/db'
 import * as schema from '../db/schema'
@@ -143,12 +142,12 @@ export class PlaylistService {
 	/**
 	 * 向本地播放列表添加一首歌曲。
 	 * @param playlistId - 目标播放列表的 ID。
-	 * @param trackPayload - 用于查找或创建歌曲的数据。
+	 * @param trackId - 要添加的歌曲的 ID。
 	 * @returns ResultAsync
 	 */
 	public addTrackToLocalPlaylist(
 		playlistId: number,
-		trackPayload: CreateTrackPayload,
+		trackId: number,
 	): ResultAsync<
 		typeof schema.playlistTracks.$inferSelect,
 		| DatabaseError
@@ -156,67 +155,63 @@ export class PlaylistService {
 		| TrackAlreadyExistsError
 		| PlaylistNotFoundError
 	> {
-		const trackResult = this.trackService.findOrCreateTrack(trackPayload)
+		return ResultAsync.fromPromise(
+			(async () => {
+				// 验证播放列表是否存在且为 'local'
+				const playlist = await this.db.query.playlists.findFirst({
+					where: and(
+						eq(schema.playlists.id, playlistId),
+						eq(schema.playlists.type, 'local'),
+					),
+					columns: { id: true },
+				})
+				if (!playlist) {
+					throw new PlaylistNotFoundError(playlistId)
+				}
 
-		return trackResult.andThen((track) => {
-			return ResultAsync.fromPromise(
-				(async () => {
-					// 验证播放列表是否存在且为 'local'
-					const playlist = await this.db.query.playlists.findFirst({
-						where: and(
-							eq(schema.playlists.id, playlistId),
-							eq(schema.playlists.type, 'local'),
-						),
-						columns: { id: true },
+				// 检查歌曲是否已在列表中
+				const existingLink = await this.db.query.playlistTracks.findFirst({
+					where: and(
+						eq(schema.playlistTracks.playlistId, playlistId),
+						eq(schema.playlistTracks.trackId, trackId),
+					),
+				})
+				if (existingLink) {
+					throw new TrackAlreadyExistsError(trackId, playlistId)
+				}
+
+				// 获取新的排序号
+				const maxOrderResult = await this.db
+					.select({
+						maxOrder: sql<number | null>`MAX(${schema.playlistTracks.order})`,
 					})
-					if (!playlist) {
-						throw new PlaylistNotFoundError(playlistId)
-					}
+					.from(schema.playlistTracks)
+					.where(eq(schema.playlistTracks.playlistId, playlistId))
+				const nextOrder = (maxOrderResult[0].maxOrder ?? -1) + 1
 
-					// 检查歌曲是否已在列表中
-					const existingLink = await this.db.query.playlistTracks.findFirst({
-						where: and(
-							eq(schema.playlistTracks.playlistId, playlistId),
-							eq(schema.playlistTracks.trackId, track.id),
-						),
+				// 插入关联记录
+				const [newLink] = await this.db
+					.insert(schema.playlistTracks)
+					.values({
+						playlistId: playlistId,
+						trackId: trackId,
+						order: nextOrder,
 					})
-					if (existingLink) {
-						throw new TrackAlreadyExistsError(track.id, playlistId)
-					}
+					.returning()
 
-					// 获取新的排序号
-					const maxOrderResult = await this.db
-						.select({
-							maxOrder: sql<number | null>`MAX(${schema.playlistTracks.order})`,
-						})
-						.from(schema.playlistTracks)
-						.where(eq(schema.playlistTracks.playlistId, playlistId))
-					const nextOrder = (maxOrderResult[0].maxOrder ?? -1) + 1
+				// 更新播放列表的 itemCount
+				await this.db
+					.update(schema.playlists)
+					.set({ itemCount: sql`${schema.playlists.itemCount} + 1` })
+					.where(eq(schema.playlists.id, playlistId))
 
-					// 插入关联记录
-					const [newLink] = await this.db
-						.insert(schema.playlistTracks)
-						.values({
-							playlistId: playlistId,
-							trackId: track.id,
-							order: nextOrder,
-						})
-						.returning()
-
-					// 更新播放列表的 itemCount
-					await this.db
-						.update(schema.playlists)
-						.set({ itemCount: sql`${schema.playlists.itemCount} + 1` })
-						.where(eq(schema.playlists.id, playlistId))
-
-					return newLink
-				})(),
-				(e) => {
-					if (e instanceof ServiceError) return e
-					return new DatabaseError('添加歌曲到播放列表的事务失败', e)
-				},
-			)
-		})
+				return newLink
+			})(),
+			(e) => {
+				if (e instanceof ServiceError) return e
+				return new DatabaseError('添加歌曲到播放列表的事务失败', e)
+			},
+		)
 	}
 
 	/**
@@ -412,6 +407,7 @@ export class PlaylistService {
 	> {
 		return ResultAsync.fromPromise(
 			this.db.query.playlists.findMany({
+				orderBy: desc(schema.playlists.updatedAt),
 				with: {
 					author: true,
 				},
@@ -570,6 +566,30 @@ export class PlaylistService {
 				},
 			}),
 			(e) => new DatabaseError('查询播放列表失败', e),
+		)
+	}
+
+	/**
+	 * 获取包含指定歌曲的所有本地播放列表
+	 * @param trackId
+	 */
+	public getLocalPlaylistsContainingTrack(
+		trackId: number,
+	): ResultAsync<(typeof schema.playlists.$inferSelect)[], DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db.query.playlists.findMany({
+				where: and(
+					eq(schema.playlists.type, 'local'),
+					inArray(
+						schema.playlists.id,
+						this.db
+							.select({ playlistId: schema.playlistTracks.playlistId })
+							.from(schema.playlistTracks)
+							.where(eq(schema.playlistTracks.trackId, trackId)),
+					),
+				),
+			}),
+			(e) => new DatabaseError('获取包含该歌曲的本地播放列表失败', e),
 		)
 	}
 }

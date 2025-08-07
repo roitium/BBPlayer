@@ -70,11 +70,13 @@ const mapApiItemToTrack = (
 			source: 'bilibili',
 			avatarUrl: null,
 			createdAt: new Date(video.pubdate),
+			updatedAt: new Date(video.pubdate),
 		},
 		coverUrl: video.pic,
 		duration: mp.duration,
 		playHistory: [],
 		createdAt: new Date(video.pubdate),
+		updatedAt: new Date(video.pubdate),
 		bilibiliMetadata: {
 			bvid: video.bvid,
 			cid: mp.cid,
@@ -119,10 +121,7 @@ export default function MultipagePage() {
 		)
 	}, [rawMultipageData, videoData])
 
-	const { mutateAsync: syncMultipage } = usePlaylistSync(
-		'multi_page',
-		bv2av(bvid),
-	)
+	const { mutateAsync: syncMultipage } = usePlaylistSync()
 
 	const playTrack = useCallback(
 		(track: UITrack, playNext = false) => {
@@ -175,17 +174,20 @@ export default function MultipagePage() {
 	const handleSync = useCallback(async () => {
 		toast.show('同步中...')
 		setRefreshing(true)
-		await syncMultipage(undefined, {
-			onSuccess: (id) => {
-				if (!id) return
-				setTimeout(
-					() => navigation.replace('PlaylistLocal', { id: String(id) }),
-					2000,
-				)
+		await syncMultipage(
+			{
+				remoteSyncId: bv2av(bvid),
+				type: 'multi_page',
 			},
-		})
+			{
+				onSuccess: (id) => {
+					if (!id) return
+					navigation.replace('PlaylistLocal', { id: String(id) })
+				},
+			},
+		)
 		setRefreshing(false)
-	}, [navigation, syncMultipage])
+	}, [bvid, navigation, syncMultipage])
 
 	const keyExtractor = useCallback((item: UITrack) => {
 		return String(item.id)

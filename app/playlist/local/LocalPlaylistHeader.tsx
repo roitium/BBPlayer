@@ -1,3 +1,4 @@
+import type { Playlist } from '@/types/core/media'
 import { formatRelativeTime } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
@@ -15,6 +16,7 @@ interface PlaylistHeaderProps {
 	trackCount: number
 	validTrackCount: number
 	onClickCopyToLocalPlaylist: () => void
+	playlistType: Playlist['type']
 }
 
 /**
@@ -28,6 +30,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	authorName,
 	trackCount,
 	validTrackCount,
+	playlistType,
 	onClickPlayAll,
 	onClickSync,
 	onClickCopyToLocalPlaylist,
@@ -38,7 +41,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	return (
 		<View style={{ position: 'relative', flexDirection: 'column' }}>
 			{/* 收藏夹信息 */}
-			<View style={{ flexDirection: 'row', padding: 16, alignItems: 'center' }}>
+			<View style={{ flexDirection: 'row', margin: 16, alignItems: 'center' }}>
 				<Image
 					source={{ uri: coverUri }}
 					contentFit='cover'
@@ -93,22 +96,29 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 						size={30}
 						onPress={onClickPlayAll}
 					/>
+					{playlistType === 'local' || (
+						<IconButton
+							mode='contained'
+							icon={'sync'}
+							size={20}
+							onPress={onClickSync}
+						/>
+					)}
 					<IconButton
 						mode='contained'
-						icon={'sync'}
-						size={20}
-						onPress={onClickSync}
-					/>
-					<IconButton
-						mode='contained'
-						icon={'copy'}
+						icon='content-copy'
 						size={20}
 						onPress={onClickCopyToLocalPlaylist}
 					/>
 				</View>
 			</View>
 
-			<Text variant='bodyMedium'>{description ?? '还没有简介哦~'}</Text>
+			<Text
+				style={{ margin: 16 }}
+				variant='bodyMedium'
+			>
+				{description ?? '还没有简介哦~'}
+			</Text>
 
 			<Divider />
 		</View>

@@ -6,6 +6,7 @@ export interface Artist {
 	source: 'bilibili' | 'local'
 	remoteId: string | null
 	createdAt: Date
+	updatedAt: Date
 }
 
 export interface PlayRecord {
@@ -24,6 +25,7 @@ interface BaseTrack {
 	playHistory: PlayRecord[]
 	createdAt: Date
 	duration: number
+	updatedAt: Date
 }
 
 export interface BilibiliTrack extends BaseTrack {
@@ -64,4 +66,5 @@ export interface Playlist {
 	remoteSyncId: number | null
 	lastSyncedAt: Date | null
 	createdAt: Date
+	updatedAt: Date
 }

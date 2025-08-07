@@ -7,6 +7,7 @@ import {
 } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
+import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -61,29 +62,34 @@ export default function LocalPlaylistPage() {
 		isError: isPlaylistMetadataError,
 	} = usePlaylistMetadata(Number(id))
 
-	const { mutateAsync: syncPlaylist } = usePlaylistSync(
-		playlistMetadata?.type ?? 'favorite', // 如果不存在，就随便填写一个，因为下面 remoteSyncId 为 0 会自动过滤
-		playlistMetadata?.remoteSyncId ?? 0,
-	)
+	const { mutateAsync: syncPlaylist } = usePlaylistSync()
 
 	const { mutateAsync: copyToLocalPlaylist } =
-		useCopyRemotePlaylistToLocalPlaylist(Number(id))
+		useCopyRemotePlaylistToLocalPlaylist()
 
 	const onClickCopyToLocalPlaylist = useCallback(async () => {
-		toast.show('复制中...')
-		await copyToLocalPlaylist(undefined, {
-			onSuccess: (id) =>
-				setTimeout(
-					() => navigation.navigate('PlaylistLocal', { id: String(id) }),
-					1000,
-				),
-		})
-	}, [copyToLocalPlaylist, navigation])
+		await copyToLocalPlaylist(
+			{
+				playlistId: Number(id),
+			},
+			{
+				onSuccess: (id) =>
+					navigation.navigate('PlaylistLocal', { id: String(id) }),
+			},
+		)
+	}, [copyToLocalPlaylist, id, navigation])
 
 	const handleSync = useCallback(async () => {
+		if (!playlistMetadata || !playlistMetadata.remoteSyncId) {
+			toast.error('无法同步，因为未找到播放列表元数据或 remoteSyncId 为空')
+			return
+		}
 		toast.show('同步中...')
-		await syncPlaylist()
-	}, [syncPlaylist])
+		await syncPlaylist({
+			remoteSyncId: playlistMetadata.remoteSyncId,
+			type: playlistMetadata.type,
+		})
+	}, [playlistMetadata, syncPlaylist])
 
 	const playNext = useCallback(
 		async (track: Track) => {
@@ -98,7 +104,7 @@ export default function LocalPlaylistPage() {
 			} catch (error) {
 				playlistLog.error('添加到队列失败', error)
 				toast.error('添加到队列失败', {
-					description: error,
+					description: flatErrorMessage(error as Error),
 				})
 			}
 		},
@@ -119,7 +125,7 @@ export default function LocalPlaylistPage() {
 			} catch (error) {
 				playlistLog.error('播放全部失败', error)
 				toast.error('播放全部失败', {
-					description: error,
+					description: flatErrorMessage(error as Error),
 				})
 			}
 		},
@@ -222,6 +228,7 @@ export default function LocalPlaylistPage() {
 							validTrackCount={filteredPlaylistData.length}
 							lastSyncedAt={playlistMetadata.lastSyncedAt ?? undefined}
 							onClickCopyToLocalPlaylist={onClickCopyToLocalPlaylist}
+							playlistType={playlistMetadata.type}
 						/>
 					}
 					keyExtractor={keyExtractor}
