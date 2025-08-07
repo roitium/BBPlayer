@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -570,6 +570,30 @@ export class PlaylistService {
 				},
 			}),
 			(e) => new DatabaseError('查询播放列表失败', e),
+		)
+	}
+
+	/**
+	 * 获取包含指定歌曲的所有本地播放列表
+	 * @param trackId
+	 */
+	public getLocalPlaylistsContainingTrack(
+		trackId: number,
+	): ResultAsync<(typeof schema.playlists.$inferSelect)[], DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db.query.playlists.findMany({
+				where: and(
+					eq(schema.playlists.type, 'local'),
+					inArray(
+						schema.playlists.id,
+						this.db
+							.select({ playlistId: schema.playlistTracks.playlistId })
+							.from(schema.playlistTracks)
+							.where(eq(schema.playlistTracks.trackId, trackId)),
+					),
+				),
+			}),
+			(e) => new DatabaseError('获取包含该歌曲的本地播放列表失败', e),
 		)
 	}
 }

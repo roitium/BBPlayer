@@ -1,8 +1,9 @@
 import { queryClient } from '@/lib/config/queryClient'
+import db from '@/lib/db/db'
 import { playlistFacade } from '@/lib/facades/playlist'
 import { syncFacade } from '@/lib/facades/sync'
 import { playlistService } from '@/lib/services/playlistService'
-import type { Playlist } from '@/types/core/media'
+import type { Playlist, Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
@@ -17,6 +18,10 @@ export const playlistKeys = {
 		[...playlistKeys.all, 'playlistMetadata', playlistId] as const,
 	syncPlaylist: (remoteId: number, type: Playlist['type']) =>
 		[...playlistKeys.all, 'syncPlaylist', remoteId, type] as const,
+	playlistsContainingTrack: (trackId: number) =>
+		[...playlistKeys.all, 'playlistsContainingTrack', trackId] as const,
+	updateLocalPlaylistTracks: (trackId: number) =>
+		[...playlistKeys.all, 'updateLocalPlaylistTracks', trackId] as const,
 }
 
 export const usePlaylistLists = () => {
@@ -76,6 +81,68 @@ export const usePlaylistSync = (
 		},
 		onError: (error) => {
 			toast.error('同步失败', {
+				description: flatErrorMessage(error),
+			})
+		},
+	})
+}
+
+export const usePlaylistsContainingTrack = (trackId: number) => {
+	return useQuery({
+		queryKey: playlistKeys.playlistsContainingTrack(trackId),
+		queryFn: () =>
+			returnOrThrowAsync(
+				playlistService.getLocalPlaylistsContainingTrack(trackId),
+			),
+		enabled: !!trackId,
+	})
+}
+
+export const useUpdateLocalPlaylistTracks = (track: Track) => {
+	return useMutation({
+		mutationKey: playlistKeys.updateLocalPlaylistTracks(track.id),
+		mutationFn: async ({
+			toAddPlaylistIds,
+			toRemovePlaylistIds,
+		}: {
+			toAddPlaylistIds: number[]
+			toRemovePlaylistIds: number[]
+		}) => {
+			if (!track) return
+
+			await db.transaction(async (tx) => {
+				const txPlaylistService = playlistService.withDB(tx)
+				for (const playlistId of toAddPlaylistIds) {
+					await txPlaylistService.addTrackToLocalPlaylist(playlistId, track)
+				}
+				for (const playlistId of toRemovePlaylistIds) {
+					await txPlaylistService.removeTrackFromLocalPlaylist(
+						playlistId,
+						track.id,
+					)
+				}
+			})
+
+			return { toAddPlaylistIds, toRemovePlaylistIds }
+		},
+		onSuccess: (data) => {
+			if (!data) return
+			const { toAddPlaylistIds, toRemovePlaylistIds } = data
+			toast.success('操作成功')
+			void queryClient.invalidateQueries({
+				queryKey: playlistKeys.playlistsContainingTrack(track.id),
+			})
+			void queryClient.invalidateQueries({
+				queryKey: playlistKeys.playlistLists(),
+			})
+			for (const id of [...toAddPlaylistIds, ...toRemovePlaylistIds]) {
+				void queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistContents(id),
+				})
+			}
+		},
+		onError: (error) => {
+			toast.error('操作失败', {
 				description: flatErrorMessage(error),
 			})
 		},
