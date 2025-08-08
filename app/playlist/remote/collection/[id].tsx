@@ -159,12 +159,12 @@ export default function CollectionPage() {
 
 	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
 
-	const { mutateAsync: syncCollection } = usePlaylistSync()
+	const { mutate: syncCollection } = usePlaylistSync()
 
-	const handleSync = useCallback(async () => {
+	const handleSync = useCallback(() => {
 		toast.show('同步中...')
 		setRefreshing(true)
-		await syncCollection(
+		syncCollection(
 			{
 				remoteSyncId: Number(id),
 				type: 'collection',

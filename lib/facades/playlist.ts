@@ -27,11 +27,12 @@ export class PlaylistFacade {
 	) {}
 
 	/**
-	 * 将 remote playlist 复制为 local playlist
+	 * 复制一份 playlist，新复制的 playlist 类型为 local
 	 * @param playlistId remote playlist 的 ID
+	 * @param name 新的 local playlist 的名称
 	 * @returns 如果成功，则为 local playlist 的 ID
 	 */
-	public async copyRemotePlaylistToLocalPlaylist(playlistId: number) {
+	public async duplicatePlaylist(playlistId: number, name: string) {
 		return ResultAsync.fromPromise(
 			this.db.transaction(async (tx) => {
 				const playlistSvc = this.playlistService.withDB(tx)
@@ -44,13 +45,11 @@ export class PlaylistFacade {
 
 				if (!playlistMetadata)
 					throw new FacadeError(`未找到播放列表：${playlistId}`)
-				if (playlistMetadata.type === 'local')
-					throw new FacadeError(`播放列表：${playlistId} 不是 remote 类型`)
 
-				logger.debug('step1: 获取并验证 remote 播放列表', playlistMetadata)
+				logger.debug('step1: 获取播放列表', playlistMetadata)
 
 				const localPlaylistResult = await playlistSvc.createPlaylist({
-					title: playlistMetadata.title + '(duplicate)',
+					title: name,
 					description: playlistMetadata.description ?? undefined,
 					coverUrl: playlistMetadata.coverUrl ?? undefined,
 					authorId: playlistMetadata.authorId ?? undefined,
@@ -75,7 +74,7 @@ export class PlaylistFacade {
 					})
 					.map((t) => t.id)
 				logger.debug(
-					'step3: 获取 remote 播放列表中的所有歌曲并清洗完成（对于 bilibili 音频，去除掉失效视频）',
+					'step3: 获取播放列表中的所有歌曲并清洗完成（对于 bilibili 音频，去除掉失效视频）',
 				)
 
 				const replaceResult = await playlistSvc.replacePlaylistAllTracks(
@@ -87,11 +86,11 @@ export class PlaylistFacade {
 				}
 				logger.debug('step4: 替换本地播放列表中的所有歌曲')
 
-				logger.debug('将 remote 播放列表复制为 local 播放列表成功')
+				logger.debug('复制播放列表成功')
 
 				return localPlaylist.id
 			}),
-			(e) => new FacadeError('将 remote 播放列表复制为 local 失败', e),
+			(e) => new FacadeError('复制播放列表', e),
 		)
 	}
 }

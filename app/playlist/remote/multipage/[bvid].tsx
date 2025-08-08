@@ -120,7 +120,7 @@ export default function MultipagePage() {
 		)
 	}, [rawMultipageData, videoData])
 
-	const { mutateAsync: syncMultipage } = usePlaylistSync()
+	const { mutate: syncMultipage } = usePlaylistSync()
 
 	const playTrack = useCallback(
 		(track: UITrack, playNext = false) => {
@@ -170,10 +170,10 @@ export default function MultipagePage() {
 		[playTrack, trackMenuItems],
 	)
 
-	const handleSync = useCallback(async () => {
+	const handleSync = useCallback(() => {
 		toast.show('同步中...')
 		setRefreshing(true)
-		await syncMultipage(
+		syncMultipage(
 			{
 				remoteSyncId: bv2av(bvid),
 				type: 'multi_page',

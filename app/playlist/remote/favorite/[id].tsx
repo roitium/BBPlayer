@@ -111,7 +111,7 @@ export default function FavoritePage() {
 		[favoriteData],
 	)
 
-	const { mutateAsync: syncFavorite } = usePlaylistSync()
+	const { mutate: syncFavorite } = usePlaylistSync()
 
 	const handlePlayTrack = useCallback(
 		(item: UITrack, playNext = false) => {
@@ -150,14 +150,14 @@ export default function FavoritePage() {
 		[navigation, handlePlayTrack],
 	)
 
-	const handleSync = useCallback(async () => {
+	const handleSync = useCallback(() => {
 		if (favoriteData?.pages.flatMap((page) => page.medias).length === 0) {
 			toast.info('收藏夹为空，无需同步')
 			return
 		}
 		toast.show('同步中...')
 		setRefreshing(true)
-		await syncFavorite(
+		syncFavorite(
 			{
 				remoteSyncId: Number(id),
 				type: 'favorite',

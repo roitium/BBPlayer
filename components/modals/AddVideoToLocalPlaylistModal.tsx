@@ -70,7 +70,7 @@ const AddVideoToLocalPlaylistModal = memo(
 			refetch: refetchContainingTrack,
 		} = usePlaylistsContainingTrack(track.id)
 
-		const { mutateAsync: updateTracks, isPending: isMutating } =
+		const { mutate: updateTracks, isPending: isMutating } =
 			useUpdateLocalPlaylistTracks()
 
 		const [checkedPlaylistIds, setCheckedPlaylistIds] = useState<number[]>([])
@@ -103,7 +103,7 @@ const AddVideoToLocalPlaylistModal = memo(
 			})
 		}, [])
 
-		const handleConfirm = useCallback(async () => {
+		const handleConfirm = useCallback(() => {
 			if (isMutating) return
 
 			const currentCheckedIds = new Set(checkedPlaylistIds)
@@ -119,7 +119,7 @@ const AddVideoToLocalPlaylistModal = memo(
 				setVisible(false)
 				return
 			}
-			await updateTracks({
+			updateTracks({
 				toAddPlaylistIds,
 				toRemovePlaylistIds,
 				trackId: track.id,

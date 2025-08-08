@@ -13,8 +13,13 @@ import { useMutation } from '@tanstack/react-query'
 
 const logger = log.extend('mutations/db/playlist')
 
+queryClient.setMutationDefaults(['db', 'playlists'], {
+	retry: false,
+})
+
 export const usePlaylistSync = () => {
 	return useMutation({
+		mutationKey: ['db', 'playlists', 'sync'],
 		mutationFn: async ({
 			remoteSyncId,
 			type,
@@ -54,6 +59,7 @@ export const usePlaylistSync = () => {
 
 export const useUpdateLocalPlaylistTracks = () => {
 	return useMutation({
+		mutationKey: ['db', 'playlists', 'updateLocalPlaylistTracks'],
 		mutationFn: async ({
 			toAddPlaylistIds,
 			toRemovePlaylistIds,
@@ -105,11 +111,17 @@ export const useUpdateLocalPlaylistTracks = () => {
 	})
 }
 
-export const useCopyRemotePlaylistToLocalPlaylist = () => {
+export const useDuplicatePlaylist = () => {
 	return useMutation({
-		mutationFn: async ({ playlistId }: { playlistId: number }) => {
-			const result =
-				await playlistFacade.copyRemotePlaylistToLocalPlaylist(playlistId)
+		mutationKey: ['db', 'playlists', 'duplicatePlaylist'],
+		mutationFn: async ({
+			playlistId,
+			name,
+		}: {
+			playlistId: number
+			name: string
+		}) => {
+			const result = await playlistFacade.duplicatePlaylist(playlistId, name)
 			if (result.isErr()) {
 				throw result.error
 			}
@@ -132,6 +144,7 @@ export const useCopyRemotePlaylistToLocalPlaylist = () => {
 
 export const useEditPlaylistMetadata = () => {
 	return useMutation({
+		mutationKey: ['db', 'playlists', 'editPlaylistMetadata'],
 		mutationFn: async ({
 			playlistId,
 			payload,
@@ -163,6 +176,31 @@ export const useEditPlaylistMetadata = () => {
 		onError: (error, variables) => {
 			logger.error('修改播放列表信息失败: ', flatErrorMessage(error), variables)
 			toast.error('修改播放列表信息失败', {
+				description: flatErrorMessage(error),
+			})
+		},
+	})
+}
+
+export const useDeletePlaylist = () => {
+	return useMutation({
+		mutationKey: ['db', 'playlists', 'deletePlaylist'],
+		mutationFn: async ({ playlistId }: { playlistId: number }) => {
+			const result = await playlistService.deletePlaylist(playlistId)
+			if (result.isErr()) {
+				throw result.error
+			}
+			return result.value
+		},
+		onSuccess: () => {
+			toast.success('删除成功')
+			void queryClient.invalidateQueries({
+				queryKey: playlistKeys.playlistLists(),
+			})
+		},
+		onError: (error, variables) => {
+			logger.error('删除播放列表失败: ', flatErrorMessage(error), variables)
+			toast.error('删除播放列表失败', {
 				description: flatErrorMessage(error),
 			})
 		},

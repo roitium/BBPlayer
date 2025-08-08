@@ -12,13 +12,13 @@ export default function EditPlaylistMetadataModal({
 	visiable: boolean
 	setVisible: (visible: boolean) => void
 }) {
-	const { mutateAsync: editPlaylistMetadata } = useEditPlaylistMetadata()
+	const { mutate: editPlaylistMetadata } = useEditPlaylistMetadata()
 	const [title, setTitle] = useState(playlist.title)
 	const [description, setDescription] = useState(playlist.description)
 	const [coverUrl, setCoverUrl] = useState(playlist.coverUrl)
 
-	const handleConfirm = useCallback(async () => {
-		await editPlaylistMetadata({
+	const handleConfirm = useCallback(() => {
+		editPlaylistMetadata({
 			playlistId: playlist.id,
 			payload: {
 				title,

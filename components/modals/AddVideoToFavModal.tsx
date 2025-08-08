@@ -66,7 +66,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		isError,
 	} = useGetFavoriteForOneVideo(bvid, personalInfo?.mid)
 
-	const { mutateAsync: dealFavorite, isPending: isMutating } =
+	const { mutate: dealFavorite, isPending: isMutating } =
 		useDealFavoriteForOneVideo()
 
 	const [checkedList, setCheckedList] = useState<string[]>([])
@@ -81,7 +81,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		}
 	}, [playlists])
 
-	const handleConfirm = useCallback(async () => {
+	const handleConfirm = useCallback(() => {
 		if (!playlists || isMutating) return
 
 		const initialCheckedIds = new Set(
@@ -113,7 +113,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		}
 
 		try {
-			await dealFavorite({
+			dealFavorite({
 				bvid,
 				addToFavoriteIds,
 				delInFavoriteIds,

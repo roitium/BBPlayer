@@ -1,6 +1,12 @@
+import { queryClient } from '@/lib/config/queryClient'
 import { playlistService } from '@/lib/services/playlistService'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import { useQuery } from '@tanstack/react-query'
+
+queryClient.setQueryDefaults(['db', 'playlists'], {
+	retry: false,
+	staleTime: 0,
+})
 
 export const playlistKeys = {
 	all: ['db', 'playlists'] as const,
@@ -17,7 +23,6 @@ export const usePlaylistLists = () => {
 	return useQuery({
 		queryKey: playlistKeys.playlistLists(),
 		queryFn: () => returnOrThrowAsync(playlistService.getAllPlaylists()),
-		staleTime: 0,
 	})
 }
 
@@ -26,7 +31,6 @@ export const usePlaylistContents = (playlistId: number) => {
 		queryKey: playlistKeys.playlistContents(playlistId),
 		queryFn: () =>
 			returnOrThrowAsync(playlistService.getPlaylistTracks(playlistId)),
-		staleTime: 0,
 	})
 }
 
@@ -35,7 +39,6 @@ export const usePlaylistMetadata = (playlistId: number) => {
 		queryKey: playlistKeys.playlistMetadata(playlistId),
 		queryFn: () =>
 			returnOrThrowAsync(playlistService.getPlaylistMetadata(playlistId)),
-		staleTime: 0,
 	})
 }
 

@@ -1,7 +1,8 @@
 import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
 import {
-	useCopyRemotePlaylistToLocalPlaylist,
+	useDeletePlaylist,
+	useDuplicatePlaylist,
 	usePlaylistSync,
 } from '@/hooks/mutations/db/playlist'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
@@ -22,8 +23,18 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
-import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
+import { Alert, useWindowDimensions, View } from 'react-native'
+import {
+	Appbar,
+	Button,
+	Dialog,
+	Divider,
+	Menu,
+	Portal,
+	Text,
+	TextInput,
+	useTheme,
+} from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
@@ -50,6 +61,11 @@ export default function LocalPlaylistPage() {
 	)
 	const [editPlaylistModalVisible, setEditPlaylistModalVisible] =
 		useState(false)
+	const [duplicatePlaylistModalVisible, setDuplicatePlaylistModalVisible] =
+		useState(false)
+	const [duplicatePlaylistName, setDuplicatePlaylistName] = useState('')
+	const [functionalMenuVisible, setFunctionalMenuVisible] = useState(false)
+	const dimensions = useWindowDimensions()
 
 	const {
 		data: playlistData,
@@ -71,30 +87,52 @@ export default function LocalPlaylistPage() {
 		isError: isPlaylistMetadataError,
 	} = usePlaylistMetadata(Number(id))
 
-	const { mutateAsync: syncPlaylist } = usePlaylistSync()
+	useEffect(() => {
+		if (playlistMetadata)
+			setDuplicatePlaylistName(playlistMetadata.title + '-副本')
+	}, [playlistMetadata])
 
-	const { mutateAsync: copyToLocalPlaylist } =
-		useCopyRemotePlaylistToLocalPlaylist()
+	const { mutate: syncPlaylist } = usePlaylistSync()
+	const { mutate: duplicatePlaylist } = useDuplicatePlaylist()
+	const { mutate: deletePlaylist } = useDeletePlaylist()
 
-	const onClickCopyToLocalPlaylist = useCallback(async () => {
-		await copyToLocalPlaylist(
+	const onClickDuplicateLocalPlaylist = useCallback(() => {
+		duplicatePlaylist(
 			{
 				playlistId: Number(id),
+				name: duplicatePlaylistName,
 			},
 			{
 				onSuccess: (id) =>
 					navigation.navigate('PlaylistLocal', { id: String(id) }),
 			},
 		)
-	}, [copyToLocalPlaylist, id, navigation])
+		setDuplicatePlaylistModalVisible(false)
+	}, [duplicatePlaylist, duplicatePlaylistName, id, navigation])
 
-	const handleSync = useCallback(async () => {
+	const onClickShowDuplicatePlaylistModal = useCallback(() => {
+		setDuplicatePlaylistModalVisible(true)
+	}, [])
+
+	const onClickDeletePlaylist = useCallback(() => {
+		deletePlaylist(
+			{
+				playlistId: Number(id),
+			},
+			{
+				onSuccess: () => navigation.goBack(),
+			},
+		)
+		navigation.goBack()
+	}, [deletePlaylist, id, navigation])
+
+	const handleSync = useCallback(() => {
 		if (!playlistMetadata || !playlistMetadata.remoteSyncId) {
 			toast.error('无法同步，因为未找到播放列表元数据或 remoteSyncId 为空')
 			return
 		}
 		toast.show('同步中...')
-		await syncPlaylist({
+		syncPlaylist({
 			remoteSyncId: playlistMetadata.remoteSyncId,
 			type: playlistMetadata.type,
 		})
@@ -221,8 +259,8 @@ export default function LocalPlaylistPage() {
 				<Appbar.Content title={playlistMetadata.title} />
 				<Appbar.BackAction onPress={() => navigation.goBack()} />
 				<Appbar.Action
-					icon='pencil'
-					onPress={() => setEditPlaylistModalVisible(true)}
+					icon='dots-vertical'
+					onPress={() => setFunctionalMenuVisible(true)}
 				/>
 			</Appbar.Header>
 
@@ -241,7 +279,7 @@ export default function LocalPlaylistPage() {
 							onClickPlayAll={playAll}
 							onClickSync={handleSync}
 							validTrackCount={filteredPlaylistData.length}
-							onClickCopyToLocalPlaylist={onClickCopyToLocalPlaylist}
+							onClickCopyToLocalPlaylist={onClickShowDuplicatePlaylistModal}
 						/>
 					}
 					keyExtractor={keyExtractor}
@@ -271,11 +309,85 @@ export default function LocalPlaylistPage() {
 				/>
 			)}
 
-			<EditPlaylistMetadataModal
-				playlist={playlistMetadata}
-				visiable={editPlaylistModalVisible}
-				setVisible={setEditPlaylistModalVisible}
-			/>
+			{playlistMetadata.type === 'local' && (
+				<EditPlaylistMetadataModal
+					playlist={playlistMetadata}
+					visiable={editPlaylistModalVisible}
+					setVisible={setEditPlaylistModalVisible}
+				/>
+			)}
+			<Portal>
+				<Dialog
+					visible={duplicatePlaylistModalVisible}
+					onDismiss={() => setDuplicatePlaylistModalVisible(false)}
+				>
+					<Dialog.Title>复制播放列表</Dialog.Title>
+					<Dialog.Content>
+						<TextInput
+							label='新播放列表名称'
+							defaultValue={duplicatePlaylistName}
+							onChangeText={setDuplicatePlaylistName}
+							mode='outlined'
+							numberOfLines={1}
+							style={{ maxHeight: 200 }}
+							textAlignVertical='top'
+						/>
+					</Dialog.Content>
+					<Dialog.Actions>
+						<Button onPress={() => setDuplicatePlaylistModalVisible(false)}>
+							取消
+						</Button>
+						<Button onPress={onClickDuplicateLocalPlaylist}>确定</Button>
+					</Dialog.Actions>
+				</Dialog>
+			</Portal>
+
+			<Portal>
+				<Menu
+					visible={functionalMenuVisible}
+					onDismiss={() => setFunctionalMenuVisible(false)}
+					anchor={{
+						x: dimensions.width - 10,
+						y: 60 + insets.top,
+					}}
+				>
+					{playlistMetadata.type === 'local' && (
+						<Menu.Item
+							onPress={() => {
+								setFunctionalMenuVisible(false)
+								setEditPlaylistModalVisible(true)
+							}}
+							title='编辑播放列表信息'
+							leadingIcon='pencil'
+						/>
+					)}
+					<Menu.Item
+						onPress={() => {
+							Alert.alert(
+								'删除播放列表',
+								'确定要删除此播放列表吗？',
+								[
+									{
+										text: '取消',
+										style: 'cancel',
+									},
+									{
+										text: '确定',
+										onPress: () => {
+											setFunctionalMenuVisible(false)
+											onClickDeletePlaylist()
+										},
+									},
+								],
+								{ cancelable: true },
+							)
+						}}
+						title='删除播放列表'
+						leadingIcon='delete'
+						titleStyle={{ color: colors.error }}
+					/>
+				</Menu>
+			</Portal>
 		</View>
 	)
 }
