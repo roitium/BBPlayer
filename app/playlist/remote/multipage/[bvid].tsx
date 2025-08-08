@@ -12,7 +12,7 @@ import type {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
-import type { Track } from '@/types/core/media'
+import type { BilibiliTrack } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -29,45 +29,20 @@ import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
 
-const mapApiItemToViewTrack = (
+const mapApiItemToTrack = (
 	mp: BilibiliMultipageVideo,
 	video: BilibiliVideoDetails,
-) => {
+): BilibiliTrack => {
 	return {
 		id: mp.cid,
-		cid: mp.cid,
-		bvid: video.bvid,
+		uniqueKey: `bilibili::${video.bvid}::${video.cid}`,
+		source: 'bilibili',
 		title: mp.part,
 		artist: {
 			id: video.owner.mid,
 			name: video.owner.name,
-			source: 'bilibili',
-		},
-		coverUrl: mp.first_frame,
-		duration: mp.duration,
-		source: 'bilibili',
-		isMultiPage: true,
-	}
-}
-
-type UITrack = ReturnType<typeof mapApiItemToViewTrack>
-
-const mapApiItemToTrack = (
-	mp: BilibiliMultipageVideo,
-	video: BilibiliVideoDetails,
-): Track => {
-	return {
-		id: mp.cid,
-		uniqueKey: `mp::${video.bvid}::${video.cid}`,
-		source: 'bilibili',
-		title: mp.part,
-		artist: {
-			id: 1145141919810, // FIXME: Don't ask me why, bro.
-			name: video.owner.name,
-			signature: '你所热爱的，就是你的生活',
 			remoteId: video.owner.mid.toString(),
 			source: 'bilibili',
-			avatarUrl: null,
 			createdAt: new Date(video.pubdate),
 			updatedAt: new Date(video.pubdate),
 		},
@@ -115,31 +90,25 @@ export default function MultipagePage() {
 		if (!rawMultipageData || !videoData) {
 			return []
 		}
-		return rawMultipageData.map((item) =>
-			mapApiItemToViewTrack(item, videoData),
-		)
+		return rawMultipageData.map((item) => mapApiItemToTrack(item, videoData))
 	}, [rawMultipageData, videoData])
 
 	const { mutate: syncMultipage } = usePlaylistSync()
 
 	const playTrack = useCallback(
-		(track: UITrack, playNext = false) => {
-			if (!rawMultipageData || !videoData) return
-			const apiItem = rawMultipageData.find((item) => item.cid === track.cid)
-			if (!apiItem) return
-			const trackToPlay = mapApiItemToTrack(apiItem, videoData)
+		(track: BilibiliTrack, playNext = false) => {
 			void addToQueue({
-				tracks: [trackToPlay],
+				tracks: [track],
 				playNow: !playNext,
 				clearQueue: false,
 				playNext: playNext,
 			})
 		},
-		[addToQueue, rawMultipageData, videoData],
+		[addToQueue],
 	)
 
 	const trackMenuItems = useCallback(
-		(item: UITrack) => [
+		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -150,7 +119,7 @@ export default function MultipagePage() {
 	)
 
 	const renderItem = useCallback(
-		({ item, index }: { item: UITrack; index: number }) => {
+		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
@@ -188,7 +157,7 @@ export default function MultipagePage() {
 		setRefreshing(false)
 	}, [bvid, navigation, syncMultipage])
 
-	const keyExtractor = useCallback((item: UITrack) => {
+	const keyExtractor = useCallback((item: BilibiliTrack) => {
 		return String(item.id)
 	}, [])
 

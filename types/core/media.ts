@@ -1,10 +1,10 @@
 export interface Artist {
 	id: number
 	name: string
-	avatarUrl: string | null
-	signature: string | null
+	avatarUrl?: string | null
+	signature?: string | null
 	source: 'bilibili' | 'local'
-	remoteId: string | null
+	remoteId?: string | null
 	createdAt: Date
 	updatedAt: Date
 }

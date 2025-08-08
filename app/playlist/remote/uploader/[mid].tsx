@@ -9,7 +9,11 @@ import {
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/useUserData'
 import { bv2av } from '@/lib/api/bilibili/utils'
-import type { BilibiliUserUploadedVideosResponse } from '@/types/apis/bilibili'
+import type {
+	BilibiliUserInfo,
+	BilibiliUserUploadedVideosResponse,
+} from '@/types/apis/bilibili'
+import type { BilibiliTrack } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/time'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -33,26 +37,37 @@ import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
 
-const mapApiItemToViewTrack = (
+const mapApiItemToTrack = (
 	apiItem: BilibiliUserUploadedVideosResponse['list']['vlist'][0],
-) => {
+	uploaderData: BilibiliUserInfo,
+): BilibiliTrack => {
 	return {
 		id: bv2av(apiItem.bvid),
-		bvid: apiItem.bvid,
+		uniqueKey: `bilibili::${apiItem.bvid}`,
+		source: 'bilibili',
 		title: apiItem.title,
 		artist: {
-			id: apiItem.aid,
-			name: apiItem.author,
+			id: uploaderData.mid,
+			name: uploaderData.name,
+			avatarUrl: uploaderData.face,
 			source: 'bilibili',
+			remoteId: uploaderData.mid.toString(),
+			createdAt: new Date(apiItem.created),
+			updatedAt: new Date(apiItem.created),
 		},
 		coverUrl: apiItem.pic,
 		duration: formatMMSSToSeconds(apiItem.length),
-		source: 'bilibili', // 明确来源
-		isMultiPage: false,
+		playHistory: [],
+		bilibiliMetadata: {
+			bvid: apiItem.bvid,
+			cid: null,
+			isMultiPage: false,
+			videoIsValid: true,
+		},
+		createdAt: new Date(apiItem.created),
+		updatedAt: new Date(apiItem.created),
 	}
 }
-
-type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
 export default function UploaderPage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistUploader'>>()
@@ -82,14 +97,14 @@ export default function UploaderPage() {
 	} = useOtherUserInfo(Number(mid))
 
 	const tracks = useMemo(() => {
-		if (!uploadedVideos) return []
+		if (!uploadedVideos || !uploaderUserInfo) return []
 		return uploadedVideos.pages
 			.flatMap((page) => page.list.vlist)
-			.map(mapApiItemToViewTrack)
-	}, [uploadedVideos])
+			.map((item) => mapApiItemToTrack(item, uploaderUserInfo))
+	}, [uploadedVideos, uploaderUserInfo])
 
 	const trackMenuItems = useCallback(
-		(item: UITrack) => [
+		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -108,7 +123,9 @@ export default function UploaderPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
+					navigation.navigate('PlaylistMultipage', {
+						bvid: item.bilibiliMetadata.bvid,
+					})
 				},
 			},
 		],
@@ -116,7 +133,7 @@ export default function UploaderPage() {
 	)
 
 	const renderItem = useCallback(
-		({ item, index }: { item: UITrack; index: number }) => {
+		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
@@ -135,7 +152,10 @@ export default function UploaderPage() {
 		[trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
+	const keyExtractor = useCallback(
+		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
+		[],
+	)
 
 	useEffect(() => {
 		if (typeof mid !== 'string') {

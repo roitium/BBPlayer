@@ -1,7 +1,7 @@
 export interface BilibiliMetadataPayload {
 	bvid: string
 	isMultiPage: boolean
-	cid?: number
+	cid?: number | null
 	videoIsValid: boolean
 }
 
@@ -11,8 +11,8 @@ export interface LocalMetadataPayload {
 
 export interface CreateTrackPayloadBase {
 	title: string
-	artistId?: number
-	coverUrl?: string
+	artistId?: number | null
+	coverUrl?: string | null
 	duration: number
 }
 
@@ -43,9 +43,10 @@ export type CreateTrackPayload =
 
 export interface UpdateTrackPayloadBase {
 	id: number
-	title?: string
-	coverUrl?: string
-	duration?: number
+	title?: string | null
+	coverUrl?: string | null
+	duration?: number | null
+	artistId?: number | null
 }
 
 interface UpdateBilibiliTrackPayload extends UpdateTrackPayloadBase {

@@ -1,13 +1,13 @@
 export interface CreateArtistPayload {
 	name: string
 	source: 'bilibili' | 'local'
-	remoteId?: string
-	avatarUrl?: string
-	signature?: string
+	remoteId?: string | null
+	avatarUrl?: string | null
+	signature?: string | null
 }
 
 export interface UpdateArtistPayload {
-	name?: string
-	avatarUrl?: string
-	signature?: string
+	name?: string | null
+	avatarUrl?: string | null
+	signature?: string | null
 }

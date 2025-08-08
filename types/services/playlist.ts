@@ -1,16 +1,16 @@
 export interface CreatePlaylistPayload {
 	title: string
-	description?: string
-	coverUrl?: string
-	authorId?: number
+	description?: string | null
+	coverUrl?: string | null
+	authorId?: number | null
 	type: 'favorite' | 'collection' | 'multi_page' | 'local'
-	remoteSyncId?: number
+	remoteSyncId?: number | null
 }
 
 export interface UpdatePlaylistPayload {
-	title?: string
-	description?: string
-	coverUrl?: string
+	title?: string | null
+	description?: string | null
+	coverUrl?: string | null
 }
 
 export interface ReorderSingleTrackPayload {

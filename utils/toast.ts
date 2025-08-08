@@ -4,6 +4,7 @@ import Toast from 'react-native-toast-message'
 type Options = Omit<ToastShowParams, 'text1' | 'type'> & {
 	description?: string
 	id?: string
+	duration?: number
 }
 
 const show = (message: string, options?: Options) => {
@@ -12,6 +13,8 @@ const show = (message: string, options?: Options) => {
 		...options,
 		text1: message,
 		text2: options?.description,
+		visibilityTime: options?.duration ?? 3000,
+		autoHide: options?.duration === Number.POSITIVE_INFINITY ? false : true,
 	})
 }
 
@@ -21,6 +24,8 @@ const success = (message: string, options?: Options) => {
 		...options,
 		text1: message,
 		text2: options?.description,
+		visibilityTime: options?.duration ?? 3000,
+		autoHide: options?.duration === Number.POSITIVE_INFINITY ? false : true,
 	})
 }
 
@@ -30,6 +35,8 @@ const error = (message: string, options?: Options) => {
 		...options,
 		text1: message,
 		text2: options?.description,
+		visibilityTime: options?.duration ?? 3000,
+		autoHide: options?.duration === Number.POSITIVE_INFINITY ? false : true,
 	})
 }
 
@@ -39,6 +46,8 @@ const info = (message: string, options?: Options) => {
 		...options,
 		text1: message,
 		text2: options?.description,
+		visibilityTime: options?.duration ?? 3000,
+		autoHide: options?.duration === Number.POSITIVE_INFINITY ? false : true,
 	})
 }
 

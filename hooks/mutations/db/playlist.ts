@@ -4,8 +4,10 @@ import db from '@/lib/db/db'
 import { playlistFacade } from '@/lib/facades/playlist'
 import { syncFacade } from '@/lib/facades/sync'
 import { playlistService } from '@/lib/services/playlistService'
+import { trackService } from '@/lib/services/trackService'
 import type { Playlist } from '@/types/core/media'
 import type { UpdatePlaylistPayload } from '@/types/services/playlist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
@@ -57,35 +59,52 @@ export const usePlaylistSync = () => {
 	})
 }
 
-export const useUpdateLocalPlaylistTracks = () => {
+/**
+ * 针对单个音轨，批量更新它所在的本地播放列表。
+ * 当该 track 不存在时，会自动创建
+ * @returns
+ */
+export const useUpdateTrackLocalPlaylists = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'updateLocalPlaylistTracks'],
+		mutationKey: ['db', 'playlists', 'updateTrackLocalPlaylists'],
 		mutationFn: async ({
 			toAddPlaylistIds,
 			toRemovePlaylistIds,
-			trackId,
+			trackPayload,
 		}: {
 			toAddPlaylistIds: number[]
 			toRemovePlaylistIds: number[]
-			trackId: number
+			trackPayload: CreateTrackPayload
 		}) => {
-			await db.transaction(async (tx) => {
+			return await db.transaction(async (tx) => {
 				const playlistSvc = playlistService.withDB(tx)
+				const trackSvc = trackService.withDB(tx)
+				const track = await trackSvc.findOrCreateTrack(trackPayload)
+				if (track.isErr()) {
+					throw track.error
+				}
+				const trackId = track.value.id
 				for (const playlistId of toAddPlaylistIds) {
 					await playlistSvc.addTrackToLocalPlaylist(playlistId, trackId)
 				}
 				for (const playlistId of toRemovePlaylistIds) {
 					await playlistSvc.removeTrackFromLocalPlaylist(playlistId, trackId)
 				}
+				return trackId
 			})
 		},
-		onSuccess: (_, variables) => {
-			const { toAddPlaylistIds, toRemovePlaylistIds, trackId } = variables
+		onSuccess: (trackId, variables) => {
+			const { toAddPlaylistIds, toRemovePlaylistIds } = variables
 			toast.success('操作成功')
 			const promises = []
 			promises.push(
 				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistsContainingTrack(trackId),
+				}),
+			)
+			promises.push(
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistLists(),
 				}),
 			)
 			for (const id of [...toAddPlaylistIds, ...toRemovePlaylistIds]) {

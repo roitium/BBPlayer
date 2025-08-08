@@ -46,7 +46,7 @@ export class PlaylistFacade {
 				if (!playlistMetadata)
 					throw new FacadeError(`未找到播放列表：${playlistId}`)
 
-				logger.debug('step1: 获取播放列表', playlistMetadata)
+				logger.debug('step1: 获取播放列表', playlistMetadata.id)
 
 				const localPlaylistResult = await playlistSvc.createPlaylist({
 					title: name,

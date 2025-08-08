@@ -169,7 +169,7 @@ export class TrackService {
 		const updateResult = ResultAsync.fromPromise(
 			this.db
 				.update(schema.tracks)
-				.set(dataToUpdate)
+				.set({ ...dataToUpdate, title: dataToUpdate.title ?? undefined })
 				.where(eq(schema.tracks.id, id)),
 			(e) => new DatabaseError(`更新 track 失败：${id}`, e),
 		)

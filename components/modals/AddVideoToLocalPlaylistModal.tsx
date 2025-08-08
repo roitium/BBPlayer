@@ -9,12 +9,18 @@ import {
 	useTheme,
 } from 'react-native-paper'
 
-import { useUpdateLocalPlaylistTracks } from '@/hooks/mutations/db/playlist'
+import { useUpdateTrackLocalPlaylists } from '@/hooks/mutations/db/playlist'
 import {
 	usePlaylistLists,
 	usePlaylistsContainingTrack,
 } from '@/hooks/queries/db/usePlaylist'
+import { artistService } from '@/lib/services/artistService'
 import type { Playlist, Track } from '@/types/core/media'
+import { flatErrorMessage } from '@/utils/error'
+import log from '@/utils/log'
+import toast from '@/utils/toast'
+
+const logger = log.extend('Modals/AddVideoToLocalPlaylistModal')
 
 const PlaylistListItem = memo(function PlaylistListItem({
 	id,
@@ -71,7 +77,7 @@ const AddVideoToLocalPlaylistModal = memo(
 		} = usePlaylistsContainingTrack(track.id)
 
 		const { mutate: updateTracks, isPending: isMutating } =
-			useUpdateLocalPlaylistTracks()
+			useUpdateTrackLocalPlaylists()
 
 		const [checkedPlaylistIds, setCheckedPlaylistIds] = useState<number[]>([])
 
@@ -103,7 +109,7 @@ const AddVideoToLocalPlaylistModal = memo(
 			})
 		}, [])
 
-		const handleConfirm = useCallback(() => {
+		const handleConfirm = useCallback(async () => {
 			if (isMutating) return
 
 			const currentCheckedIds = new Set(checkedPlaylistIds)
@@ -119,19 +125,46 @@ const AddVideoToLocalPlaylistModal = memo(
 				setVisible(false)
 				return
 			}
+
+			let artistId
+			if (track.artist) {
+				artistId = await artistService.findOrCreateArtist({
+					name: track.artist.name,
+					source: track.artist.source,
+					remoteId: track.artist.remoteId,
+					avatarUrl: track.artist.avatarUrl,
+					signature: track.artist.signature,
+				})
+				if (artistId.isErr()) {
+					toast.error('查询或创建歌手失败', {
+						description: flatErrorMessage(artistId.error),
+						duration: Number.POSITIVE_INFINITY,
+					})
+					logger.error('查询或创建歌手失败: ', flatErrorMessage(artistId.error))
+					return
+				}
+			}
+			logger.debug(
+				'查询或创建该 track 对应的 artist 完成：',
+				artistId?.value.id,
+			)
 			updateTracks({
 				toAddPlaylistIds,
 				toRemovePlaylistIds,
-				trackId: track.id,
+				trackPayload: {
+					...track,
+					artistId: artistId?.value.id,
+				},
 			})
+			logger.debug('更新本地播放列表完成')
 			setVisible(false)
 		}, [
 			isMutating,
 			checkedPlaylistIds,
 			initialCheckedPlaylistIdSet,
 			updateTracks,
+			track,
 			setVisible,
-			track.id,
 		])
 
 		const handleDismiss = () => {

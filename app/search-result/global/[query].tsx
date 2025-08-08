@@ -1,11 +1,12 @@
+import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useSearchResults } from '@/hooks/queries/bilibili/useSearchData'
 import type { BilibiliSearchVideo } from '@/types/apis/bilibili'
+import type { BilibiliTrack } from '@/types/core/media'
 import { formatMMSSToSeconds } from '@/utils/time'
-import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
@@ -19,24 +20,33 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
-const mapApiItemToViewTrack = (apiItem: BilibiliSearchVideo) => {
+const mapApiItemToTrack = (apiItem: BilibiliSearchVideo): BilibiliTrack => {
 	return {
 		id: apiItem.aid,
-		bvid: apiItem.bvid,
-		title: apiItem.title,
+		uniqueKey: `bilibili::${apiItem.bvid}`,
+		source: 'bilibili',
+		title: apiItem.title.replace(/<em[^>]*>|<\/em>/g, ''),
 		artist: {
-			id: apiItem.author,
+			id: apiItem.mid,
 			name: apiItem.author,
+			remoteId: apiItem.mid.toString(),
 			source: 'bilibili',
+			createdAt: new Date(apiItem.senddate),
+			updatedAt: new Date(apiItem.senddate),
 		},
-		coverUrl: apiItem.pic,
-		duration: formatMMSSToSeconds(apiItem.duration),
-		source: 'bilibili', // 明确来源
-		isMultiPage: false, // 搜索结果里的视频不当作分P处理
+		coverUrl: `https:${apiItem.pic}`,
+		duration: apiItem.duration ? formatMMSSToSeconds(apiItem.duration) : 0,
+		playHistory: [],
+		createdAt: new Date(apiItem.senddate),
+		updatedAt: new Date(apiItem.senddate),
+		bilibiliMetadata: {
+			bvid: apiItem.bvid,
+			cid: null,
+			isMultiPage: false,
+			videoIsValid: true,
+		},
 	}
 }
-
-type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
@@ -54,7 +64,13 @@ export default function SearchResultsPage() {
 		fetchNextPage,
 	} = useSearchResults(query)
 
-	const { trackMenuItems } = useSearchInteractions()
+	const {
+		trackMenuItems,
+		playTrack,
+		currentModalTrack,
+		modalVisible,
+		setModalVisible,
+	} = useSearchInteractions()
 
 	const uniqueSearchData = useMemo(() => {
 		if (!searchData?.pages) {
@@ -64,24 +80,33 @@ export default function SearchResultsPage() {
 		const allTracks = searchData.pages.flatMap((page) => page.result)
 		const uniqueMap = new Map(allTracks.map((track) => [track.bvid, track]))
 		const uniqueTracks = [...uniqueMap.values()]
-		return uniqueTracks.map(mapApiItemToViewTrack)
+		return uniqueTracks.map(mapApiItemToTrack)
 	}, [searchData])
 
 	const renderSearchResultItem = useCallback(
-		({ item, index }: { item: UITrack; index: number }) => {
+		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
-					onTrackPress={() => toast.show('暂未实现')}
-					menuItems={trackMenuItems()}
-					data={item}
+					onTrackPress={() => playTrack(item)}
+					menuItems={trackMenuItems(item)}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},
-		[trackMenuItems],
+		[playTrack, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
+	const keyExtractor = useCallback(
+		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
+		[],
+	)
 
 	if (isPendingSearchData) {
 		return <PlaylistLoading />
@@ -138,12 +163,13 @@ export default function SearchResultsPage() {
 				}
 			/>
 
-			{/* <AddToFavoriteListsModal
-				key={currentModalBvid}
-				bvid={currentModalBvid}
-				visible={modalVisible}
-				setVisible={setModalVisible}
-			/> */}
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={modalVisible}
+					setVisible={setModalVisible}
+				/>
+			)}
 		</View>
 	)
 }

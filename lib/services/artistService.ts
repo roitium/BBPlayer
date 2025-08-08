@@ -126,7 +126,7 @@ export class ArtistService {
 
 				const [updated] = await this.db
 					.update(schema.artists)
-					.set(payload)
+					.set({ ...payload, name: payload.name ?? undefined })
 					.where(eq(schema.artists.id, artistId))
 					.returning()
 

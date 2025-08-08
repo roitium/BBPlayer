@@ -9,7 +9,7 @@ import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteDa
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
-import type { Track } from '@/types/core/media'
+import type { BilibiliTrack } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -26,40 +26,19 @@ import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
 
-const mapApiItemToViewTrack = (apiItem: BilibiliMediaItemInCollection) => {
+const mapApiItemToTrack = (
+	apiItem: BilibiliMediaItemInCollection,
+): BilibiliTrack => {
 	return {
 		id: bv2av(apiItem.bvid),
-		cid: apiItem.id,
-		bvid: apiItem.bvid,
-		title: apiItem.title,
-		artist: {
-			id: apiItem.id,
-			name: apiItem.upper.name,
-			remoteId: apiItem.upper.mid.toString(),
-			source: 'bilibili',
-		},
-		coverUrl: apiItem.cover,
-		duration: apiItem.duration,
-		source: 'bilibili', // 明确来源
-		isMultiPage: false, // 合集里的视频不当作分P处理
-	}
-}
-
-type UITrack = ReturnType<typeof mapApiItemToViewTrack>
-
-const mapApiItemToTrack = (apiItem: BilibiliMediaItemInCollection): Track => {
-	return {
-		id: bv2av(apiItem.bvid),
-		uniqueKey: `collection::${apiItem.bvid}`,
+		uniqueKey: `bilibili::${apiItem.bvid}`,
 		source: 'bilibili',
 		title: apiItem.title,
 		artist: {
-			id: 1145141919810, // FIXME: Don't ask me why, bro.
+			id: apiItem.upper.mid,
 			name: apiItem.upper.name,
-			signature: '你所热爱的，就是你的生活',
 			remoteId: apiItem.upper.mid.toString(),
 			source: 'bilibili',
-			avatarUrl: null,
 			createdAt: new Date(apiItem.pubtime),
 			updatedAt: new Date(apiItem.pubtime),
 		},
@@ -96,29 +75,25 @@ export default function CollectionPage() {
 		isError: isCollectionDataError,
 		refetch,
 	} = useCollectionAllContents(Number(id))
-	const tracksForDisplay = useMemo(
-		() => collectionData?.medias.map(mapApiItemToViewTrack) ?? [],
+	const tracks = useMemo(
+		() => collectionData?.medias.map(mapApiItemToTrack) ?? [],
 		[collectionData],
 	)
 
 	const handlePlayTrack = useCallback(
-		(item: UITrack, playNext = false) => {
-			if (!collectionData?.medias) return
-			const apiItem = collectionData?.medias.find((m) => m.bvid === item.bvid)
-			if (!apiItem) return
-			const track = mapApiItemToTrack(apiItem)
+		(item: BilibiliTrack, playNext = false) => {
 			void addToQueue({
-				tracks: [track],
+				tracks: [item],
 				playNow: !playNext,
 				clearQueue: false,
 				playNext: playNext,
 			})
 		},
-		[addToQueue, collectionData?.medias],
+		[addToQueue],
 	)
 
 	const trackMenuItems = useCallback(
-		(item: UITrack) => [
+		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -129,7 +104,9 @@ export default function CollectionPage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
+					navigation.navigate('PlaylistMultipage', {
+						bvid: item.bilibiliMetadata.bvid,
+					})
 				},
 			},
 		],
@@ -137,7 +114,7 @@ export default function CollectionPage() {
 	)
 
 	const renderItem = useCallback(
-		({ item, index }: { item: UITrack; index: number }) => {
+		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
@@ -157,7 +134,10 @@ export default function CollectionPage() {
 		[handlePlayTrack, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
+	const keyExtractor = useCallback(
+		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
+		[],
+	)
 
 	const { mutate: syncCollection } = usePlaylistSync()
 
@@ -220,7 +200,7 @@ export default function CollectionPage() {
 				}}
 			>
 				<LegendList
-					data={tracksForDisplay}
+					data={tracks}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}

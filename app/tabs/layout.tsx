@@ -24,10 +24,11 @@ export default function TabLayout() {
 
 	return (
 		<Tab.Navigator
-			disablePageAnimations={true}
+			disablePageAnimations={false}
 			tabBarActiveTintColor={themes.primary}
 			activeIndicatorColor={themes.primaryContainer}
 			tabBarStyle={{ backgroundColor: themes.elevation.level1 }}
+			initialRouteName='Library'
 		>
 			<Tab.Screen
 				name='Home'

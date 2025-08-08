@@ -109,6 +109,7 @@ interface BilibiliSearchVideo {
 	author: string
 	duration: string
 	senddate: number
+	mid: number
 }
 
 /**

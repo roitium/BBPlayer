@@ -1,3 +1,4 @@
+import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
@@ -9,7 +10,7 @@ import {
 import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import toast from '@/utils/toast'
+import type { BilibiliTrack } from '@/types/core/media'
 import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
@@ -29,25 +30,36 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
-const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
+const mapApiItemToTrack = (
+	apiItem: BilibiliFavoriteListContent,
+): BilibiliTrack => {
 	return {
-		id: bv2av(apiItem.bvid), // 仅仅用于列表的 key，不会作为真实 id 传递
-		cid: apiItem.id,
-		bvid: apiItem.bvid,
+		id: bv2av(apiItem.bvid),
+		uniqueKey: `bilibili::${apiItem.bvid}`,
+		source: 'bilibili',
 		title: apiItem.title,
 		artist: {
-			id: apiItem.id,
+			id: apiItem.upper.mid,
 			name: apiItem.upper.name,
+			remoteId: apiItem.upper.mid.toString(),
 			source: 'bilibili',
+			avatarUrl: apiItem.upper.face,
+			createdAt: new Date(apiItem.pubdate),
+			updatedAt: new Date(apiItem.pubdate),
 		},
 		coverUrl: apiItem.cover,
 		duration: apiItem.duration,
-		source: 'bilibili', // 明确来源
-		isMultiPage: false, // 收藏夹里的视频不当作分P处理
+		playHistory: [],
+		createdAt: new Date(apiItem.pubdate),
+		updatedAt: new Date(apiItem.pubdate),
+		bilibiliMetadata: {
+			bvid: apiItem.bvid,
+			cid: null,
+			isMultiPage: false,
+			videoIsValid: true,
+		},
 	}
 }
-
-type UITrack = ReturnType<typeof mapApiItemToViewTrack>
 
 export default function SearchResultsPage() {
 	const { colors } = useTheme()
@@ -70,31 +82,45 @@ export default function SearchResultsPage() {
 		query,
 		favoriteFolderList?.at(0)?.id,
 	)
-	const tracksForDisplay = useMemo(
+	const tracks = useMemo(
 		() =>
-			searchData?.pages
-				.flatMap((page) => page.medias)
-				.map(mapApiItemToViewTrack) ?? [],
+			searchData?.pages.flatMap((page) => page.medias).map(mapApiItemToTrack) ??
+			[],
 		[searchData],
 	)
 
-	const { trackMenuItems } = useSearchInteractions()
+	const {
+		trackMenuItems,
+		playTrack,
+		currentModalTrack,
+		modalVisible,
+		setModalVisible,
+	} = useSearchInteractions()
 
 	const renderSearchResultItem = useCallback(
-		({ item, index }: { item: UITrack; index: number }) => {
+		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
-					onTrackPress={() => toast.show('暂未实现')}
-					menuItems={trackMenuItems()}
-					data={item}
+					onTrackPress={() => playTrack(item)}
+					menuItems={trackMenuItems(item)}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
 				/>
 			)
 		},
-		[trackMenuItems],
+		[playTrack, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
+	const keyExtractor = useCallback(
+		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
+		[],
+	)
 
 	if (isPendingSearchData) {
 		return <PlaylistLoading />
@@ -120,7 +146,7 @@ export default function SearchResultsPage() {
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
-				data={tracksForDisplay}
+				data={tracks}
 				renderItem={renderSearchResultItem}
 				ItemSeparatorComponent={() => <Divider />}
 				keyExtractor={keyExtractor}
@@ -160,12 +186,13 @@ export default function SearchResultsPage() {
 				showsVerticalScrollIndicator={false}
 			/>
 
-			{/* <AddToFavoriteListsModal
-				key={currentModalBvid}
-				bvid={currentModalBvid}
-				visible={modalVisible}
-				setVisible={setModalVisible}
-			/> */}
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={modalVisible}
+					setVisible={setModalVisible}
+				/>
+			)}
 		</View>
 	)
 }

@@ -9,7 +9,7 @@ import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/useFavoriteDat
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import type { Track } from '@/types/core/media'
+import type { BilibiliTrack } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -32,39 +32,20 @@ import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
 
-const mapApiItemToViewTrack = (apiItem: BilibiliFavoriteListContent) => {
-	return {
-		id: bv2av(apiItem.bvid), // 仅仅用于列表的 key，不会作为真实 id 传递
-		cid: apiItem.id,
-		bvid: apiItem.bvid,
-		title: apiItem.title,
-		artist: {
-			id: apiItem.id,
-			name: apiItem.upper.name,
-			source: 'bilibili',
-		},
-		coverUrl: apiItem.cover,
-		duration: apiItem.duration,
-		source: 'bilibili', // 明确来源
-		isMultiPage: false, // 收藏夹里的视频不当作分P处理
-	}
-}
-
-type UITrack = ReturnType<typeof mapApiItemToViewTrack>
-
-const mapApiItemToTrack = (apiItem: BilibiliFavoriteListContent): Track => {
+const mapApiItemToTrack = (
+	apiItem: BilibiliFavoriteListContent,
+): BilibiliTrack => {
 	return {
 		id: bv2av(apiItem.bvid),
-		uniqueKey: `favorite::${apiItem.bvid}`,
+		uniqueKey: `bilibili::${apiItem.bvid}`,
 		source: 'bilibili',
 		title: apiItem.title,
 		artist: {
-			id: 1145141919810, // FIXME: Don't ask me why, bro.
+			id: apiItem.upper.mid,
 			name: apiItem.upper.name,
-			signature: '你所热爱的，就是你的生活',
 			remoteId: apiItem.upper.mid.toString(),
 			source: 'bilibili',
-			avatarUrl: null,
+			avatarUrl: apiItem.upper.face,
 			createdAt: new Date(apiItem.pubdate),
 			updatedAt: new Date(apiItem.pubdate),
 		},
@@ -103,36 +84,30 @@ export default function FavoritePage() {
 		refetch,
 		hasNextPage,
 	} = useInfiniteFavoriteList(Number(id))
-	const tracksForDisplay = useMemo(
+	const tracks = useMemo(
 		() =>
 			favoriteData?.pages
 				.flatMap((page) => page.medias)
-				.map(mapApiItemToViewTrack) ?? [],
+				.map(mapApiItemToTrack) ?? [],
 		[favoriteData],
 	)
 
 	const { mutate: syncFavorite } = usePlaylistSync()
 
 	const handlePlayTrack = useCallback(
-		(item: UITrack, playNext = false) => {
-			if (!favoriteData) return
-			const apiItem = favoriteData.pages
-				.flatMap((page) => page.medias)
-				.find((m) => m.bvid === item.bvid)
-			if (!apiItem) return
-			const track = mapApiItemToTrack(apiItem)
+		(item: BilibiliTrack, playNext = false) => {
 			void addToQueue({
-				tracks: [track],
+				tracks: [item],
 				playNow: !playNext,
 				clearQueue: false,
 				playNext: playNext,
 			})
 		},
-		[addToQueue, favoriteData],
+		[addToQueue],
 	)
 
 	const trackMenuItems = useCallback(
-		(item: UITrack) => [
+		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
@@ -143,7 +118,9 @@ export default function FavoritePage() {
 				title: '作为分P视频展示',
 				leadingIcon: 'eye-outline',
 				onPress: () => {
-					navigation.navigate('PlaylistMultipage', { bvid: item.bvid })
+					navigation.navigate('PlaylistMultipage', {
+						bvid: item.bilibiliMetadata.bvid,
+					})
 				},
 			},
 		],
@@ -173,7 +150,7 @@ export default function FavoritePage() {
 	}, [favoriteData?.pages, id, navigation, syncFavorite])
 
 	const renderItem = useCallback(
-		({ item, index }: { item: UITrack; index: number }) => {
+		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
@@ -192,7 +169,10 @@ export default function FavoritePage() {
 		[handlePlayTrack, trackMenuItems],
 	)
 
-	const keyExtractor = useCallback((item: UITrack) => item.bvid, [])
+	const keyExtractor = useCallback(
+		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
+		[],
+	)
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
@@ -230,7 +210,7 @@ export default function FavoritePage() {
 				}}
 			>
 				<LegendList
-					data={tracksForDisplay}
+					data={tracks}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={
