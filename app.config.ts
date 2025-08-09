@@ -94,5 +94,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	},
 	ios: {
 		bundleIdentifier: 'com.roitium.bbplayer',
+		runtimeVersion: {
+			policy: 'appVersion',
+		},
 	},
 })
