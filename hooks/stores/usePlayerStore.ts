@@ -533,7 +533,11 @@ export const usePlayerStore = create<PlayerStore>()(
 		{
 			name: 'player-storage-full',
 			storage: createJSONStorage(() => zustandStorage),
-			partialize: (state) => state,
+			partialize: (state) => ({
+				...state,
+				isPlaying: false,
+				isBuffering: false,
+			}),
 		},
 	),
 )
