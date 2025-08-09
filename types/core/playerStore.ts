@@ -7,11 +7,11 @@ import type { Track } from './media'
 // 播放器状态接口
 interface PlayerState {
 	// 队列相关
-	tracks: Record<string, Track> // 歌曲数据源，key 是 id
-	orderedList: string[] // 顺序播放列表，存储 id
-	shuffledList: string[] // 随机播放列表，存储 id
+	tracks: Record<string, Track> // 歌曲数据源，key 是 uniqueKey
+	orderedList: string[] // 顺序播放列表，存储 uniqueKey
+	shuffledList: string[] // 随机播放列表，存储 uniqueKey
 
-	currentTrackId: string | null // 当前播放歌曲的 id
+	currentTrackUniqueKey: string | null // 当前播放歌曲的 uniqueKey
 
 	// 播放状态
 	isPlaying: boolean

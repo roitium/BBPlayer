@@ -49,7 +49,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				tracks: {},
 				orderedList: [],
 				shuffledList: [],
-				currentTrackId: null,
+				currentTrackUniqueKey: null,
 				isPlaying: false,
 				isBuffering: false,
 				repeatMode: RepeatMode.Off,
@@ -65,14 +65,16 @@ export const usePlayerStore = create<PlayerStore>()(
 				},
 
 				_getCurrentTrack: (): Track | null => {
-					const { tracks, currentTrackId: currentTrackKey } = get()
-					return currentTrackKey ? (tracks[currentTrackKey] ?? null) : null
+					const { tracks, currentTrackUniqueKey } = get()
+					return currentTrackUniqueKey
+						? (tracks[currentTrackUniqueKey] ?? null)
+						: null
 				},
 
 				_getCurrentIndex: (): number => {
-					const { currentTrackId } = get()
-					if (!currentTrackId) return -1
-					return get()._getActiveList().indexOf(currentTrackId)
+					const { currentTrackUniqueKey } = get()
+					if (!currentTrackUniqueKey) return -1
+					return get()._getActiveList().indexOf(currentTrackUniqueKey)
 				},
 
 				resetPlayer: async () => {
@@ -97,14 +99,14 @@ export const usePlayerStore = create<PlayerStore>()(
 					return currentTrack ? [currentTrack] : []
 				},
 
-				removeTrack: async (id: string) => {
-					playerLog.debug('removeTrack()', { id })
-					const { tracks, currentTrackId: initialCurrentKey } = get()
+				removeTrack: async (uniqueKey: string) => {
+					playerLog.debug('removeTrack()', { id: uniqueKey })
+					const { tracks, currentTrackUniqueKey: initialCurrentUniqueKey } =
+						get()
 
-					const numberId = Number(id)
 					const keyToRemove = Object.keys(tracks).find((key) => {
 						const track = tracks[key]
-						return track.id === numberId
+						return track.uniqueKey === uniqueKey
 					})
 
 					if (!keyToRemove) {
@@ -112,7 +114,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						return
 					}
 
-					if (initialCurrentKey !== keyToRemove) {
+					if (initialCurrentUniqueKey !== keyToRemove) {
 						set(
 							produce((state: PlayerState) => {
 								delete state.tracks[keyToRemove]
@@ -157,7 +159,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							if (shuffledIndex > -1)
 								state.shuffledList.splice(shuffledIndex, 1)
 
-							state.currentTrackId = nextTrackKeyToPlay
+							state.currentTrackUniqueKey = nextTrackKeyToPlay
 						}),
 					)
 
@@ -194,7 +196,9 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					const existingTracks = get().tracks
 					// 找出需要新加入的 tracks
-					const newTracks = tracks.filter((track) => !existingTracks[track.id])
+					const newTracks = tracks.filter(
+						(track) => !existingTracks[track.uniqueKey],
+					)
 
 					// 没有新歌加入，但需要跳转播放
 					if (newTracks.length === 0) {
@@ -213,7 +217,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					}
 
 					// 有新歌加入
-					const newKeys = newTracks.map((track) => String(track.id))
+					const newKeys = newTracks.map((track) => String(track.uniqueKey))
 					set(
 						produce((state: PlayerState) => {
 							// 1. 把新歌数据加进去
@@ -222,7 +226,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							})
 
 							// 2. 计算插入位置
-							const currentKey = state.currentTrackId
+							const currentKey = state.currentTrackUniqueKey
 							let orderedInsertIdx = state.orderedList.length
 							let shuffledInsertIdx = state.shuffledList.length
 							if (playNext && currentKey) {
@@ -243,18 +247,18 @@ export const usePlayerStore = create<PlayerStore>()(
 								if (startFromId && newKeys.includes(startFromId)) {
 									keyToPlay = startFromId
 								}
-								state.currentTrackId = keyToPlay
+								state.currentTrackUniqueKey = keyToPlay
 							} else if (
-								!state.currentTrackId &&
+								!state.currentTrackUniqueKey &&
 								state.orderedList.length > 0
 							) {
-								state.currentTrackId = state.orderedList[0]
+								state.currentTrackUniqueKey = state.orderedList[0]
 							}
 						}),
 					)
 
 					if (playNow) {
-						const keyToPlay = get().currentTrackId
+						const keyToPlay = get().currentTrackUniqueKey
 						if (!keyToPlay) {
 							playerLog.error('播放器异常，无法找到当前播放的 key')
 							return
@@ -392,7 +396,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					const {
 						shuffleMode,
 						orderedList,
-						currentTrackId: currentTrackKey,
+						currentTrackUniqueKey: currentTrackKey,
 					} = get()
 					if (!checkPlayerReady()) return
 
@@ -448,7 +452,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					if (needsUpdate) {
 						set(
 							produce((state: PlayerState) => {
-								state.tracks[track.id] = finalTrack
+								state.tracks[track.uniqueKey] = finalTrack
 							}),
 						)
 					}
@@ -478,7 +482,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					playerLog.debug(
 						`跳转到曲目: index=${index}, key=${keyToPlay}, title=${initialTrack.title}`,
 					)
-					set({ currentTrackId: keyToPlay, isBuffering: true })
+					set({ currentTrackUniqueKey: keyToPlay, isBuffering: true })
 
 					// 1. 获取最新的音频流
 					const updatedTrackResult = await get().patchAudio(initialTrack)
@@ -517,7 +521,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					)
 
 					set({
-						currentTrackId: String(finalTrack.id),
+						currentTrackUniqueKey: String(finalTrack.uniqueKey),
 						isPlaying: true,
 						isBuffering: false,
 					})
@@ -527,9 +531,9 @@ export const usePlayerStore = create<PlayerStore>()(
 			return store
 		},
 		{
-			name: 'player-storage',
+			name: 'player-storage-full',
 			storage: createJSONStorage(() => zustandStorage),
-			partialize: (state) => ({ repeatMode: state.repeatMode }),
+			partialize: (state) => state,
 		},
 	),
 )

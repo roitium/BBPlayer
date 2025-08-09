@@ -128,8 +128,7 @@ function PlayerQueueModal({
 
 	const removeTrackHandler = useCallback(
 		async (track: Track) => {
-			// FIXME: remote playlist 预览时播放歌曲，id 为资源 aid 或 cid，是有概率与项目内主键 id 冲突的，或许考虑接受一个可选 uniqueKey 参数辅助过滤？
-			await removeTrack(String(track.id))
+			await removeTrack(track.uniqueKey)
 		},
 		[removeTrack],
 	)

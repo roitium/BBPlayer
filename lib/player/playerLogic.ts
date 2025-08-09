@@ -182,8 +182,8 @@ const PlayerLogic = {
 					reportErrorToSentry(data, '播放错误', ProjectScope.PlayerStore)
 				}
 				const state = usePlayerStore.getState()
-				const nowTrack = state.currentTrackId
-					? (state.tracks[state.currentTrackId] ?? null)
+				const nowTrack = state.currentTrackUniqueKey
+					? (state.tracks[state.currentTrackUniqueKey] ?? null)
 					: null
 				if (nowTrack) {
 					playerLog.debug('当前播放的曲目', {
