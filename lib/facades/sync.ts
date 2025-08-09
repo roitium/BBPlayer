@@ -291,7 +291,7 @@ export class SyncFacade {
 	public async syncFavorite(
 		favoriteId: number,
 	): Promise<Result<number | undefined, FacadeError | BilibiliApiError>> {
-		// TODO: getFavoriteListAllContents 获取到的 bvid 中会包含被 up 隐藏的视频，但这部分视频在 getFavoriteListContents 中是找不到的，也就无法添加到本地数据库。这导致对于包含这种视频的收藏夹，每次同步都会重新「同步」这些视频，但咱们没办法......
+		// getFavoriteListAllContents 获取到的 bvid 中会包含被 up 隐藏的视频，但这部分视频在 getFavoriteListContents 中是找不到的，也就无法添加到本地数据库。这导致对于包含这种视频的收藏夹，每次同步都会重新「同步」这些视频，但咱们没办法......
 		if (this.syncingIds.has(`favorite::${favoriteId}`)) {
 			return err(new SyncTaskAlreadyRunningError())
 		}

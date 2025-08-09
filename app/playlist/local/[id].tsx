@@ -200,7 +200,7 @@ export default function LocalPlaylistPage() {
 
 	const handleTrackPress = useCallback(
 		(track: Track) => {
-			void playAll(String(track.id))
+			void playAll(track.uniqueKey)
 		},
 		[playAll],
 	)

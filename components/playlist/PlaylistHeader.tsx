@@ -1,7 +1,16 @@
+import type { RootStackParamList } from '@/types/navigation'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
-import { Button, Divider, Text, TouchableRipple } from 'react-native-paper'
+import {
+	Button,
+	Divider,
+	IconButton,
+	Text,
+	TouchableRipple,
+} from 'react-native-paper'
 import type { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
 
 interface PlaylistHeaderProps {
@@ -11,6 +20,7 @@ interface PlaylistHeaderProps {
 	description: string | undefined
 	onClickMainButton?: () => void
 	mainButtonIcon: IconSource
+	linkedPlaylistId?: number
 }
 
 /**
@@ -23,7 +33,11 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	description,
 	onClickMainButton,
 	mainButtonIcon,
+	linkedPlaylistId,
 }: PlaylistHeaderProps) {
+	const navigation = useNavigation<
+		NativeStackNavigationProp<RootStackParamList, 'PlaylistMultipage'> // 这里的泛型参数随便写一个好了
+	>()
 	const [showFullTitle, setShowFullTitle] = useState(false)
 	if (!title) return null
 
@@ -60,7 +74,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 				style={{
 					flexDirection: 'row',
 					alignItems: 'center',
-					justifyContent: 'space-between',
+					justifyContent: 'flex-start',
 					marginHorizontal: 16,
 				}}
 			>
@@ -70,8 +84,20 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 						icon={mainButtonIcon}
 						onPress={() => onClickMainButton()}
 					>
-						同步
+						{linkedPlaylistId ? '重新同步' : '同步到本地'}
 					</Button>
+				)}
+				{linkedPlaylistId && (
+					<IconButton
+						mode='contained'
+						icon={'arrow-right'}
+						size={20}
+						onPress={() =>
+							navigation.navigate('PlaylistLocal', {
+								id: linkedPlaylistId.toString(),
+							})
+						}
+					/>
 				)}
 			</View>
 

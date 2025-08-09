@@ -68,6 +68,13 @@ export default function PlayerPage() {
 					<TrackInfo
 						isFavorite={isFavorite}
 						onFavoritePress={() => setIsFavorite(!isFavorite)}
+						onArtistPress={() =>
+							currentTrack.artist?.remoteId
+								? navigation.navigate('PlaylistUploader', {
+										mid: currentTrack.artist?.remoteId,
+									})
+								: void 0
+						}
 					/>
 				</View>
 

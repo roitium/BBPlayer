@@ -1,14 +1,16 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { Image } from 'expo-image'
 import { Dimensions, TouchableOpacity, View } from 'react-native'
-import { IconButton, Text, useTheme } from 'react-native-paper'
+import { IconButton, Text, TouchableRipple, useTheme } from 'react-native-paper'
 
 export function TrackInfo({
 	isFavorite,
 	onFavoritePress,
+	onArtistPress,
 }: {
 	isFavorite: boolean
 	onFavoritePress: () => void
+	onArtistPress: () => void
 }) {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
@@ -54,13 +56,17 @@ export function TrackInfo({
 						>
 							{currentTrack.title}
 						</Text>
-						<Text
-							variant='bodyMedium'
-							style={{ color: colors.onSurfaceVariant }}
-							numberOfLines={1}
-						>
-							{currentTrack.artist?.name ?? ''}
-						</Text>
+						{currentTrack.artist?.name && (
+							<TouchableRipple onPress={onArtistPress}>
+								<Text
+									variant='bodyMedium'
+									style={{ color: colors.onSurfaceVariant }}
+									numberOfLines={1}
+								>
+									{currentTrack.artist.name}
+								</Text>
+							</TouchableRipple>
+						)}
 					</View>
 					<IconButton
 						icon={isFavorite ? 'heart' : 'heart-outline'}

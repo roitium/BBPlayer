@@ -22,6 +22,7 @@ import {
 	TouchableRipple,
 	useTheme,
 } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const TrackItem = memo(
 	({
@@ -109,9 +110,9 @@ function PlayerQueueModal({
 	const flatListRef = useRef<BottomSheetFlatListMethods>(null)
 	const currentIndex = useMemo(() => {
 		if (!currentTrack || !queue.length) return -1
-		// HACK: 基于 uniqueKey 的比较是否可靠？
 		return queue.findIndex((t) => t.uniqueKey === currentTrack.uniqueKey)
 	}, [queue, currentTrack])
+	const insets = useSafeAreaInsets()
 
 	usePreventRemove(isVisible, () => {
 		sheetRef.current?.close()
@@ -196,6 +197,7 @@ function PlayerQueueModal({
 				contentContainerStyle={{
 					backgroundColor: theme.colors.elevation.level1,
 				}}
+				style={{ marginBottom: insets.bottom }}
 			/>
 		</BottomSheet>
 	)
