@@ -2,6 +2,7 @@ import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPla
 import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
 import {
 	useDeletePlaylist,
+	useDeleteTrackFromLocalPlaylist,
 	useDuplicatePlaylist,
 	usePlaylistSync,
 } from '@/hooks/mutations/db/playlist'
@@ -95,6 +96,8 @@ export default function LocalPlaylistPage() {
 	const { mutate: syncPlaylist } = usePlaylistSync()
 	const { mutate: duplicatePlaylist } = useDuplicatePlaylist()
 	const { mutate: deletePlaylist } = useDeletePlaylist()
+	const { mutate: deleteTrackFromLocalPlaylist } =
+		useDeleteTrackFromLocalPlaylist()
 
 	const onClickDuplicateLocalPlaylist = useCallback(() => {
 		duplicatePlaylist(
@@ -194,8 +197,18 @@ export default function LocalPlaylistPage() {
 					setAddTrackModalVisible(true)
 				},
 			},
+			{
+				title: '删除歌曲',
+				leadingIcon: 'delete',
+				onPress: () => {
+					deleteTrackFromLocalPlaylist({
+						trackId: item.id,
+						playlistId: Number(id),
+					})
+				},
+			},
 		],
-		[playNext],
+		[deleteTrackFromLocalPlaylist, id, playNext],
 	)
 
 	const handleTrackPress = useCallback(

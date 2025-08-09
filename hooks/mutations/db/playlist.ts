@@ -225,3 +225,48 @@ export const useDeletePlaylist = () => {
 		},
 	})
 }
+
+export const useDeleteTrackFromLocalPlaylist = () => {
+	return useMutation({
+		mutationKey: ['db', 'playlists', 'deleteTrackFromLocalPlaylist'],
+		mutationFn: async ({
+			trackId,
+			playlistId,
+		}: {
+			trackId: number
+			playlistId: number
+		}) => {
+			const result = await playlistService.removeTrackFromLocalPlaylist(
+				playlistId,
+				trackId,
+			)
+			if (result.isErr()) {
+				throw result.error
+			}
+			return result.value
+		},
+		onSuccess: (_, variables) => {
+			toast.success('删除成功')
+			void Promise.all([
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistsContainingTrack(variables.trackId),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistLists(),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistContents(variables.playlistId),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistMetadata(variables.playlistId),
+				}),
+			])
+		},
+		onError: (error, variables) => {
+			logger.error('删除播放列表失败: ', flatErrorMessage(error), variables)
+			toast.error('删除播放列表失败', {
+				description: flatErrorMessage(error),
+			})
+		},
+	})
+}
