@@ -4,10 +4,11 @@ import { View } from 'react-native'
 import type { RootStackParamList } from '../types/navigation'
 import NotFoundScreen from './not-found'
 import PlayerPage from './player/player'
-import PlaylistCollectionPage from './playlist/collection/[id]'
-import PlaylistFavoritePage from './playlist/favorite/[id]'
-import PlaylistMultipagePage from './playlist/multipage/[bvid]'
-import PlaylistUploaderPage from './playlist/uploader/[mid]'
+import LocalPlaylistPage from './playlist/local/[id]'
+import PlaylistCollectionPage from './playlist/remote/collection/[id]'
+import PlaylistFavoritePage from './playlist/remote/favorite/[id]'
+import PlaylistMultipagePage from './playlist/remote/multipage/[bvid]'
+import PlaylistUploaderPage from './playlist/remote/uploader/[mid]'
 import SearchResultFavPage from './search-result/fav/[query]'
 import SearchResultsPage from './search-result/global/[query]'
 import TabLayout from './tabs/layout'
@@ -42,10 +43,6 @@ export function RootLayoutNav() {
 					component={SearchResultsPage}
 				/>
 				<RootStack.Screen
-					name='NotFound'
-					component={NotFoundScreen}
-				/>
-				<RootStack.Screen
 					name='PlaylistCollection'
 					component={PlaylistCollectionPage}
 				/>
@@ -64,6 +61,14 @@ export function RootLayoutNav() {
 				<RootStack.Screen
 					name='SearchResultFav'
 					component={SearchResultFavPage}
+				/>
+				<RootStack.Screen
+					name='PlaylistLocal'
+					component={LocalPlaylistPage}
+				/>
+				<RootStack.Screen
+					name='NotFound'
+					component={NotFoundScreen}
 				/>
 			</RootStack.Navigator>
 			<View

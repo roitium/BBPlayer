@@ -1,4 +1,5 @@
-import { BaseToast, BaseToastProps } from 'react-native-toast-message'
+import type { BaseToastProps } from 'react-native-toast-message'
+import { BaseToast } from 'react-native-toast-message'
 
 export const toastConfig = {
 	success: (props: BaseToastProps) => (

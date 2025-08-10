@@ -1,5 +1,6 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import log from '@/utils/log'
+import { ProjectScope } from '@/types/core/scope'
+import log, { reportErrorToSentry } from '@/utils/log'
 import { convertToRNTPTrack } from '@/utils/player'
 import TrackPlayer, {
 	AppKilledPlaybackBehavior,
@@ -12,7 +13,7 @@ import TrackPlayer, {
 const playerLog = log.extend('PLAYER/LOGIC')
 
 const initPlayer = async () => {
-	playerLog.debug('调用 initPlayer()')
+	playerLog.debug('开始初始化播放器')
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
 	// 在初始化时修改一次重复模式，与水合后的 store 状态保持一致
@@ -21,15 +22,13 @@ const initPlayer = async () => {
 		repeatMode === RepeatMode.Track ? RepeatMode.Track : RepeatMode.Off,
 	)
 	global.playerIsReady = true
-	playerLog.debug('播放器初始化完成')
+	playerLog.info('播放器初始化完成')
 }
 
 const PlayerLogic = {
 	// 初始化播放器
 	async preparePlayer(): Promise<void> {
-		playerLog.debug('开始初始化播放器')
 		try {
-			playerLog.debug('设置播放器配置')
 			const setup = async () => {
 				try {
 					await TrackPlayer.setupPlayer({
@@ -47,10 +46,8 @@ const PlayerLogic = {
 			while ((await setup()) === 'android_cannot_setup_player_in_background') {
 				await new Promise<void>((resolve) => setTimeout(resolve, 1))
 			}
-			playerLog.debug('播放器配置设置完成')
 
 			// 设置播放器能力（怕自己忘了记一下：如果想修改这些能力对应的函数调用，要去 /lib/services/playbackService 里改）
-			playerLog.debug('开始设置播放器能力')
 			await TrackPlayer.updateOptions({
 				capabilities: [
 					Capability.Play,
@@ -70,30 +67,27 @@ const PlayerLogic = {
 				android: {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
+				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
 				icon: require('../../assets/images/icon-large.png'),
 			})
-			playerLog.debug('播放器能力设置完成')
 			// 设置重复模式为 Off
 			await TrackPlayer.setRepeatMode(RepeatMode.Off)
 		} catch (error: unknown) {
-			playerLog.sentry('初始化播放器失败', error)
+			playerLog.error('初始化播放器失败', error)
+			reportErrorToSentry(error, '初始化播放器失败', ProjectScope.PlayerStore)
 		}
 	},
 
 	// 设置事件监听器
 	setupEventListeners(): void {
-		playerLog.debug('开始设置事件监听器')
-
 		// 监听播放状态变化
-		playerLog.debug('设置播放状态变化监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackState,
-			async (data: { state: TrackPlayerState }) => {
+			(data: { state: TrackPlayerState }) => {
 				const { state } = data
 				const setter = usePlayerStore.setState
 				// const store = usePlayerStore.getState()
-				// const currentTrack = store.currentTrackKey
+				// const currentTrack = usePlayerStore.getState()._getCurrentTrack()
 				// 	? (store.tracks[store.currentTrackKey] ?? null)
 				// 	: null
 
@@ -147,10 +141,8 @@ const PlayerLogic = {
 				}
 			},
 		)
-		playerLog.debug('播放状态变化监听器设置完成')
 
 		// 监听播放完成
-		playerLog.debug('设置播放完成监听器')
 		TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async () => {
 			const store = usePlayerStore.getState()
 			const { repeatMode } = store
@@ -166,7 +158,6 @@ const PlayerLogic = {
 		})
 
 		// 监听播放错误
-		playerLog.debug('设置播放错误监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackError,
 			async (data: { code: string; message: string }) => {
@@ -175,22 +166,21 @@ const PlayerLogic = {
 						'播放错误：服务器返回了错误状态码，重新加载曲目，但不上报错误',
 					)
 				} else {
-					playerLog.sentry('播放错误', data)
+					playerLog.error('播放错误', data)
+					reportErrorToSentry(data, '播放错误', ProjectScope.PlayerStore)
 				}
 				const state = usePlayerStore.getState()
-				const nowTrack = state.currentTrackKey
-					? (state.tracks[state.currentTrackKey] ?? null)
+				const nowTrack = state.currentTrackUniqueKey
+					? (state.tracks[state.currentTrackUniqueKey] ?? null)
 					: null
 				if (nowTrack) {
 					playerLog.debug('当前播放的曲目', {
 						trackId: nowTrack.id,
 						title: nowTrack.title,
 					})
-					const track = await usePlayerStore
-						.getState()
-						.patchMetadataAndAudio(nowTrack)
+					const track = await usePlayerStore.getState().patchAudio(nowTrack)
 					if (track.isErr()) {
-						playerLog.sentry('更新音频流失败', track.error)
+						playerLog.error('更新音频流失败', track.error)
 						return
 					}
 					playerLog.debug('更新音频流成功', {
@@ -200,15 +190,13 @@ const PlayerLogic = {
 					// 使用 load 方法替换当前曲目
 					const rntpTrack = convertToRNTPTrack(track.value.track)
 					if (rntpTrack.isErr()) {
-						playerLog.sentry('更新音频流失败', rntpTrack.error)
+						playerLog.error('将 Track 转换为 RNTPTrack 失败', rntpTrack.error)
 						return
 					}
 					await TrackPlayer.load(rntpTrack.value)
 				}
 			},
 		)
-
-		playerLog.debug('所有事件监听器设置完成')
 	},
 }
 

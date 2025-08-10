@@ -24,9 +24,11 @@ export const linking = {
 			NotFound: '*',
 		},
 	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	getStateFromPath(path: string, options: any) {
-		console.log(path)
+
+	getStateFromPath(
+		path: string,
+		options: Parameters<typeof getStateFromPathDefault>[1],
+	) {
 		if (path.startsWith('notification.click')) {
 			return { routes: [{ name: 'Player' }] }
 		}

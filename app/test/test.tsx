@@ -57,7 +57,7 @@ export default function TestPage() {
 					description: '现在更新',
 				})
 				setTimeout(() => {
-					Updates.reloadAsync()
+					void Updates.reloadAsync()
 				}, 1000)
 			}
 		} catch (error) {
@@ -66,7 +66,7 @@ export default function TestPage() {
 		}
 	}
 
-	const openLogFile = async () => {
+	const openLogFile = () => {
 		let date = new Date()
 		const offset = date.getTimezoneOffset()
 		date = new Date(date.getTime() - offset * 60 * 1000)
@@ -155,11 +155,11 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							setIsQrCodeLoginDialogVisible(true)
+							throw new Error('测试错误')
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						测试扫码登录
+						扔个错误
 					</Button>
 				</View>
 
@@ -171,14 +171,12 @@ export default function TestPage() {
 				</Text>
 				{queue.map((track) => (
 					<Card
-						key={`${track.id}-${track.cid}`}
+						key={`${track.id}`}
 						style={{ marginBottom: 8 }}
 					>
 						<Card.Title
-							title={track.hasMetadata ? track.title : track.id}
-							subtitle={
-								track.hasMetadata ? track.artist : '该视频还未获取元数据'
-							}
+							title={track.title}
+							subtitle={track.artist?.name ?? '该视频还未获取元数据'}
 						/>
 					</Card>
 				))}

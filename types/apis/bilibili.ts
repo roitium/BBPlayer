@@ -31,7 +31,7 @@ interface BilibiliAudioStreamResponse {
 				  }[]
 				| null
 		} | null
-		hiRes?: {
+		flac?: {
 			display: boolean
 			audio: {
 				id: number
@@ -50,8 +50,11 @@ interface BilibiliHistoryVideo {
 	bvid: string
 	title: string
 	pic: string
+	pubdate: number
 	owner: {
 		name: string
+		mid: number
+		face: string
 	}
 	duration: number
 }
@@ -70,7 +73,18 @@ interface BilibiliVideoDetails {
 	owner: {
 		name: string
 		mid: number
+		face: string
 	}
+	cid: number
+	pages: BilibiliVideoDetailsPage[]
+}
+
+/**
+ * bilibili 视频详情接口获取到的 pages 字段
+ */
+interface BilibiliVideoDetailsPage {
+	part: string
+	duration: number
 	cid: number
 }
 
@@ -95,6 +109,7 @@ interface BilibiliSearchVideo {
 	author: string
 	duration: string
 	senddate: number
+	mid: number
 }
 
 /**
@@ -122,6 +137,7 @@ interface BilibiliFavoriteListContent {
 	id: number
 	bvid: string
 	upper: {
+		mid: number
 		name: string
 		face: string
 	}
@@ -147,6 +163,7 @@ interface BilibiliFavoriteListContents {
 		upper: {
 			name: string
 			face: string
+			mid: number
 		}
 	}
 	medias: BilibiliFavoriteListContent[]
@@ -185,7 +202,7 @@ interface BilibiliCollection {
 /**
  * 追更合集/收藏夹内容
  */
-type BilibiliCollectionContent = {
+interface BilibiliCollectionContent {
 	info: {
 		id: number
 		season_type: number // 未知
@@ -237,7 +254,7 @@ interface BilibiliCollectionInfo {
 /**
  * 合集内单个内容
  */
-interface BilibiliMediaItem {
+interface BilibiliMediaItemInCollection {
 	id: number
 	title: string
 	cover: string
@@ -261,7 +278,7 @@ interface BilibiliMediaItem {
  */
 interface BilibiliCollectionAllContents {
 	info: BilibiliCollectionInfo
-	medias: BilibiliMediaItem[]
+	medias: BilibiliMediaItemInCollection[]
 }
 
 /**
@@ -327,7 +344,7 @@ export type {
 	BilibiliFavoriteListContents,
 	BilibiliHistoryVideo,
 	BilibiliHotSearch,
-	BilibiliMediaItem,
+	BilibiliMediaItemInCollection,
 	BilibiliMultipageVideo,
 	BilibiliPlaylist,
 	BilibiliSearchVideo,

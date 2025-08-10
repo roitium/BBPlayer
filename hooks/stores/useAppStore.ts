@@ -8,7 +8,7 @@ import { create } from 'zustand'
 export const parseCookieString = (
 	cookie?: string,
 ): Result<Record<string, string>[], Error> => {
-	if (!cookie || !cookie.trim()) {
+	if (!cookie?.trim()) {
 		return ok([])
 	}
 
@@ -45,7 +45,9 @@ export const useAppStore = create<AppState>()((set, get) => {
 	const initialCookieString = storage.getString('bilibili_cookie')
 
 	log.debug('AppStore Initializing', {
-		initialCookieString,
+		initialCookieString: initialCookieString
+			? initialCookieString.slice(0, 10) + '...'
+			: undefined,
 		sendPlayHistory,
 	})
 

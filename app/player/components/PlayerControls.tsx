@@ -28,18 +28,18 @@ export function PlayerControls({ onOpenQueue }: { onOpenQueue: () => void }) {
 				<IconButton
 					icon='skip-previous'
 					size={32}
-					onPress={skipToPrevious}
+					onPress={() => void skipToPrevious()}
 				/>
 				<IconButton
 					icon={isPlaying ? 'pause' : 'play'}
 					size={48}
-					onPress={togglePlay}
+					onPress={() => void togglePlay()}
 					mode='contained'
 				/>
 				<IconButton
 					icon='skip-next'
 					size={32}
-					onPress={skipToNext}
+					onPress={() => void skipToNext()}
 				/>
 			</View>
 			<View

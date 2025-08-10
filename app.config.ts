@@ -78,6 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			},
 		],
 		'expo-web-browser',
+		'expo-sqlite',
 	],
 	experiments: {
 		reactCompiler: true,
@@ -93,5 +94,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	},
 	ios: {
 		bundleIdentifier: 'com.roitium.bbplayer',
+		runtimeVersion: {
+			policy: 'appVersion',
+		},
 	},
 })

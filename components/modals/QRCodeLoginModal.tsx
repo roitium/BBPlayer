@@ -1,5 +1,5 @@
 import useAppStore from '@/hooks/stores/useAppStore'
-import { bilibiliApi } from '@/lib/api/bilibili/bilibili.api'
+import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
@@ -7,9 +7,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useEffect, useReducer } from 'react'
 import { Pressable } from 'react-native'
-import { Button, Dialog, Portal, Text } from 'react-native-paper'
+import { Button, Dialog, Text } from 'react-native-paper'
 import QRCode from 'react-native-qrcode-svg'
 import * as setCookieParser from 'set-cookie-parser'
+import { AnimatedModal } from '../AnimatedModal'
 
 type Status =
 	| 'prompting'
@@ -65,7 +66,7 @@ function reducer(state: State, action: Action): State {
 				statusText: `获取二维码失败: ${action.payload}`,
 			}
 		case 'POLL_UPDATE':
-			switch (action.payload.code) {
+			switch (action.payload.code as BilibiliQrCodeLoginStatus) {
 				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_WAIT:
 					return { ...state, statusText: '等待扫码' }
 				case BilibiliQrCodeLoginStatus.QRCODE_LOGIN_STATUS_SCANNED_BUT_NOT_CONFIRMED:
@@ -107,14 +108,17 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 		const generateQrCode = async () => {
 			const response = await bilibiliApi.getLoginQrCode()
 			if (response.isErr()) {
-				dispatch({ type: 'GENERATE_FAILURE', payload: String(response.error) })
+				dispatch({
+					type: 'GENERATE_FAILURE',
+					payload: String(response.error.message),
+				})
 				toast.error('获取二维码失败', { id: 'bilibili-qrcode-login-error' })
 				setTimeout(() => setVisible(false), 2000)
 			} else {
 				dispatch({ type: 'GENERATE_SUCCESS', payload: response.value })
 			}
 		}
-		generateQrCode()
+		void generateQrCode()
 	}, [status, setVisible])
 
 	useEffect(() => {
@@ -208,19 +212,17 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	}
 
 	return (
-		<Portal>
-			<Dialog
-				visible={visible}
-				onDismiss={() => setVisible(false)}
+		<AnimatedModal
+			visible={visible}
+			onDismiss={() => setVisible(false)}
+		>
+			<Dialog.Title>扫码登录</Dialog.Title>
+			<Dialog.Content
+				style={{ justifyContent: 'center', alignItems: 'center' }}
 			>
-				<Dialog.Title>扫码登录</Dialog.Title>
-				<Dialog.Content
-					style={{ justifyContent: 'center', alignItems: 'center' }}
-				>
-					{renderDialogContent()}
-				</Dialog.Content>
-			</Dialog>
-		</Portal>
+				{renderDialogContent()}
+			</Dialog.Content>
+		</AnimatedModal>
 	)
 })
 

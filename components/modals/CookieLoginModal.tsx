@@ -1,17 +1,11 @@
-import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/useFavoriteData'
-import { userQueryKeys } from '@/hooks/queries/bilibili/useUserData'
+import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
+import { userQueryKeys } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useState } from 'react'
-import {
-	Button,
-	Dialog,
-	Divider,
-	Portal,
-	Text,
-	TextInput,
-} from 'react-native-paper'
+import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
+import { AnimatedModal } from '../AnimatedModal'
 
 function SetCookieDialog({
 	visible,
@@ -26,7 +20,7 @@ function SetCookieDialog({
 	const setBilibiliCookie = useAppStore((state) => state.setBilibiliCookie)
 	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 	const handleConfirm = () => {
-		if (!inputCookie || !inputCookie.trim()) {
+		if (!inputCookie?.trim()) {
 			clearBilibiliCookie()
 			setVisible(false)
 			// 清除所有缓存数据
@@ -43,42 +37,43 @@ function SetCookieDialog({
 			return
 		}
 		setVisible(false)
-		queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all })
-		queryClient.refetchQueries({ queryKey: userQueryKeys.all })
+		const refetchs = Promise.all([
+			queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all }),
+			queryClient.refetchQueries({ queryKey: userQueryKeys.all }),
+		])
+		void refetchs
 	}
 
 	return (
-		<Portal>
-			<Dialog
-				visible={visible}
-				onDismiss={() => setVisible(false)}
-			>
-				<Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
-				<Dialog.Content>
-					<TextInput
-						label='Cookie'
-						value={inputCookie}
-						onChangeText={setInputCookie}
-						mode='outlined'
-						numberOfLines={5}
-						multiline
-						style={{ maxHeight: 200 }}
-						textAlignVertical='top'
-					/>
-					<Text
-						variant='bodySmall'
-						style={{ marginTop: 8 }}
-					>
-						请在此处粘贴您的 Bilibili Cookie 以获取个人数据。
-					</Text>
-					<Divider style={{ marginTop: 16, marginBottom: 16 }} />
-				</Dialog.Content>
-				<Dialog.Actions>
-					<Button onPress={() => setVisible(false)}>取消</Button>
-					<Button onPress={handleConfirm}>确定</Button>
-				</Dialog.Actions>
-			</Dialog>
-		</Portal>
+		<AnimatedModal
+			visible={visible}
+			onDismiss={() => setVisible(false)}
+		>
+			<Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
+			<Dialog.Content>
+				<TextInput
+					label='Cookie'
+					value={inputCookie}
+					onChangeText={setInputCookie}
+					mode='outlined'
+					numberOfLines={5}
+					multiline
+					style={{ maxHeight: 200 }}
+					textAlignVertical='top'
+				/>
+				<Text
+					variant='bodySmall'
+					style={{ marginTop: 8 }}
+				>
+					请在此处粘贴您的 Bilibili Cookie 以获取个人数据。
+				</Text>
+				<Divider style={{ marginTop: 16, marginBottom: 16 }} />
+			</Dialog.Content>
+			<Dialog.Actions>
+				<Button onPress={() => setVisible(false)}>取消</Button>
+				<Button onPress={handleConfirm}>确定</Button>
+			</Dialog.Actions>
+		</AnimatedModal>
 	)
 }
 

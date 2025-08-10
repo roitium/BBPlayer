@@ -1,18 +1,19 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import TrackPlayer, { Event } from 'react-native-track-player'
 
+// eslint-disable-next-line @typescript-eslint/require-await -- startHeadlessTask 要求传入的函数必须返回一个 Promise
 export const PlaybackService = async () => {
 	// 播放控制
 	TrackPlayer.addEventListener(Event.RemotePlay, () => {
 		if (usePlayerStore.getState().isPlaying) return
-		usePlayerStore.getState().togglePlay()
+		void usePlayerStore.getState().togglePlay()
 	})
 	TrackPlayer.addEventListener(Event.RemotePause, () => {
 		if (!usePlayerStore.getState().isPlaying) return
-		usePlayerStore.getState().togglePlay()
+		void usePlayerStore.getState().togglePlay()
 	})
 	TrackPlayer.addEventListener(Event.RemoteNext, () => {
-		usePlayerStore.getState().skipToNext()
+		void usePlayerStore.getState().skipToNext()
 	})
 	TrackPlayer.addEventListener(Event.RemotePrevious, () =>
 		usePlayerStore.getState().skipToPrevious(),
@@ -20,27 +21,11 @@ export const PlaybackService = async () => {
 
 	// 跳转控制
 	TrackPlayer.addEventListener(Event.RemoteSeek, (event) => {
-		usePlayerStore.getState().seekTo(event.position)
+		void usePlayerStore.getState().seekTo(event.position)
 	})
 
 	// 停止控制
 	TrackPlayer.addEventListener(Event.RemoteStop, () => {
-		usePlayerStore.getState().resetPlayer()
+		void usePlayerStore.getState().resetStore()
 	})
-
-	// TrackPlayer.addEventListener(Event.RemoteJumpForward, async (event) => {
-	//   const position = await TrackPlayer.getProgress().then(
-	//     (progress) => progress.position,
-	//   )
-	//   const jumpAmount = event.interval || 10
-	//   TrackPlayer.seekTo(position + jumpAmount)
-	// })
-
-	// TrackPlayer.addEventListener(Event.RemoteJumpBackward, async (event) => {
-	//   const position = await TrackPlayer.getProgress().then(
-	//     (progress) => progress.position,
-	//   )
-	//   const jumpAmount = event.interval || 10 // 默认跳转10秒
-	//   TrackPlayer.seekTo(Math.max(0, position - jumpAmount))
-	// })
 }

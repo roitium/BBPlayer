@@ -1,4 +1,4 @@
-import { ApiCallingError } from '@/lib/core/errors'
+import { ApiCallingError } from '@/lib/errors'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
@@ -18,11 +18,11 @@ export const queryClient = new QueryClient({
 	},
 	queryCache: new QueryCache({
 		onError: (error, query) => {
-			toast.error(`请求 ${query.queryKey} 失败`, {
+			toast.error(`请求 [${query.queryKey.toString()}] 失败`, {
 				description: error.message,
 				duration: Number.POSITIVE_INFINITY,
 			})
-			rootLog.error(`请求 ${query.queryKey} 失败`, error)
+			rootLog.error(`请求 [${query.queryKey.toString()}] 失败：`, error)
 
 			// 这个错误属于三方依赖的错误，不应该报告到 Sentry
 			if (error instanceof ApiCallingError) {

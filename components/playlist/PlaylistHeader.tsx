@@ -1,14 +1,26 @@
+import type { RootStackParamList } from '@/types/navigation'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { View } from 'react-native'
-import { Divider, IconButton, Text } from 'react-native-paper'
+import {
+	Button,
+	Divider,
+	IconButton,
+	Text,
+	TouchableRipple,
+} from 'react-native-paper'
+import type { IconSource } from 'react-native-paper/lib/typescript/components/Icon'
 
 interface PlaylistHeaderProps {
 	coverUri: string | undefined
 	title: string | undefined
-	subtitle: string | undefined // 通常格式： "Author • n Tracks"
+	subtitles: string | string[] | undefined // 通常格式： "Author • n Tracks"
 	description: string | undefined
-	onPlayAll: (() => void) | undefined
+	onClickMainButton?: () => void
+	mainButtonIcon: IconSource
+	linkedPlaylistId?: number
 }
 
 /**
@@ -17,61 +29,84 @@ interface PlaylistHeaderProps {
 export const PlaylistHeader = memo(function PlaylistHeader({
 	coverUri,
 	title,
-	subtitle,
+	subtitles,
 	description,
-	onPlayAll,
+	onClickMainButton,
+	mainButtonIcon,
+	linkedPlaylistId,
 }: PlaylistHeaderProps) {
-	if (!coverUri || !title) return null
+	const navigation = useNavigation<
+		NativeStackNavigationProp<RootStackParamList, 'PlaylistMultipage'> // 这里的泛型参数随便写一个好了
+	>()
+	const [showFullTitle, setShowFullTitle] = useState(false)
+	if (!title) return null
+
 	return (
 		<View style={{ position: 'relative', flexDirection: 'column' }}>
 			{/* 收藏夹信息 */}
-			<View style={{ flexDirection: 'row', padding: 16 }}>
+			<View style={{ flexDirection: 'row', padding: 16, alignItems: 'center' }}>
 				<Image
 					source={{ uri: coverUri }}
+					contentFit='cover'
 					style={{ width: 120, height: 120, borderRadius: 8 }}
 				/>
 				<View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
-					<Text
-						variant='titleLarge'
-						style={{ fontWeight: 'bold' }}
-						numberOfLines={2}
-					>
-						{title}
-					</Text>
+					<TouchableRipple onPress={() => setShowFullTitle(!showFullTitle)}>
+						<Text
+							variant='titleLarge'
+							style={{ fontWeight: 'bold' }}
+							numberOfLines={showFullTitle ? undefined : 2}
+						>
+							{title}
+						</Text>
+					</TouchableRipple>
 					<Text
 						variant='bodyMedium'
-						numberOfLines={1}
+						numberOfLines={Array.isArray(subtitles) ? subtitles.length : 1}
 					>
-						{subtitle || ''}
+						{Array.isArray(subtitles) ? subtitles.join('\n') : subtitles}
 					</Text>
 				</View>
 			</View>
 
-			{/* 描述和操作按钮 */}
+			{/* 操作按钮 */}
 			<View
 				style={{
 					flexDirection: 'row',
 					alignItems: 'center',
-					justifyContent: 'space-between',
-					padding: 16,
+					justifyContent: 'flex-start',
+					marginHorizontal: 16,
 				}}
 			>
-				<Text
-					variant='bodyMedium'
-					style={{ maxWidth: 300 }}
-				>
-					{description || '还没有简介哦~'}
-				</Text>
-
-				{onPlayAll && (
+				{onClickMainButton && (
+					<Button
+						mode='contained'
+						icon={mainButtonIcon}
+						onPress={() => onClickMainButton()}
+					>
+						{linkedPlaylistId ? '重新同步' : '同步到本地'}
+					</Button>
+				)}
+				{linkedPlaylistId && (
 					<IconButton
 						mode='contained'
-						icon='play'
-						size={30}
-						onPress={() => onPlayAll()}
+						icon={'arrow-right'}
+						size={20}
+						onPress={() =>
+							navigation.navigate('PlaylistLocal', {
+								id: linkedPlaylistId.toString(),
+							})
+						}
 					/>
 				)}
 			</View>
+
+			<Text
+				variant='bodyMedium'
+				style={{ margin: description ? 16 : 0 }}
+			>
+				{description ?? ''}
+			</Text>
 
 			<Divider />
 		</View>

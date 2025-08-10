@@ -14,6 +14,7 @@ export function FunctionalMenu({
 	viewMode,
 	uploaderMid,
 	setFavModalVisible,
+	setLocalPlaylistModalVisible,
 }: {
 	menuVisible: boolean
 	setMenuVisible: (visible: boolean) => void
@@ -21,6 +22,7 @@ export function FunctionalMenu({
 	viewMode: string
 	uploaderMid: number | undefined
 	setFavModalVisible: (visible: boolean) => void
+	setLocalPlaylistModalVisible: (visible: boolean) => void
 }) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
@@ -33,12 +35,22 @@ export function FunctionalMenu({
 			onDismiss={() => setMenuVisible(false)}
 			anchor={{ x: screenWidth - 24, y: insets.top + 24 }}
 		>
+			{currentTrack?.source === 'bilibili' && (
+				<Menu.Item
+					onPress={() => {
+						setMenuVisible(false)
+						setFavModalVisible(true)
+					}}
+					title='添加到 bilibili 收藏夹'
+					leadingIcon='playlist-plus'
+				/>
+			)}
 			<Menu.Item
 				onPress={() => {
 					setMenuVisible(false)
-					setFavModalVisible(true)
+					setLocalPlaylistModalVisible(true)
 				}}
-				title='添加到收藏夹'
+				title='添加到本地歌单'
 				leadingIcon='playlist-plus'
 			/>
 			<Menu.Item
@@ -57,10 +69,10 @@ export function FunctionalMenu({
 			/>
 			<Divider />
 			<Menu.Item
-				onPress={async () => {
+				onPress={() => {
 					setMenuVisible(false)
 					if (!currentTrack) return
-					await WebBrowser.openBrowserAsync(
+					void WebBrowser.openBrowserAsync(
 						`https://www.bilibili.com/video/${currentTrack.id}`,
 					)
 				}}

@@ -1,0 +1,1 @@
+CREATE INDEX `bilibili_metadata_bvid_cid_idx` ON `bilibili_metadata` (`bvid`,`cid`);

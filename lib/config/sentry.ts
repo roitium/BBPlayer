@@ -20,7 +20,7 @@ export function initializeSentry() {
 		debug: false,
 		tracesSampleRate: 0.7,
 		sendDefaultPii: true,
-		integrations: [navigationIntegration, Sentry.mobileReplayIntegration()],
+		integrations: [navigationIntegration],
 		enableNativeFramesTracking: !isRunningInExpoGo(),
 		enabled: !developement,
 		environment: developement ? 'development' : 'production',
@@ -46,11 +46,13 @@ export function initializeSentry() {
 
 	// 设置全局错误处理器，捕获未被处理的 JS 错误
 	if (!developement) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const errorUtils = (global as any).ErrorUtils
 		if (errorUtils) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			const originalErrorHandler = errorUtils.getGlobalHandler()
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			errorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
 				Sentry.captureException(error, {
 					tags: {
@@ -59,6 +61,7 @@ export function initializeSentry() {
 					},
 				})
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				originalErrorHandler(error, isFatal)
 			})
 		}

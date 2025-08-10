@@ -2,11 +2,8 @@ import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import { isTargetTrack } from '@/utils/player'
-import BottomSheet, {
-	BottomSheetFlatList,
-	BottomSheetFlatListMethods,
-} from '@gorhom/bottom-sheet'
+import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet'
 import { usePreventRemove } from '@react-navigation/native'
 import {
 	memo,
@@ -25,6 +22,7 @@ import {
 	TouchableRipple,
 	useTheme,
 } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const TrackItem = memo(
 	({
@@ -73,14 +71,14 @@ const TrackItem = memo(
 								numberOfLines={1}
 								style={{ fontWeight: 'bold' }}
 							>
-								{track.title || track.id}
+								{track.title}
 							</Text>
 							<Text
 								variant='bodySmall'
 								style={{ fontWeight: 'thin' }}
 								numberOfLines={1}
 							>
-								{track.artist || '待加载...'}
+								{track.artist?.name ?? '未知作者'}
 							</Text>
 						</View>
 						<IconButton
@@ -112,10 +110,9 @@ function PlayerQueueModal({
 	const flatListRef = useRef<BottomSheetFlatListMethods>(null)
 	const currentIndex = useMemo(() => {
 		if (!currentTrack || !queue.length) return -1
-		return queue.findIndex((t) =>
-			isTargetTrack(t, currentTrack.id, currentTrack.cid),
-		)
+		return queue.findIndex((t) => t.uniqueKey === currentTrack.uniqueKey)
 	}, [queue, currentTrack])
+	const insets = useSafeAreaInsets()
 
 	usePreventRemove(isVisible, () => {
 		sheetRef.current?.close()
@@ -123,26 +120,21 @@ function PlayerQueueModal({
 
 	const switchTrackHandler = useCallback(
 		(track: Track) => {
-			const index = queue.findIndex((t) =>
-				isTargetTrack(t, track.id, track.cid),
-			)
+			const index = queue.findIndex((t) => t.uniqueKey === track.uniqueKey)
 			if (index === -1) return
-			skipToTrack(index)
+			void skipToTrack(index)
 		},
 		[skipToTrack, queue],
 	)
 
 	const removeTrackHandler = useCallback(
 		async (track: Track) => {
-			await removeTrack(track.id, track.cid)
+			await removeTrack(track.uniqueKey)
 		},
 		[removeTrack],
 	)
 
-	const keyExtractor = useCallback(
-		(item: Track) => `${item.id}-${item.cid}`,
-		[],
-	)
+	const keyExtractor = useCallback((item: Track) => item.uniqueKey, [])
 
 	const renderItem = useCallback(
 		({ item }: { item: Track }) => (
@@ -150,11 +142,7 @@ function PlayerQueueModal({
 				track={item}
 				onSwitchTrack={switchTrackHandler}
 				onRemoveTrack={removeTrackHandler}
-				isCurrentTrack={
-					item.isMultiPage
-						? item.cid === currentTrack?.cid
-						: item.id === currentTrack?.id
-				}
+				isCurrentTrack={item.uniqueKey === currentTrack?.uniqueKey}
 			/>
 		),
 		[switchTrackHandler, removeTrackHandler, currentTrack],
@@ -209,6 +197,7 @@ function PlayerQueueModal({
 				contentContainerStyle={{
 					backgroundColor: theme.colors.elevation.level1,
 				}}
+				style={{ marginBottom: insets.bottom }}
 			/>
 		</BottomSheet>
 	)

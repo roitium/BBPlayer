@@ -1,0 +1,474 @@
+import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
+import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
+import {
+	useDeletePlaylist,
+	useDeleteTrackFromLocalPlaylist,
+	useDuplicatePlaylist,
+	usePlaylistSync,
+} from '@/hooks/mutations/db/playlist'
+import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import {
+	usePlaylistContents,
+	usePlaylistMetadata,
+	useSearchTracksInPlaylist,
+} from '@/hooks/queries/db/playlist'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
+import type { Track } from '@/types/core/media'
+import log, { flatErrorMessage } from '@/utils/log'
+import toast from '@/utils/toast'
+import { LegendList } from '@legendapp/list'
+import {
+	type RouteProp,
+	useNavigation,
+	usePreventRemove,
+	useRoute,
+} from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { TextInput as RNTextInput } from 'react-native'
+import { Alert, useWindowDimensions, View } from 'react-native'
+import {
+	Appbar,
+	Button,
+	Dialog,
+	Divider,
+	Menu,
+	Portal,
+	Searchbar,
+	Text,
+	TextInput,
+	useTheme,
+} from 'react-native-paper'
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PlaylistError } from '../../../components/playlist/PlaylistError'
+import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
+import type { RootStackParamList } from '../../../types/navigation'
+import { PlaylistHeader } from './components/LocalPlaylistHeader'
+import { TrackListItem } from './components/LocalPlaylistItem'
+
+const logger = log.extend('PLAYLIST/LOCAL')
+
+const SEARCHBAR_HEIGHT = 72
+
+export default function LocalPlaylistPage() {
+	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistLocal'>>()
+	const { id } = route.params
+	const { colors } = useTheme()
+	const navigation =
+		useNavigation<
+			NativeStackNavigationProp<RootStackParamList, 'PlaylistLocal'>
+		>()
+	const addToQueue = usePlayerStore((state) => state.addToQueue)
+	const currentTrack = useCurrentTrack()
+	const insets = useSafeAreaInsets()
+	const [addTrackModalVisible, setAddTrackModalVisible] = useState(false)
+	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
+		undefined,
+	)
+	const [editPlaylistModalVisible, setEditPlaylistModalVisible] =
+		useState(false)
+	const [duplicatePlaylistModalVisible, setDuplicatePlaylistModalVisible] =
+		useState(false)
+	const [duplicatePlaylistName, setDuplicatePlaylistName] = useState('')
+	const [functionalMenuVisible, setFunctionalMenuVisible] = useState(false)
+	const dimensions = useWindowDimensions()
+	const [searchQuery, setSearchQuery] = useState('')
+	const [startSearch, setStartSearch] = useState(false)
+	const searchbarRef = useRef<RNTextInput>(null)
+	const searchbarHeight = useSharedValue(0)
+	const debouncedQuery = useDebouncedValue(searchQuery, 200)
+
+	const {
+		data: playlistData,
+		isPending: isPlaylistDataPending,
+		isError: isPlaylistDataError,
+	} = usePlaylistContents(Number(id))
+	const filteredPlaylistData = useMemo(
+		() =>
+			playlistData?.filter(
+				(item) =>
+					item.source === 'bilibili' && item.bilibiliMetadata.videoIsValid,
+			) ?? [],
+		[playlistData],
+	)
+
+	const {
+		data: searchData,
+		isError: isSearchError,
+		error: searchError,
+	} = useSearchTracksInPlaylist(Number(id), debouncedQuery, startSearch)
+
+	const finalPlaylistData = useMemo(() => {
+		if (!startSearch || !debouncedQuery.trim()) return playlistData ?? []
+
+		if (isSearchError) {
+			toast.error('搜索失败', {
+				description: flatErrorMessage(searchError),
+			})
+			logger.error('搜索失败: ', flatErrorMessage(searchError))
+			return []
+		}
+
+		return searchData ?? []
+	}, [
+		startSearch,
+		debouncedQuery,
+		playlistData,
+		isSearchError,
+		searchData,
+		searchError,
+	])
+
+	const {
+		data: playlistMetadata,
+		isPending: isPlaylistMetadataPending,
+		isError: isPlaylistMetadataError,
+	} = usePlaylistMetadata(Number(id))
+
+	useEffect(() => {
+		if (playlistMetadata)
+			setDuplicatePlaylistName(playlistMetadata.title + '-副本')
+	}, [playlistMetadata])
+
+	const { mutate: syncPlaylist } = usePlaylistSync()
+	const { mutate: duplicatePlaylist } = useDuplicatePlaylist()
+	const { mutate: deletePlaylist } = useDeletePlaylist()
+	const { mutate: deleteTrackFromLocalPlaylist } =
+		useDeleteTrackFromLocalPlaylist()
+
+	const onClickDuplicateLocalPlaylist = useCallback(() => {
+		duplicatePlaylist(
+			{
+				playlistId: Number(id),
+				name: duplicatePlaylistName,
+			},
+			{
+				onSuccess: (id) =>
+					navigation.navigate('PlaylistLocal', { id: String(id) }),
+			},
+		)
+		setDuplicatePlaylistModalVisible(false)
+	}, [duplicatePlaylist, duplicatePlaylistName, id, navigation])
+
+	const onClickDeletePlaylist = useCallback(() => {
+		deletePlaylist(
+			{
+				playlistId: Number(id),
+			},
+			{
+				onSuccess: () => navigation.goBack(),
+			},
+		)
+		navigation.goBack()
+	}, [deletePlaylist, id, navigation])
+
+	const handleSync = useCallback(() => {
+		if (!playlistMetadata || !playlistMetadata.remoteSyncId) {
+			toast.error('无法同步，因为未找到播放列表元数据或 remoteSyncId 为空')
+			return
+		}
+		toast.show('同步中...')
+		syncPlaylist({
+			remoteSyncId: playlistMetadata.remoteSyncId,
+			type: playlistMetadata.type,
+		})
+	}, [playlistMetadata, syncPlaylist])
+
+	const playNext = useCallback(
+		async (track: Track) => {
+			try {
+				await addToQueue({
+					tracks: [track],
+					playNow: false,
+					clearQueue: false,
+					playNext: true,
+				})
+				toast.success('添加到下一首播放成功')
+			} catch (error) {
+				logger.error('添加到队列失败', error)
+				toast.error('添加到队列失败', {
+					description: flatErrorMessage(error as Error),
+				})
+			}
+		},
+		[addToQueue],
+	)
+
+	const playAll = useCallback(
+		async (startFromId?: string) => {
+			try {
+				if (!filteredPlaylistData) return
+				await addToQueue({
+					tracks: filteredPlaylistData,
+					playNow: true,
+					clearQueue: true,
+					startFromId: startFromId,
+					playNext: false,
+				})
+			} catch (error) {
+				logger.error('播放全部失败', error)
+				toast.error('播放全部失败', {
+					description: flatErrorMessage(error as Error),
+				})
+			}
+		},
+		[addToQueue, filteredPlaylistData],
+	)
+
+	const trackMenuItems = useCallback(
+		(item: Track) => [
+			{
+				title: '下一首播放',
+				leadingIcon: 'play-circle-outline',
+				onPress: () => playNext(item),
+			},
+			{
+				title: '添加到本地歌单',
+				leadingIcon: 'playlist-plus',
+				onPress: () => {
+					setCurrentModalTrack(item)
+					setAddTrackModalVisible(true)
+				},
+			},
+			{
+				title: '删除歌曲',
+				leadingIcon: 'delete',
+				onPress: () => {
+					deleteTrackFromLocalPlaylist({
+						trackId: item.id,
+						playlistId: Number(id),
+					})
+				},
+			},
+		],
+		[deleteTrackFromLocalPlaylist, id, playNext],
+	)
+
+	const handleTrackPress = useCallback(
+		(track: Track) => {
+			void playAll(track.uniqueKey)
+		},
+		[playAll],
+	)
+
+	const renderItem = useCallback(
+		({ item, index }: { item: Track; index: number }) => {
+			return (
+				<TrackListItem
+					index={index}
+					onTrackPress={() => handleTrackPress(item)}
+					menuItems={trackMenuItems(item)}
+					disabled={
+						item.source === 'bilibili' && !item.bilibiliMetadata.videoIsValid
+					}
+					data={{
+						cover: item.coverUrl ?? undefined,
+						artistCover: item.artist?.avatarUrl ?? undefined,
+						title: item.title,
+						duration: item.duration,
+						id: item.id,
+						artistName: item.artist?.name,
+					}}
+				/>
+			)
+		},
+		[handleTrackPress, trackMenuItems],
+	)
+
+	const keyExtractor = useCallback((item: Track) => String(item.id), [])
+
+	useEffect(() => {
+		if (typeof id !== 'string') {
+			navigation.replace('NotFound')
+		}
+	}, [id, navigation])
+
+	usePreventRemove(startSearch, () => setStartSearch(false))
+
+	useEffect(() => {
+		if (startSearch) {
+			const t = setTimeout(() => searchbarRef.current?.focus?.(), 120)
+			return () => clearTimeout(t)
+		}
+	}, [startSearch])
+
+	useEffect(() => {
+		searchbarHeight.set(
+			withTiming(startSearch ? SEARCHBAR_HEIGHT : 0, { duration: 180 }),
+		)
+	}, [searchbarHeight, startSearch])
+
+	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
+		height: searchbarHeight.value,
+	}))
+
+	if (typeof id !== 'string') {
+		return null
+	}
+
+	if (isPlaylistDataPending || isPlaylistMetadataPending) {
+		return <PlaylistLoading />
+	}
+
+	if (isPlaylistDataError || isPlaylistMetadataError) {
+		return <PlaylistError text='加载播放列表内容失败' />
+	}
+
+	if (!playlistMetadata) {
+		return <PlaylistError text='未找到播放列表元数据' />
+	}
+
+	return (
+		<View style={{ flex: 1, backgroundColor: colors.background }}>
+			<Appbar.Header elevated>
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content title={playlistMetadata.title} />
+				<Appbar.Action
+					icon={startSearch ? 'close' : 'magnify'}
+					onPress={() => setStartSearch((prev) => !prev)}
+				/>
+				<Appbar.Action
+					icon='dots-vertical'
+					onPress={() => setFunctionalMenuVisible(true)}
+				/>
+			</Appbar.Header>
+
+			{/* 搜索框 */}
+			<Animated.View style={[{ overflow: 'hidden' }, searchbarAnimatedStyle]}>
+				<Searchbar
+					mode='view'
+					placeholder='搜索歌曲'
+					onChangeText={setSearchQuery}
+					value={searchQuery}
+				/>
+			</Animated.View>
+
+			<LegendList
+				data={finalPlaylistData ?? []}
+				renderItem={renderItem}
+				ItemSeparatorComponent={() => <Divider />}
+				ListHeaderComponent={
+					<PlaylistHeader
+						playlist={playlistMetadata}
+						onClickPlayAll={playAll}
+						onClickSync={handleSync}
+						validTrackCount={filteredPlaylistData.length}
+						onClickCopyToLocalPlaylist={() =>
+							setDuplicatePlaylistModalVisible(true)
+						}
+						onPressAuthor={(author) =>
+							author.remoteId &&
+							navigation.navigate('PlaylistUploader', { mid: author.remoteId })
+						}
+					/>
+				}
+				keyExtractor={keyExtractor}
+				contentContainerStyle={{
+					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+				}}
+				showsVerticalScrollIndicator={false}
+				ListFooterComponent={
+					<Text
+						variant='titleMedium'
+						style={{
+							textAlign: 'center',
+							paddingTop: 10,
+						}}
+					>
+						•
+					</Text>
+				}
+			/>
+
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={addTrackModalVisible}
+					setVisible={setAddTrackModalVisible}
+				/>
+			)}
+
+			<EditPlaylistMetadataModal
+				playlist={playlistMetadata}
+				visiable={editPlaylistModalVisible}
+				setVisible={setEditPlaylistModalVisible}
+			/>
+			<Portal>
+				<Dialog
+					visible={duplicatePlaylistModalVisible}
+					onDismiss={() => setDuplicatePlaylistModalVisible(false)}
+				>
+					<Dialog.Title>复制播放列表</Dialog.Title>
+					<Dialog.Content>
+						<TextInput
+							label='新播放列表名称'
+							defaultValue={duplicatePlaylistName}
+							onChangeText={setDuplicatePlaylistName}
+							mode='outlined'
+							numberOfLines={1}
+							style={{ maxHeight: 200 }}
+							textAlignVertical='top'
+						/>
+					</Dialog.Content>
+					<Dialog.Actions>
+						<Button onPress={() => setDuplicatePlaylistModalVisible(false)}>
+							取消
+						</Button>
+						<Button onPress={onClickDuplicateLocalPlaylist}>确定</Button>
+					</Dialog.Actions>
+				</Dialog>
+			</Portal>
+
+			<Portal>
+				<Menu
+					visible={functionalMenuVisible}
+					onDismiss={() => setFunctionalMenuVisible(false)}
+					anchor={{
+						x: dimensions.width - 10,
+						y: 60 + insets.top,
+					}}
+				>
+					<Menu.Item
+						onPress={() => {
+							setFunctionalMenuVisible(false)
+							setEditPlaylistModalVisible(true)
+						}}
+						title='编辑播放列表信息'
+						leadingIcon='pencil'
+					/>
+					<Menu.Item
+						onPress={() => {
+							Alert.alert(
+								'删除播放列表',
+								'确定要删除此播放列表吗？',
+								[
+									{
+										text: '取消',
+										style: 'cancel',
+									},
+									{
+										text: '确定',
+										onPress: () => {
+											setFunctionalMenuVisible(false)
+											onClickDeletePlaylist()
+										},
+									},
+								],
+								{ cancelable: true },
+							)
+						}}
+						title='删除播放列表'
+						leadingIcon='delete'
+						titleStyle={{ color: colors.error }}
+					/>
+				</Menu>
+			</Portal>
+		</View>
+	)
+}

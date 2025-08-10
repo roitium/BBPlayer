@@ -1,7 +1,8 @@
 import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
-import { BottomTabParamList } from '@/types/navigation'
+import type { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
-import { RouteProp, useFocusEffect, useRoute } from '@react-navigation/native'
+import type { RouteProp } from '@react-navigation/native'
+import { useFocusEffect, useRoute } from '@react-navigation/native'
 import { useState } from 'react'
 import { Dimensions, View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
@@ -9,28 +10,32 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view'
 import CollectionListComponent from './components/collection/CollectionList'
 import FavoriteFolderListComponent from './components/favorite/FavoriteFolderList'
+import LocalPlaylistListComponent from './components/local/LocalPlaylistList'
 import MultiPageVideosListComponent from './components/multipage/MultiPageVideosList'
 
 const renderScene = SceneMap({
+	local: LocalPlaylistListComponent,
 	favorite: FavoriteFolderListComponent,
 	collection: CollectionListComponent,
-	multiPart: MultiPageVideosListComponent,
+	multiPage: MultiPageVideosListComponent,
 })
 
 const routes = [
+	{ key: 'local', title: '播放列表' },
 	{ key: 'favorite', title: '收藏夹' },
 	{ key: 'collection', title: '合集' },
-	{ key: 'multiPart', title: '分 p' },
+	{ key: 'multiPage', title: '分 p' },
 ]
 
 export enum Tabs {
-	Collection = 1,
-	Favorite = 0,
-	MultiPart = 2,
+	Local = 0,
+	Favorite = 1,
+	Collection = 2,
+	MultiPage = 3,
 }
 
 export default function Library() {
-	const [index, setIndex] = useState(Tabs.Favorite)
+	const [index, setIndex] = useState(Tabs.Local)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
@@ -120,10 +125,21 @@ export default function Library() {
 								/>
 							),
 						},
-						multiPart: {
+						multiPage: {
 							icon: ({ focused }) => (
 								<Icon
 									name={focused ? 'folder-play' : 'folder-play-outline'}
+									size={20}
+									color={
+										focused ? colors.onSecondaryContainer : colors.onSurface
+									}
+								/>
+							),
+						},
+						local: {
+							icon: ({ focused }) => (
+								<Icon
+									name={focused ? 'list-box' : 'list-box-outline'}
 									size={20}
 									color={
 										focused ? colors.onSecondaryContainer : colors.onSurface

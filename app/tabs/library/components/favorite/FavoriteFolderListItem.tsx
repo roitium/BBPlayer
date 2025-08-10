@@ -1,4 +1,4 @@
-import type { Playlist } from '@/types/core/media'
+import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { memo } from 'react'
@@ -6,7 +6,7 @@ import { TouchableOpacity, View } from 'react-native'
 import { Divider, Icon, Text } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../../types/navigation'
 
-const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
+const FavoriteFolderListItem = memo(({ item }: { item: BilibiliPlaylist }) => {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
@@ -29,7 +29,7 @@ const FavoriteFolderListItem = memo(({ item }: { item: Playlist }) => {
 							>
 								{item.title}
 							</Text>
-							<Text variant='bodySmall'>{item.count} 首歌曲</Text>
+							<Text variant='bodySmall'>{item.media_count} 首歌曲</Text>
 						</View>
 						<Icon
 							source='arrow-right'
