@@ -11,12 +11,11 @@ import {
 	usePlaylistContents,
 	usePlaylistMetadata,
 	useSearchTracksInPlaylist,
-} from '@/hooks/queries/db/usePlaylist'
+} from '@/hooks/queries/db/playlist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import type { Track } from '@/types/core/media'
-import { flatErrorMessage } from '@/utils/error'
-import log from '@/utils/log'
+import log, { flatErrorMessage } from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -50,8 +49,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
-import { PlaylistHeader } from './LocalPlaylistHeader'
-import { TrackListItem } from './LocalPlaylistItem'
+import { PlaylistHeader } from './components/LocalPlaylistHeader'
+import { TrackListItem } from './components/LocalPlaylistItem'
 
 const logger = log.extend('PLAYLIST/LOCAL')
 

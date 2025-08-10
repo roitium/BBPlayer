@@ -1,5 +1,5 @@
-import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'

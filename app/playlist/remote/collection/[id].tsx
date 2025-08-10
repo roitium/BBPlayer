@@ -5,7 +5,7 @@ import {
 } from '@/components/playlist/PlaylistItem'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { useCollectionAllContents } from '@/hooks/queries/bilibili/useFavoriteData'
+import { useCollectionAllContents } from '@/hooks/queries/bilibili/favorite'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'

@@ -13,13 +13,12 @@ import { useUpdateTrackLocalPlaylists } from '@/hooks/mutations/db/playlist'
 import {
 	usePlaylistLists,
 	usePlaylistsContainingTrack,
-} from '@/hooks/queries/db/usePlaylist'
+} from '@/hooks/queries/db/playlist'
 import { artistService } from '@/lib/services/artistService'
 import type { Playlist, Track } from '@/types/core/media'
-import { flatErrorMessage } from '@/utils/error'
-import log from '@/utils/log'
+import log, { flatErrorMessage } from '@/utils/log'
 import toast from '@/utils/toast'
-import { AnimatedModal } from '../modal'
+import { AnimatedModal } from '../AnimatedModal'
 
 const logger = log.extend('Modals/AddVideoToLocalPlaylistModal')
 

@@ -1,11 +1,11 @@
-import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/useFavoriteData'
-import { userQueryKeys } from '@/hooks/queries/bilibili/useUserData'
+import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
+import { userQueryKeys } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useState } from 'react'
 import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
-import { AnimatedModal } from '../modal'
+import { AnimatedModal } from '../AnimatedModal'
 
 function SetCookieDialog({
 	visible,

@@ -1,7 +1,6 @@
 import { playlistService } from '@/lib/services/playlistService'
 import type { Playlist } from '@/types/core/media'
-import { flatErrorMessage } from '@/utils/error'
-import log from '@/utils/log'
+import log, { flatErrorMessage } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useEffect, useState } from 'react'
 

@@ -1,7 +1,6 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { ProjectScope } from '@/types/core/scope'
-import { reportErrorToSentry } from '@/utils/error'
-import log from '@/utils/log'
+import log, { reportErrorToSentry } from '@/utils/log'
 import { convertToRNTPTrack } from '@/utils/player'
 import TrackPlayer, {
 	AppKilledPlaybackBehavior,

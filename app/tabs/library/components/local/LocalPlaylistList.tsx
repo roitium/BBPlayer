@@ -1,5 +1,5 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { usePlaylistLists } from '@/hooks/queries/db/usePlaylist'
+import { usePlaylistLists } from '@/hooks/queries/db/playlist'
 import type { Playlist } from '@/types/core/media'
 import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'

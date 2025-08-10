@@ -5,7 +5,7 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetMultiPageList,
 	useGetVideoDetails,
-} from '@/hooks/queries/bilibili/useVideoData'
+} from '@/hooks/queries/bilibili/video'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {

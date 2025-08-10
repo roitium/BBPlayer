@@ -7,7 +7,7 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
-} from '@/hooks/queries/bilibili/useUserData'
+} from '@/hooks/queries/bilibili/user'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
 	BilibiliUserInfo,

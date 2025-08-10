@@ -43,10 +43,6 @@ export function RootLayoutNav() {
 					component={SearchResultsPage}
 				/>
 				<RootStack.Screen
-					name='NotFound'
-					component={NotFoundScreen}
-				/>
-				<RootStack.Screen
 					name='PlaylistCollection'
 					component={PlaylistCollectionPage}
 				/>
@@ -69,6 +65,10 @@ export function RootLayoutNav() {
 				<RootStack.Screen
 					name='PlaylistLocal'
 					component={LocalPlaylistPage}
+				/>
+				<RootStack.Screen
+					name='NotFound'
+					component={NotFoundScreen}
 				/>
 			</RootStack.Navigator>
 			<View

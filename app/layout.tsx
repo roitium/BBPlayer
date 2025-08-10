@@ -1,4 +1,3 @@
-import { AppProviders } from '@/components/providers/AppProviders'
 import { toastConfig } from '@/components/toast/ToastConfig'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
@@ -25,6 +24,7 @@ import {
 import { Text } from 'react-native-paper'
 import Toast from 'react-native-toast-message'
 import migrations from '../drizzle/migrations'
+import { AppProviders } from './providers'
 
 // 在获取资源时保持启动画面可见
 void SplashScreen.preventAutoHideAsync()
@@ -140,6 +140,7 @@ export default Sentry.wrap(function RootLayout() {
 		return (
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
 				<Text>数据库迁移失败: {migrationsError?.message}</Text>
+				<Text>建议截图报错信息，发到项目 issues 反馈</Text>
 			</View>
 		)
 	}

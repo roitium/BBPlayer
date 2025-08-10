@@ -10,7 +10,7 @@ import { Pressable } from 'react-native'
 import { Button, Dialog, Text } from 'react-native-paper'
 import QRCode from 'react-native-qrcode-svg'
 import * as setCookieParser from 'set-cookie-parser'
-import { AnimatedModal } from '../modal'
+import { AnimatedModal } from '../AnimatedModal'
 
 type Status =
 	| 'prompting'

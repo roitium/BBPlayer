@@ -1,5 +1,5 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { BilibiliApiError } from '@/lib/errors/bilibili'
 import toast from '@/utils/toast'

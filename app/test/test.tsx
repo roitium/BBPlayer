@@ -155,11 +155,11 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							navigation.push('PlaylistLocal', { id: '12' })
+							throw new Error('测试错误')
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						跳转 local 播放列表
+						扔个错误
 					</Button>
 				</View>
 

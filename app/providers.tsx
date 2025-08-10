@@ -15,8 +15,8 @@ import {
 	PaperProvider,
 } from 'react-native-paper'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { linking } from '../../app/linking'
-import { RootLayoutNav } from '../../app/navigation'
+import { linking } from './linking'
+import { RootLayoutNav } from './navigation'
 
 export function AppProviders({
 	onLayoutRootView,

@@ -1,9 +1,9 @@
+import { useDealFavoriteForOneVideo } from '@/hooks/mutations/bilibili/favorite'
 import {
 	favoriteListQueryKeys,
-	useDealFavoriteForOneVideo,
 	useGetFavoriteForOneVideo,
-} from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+} from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
@@ -16,7 +16,7 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
-import { AnimatedModal } from '../modal'
+import { AnimatedModal } from '../AnimatedModal'
 
 const FavoriteListItem = memo(function FavoriteListItem({
 	name,

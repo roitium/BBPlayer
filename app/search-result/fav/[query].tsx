@@ -6,8 +6,8 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteSearchFavoriteItems,
-} from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+} from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import type { BilibiliTrack } from '@/types/core/media'

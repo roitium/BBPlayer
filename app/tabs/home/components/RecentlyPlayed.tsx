@@ -1,5 +1,5 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToBilibiliFavModal'
-import { useRecentlyPlayed } from '@/hooks/queries/bilibili/useUserData'
+import { useRecentlyPlayed } from '@/hooks/queries/bilibili/user'
 import type { Track } from '@/types/core/media'
 import { LegendList } from '@legendapp/list'
 import { useCallback, useState } from 'react'

@@ -2,8 +2,8 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteFavoriteList,
-} from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+} from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
