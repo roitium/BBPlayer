@@ -8,7 +8,14 @@ import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
-import { Button, Checkbox, Dialog, Text, useTheme } from 'react-native-paper'
+import {
+	Button,
+	Checkbox,
+	Dialog,
+	Divider,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import { AnimatedModal } from '../modal'
 
 const FavoriteListItem = memo(function FavoriteListItem({
@@ -186,6 +193,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		return (
 			<>
 				<Dialog.Content>
+					<Divider bold />
 					{/* 这里用 LegendList 会有 bug，添加了 extraData={checkedList} 会导致卡顿，不添加又会导致数据不同步 */}
 					<FlatList
 						data={playlists || []}
@@ -207,6 +215,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 							</View>
 						}
 					/>
+					<Divider bold />
 				</Dialog.Content>
 				<Dialog.Actions style={{ marginTop: 16 }}>
 					<Button

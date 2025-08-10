@@ -1,4 +1,4 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToBilibiliFavModal'
 import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
