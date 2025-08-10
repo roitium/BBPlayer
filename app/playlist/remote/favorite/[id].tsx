@@ -32,7 +32,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
-import useCheckLinkedToLocalPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
+import useCheckLinkedToPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
 
 const mapApiItemToTrack = (
 	apiItem: BilibiliFavoriteListContent,
@@ -77,7 +77,7 @@ export default function FavoritePage() {
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const linkedPlaylistId = useCheckLinkedToLocalPlaylist(Number(id), 'favorite')
+	const linkedPlaylistId = useCheckLinkedToPlaylist(Number(id), 'favorite')
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,

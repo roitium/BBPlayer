@@ -29,7 +29,7 @@ export class PlaylistFacade {
 	) {}
 
 	/**
-	 * 复制一份 playlist，新复制的 playlist 类型为 local
+	 * 复制一份 playlist，新复制的 playlist 类型为 local，且 author&remoteSyncId 为 null
 	 * @param playlistId remote playlist 的 ID
 	 * @param name 新的 local playlist 的名称
 	 * @returns 如果成功，则为 local playlist 的 ID
@@ -54,9 +54,9 @@ export class PlaylistFacade {
 					title: name,
 					description: playlistMetadata.description ?? undefined,
 					coverUrl: playlistMetadata.coverUrl ?? undefined,
-					authorId: playlistMetadata.authorId ?? undefined,
+					authorId: null,
 					type: 'local',
-					remoteSyncId: playlistMetadata.remoteSyncId,
+					remoteSyncId: null,
 				})
 				if (localPlaylistResult.isErr()) {
 					throw localPlaylistResult.error

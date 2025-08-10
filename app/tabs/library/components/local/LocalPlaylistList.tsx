@@ -4,15 +4,17 @@ import type { Playlist } from '@/types/core/media'
 import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { Text, useTheme } from 'react-native-paper'
+import { IconButton, Text, useTheme } from 'react-native-paper'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
+import CreatePlaylistModal from './CreatePlaylistModal'
 import LocalPlaylistItem from './LocalPlaylistItem'
 
 const LocalPlaylistListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
+	const [modalVisible, setModalVisible] = useState(false)
 
 	const {
 		data: playlists,
@@ -63,7 +65,16 @@ const LocalPlaylistListComponent = memo(() => {
 				>
 					播放列表
 				</Text>
-				<Text variant='bodyMedium'>{playlists.length ?? 0} 个播放列表</Text>
+				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+					<Text variant='bodyMedium'>{playlists.length ?? 0} 个播放列表</Text>
+					<IconButton
+						icon='plus'
+						size={20}
+						onPress={() => {
+							setModalVisible(true)
+						}}
+					/>
+				</View>
 			</View>
 			<LegendList
 				style={{ flex: 1 }}
@@ -91,6 +102,11 @@ const LocalPlaylistListComponent = memo(() => {
 				ListEmptyComponent={
 					<Text style={{ textAlign: 'center' }}>没有播放列表</Text>
 				}
+			/>
+
+			<CreatePlaylistModal
+				visiable={modalVisible}
+				setVisible={setModalVisible}
 			/>
 		</View>
 	)

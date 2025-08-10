@@ -1,7 +1,7 @@
 import type { Playlist } from '@/types/core/media'
 import { formatRelativeTime } from '@/utils/time'
 import { Image } from 'expo-image'
-import { memo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import {
 	Button,
@@ -18,6 +18,47 @@ interface PlaylistHeaderProps {
 	onClickSync: () => void
 	validTrackCount: number
 	onClickCopyToLocalPlaylist: () => void
+	/** 当作者为 bilibili 时触发。可选，未提供时仅视觉提示不响应 */
+	onPressAuthor?: (author: NonNullable<Playlist['author']>) => void
+}
+
+interface SubtitlePieces {
+	isLocal: boolean
+	authorName?: string
+	authorClickable: boolean
+	countText: string
+	syncLine?: string // 带“最后同步：xxx”的整行
+}
+
+// 三元运算符过于难懂，还是用函数好一些
+function buildSubtitlePieces(
+	playlist: Playlist,
+	validTrackCount: number,
+): SubtitlePieces {
+	const isLocal = playlist.type === 'local'
+
+	const countRaw =
+		validTrackCount !== playlist.itemCount
+			? `${playlist.itemCount}(${validTrackCount})`
+			: `${playlist.itemCount}`
+
+	const countText = `${countRaw} 首歌曲`
+
+	const authorName = !isLocal
+		? (playlist.author?.name ?? '未知作者')
+		: undefined
+	const authorClickable =
+		!!authorName && !isLocal && playlist.author?.source === 'bilibili'
+
+	const syncLine = !isLocal
+		? `最后同步：${
+				playlist.lastSyncedAt
+					? formatRelativeTime(playlist.lastSyncedAt)
+					: '未知'
+			}`
+		: undefined
+
+	return { isLocal, authorName, authorClickable, countText, syncLine }
 }
 
 /**
@@ -29,19 +70,27 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	onClickPlayAll,
 	onClickSync,
 	onClickCopyToLocalPlaylist,
+	onPressAuthor,
 }: PlaylistHeaderProps) {
 	const [showFullTitle, setShowFullTitle] = useState(false)
 
+	const { isLocal, authorName, authorClickable, countText, syncLine } = useMemo(
+		() => buildSubtitlePieces(playlist, validTrackCount),
+		[playlist, validTrackCount],
+	)
+
 	if (!playlist.title) return null
+
 	return (
 		<View style={{ position: 'relative', flexDirection: 'column' }}>
-			{/* 收藏夹信息 */}
+			{/* 顶部信息 */}
 			<View style={{ flexDirection: 'row', margin: 16, alignItems: 'center' }}>
 				<Image
 					source={{ uri: playlist.coverUrl ?? undefined }}
 					contentFit='cover'
 					style={{ width: 120, height: 120, borderRadius: 8 }}
 				/>
+
 				<View
 					style={{
 						marginLeft: 16,
@@ -65,17 +114,30 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 						style={{ fontWeight: '100' }}
 						numberOfLines={2}
 					>
-						{playlist.author?.name} • {playlist.itemCount}
-						{validTrackCount !== playlist.itemCount
-							? `(${validTrackCount})`
-							: ''}{' '}
-						首歌曲
-						{playlist.type !== 'local' &&
-							'\n' +
-								'最后同步：' +
-								(playlist.lastSyncedAt
-									? formatRelativeTime(playlist.lastSyncedAt)
-									: '未知')}
+						{isLocal ? (
+							<>{countText}</>
+						) : (
+							<>
+								{/* 作者名 */}
+								<Text
+									variant='bodyMedium'
+									onPress={
+										authorClickable && playlist.author
+											? () => onPressAuthor?.(playlist.author!)
+											: undefined
+									}
+									style={{
+										textDecorationLine: authorClickable ? 'underline' : 'none',
+									}}
+								>
+									{authorName}
+								</Text>
+								{' • '}
+								{countText}
+								{syncLine ? '\n' : ''}
+								{syncLine}
+							</>
+						)}
 					</Text>
 				</View>
 			</View>
@@ -92,19 +154,21 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
 					<Button
 						mode='contained'
-						icon={'play'}
+						icon='play'
 						onPress={onClickPlayAll}
 					>
 						播放全部
 					</Button>
-					{playlist.type === 'local' || (
+
+					{playlist.type !== 'local' && (
 						<IconButton
 							mode='contained'
-							icon={'sync'}
+							icon='sync'
 							size={20}
 							onPress={onClickSync}
 						/>
 					)}
+
 					<Tooltip title='复制到本地歌单'>
 						<IconButton
 							mode='contained'
@@ -116,14 +180,15 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 				</View>
 			</View>
 
-			<Text
-				style={{
-					margin: playlist.description ? 16 : 0,
-				}}
-				variant='bodyMedium'
-			>
-				{playlist.description ?? ''}
-			</Text>
+			{/* 描述 */}
+			{!!playlist.description && (
+				<Text
+					style={{ margin: 16 }}
+					variant='bodyMedium'
+				>
+					{playlist.description}
+				</Text>
+			)}
 
 			<Divider />
 		</View>

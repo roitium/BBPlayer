@@ -2,7 +2,7 @@ export interface CreatePlaylistPayload {
 	title: string
 	description?: string | null
 	coverUrl?: string | null
-	authorId?: number | null
+	authorId?: number | null // 如果是本地播放列表，则为 null
 	type: 'favorite' | 'collection' | 'multi_page' | 'local'
 	remoteSyncId?: number | null
 }

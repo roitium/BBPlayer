@@ -29,7 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
-import useCheckLinkedToLocalPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
+import useCheckLinkedToPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
 
 const mapApiItemToTrack = (
 	mp: BilibiliMultipageVideo,
@@ -74,10 +74,7 @@ export default function MultipagePage() {
 	const currentTrack = useCurrentTrack()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const insets = useSafeAreaInsets()
-	const linkedPlaylistId = useCheckLinkedToLocalPlaylist(
-		bv2av(bvid),
-		'multi_page',
-	)
+	const linkedPlaylistId = useCheckLinkedToPlaylist(bv2av(bvid), 'multi_page')
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalTrack, setCurrentModalTrack] = useState<
 		BilibiliTrack | undefined

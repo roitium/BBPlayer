@@ -7,11 +7,9 @@ import type { Playlist } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { UpdatePlaylistPayload } from '@/types/services/playlist'
 import type { CreateTrackPayload } from '@/types/services/track'
-import log, { flatErrorMessage } from '@/utils/log'
+import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useMutation } from '@tanstack/react-query'
-
-const logger = log.extend('mutations/db/playlist')
 
 queryClient.setMutationDefaults(['db', 'playlists'], {
 	retry: false,
@@ -48,12 +46,11 @@ export const usePlaylistSync = () => {
 				}),
 			])
 		},
-		onError: (error, variables) => {
-			logger.error('同步失败: ', flatErrorMessage(error), variables)
-			toast.error('同步失败', {
-				description: flatErrorMessage(error),
-			})
-		},
+		onError: (error, { remoteSyncId, type }) =>
+			toastAndLogError(
+				`同步播放列表失败: remoteSyncId=${remoteSyncId}, type=${type}`,
+				error,
+			),
 	})
 }
 
@@ -103,12 +100,11 @@ export const useUpdateTrackLocalPlaylists = () => {
 			}
 			void Promise.all(promises)
 		},
-		onError: (error, variables) => {
-			logger.error('操作音频收藏位置失败: ', flatErrorMessage(error), variables)
-			toast.error('操作音频收藏位置失败', {
-				description: flatErrorMessage(error),
-			})
-		},
+		onError: (error, { trackPayload }) =>
+			toastAndLogError(
+				`操作音频收藏位置失败: trackTitle=${trackPayload.title}`,
+				error,
+			),
 	})
 }
 
@@ -134,12 +130,11 @@ export const useDuplicatePlaylist = () => {
 				queryKey: playlistKeys.playlistLists(),
 			})
 		},
-		onError: (error, variables) => {
-			logger.error('复制失败: ', flatErrorMessage(error), variables)
-			toast.error('复制失败', {
-				description: flatErrorMessage(error),
-			})
-		},
+		onError: (error, { playlistId, name }) =>
+			toastAndLogError(
+				`复制播放列表失败: playlistId=${playlistId}, name=${name}`,
+				error,
+			),
 	})
 }
 
@@ -174,12 +169,8 @@ export const useEditPlaylistMetadata = () => {
 				}),
 			])
 		},
-		onError: (error, variables) => {
-			logger.error('修改播放列表信息失败: ', flatErrorMessage(error), variables)
-			toast.error('修改播放列表信息失败', {
-				description: flatErrorMessage(error),
-			})
-		},
+		onError: (error, { playlistId }) =>
+			toastAndLogError(`修改播放列表信息失败：playlistId=${playlistId}`, error),
 	})
 }
 
@@ -199,12 +190,8 @@ export const useDeletePlaylist = () => {
 				queryKey: playlistKeys.playlistLists(),
 			})
 		},
-		onError: (error, variables) => {
-			logger.error('删除播放列表失败: ', flatErrorMessage(error), variables)
-			toast.error('删除播放列表失败', {
-				description: flatErrorMessage(error),
-			})
-		},
+		onError: (error, { playlistId }) =>
+			toastAndLogError(`删除播放列表失败: playlistId=${playlistId}`, error),
 	})
 }
 
@@ -244,11 +231,38 @@ export const useDeleteTrackFromLocalPlaylist = () => {
 				}),
 			])
 		},
-		onError: (error, variables) => {
-			logger.error('删除播放列表失败: ', flatErrorMessage(error), variables)
-			toast.error('删除播放列表失败', {
-				description: flatErrorMessage(error),
+		onError: (error) => toastAndLogError('从播放列表中删除 track 失败', error),
+	})
+}
+
+export const useCreateNewLocalPlaylist = () => {
+	return useMutation({
+		mutationFn: async (payload: {
+			title: string
+			description?: string
+			coverUrl?: string
+		}) => {
+			const result = await playlistService.createPlaylist({
+				...payload,
+				type: 'local',
 			})
+			if (result.isErr()) throw result.error
+			return result.value
 		},
+		onSuccess: (playlist) => {
+			toast.success('创建播放列表成功')
+			void Promise.all([
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistLists(),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistContents(playlist.id),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistMetadata(playlist.id),
+				}),
+			])
+		},
+		onError: (error) => toastAndLogError('创建播放列表失败', error),
 	})
 }

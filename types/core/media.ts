@@ -57,7 +57,7 @@ export type Track = BilibiliTrack | LocalTrack
 export interface Playlist {
 	id: number
 	title: string
-	author: Artist | null
+	author: Artist | null // 本地播放列表不存在 author
 	description: string | null
 	coverUrl: string | null
 	itemCount: number

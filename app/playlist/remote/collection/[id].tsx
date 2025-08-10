@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
-import useCheckLinkedToLocalPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
+import useCheckLinkedToPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
 
 const mapApiItemToTrack = (
 	apiItem: BilibiliMediaItemInCollection,
@@ -70,10 +70,7 @@ export default function CollectionPage() {
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const linkedPlaylistId = useCheckLinkedToLocalPlaylist(
-		Number(id),
-		'collection',
-	)
+	const linkedPlaylistId = useCheckLinkedToPlaylist(Number(id), 'collection')
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,

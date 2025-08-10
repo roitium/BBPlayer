@@ -6,7 +6,13 @@ import { useEffect, useState } from 'react'
 
 const logger = log.extend('App/Playlist/Remote')
 
-export default function useCheckLinkedToLocalPlaylist(
+/**
+ * 检查某个 remoteId 是否已经被关联到本地播放列表
+ * @param remoteId
+ * @param type
+ * @returns
+ */
+export default function useCheckLinkedToPlaylist(
 	remoteId: number,
 	type: Playlist['type'],
 ) {

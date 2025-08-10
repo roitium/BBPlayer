@@ -116,7 +116,14 @@ export default function LocalPlaylistPage() {
 		}
 
 		return searchData ?? []
-	}, [startSearch, playlistData, isSearchError, searchData, searchError])
+	}, [
+		startSearch,
+		debouncedQuery,
+		playlistData,
+		isSearchError,
+		searchData,
+		searchError,
+	])
 
 	const {
 		data: playlistMetadata,
@@ -354,6 +361,10 @@ export default function LocalPlaylistPage() {
 						validTrackCount={filteredPlaylistData.length}
 						onClickCopyToLocalPlaylist={() =>
 							setDuplicatePlaylistModalVisible(true)
+						}
+						onPressAuthor={(author) =>
+							author.remoteId &&
+							navigation.navigate('PlaylistUploader', { mid: author.remoteId })
 						}
 					/>
 				}
