@@ -1,11 +1,11 @@
 import { TrackMenuItemDividerToken } from '@/components/playlist/PlaylistItem'
-import { MULTIPAGE_VIDEO_KEYWORDS } from '@/constants/search'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { BilibiliTrack } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
+import { MULTIPAGE_VIDEO_KEYWORDS } from '../constants'
 
 export function useSearchInteractions() {
 	const navigation =

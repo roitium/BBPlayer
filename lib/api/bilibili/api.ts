@@ -112,6 +112,7 @@ export const createBilibiliApi = () => ({
 
 	/**
 	 * 获取视频音频流信息
+	 * 优先级（在 dolby 和 hi-res 都开启的情况下）：dolby > hi-res > normal
 	 */
 	getAudioStream(
 		params: BilibiliAudioStreamParams,
@@ -132,21 +133,21 @@ export const createBilibiliApi = () => ({
 			.andThen((response) => {
 				const { dash } = response
 
-				if (enableHiRes && dash?.hiRes?.audio) {
-					bilibiliApiLog.debug('优先使用 Hi-Res 音频流')
-					return okAsync({
-						url: dash.hiRes.audio.baseUrl,
-						quality: dash.hiRes.audio.id,
-						getTime: Date.now() + 60 * 1000, // Add 60s buffer
-						type: 'dash' as const,
-					})
-				}
-
 				if (enableDolby && dash?.dolby?.audio && dash.dolby.audio.length > 0) {
 					bilibiliApiLog.debug('优先使用 Dolby 音频流')
 					return okAsync({
 						url: dash.dolby.audio[0].baseUrl,
 						quality: dash.dolby.audio[0].id,
+						getTime: Date.now() + 60 * 1000, // Add 60s buffer
+						type: 'dash' as const,
+					})
+				}
+
+				if (enableHiRes && dash?.flac?.audio) {
+					bilibiliApiLog.debug('次级使用 Hi-Res 音频流')
+					return okAsync({
+						url: dash.flac.audio.baseUrl,
+						quality: dash.flac.audio.id,
 						getTime: Date.now() + 60 * 1000, // Add 60s buffer
 						type: 'dash' as const,
 					})
@@ -640,6 +641,47 @@ export const createBilibiliApi = () => ({
 				rawData: null,
 				type: BilibiliApiErrorType.ResponseFailed,
 			})
+		})
+	},
+
+	/**
+	 * 获取 b23.tv 短链接的解析后结果
+	 */
+	getB23ResolvedUrl: (b23Url: string): ResultAsync<string, ApiCallingError> => {
+		return ResultAsync.fromPromise(
+			fetch(b23Url, {
+				headers: {
+					'User-Agent':
+						'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 BiliApp/6.66.0',
+				},
+			}),
+			(e) =>
+				new BilibiliApiError({
+					message: (e as Error).message,
+					type: BilibiliApiErrorType.RequestFailed,
+				}),
+		).andThen((response) => {
+			if (!response.ok) {
+				return errAsync(
+					new BilibiliApiError({
+						message: `请求 b23.tv 短链接失败: ${response.status} ${response.statusText}`,
+						msgCode: response.status,
+						type: BilibiliApiErrorType.RequestFailed,
+					}),
+				)
+			}
+			const redirectUrl = response.url // react native 不支持 redirect: 'manual'，所以在这里直接获取最终跳转到的 URL
+			if (!redirectUrl) {
+				return errAsync(
+					new BilibiliApiError({
+						message: '未获取到 b23.tv 短链接的解析结果',
+						msgCode: 0,
+						rawData: null,
+						type: BilibiliApiErrorType.ResponseFailed,
+					}),
+				)
+			}
+			return okAsync(redirectUrl)
 		})
 	},
 })

@@ -1,3 +1,4 @@
+import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -9,7 +10,7 @@ import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/favorite'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import type { BilibiliTrack } from '@/types/core/media'
+import type { BilibiliTrack, Track } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import {
@@ -77,6 +78,10 @@ export default function FavoritePage() {
 	const insets = useSafeAreaInsets()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const linkedPlaylistId = useCheckLinkedToLocalPlaylist(Number(id), 'favorite')
+	const [modalVisible, setModalVisible] = useState(false)
+	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
+		undefined,
+	)
 
 	const {
 		data: favoriteData,
@@ -123,6 +128,15 @@ export default function FavoritePage() {
 					navigation.navigate('PlaylistMultipage', {
 						bvid: item.bilibiliMetadata.bvid,
 					})
+				},
+			},
+			TrackMenuItemDividerToken,
+			{
+				title: '添加到本地歌单',
+				leadingIcon: 'playlist-plus',
+				onPress: () => {
+					setCurrentModalTrack(item)
+					setModalVisible(true)
 				},
 			},
 		],
@@ -281,6 +295,14 @@ export default function FavoritePage() {
 					}
 				/>
 			</View>
+
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={modalVisible}
+					setVisible={setModalVisible}
+				/>
+			)}
 		</View>
 	)
 }

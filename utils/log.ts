@@ -7,6 +7,7 @@ import {
 	logger,
 	mapConsoleTransport,
 } from 'react-native-logs'
+import toast from './toast'
 
 // 创建 Logger 实例
 const config = {
@@ -83,6 +84,19 @@ export function reportErrorToSentry(
 			message,
 		},
 	})
+}
+
+/**
+ * 将错误消息和错误堆栈信息显示在 toast 上，并将错误信息记录到日志中（用于最顶端的调用者消费错误）
+ * @param error 原始错误对象
+ * @param message 需要显示的信息
+ */
+export function toastAndLogError(message: string, error: Error) {
+	toast.error(message, {
+		description: message ?? flatErrorMessage(error),
+		duration: Number.POSITIVE_INFINITY,
+	})
+	log.error(`${message}: ${flatErrorMessage(error)}`)
 }
 
 // @ts-expect-error 忽略 TS 报错

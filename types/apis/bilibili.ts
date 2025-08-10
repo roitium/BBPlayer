@@ -31,7 +31,7 @@ interface BilibiliAudioStreamResponse {
 				  }[]
 				| null
 		} | null
-		hiRes?: {
+		flac?: {
 			display: boolean
 			audio: {
 				id: number

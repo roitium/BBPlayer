@@ -14,13 +14,8 @@ import {
 	usePlaylistLists,
 	usePlaylistsContainingTrack,
 } from '@/hooks/queries/db/playlist'
-import { artistService } from '@/lib/services/artistService'
 import type { Playlist, Track } from '@/types/core/media'
-import log, { flatErrorMessage } from '@/utils/log'
-import toast from '@/utils/toast'
 import { AnimatedModal } from '../AnimatedModal'
-
-const logger = log.extend('Modals/AddVideoToLocalPlaylistModal')
 
 const PlaylistListItem = memo(function PlaylistListItem({
 	id,
@@ -109,7 +104,7 @@ const AddVideoToLocalPlaylistModal = memo(
 			})
 		}, [])
 
-		const handleConfirm = useCallback(async () => {
+		const handleConfirm = useCallback(() => {
 			if (isMutating) return
 
 			const currentCheckedIds = new Set(checkedPlaylistIds)
@@ -126,37 +121,13 @@ const AddVideoToLocalPlaylistModal = memo(
 				return
 			}
 
-			let artistId
-			if (track.artist) {
-				artistId = await artistService.findOrCreateArtist({
-					name: track.artist.name,
-					source: track.artist.source,
-					remoteId: track.artist.remoteId,
-					avatarUrl: track.artist.avatarUrl,
-					signature: track.artist.signature,
-				})
-				if (artistId.isErr()) {
-					toast.error('查询或创建歌手失败', {
-						description: flatErrorMessage(artistId.error),
-						duration: Number.POSITIVE_INFINITY,
-					})
-					logger.error('查询或创建歌手失败: ', flatErrorMessage(artistId.error))
-					return
-				}
-			}
-			logger.debug(
-				'查询或创建该 track 对应的 artist 完成：',
-				artistId?.value.id,
-			)
 			updateTracks({
 				toAddPlaylistIds,
 				toRemovePlaylistIds,
-				trackPayload: {
-					...track,
-					artistId: artistId?.value.id,
-				},
+				trackPayload: track,
+				artistPayload: track.artist,
 			})
-			logger.debug('更新本地播放列表完成')
+
 			setVisible(false)
 		}, [
 			isMutating,

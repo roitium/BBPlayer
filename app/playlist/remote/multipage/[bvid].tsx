@@ -1,3 +1,4 @@
+import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
@@ -77,6 +78,10 @@ export default function MultipagePage() {
 		bv2av(bvid),
 		'multi_page',
 	)
+	const [modalVisible, setModalVisible] = useState(false)
+	const [currentModalTrack, setCurrentModalTrack] = useState<
+		BilibiliTrack | undefined
+	>(undefined)
 
 	const {
 		data: rawMultipageData,
@@ -118,6 +123,14 @@ export default function MultipagePage() {
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
 				onPress: () => playTrack(item, true),
+			},
+			{
+				title: '添加到本地歌单',
+				leadingIcon: 'playlist-plus',
+				onPress: () => {
+					setCurrentModalTrack(item)
+					setModalVisible(true)
+				},
 			},
 		],
 		[playTrack],
@@ -241,6 +254,13 @@ export default function MultipagePage() {
 					}
 				/>
 			</View>
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={modalVisible}
+					setVisible={setModalVisible}
+				/>
+			)}
 		</View>
 	)
 }

@@ -1,4 +1,3 @@
-import { STREAM_EXPIRY_TIME } from '@/constants/player'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
@@ -9,6 +8,9 @@ import { err, ok, type Result } from 'neverthrow'
 import log from './log'
 
 const playerLog = log.extend('PLAYER/UTILS')
+
+// 音频流过期时间 120 分钟
+const STREAM_EXPIRY_TIME = 120 * 60 * 1000
 
 /**
  * 将内部 Track 类型转换为 react-native-track-player 的 Track 类型。
@@ -168,8 +170,8 @@ async function checkAndUpdateAudioStream(
 			bvid,
 			cid: cid, // cid 此时一定有值
 			audioQuality: 30280,
-			enableDolby: false,
-			enableHiRes: false,
+			enableDolby: true,
+			enableHiRes: true,
 		})
 
 		// 使用 match 处理获取音频流的 Result
