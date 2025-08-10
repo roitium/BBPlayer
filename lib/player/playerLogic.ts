@@ -14,7 +14,7 @@ import TrackPlayer, {
 const playerLog = log.extend('PLAYER/LOGIC')
 
 const initPlayer = async () => {
-	playerLog.debug('调用 initPlayer()')
+	playerLog.debug('开始初始化播放器')
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
 	// 在初始化时修改一次重复模式，与水合后的 store 状态保持一致
@@ -23,15 +23,13 @@ const initPlayer = async () => {
 		repeatMode === RepeatMode.Track ? RepeatMode.Track : RepeatMode.Off,
 	)
 	global.playerIsReady = true
-	playerLog.debug('播放器初始化完成')
+	playerLog.info('播放器初始化完成')
 }
 
 const PlayerLogic = {
 	// 初始化播放器
 	async preparePlayer(): Promise<void> {
-		playerLog.debug('开始初始化播放器')
 		try {
-			playerLog.debug('设置播放器配置')
 			const setup = async () => {
 				try {
 					await TrackPlayer.setupPlayer({
@@ -49,10 +47,8 @@ const PlayerLogic = {
 			while ((await setup()) === 'android_cannot_setup_player_in_background') {
 				await new Promise<void>((resolve) => setTimeout(resolve, 1))
 			}
-			playerLog.debug('播放器配置设置完成')
 
 			// 设置播放器能力（怕自己忘了记一下：如果想修改这些能力对应的函数调用，要去 /lib/services/playbackService 里改）
-			playerLog.debug('开始设置播放器能力')
 			await TrackPlayer.updateOptions({
 				capabilities: [
 					Capability.Play,
@@ -75,7 +71,6 @@ const PlayerLogic = {
 				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
 				icon: require('../../assets/images/icon-large.png'),
 			})
-			playerLog.debug('播放器能力设置完成')
 			// 设置重复模式为 Off
 			await TrackPlayer.setRepeatMode(RepeatMode.Off)
 		} catch (error: unknown) {
@@ -86,10 +81,7 @@ const PlayerLogic = {
 
 	// 设置事件监听器
 	setupEventListeners(): void {
-		playerLog.debug('开始设置事件监听器')
-
 		// 监听播放状态变化
-		playerLog.debug('设置播放状态变化监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackState,
 			(data: { state: TrackPlayerState }) => {
@@ -150,10 +142,8 @@ const PlayerLogic = {
 				}
 			},
 		)
-		playerLog.debug('播放状态变化监听器设置完成')
 
 		// 监听播放完成
-		playerLog.debug('设置播放完成监听器')
 		TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async () => {
 			const store = usePlayerStore.getState()
 			const { repeatMode } = store
@@ -169,7 +159,6 @@ const PlayerLogic = {
 		})
 
 		// 监听播放错误
-		playerLog.debug('设置播放错误监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackError,
 			async (data: { code: string; message: string }) => {
@@ -209,8 +198,6 @@ const PlayerLogic = {
 				}
 			},
 		)
-
-		playerLog.debug('所有事件监听器设置完成')
 	},
 }
 

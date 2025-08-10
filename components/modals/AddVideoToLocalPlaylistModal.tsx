@@ -1,13 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
-import {
-	Button,
-	Checkbox,
-	Dialog,
-	Portal,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Button, Checkbox, Dialog, Text, useTheme } from 'react-native-paper'
 
 import { useUpdateTrackLocalPlaylists } from '@/hooks/mutations/db/playlist'
 import {
@@ -19,6 +12,7 @@ import type { Playlist, Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
+import { AnimatedModal } from '../modal'
 
 const logger = log.extend('Modals/AddVideoToLocalPlaylistModal')
 
@@ -274,15 +268,13 @@ const AddVideoToLocalPlaylistModal = memo(
 		}
 
 		return (
-			<Portal>
-				<Dialog
-					visible={visible}
-					onDismiss={handleDismiss}
-				>
-					<Dialog.Title>添加到歌单</Dialog.Title>
-					{renderContent()}
-				</Dialog>
-			</Portal>
+			<AnimatedModal
+				visible={visible}
+				onDismiss={handleDismiss}
+			>
+				<Dialog.Title>添加到歌单</Dialog.Title>
+				{renderContent()}
+			</AnimatedModal>
 		)
 	},
 )

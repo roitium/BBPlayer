@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -8,7 +8,6 @@ import type {
 	ReorderSingleTrackPayload,
 	UpdatePlaylistPayload,
 } from '@/types/services/playlist'
-import log from '@/utils/log'
 import db from '../db/db'
 import * as schema from '../db/schema'
 import {
@@ -66,12 +65,12 @@ export class PlaylistService {
 	}
 
 	/**
-	 * 更新一个**本地**播放列表元数据。
+	 * 更新一个播放列表元数据。
 	 * @param playlistId - 要更新的播放列表的 ID。
 	 * @param payload - 更新所需的数据。
 	 * @returns ResultAsync 包含更新后的 Playlist 或一个错误。
 	 */
-	public updateLocalPlaylist(
+	public updatePlaylistMetadata(
 		playlistId: number,
 		payload: UpdatePlaylistPayload,
 	): ResultAsync<
@@ -80,11 +79,11 @@ export class PlaylistService {
 	> {
 		return ResultAsync.fromPromise(
 			(async () => {
-				// 验证播放列表是否存在且为 'local' 类型
+				// 验证播放列表是否存在
 				const existing = await this.db.query.playlists.findFirst({
 					where: and(
 						eq(schema.playlists.id, playlistId),
-						eq(schema.playlists.type, 'local'),
+						// eq(schema.playlists.type, 'local'),
 					),
 				})
 				if (!existing) {
@@ -356,44 +355,50 @@ export class PlaylistService {
 	public getPlaylistTracks(
 		playlistId: number,
 	): ResultAsync<Track[], DatabaseError | PlaylistNotFoundError> {
-		const start = performance.now()
 		return ResultAsync.fromPromise(
-			this.db.query.playlistTracks.findMany({
-				where: eq(schema.playlistTracks.playlistId, playlistId),
-				orderBy: desc(schema.playlistTracks.order),
-				with: {
-					track: {
-						with: {
-							artist: true,
-							bilibiliMetadata: true,
-							localMetadata: true,
+			(async () => {
+				const type = await this.db.query.playlists.findFirst({
+					columns: { type: true },
+					where: eq(schema.playlists.id, playlistId),
+				})
+				if (!type) throw new PlaylistNotFoundError(playlistId)
+				const orderBy =
+					type.type === 'local'
+						? desc(schema.playlistTracks.order)
+						: asc(schema.playlistTracks.order)
+
+				return this.db.query.playlistTracks.findMany({
+					where: eq(schema.playlistTracks.playlistId, playlistId),
+					orderBy: orderBy,
+					with: {
+						track: {
+							with: {
+								artist: true,
+								bilibiliMetadata: true,
+								localMetadata: true,
+							},
 						},
 					},
-				},
-			}),
+				})
+			})(),
 			(e) => {
 				if (e instanceof ServiceError) return e
 				return new DatabaseError('获取播放列表歌曲的事务失败', e)
 			},
-		)
-			.andThen((data) => {
-				const newTracks = []
-				for (const track of data) {
-					const t = this.trackService.formatTrack(track.track)
-					if (!t)
-						return errAsync(
-							new ServiceError(
-								`在格式化歌曲：${track.track.id} 时出错，可能是原数据不存在或 source & metadata 不匹配`,
-							),
-						)
-					newTracks.push(t)
-				}
-				return okAsync(newTracks)
-			})
-			.andTee(() => {
-				const end = performance.now()
-				log.debug(`getPlaylistTracks 耗时：${(end - start).toFixed(2)} ms`)
-			})
+		).andThen((data) => {
+			const newTracks = []
+			for (const track of data) {
+				const t = this.trackService.formatTrack(track.track)
+				if (!t)
+					return errAsync(
+						new ServiceError(
+							`在格式化歌曲：${track.track.id} 时出错，可能是原数据不存在或 source & metadata 不匹配`,
+						),
+					)
+				newTracks.push(t)
+			}
+			return okAsync(newTracks)
+		})
 	}
 
 	/**

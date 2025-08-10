@@ -172,7 +172,7 @@ export const useEditPlaylistMetadata = () => {
 			payload: UpdatePlaylistPayload
 		}) => {
 			if (playlistId === 0) return
-			const result = await playlistService.updateLocalPlaylist(
+			const result = await playlistService.updatePlaylistMetadata(
 				playlistId,
 				payload,
 			)

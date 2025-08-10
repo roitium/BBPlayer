@@ -113,10 +113,6 @@ export default function LocalPlaylistPage() {
 		setDuplicatePlaylistModalVisible(false)
 	}, [duplicatePlaylist, duplicatePlaylistName, id, navigation])
 
-	const onClickShowDuplicatePlaylistModal = useCallback(() => {
-		setDuplicatePlaylistModalVisible(true)
-	}, [])
-
 	const onClickDeletePlaylist = useCallback(() => {
 		deletePlaylist(
 			{
@@ -292,7 +288,9 @@ export default function LocalPlaylistPage() {
 							onClickPlayAll={playAll}
 							onClickSync={handleSync}
 							validTrackCount={filteredPlaylistData.length}
-							onClickCopyToLocalPlaylist={onClickShowDuplicatePlaylistModal}
+							onClickCopyToLocalPlaylist={() =>
+								setDuplicatePlaylistModalVisible(true)
+							}
 						/>
 					}
 					keyExtractor={keyExtractor}
@@ -322,13 +320,11 @@ export default function LocalPlaylistPage() {
 				/>
 			)}
 
-			{playlistMetadata.type === 'local' && (
-				<EditPlaylistMetadataModal
-					playlist={playlistMetadata}
-					visiable={editPlaylistModalVisible}
-					setVisible={setEditPlaylistModalVisible}
-				/>
-			)}
+			<EditPlaylistMetadataModal
+				playlist={playlistMetadata}
+				visiable={editPlaylistModalVisible}
+				setVisible={setEditPlaylistModalVisible}
+			/>
 			<Portal>
 				<Dialog
 					visible={duplicatePlaylistModalVisible}
@@ -364,16 +360,14 @@ export default function LocalPlaylistPage() {
 						y: 60 + insets.top,
 					}}
 				>
-					{playlistMetadata.type === 'local' && (
-						<Menu.Item
-							onPress={() => {
-								setFunctionalMenuVisible(false)
-								setEditPlaylistModalVisible(true)
-							}}
-							title='编辑播放列表信息'
-							leadingIcon='pencil'
-						/>
-					)}
+					<Menu.Item
+						onPress={() => {
+							setFunctionalMenuVisible(false)
+							setEditPlaylistModalVisible(true)
+						}}
+						title='编辑播放列表信息'
+						leadingIcon='pencil'
+					/>
 					<Menu.Item
 						onPress={() => {
 							Alert.alert(

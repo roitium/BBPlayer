@@ -54,7 +54,7 @@ export class PlaylistFacade {
 					coverUrl: playlistMetadata.coverUrl ?? undefined,
 					authorId: playlistMetadata.authorId ?? undefined,
 					type: 'local',
-					remoteSyncId: undefined,
+					remoteSyncId: playlistMetadata.remoteSyncId,
 				})
 				if (localPlaylistResult.isErr()) {
 					throw localPlaylistResult.error

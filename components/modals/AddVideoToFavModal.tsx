@@ -8,14 +8,8 @@ import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
-import {
-	Button,
-	Checkbox,
-	Dialog,
-	Portal,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Button, Checkbox, Dialog, Text, useTheme } from 'react-native-paper'
+import { AnimatedModal } from '../modal'
 
 const FavoriteListItem = memo(function FavoriteListItem({
 	name,
@@ -234,15 +228,13 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 	}
 
 	return (
-		<Portal>
-			<Dialog
-				visible={visible}
-				onDismiss={handleDismiss}
-			>
-				<Dialog.Title>添加到收藏夹</Dialog.Title>
-				{renderContent()}
-			</Dialog>
-		</Portal>
+		<AnimatedModal
+			visible={visible}
+			onDismiss={handleDismiss}
+		>
+			<Dialog.Title>添加到收藏夹</Dialog.Title>
+			{renderContent()}
+		</AnimatedModal>
 	)
 })
 

@@ -7,9 +7,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useEffect, useReducer } from 'react'
 import { Pressable } from 'react-native'
-import { Button, Dialog, Portal, Text } from 'react-native-paper'
+import { Button, Dialog, Text } from 'react-native-paper'
 import QRCode from 'react-native-qrcode-svg'
 import * as setCookieParser from 'set-cookie-parser'
+import { AnimatedModal } from '../modal'
 
 type Status =
 	| 'prompting'
@@ -211,19 +212,17 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	}
 
 	return (
-		<Portal>
-			<Dialog
-				visible={visible}
-				onDismiss={() => setVisible(false)}
+		<AnimatedModal
+			visible={visible}
+			onDismiss={() => setVisible(false)}
+		>
+			<Dialog.Title>扫码登录</Dialog.Title>
+			<Dialog.Content
+				style={{ justifyContent: 'center', alignItems: 'center' }}
 			>
-				<Dialog.Title>扫码登录</Dialog.Title>
-				<Dialog.Content
-					style={{ justifyContent: 'center', alignItems: 'center' }}
-				>
-					{renderDialogContent()}
-				</Dialog.Content>
-			</Dialog>
-		</Portal>
+				{renderDialogContent()}
+			</Dialog.Content>
+		</AnimatedModal>
 	)
 })
 
