@@ -22,7 +22,7 @@ export default function TabLayout() {
 
 	return (
 		<Tab.Navigator
-			disablePageAnimations={false}
+			disablePageAnimations
 			tabBarActiveTintColor={themes.primary}
 			activeIndicatorColor={themes.primaryContainer}
 			tabBarStyle={{ backgroundColor: themes.elevation.level1 }}

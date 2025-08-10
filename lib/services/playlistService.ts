@@ -225,6 +225,17 @@ export class PlaylistService {
 	): ResultAsync<{ trackId: number }, DatabaseError | TrackNotInPlaylistError> {
 		return ResultAsync.fromPromise(
 			(async () => {
+				// 验证播放列表是否存在且为 'local'
+				const playlist = await this.db.query.playlists.findFirst({
+					where: and(
+						eq(schema.playlists.id, playlistId),
+						eq(schema.playlists.type, 'local'),
+					),
+					columns: { id: true },
+				})
+				if (!playlist) {
+					throw new PlaylistNotFoundError(playlistId)
+				}
 				// 删除关联记录
 				const [deletedLink] = await this.db
 					.delete(schema.playlistTracks)

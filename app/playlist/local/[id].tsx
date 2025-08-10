@@ -222,32 +222,37 @@ export default function LocalPlaylistPage() {
 	)
 
 	const trackMenuItems = useCallback(
-		(item: Track) => [
-			{
-				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
-				onPress: () => playNext(item),
-			},
-			{
-				title: '添加到本地歌单',
-				leadingIcon: 'playlist-plus',
-				onPress: () => {
-					setCurrentModalTrack(item)
-					setAddTrackModalVisible(true)
+		(item: Track) => {
+			const menuItems = [
+				{
+					title: '下一首播放',
+					leadingIcon: 'play-circle-outline',
+					onPress: () => playNext(item),
 				},
-			},
-			{
-				title: '删除歌曲',
-				leadingIcon: 'delete',
-				onPress: () => {
-					deleteTrackFromLocalPlaylist({
-						trackId: item.id,
-						playlistId: Number(id),
-					})
+				{
+					title: '添加到本地歌单',
+					leadingIcon: 'playlist-plus',
+					onPress: () => {
+						setCurrentModalTrack(item)
+						setAddTrackModalVisible(true)
+					},
 				},
-			},
-		],
-		[deleteTrackFromLocalPlaylist, id, playNext],
+			]
+			if (playlistMetadata?.type === 'local') {
+				menuItems.push({
+					title: '删除歌曲',
+					leadingIcon: 'delete',
+					onPress: () => {
+						deleteTrackFromLocalPlaylist({
+							trackId: item.id,
+							playlistId: Number(id),
+						})
+					},
+				})
+			}
+			return menuItems
+		},
+		[deleteTrackFromLocalPlaylist, id, playNext, playlistMetadata?.type],
 	)
 
 	const handleTrackPress = useCallback(
