@@ -83,7 +83,6 @@ export default function EditPlaylistMetadataModal({
 					onChangeText={setTitle}
 					mode='outlined'
 					numberOfLines={1}
-					style={{ maxHeight: 200 }}
 					textAlignVertical='top'
 				/>
 				<TextInput
@@ -91,9 +90,8 @@ export default function EditPlaylistMetadataModal({
 					onChangeText={setDescription}
 					value={description ?? undefined}
 					mode='outlined'
-					numberOfLines={1}
 					multiline
-					style={{ maxHeight: 200 }}
+					style={{ maxHeight: 150 }}
 					textAlignVertical='top'
 				/>
 				<TextInput
@@ -102,7 +100,6 @@ export default function EditPlaylistMetadataModal({
 					value={coverUrl ?? undefined}
 					mode='outlined'
 					numberOfLines={1}
-					style={{ maxHeight: 200 }}
 					textAlignVertical='top'
 				/>
 			</Dialog.Content>
