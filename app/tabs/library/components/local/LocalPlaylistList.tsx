@@ -1,11 +1,10 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlaylistLists } from '@/hooks/queries/db/usePlaylist'
 import type { Playlist } from '@/types/core/media'
-import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { Searchbar, Text, useTheme } from 'react-native-paper'
+import { Text, useTheme } from 'react-native-paper'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
 import LocalPlaylistItem from './LocalPlaylistItem'
@@ -14,7 +13,6 @@ const LocalPlaylistListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	const [query, setQuery] = useState('')
 
 	const {
 		data: playlists,
@@ -67,27 +65,6 @@ const LocalPlaylistListComponent = memo(() => {
 				</Text>
 				<Text variant='bodyMedium'>{playlists.length ?? 0} 个播放列表</Text>
 			</View>
-			<Searchbar
-				placeholder='搜索我的播放列表'
-				value={query}
-				mode='bar'
-				inputStyle={{
-					alignSelf: 'center',
-				}}
-				onChangeText={setQuery}
-				style={{
-					borderRadius: 9999,
-					textAlign: 'center',
-					height: 45,
-					marginBottom: 20,
-					marginTop: 10,
-				}}
-				onSubmitEditing={() => {
-					setQuery('')
-					// navigation.navigate('SearchResultFav', { query })
-					toast.info('暂未实现')
-				}}
-			/>
 			<LegendList
 				style={{ flex: 1 }}
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}

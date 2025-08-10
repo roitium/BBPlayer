@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm'
 import { type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
 import { ResultAsync, errAsync, okAsync } from 'neverthrow'
 
@@ -595,6 +595,69 @@ export class PlaylistService {
 				),
 			}),
 			(e) => new DatabaseError('获取包含该歌曲的本地播放列表失败', e),
+		)
+	}
+
+	/**
+	 * 在某个 playlist 中依据名字搜索歌曲
+	 * @param playlistId
+	 * @param query
+	 */
+	public searchTrackInPlaylist(
+		playlistId: number,
+		query: string,
+	): ResultAsync<Track[], DatabaseError | PlaylistNotFoundError> {
+		const q = `%${query.trim().toLowerCase()}%`
+
+		return ResultAsync.fromPromise(
+			(async () => {
+				const trackIdSubq = db
+					.select({ id: schema.tracks.id })
+					.from(schema.tracks)
+					.leftJoin(
+						schema.artists,
+						eq(schema.tracks.artistId, schema.artists.id),
+					)
+					.where(like(sql`lower(${schema.tracks.title})`, q))
+
+				const rows = await db.query.playlistTracks.findMany({
+					where: and(
+						eq(schema.playlistTracks.playlistId, playlistId),
+						inArray(schema.playlistTracks.trackId, trackIdSubq),
+					),
+					with: {
+						track: {
+							columns: {
+								playHistory: false,
+							},
+							with: {
+								artist: true,
+								bilibiliMetadata: true,
+								localMetadata: true,
+							},
+						},
+					},
+					orderBy: asc(schema.playlistTracks.order),
+				})
+
+				const newTracks = []
+				for (const row of rows) {
+					const t = this.trackService.formatTrack({
+						...row.track,
+						playHistory: [],
+					})
+					if (!t)
+						throw new ValidationError(
+							`在格式化歌曲：${row.track.id} 时出错，可能是原数据不存在或 source & metadata 不匹配`,
+						)
+					newTracks.push(t)
+				}
+				return newTracks
+			})(),
+			(e) => {
+				if (e instanceof PlaylistNotFoundError) return e
+				return new DatabaseError('搜索歌曲失败', e)
+			},
 		)
 	}
 }

@@ -1,7 +1,7 @@
 import { queryClient } from '@/lib/config/queryClient'
 import { playlistService } from '@/lib/services/playlistService'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 queryClient.setQueryDefaults(['db', 'playlists'], {
 	retry: false,
@@ -17,6 +17,8 @@ export const playlistKeys = {
 		[...playlistKeys.all, 'playlistMetadata', playlistId] as const,
 	playlistsContainingTrack: (trackId: number) =>
 		[...playlistKeys.all, 'playlistsContainingTrack', trackId] as const,
+	searchTracksInPlaylist: (playlistId: number, query: string) =>
+		[...playlistKeys.all, 'searchTracksInPlaylist', playlistId, query] as const,
 }
 
 export const usePlaylistLists = () => {
@@ -50,5 +52,21 @@ export const usePlaylistsContainingTrack = (trackId: number) => {
 				playlistService.getLocalPlaylistsContainingTrack(trackId),
 			),
 		enabled: !!trackId,
+	})
+}
+
+export const useSearchTracksInPlaylist = (
+	playlistId: number,
+	query: string,
+	startSearch: boolean,
+) => {
+	return useQuery({
+		queryKey: playlistKeys.searchTracksInPlaylist(playlistId, query),
+		queryFn: () =>
+			returnOrThrowAsync(
+				playlistService.searchTrackInPlaylist(playlistId, query),
+			),
+		enabled: !!query.trim() && startSearch,
+		placeholderData: keepPreviousData,
 	})
 }

@@ -10,8 +10,10 @@ import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaylistContents,
 	usePlaylistMetadata,
+	useSearchTracksInPlaylist,
 } from '@/hooks/queries/db/usePlaylist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import type { Track } from '@/types/core/media'
 import { flatErrorMessage } from '@/utils/error'
 import log from '@/utils/log'
@@ -20,10 +22,12 @@ import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { TextInput as RNTextInput } from 'react-native'
 import { Alert, useWindowDimensions, View } from 'react-native'
 import {
 	Appbar,
@@ -32,10 +36,16 @@ import {
 	Divider,
 	Menu,
 	Portal,
+	Searchbar,
 	Text,
 	TextInput,
 	useTheme,
 } from 'react-native-paper'
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
@@ -43,7 +53,9 @@ import type { RootStackParamList } from '../../../types/navigation'
 import { PlaylistHeader } from './LocalPlaylistHeader'
 import { TrackListItem } from './LocalPlaylistItem'
 
-const playlistLog = log.extend('PLAYLIST/LOCAL')
+const logger = log.extend('PLAYLIST/LOCAL')
+
+const SEARCHBAR_HEIGHT = 72
 
 export default function LocalPlaylistPage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistLocal'>>()
@@ -67,6 +79,11 @@ export default function LocalPlaylistPage() {
 	const [duplicatePlaylistName, setDuplicatePlaylistName] = useState('')
 	const [functionalMenuVisible, setFunctionalMenuVisible] = useState(false)
 	const dimensions = useWindowDimensions()
+	const [searchQuery, setSearchQuery] = useState('')
+	const [startSearch, setStartSearch] = useState(false)
+	const searchbarRef = useRef<RNTextInput>(null)
+	const searchbarHeight = useSharedValue(0)
+	const debouncedQuery = useDebouncedValue(searchQuery, 200)
 
 	const {
 		data: playlistData,
@@ -81,6 +98,26 @@ export default function LocalPlaylistPage() {
 			) ?? [],
 		[playlistData],
 	)
+
+	const {
+		data: searchData,
+		isError: isSearchError,
+		error: searchError,
+	} = useSearchTracksInPlaylist(Number(id), debouncedQuery, startSearch)
+
+	const finalPlaylistData = useMemo(() => {
+		if (!startSearch || !debouncedQuery.trim()) return playlistData ?? []
+
+		if (isSearchError) {
+			toast.error('搜索失败', {
+				description: flatErrorMessage(searchError),
+			})
+			logger.error('搜索失败: ', flatErrorMessage(searchError))
+			return []
+		}
+
+		return searchData ?? []
+	}, [startSearch, playlistData, isSearchError, searchData, searchError])
 
 	const {
 		data: playlistMetadata,
@@ -148,7 +185,7 @@ export default function LocalPlaylistPage() {
 				})
 				toast.success('添加到下一首播放成功')
 			} catch (error) {
-				playlistLog.error('添加到队列失败', error)
+				logger.error('添加到队列失败', error)
 				toast.error('添加到队列失败', {
 					description: flatErrorMessage(error as Error),
 				})
@@ -169,7 +206,7 @@ export default function LocalPlaylistPage() {
 					playNext: false,
 				})
 			} catch (error) {
-				playlistLog.error('播放全部失败', error)
+				logger.error('播放全部失败', error)
 				toast.error('播放全部失败', {
 					description: flatErrorMessage(error as Error),
 				})
@@ -246,6 +283,25 @@ export default function LocalPlaylistPage() {
 		}
 	}, [id, navigation])
 
+	usePreventRemove(startSearch, () => setStartSearch(false))
+
+	useEffect(() => {
+		if (startSearch) {
+			const t = setTimeout(() => searchbarRef.current?.focus?.(), 120)
+			return () => clearTimeout(t)
+		}
+	}, [startSearch])
+
+	useEffect(() => {
+		searchbarHeight.set(
+			withTiming(startSearch ? SEARCHBAR_HEIGHT : 0, { duration: 180 }),
+		)
+	}, [searchbarHeight, startSearch])
+
+	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
+		height: searchbarHeight.value,
+	}))
+
 	if (typeof id !== 'string') {
 		return null
 	}
@@ -265,52 +321,60 @@ export default function LocalPlaylistPage() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<Appbar.Header elevated>
-				<Appbar.Content title={playlistMetadata.title} />
 				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content title={playlistMetadata.title} />
+				<Appbar.Action
+					icon={startSearch ? 'close' : 'magnify'}
+					onPress={() => setStartSearch((prev) => !prev)}
+				/>
 				<Appbar.Action
 					icon='dots-vertical'
 					onPress={() => setFunctionalMenuVisible(true)}
 				/>
 			</Appbar.Header>
 
-			<View
-				style={{
-					flex: 1,
-				}}
-			>
-				<LegendList
-					data={playlistData}
-					renderItem={renderItem}
-					ItemSeparatorComponent={() => <Divider />}
-					ListHeaderComponent={
-						<PlaylistHeader
-							playlist={playlistMetadata}
-							onClickPlayAll={playAll}
-							onClickSync={handleSync}
-							validTrackCount={filteredPlaylistData.length}
-							onClickCopyToLocalPlaylist={() =>
-								setDuplicatePlaylistModalVisible(true)
-							}
-						/>
-					}
-					keyExtractor={keyExtractor}
-					contentContainerStyle={{
-						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
-					}}
-					showsVerticalScrollIndicator={false}
-					ListFooterComponent={
-						<Text
-							variant='titleMedium'
-							style={{
-								textAlign: 'center',
-								paddingTop: 10,
-							}}
-						>
-							•
-						</Text>
-					}
+			{/* 搜索框 */}
+			<Animated.View style={[{ overflow: 'hidden' }, searchbarAnimatedStyle]}>
+				<Searchbar
+					mode='view'
+					placeholder='搜索歌曲'
+					onChangeText={setSearchQuery}
+					value={searchQuery}
 				/>
-			</View>
+			</Animated.View>
+
+			<LegendList
+				data={finalPlaylistData ?? []}
+				renderItem={renderItem}
+				ItemSeparatorComponent={() => <Divider />}
+				ListHeaderComponent={
+					<PlaylistHeader
+						playlist={playlistMetadata}
+						onClickPlayAll={playAll}
+						onClickSync={handleSync}
+						validTrackCount={filteredPlaylistData.length}
+						onClickCopyToLocalPlaylist={() =>
+							setDuplicatePlaylistModalVisible(true)
+						}
+					/>
+				}
+				keyExtractor={keyExtractor}
+				contentContainerStyle={{
+					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
+				}}
+				showsVerticalScrollIndicator={false}
+				ListFooterComponent={
+					<Text
+						variant='titleMedium'
+						style={{
+							textAlign: 'center',
+							paddingTop: 10,
+						}}
+					>
+						•
+					</Text>
+				}
+			/>
 
 			{currentModalTrack && (
 				<AddVideoToLocalPlaylistModal
