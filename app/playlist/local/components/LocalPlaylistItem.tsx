@@ -1,7 +1,8 @@
+import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
-import { View } from 'react-native'
+import { Easing, View } from 'react-native'
 import {
 	Divider,
 	IconButton,
@@ -9,7 +10,9 @@ import {
 	Surface,
 	Text,
 	TouchableRipple,
+	useTheme,
 } from 'react-native-paper'
+import TextTicker from 'react-native-text-ticker'
 
 export interface TrackMenuItem {
 	title: string
@@ -23,22 +26,14 @@ export const TrackMenuItemDividerToken: TrackMenuItem = {
 	onPress: () => void 0,
 }
 
-export interface TrackNecessaryData {
-	cover?: string
-	artistCover?: string
-	title: string
-	duration: number
-	id: number
-	artistName?: string
-}
-
 interface TrackListItemProps {
 	index: number
 	onTrackPress: () => void
 	menuItems: TrackMenuItem[]
 	showCoverImage?: boolean
-	data: TrackNecessaryData
+	data: Track
 	disabled?: boolean
+	playlist: Playlist
 }
 
 /**
@@ -51,10 +46,12 @@ export const TrackListItem = memo(function TrackListItem({
 	showCoverImage = true,
 	data,
 	disabled = false,
+	playlist,
 }: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
 	const closeMenu = () => setIsMenuVisible(false)
+	const theme = useTheme()
 
 	return (
 		<TouchableRipple
@@ -97,7 +94,7 @@ export const TrackListItem = memo(function TrackListItem({
 					{showCoverImage ? (
 						<Image
 							source={{
-								uri: data.cover ?? data.artistCover ?? undefined,
+								uri: data.coverUrl ?? data.artist?.avatarUrl ?? undefined,
 							}}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
 							transition={300}
@@ -116,13 +113,13 @@ export const TrackListItem = memo(function TrackListItem({
 							}}
 						>
 							{/* Display Artist if available */}
-							{data.artistName && (
+							{data.artist && (
 								<>
 									<Text
 										variant='bodySmall'
 										numberOfLines={1}
 									>
-										{data.artistName ?? '未知'}
+										{data.artist.name ?? '未知'}
 									</Text>
 									<Text
 										style={{ marginHorizontal: 4 }}
@@ -137,6 +134,21 @@ export const TrackListItem = memo(function TrackListItem({
 								{data.duration ? formatDurationToHHMMSS(data.duration) : ''}
 							</Text>
 						</View>
+						{/* 显示主视频标题（如果是分 p） */}
+						{data.source === 'bilibili' &&
+							data.bilibiliMetadata.mainTrackTitle &&
+							data.bilibiliMetadata.mainTrackTitle !== data.title &&
+							playlist.type !== 'multi_page' && (
+								<TextTicker
+									style={{ ...theme.fonts.bodySmall }}
+									loop
+									animationType='scroll'
+									duration={130 * data.bilibiliMetadata.mainTrackTitle.length}
+									easing={Easing.linear}
+								>
+									{data.bilibiliMetadata.mainTrackTitle}
+								</TextTicker>
+							)}
 					</View>
 
 					{/* Context Menu */}

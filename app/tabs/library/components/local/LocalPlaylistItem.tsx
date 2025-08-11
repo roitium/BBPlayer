@@ -29,12 +29,7 @@ const LocalPlaylistItem = memo(({ item }: { item: Playlist }) => {
 							transition={300}
 						/>
 						<View style={{ marginLeft: 12, flex: 1 }}>
-							<Text
-								variant='titleMedium'
-								numberOfLines={1}
-							>
-								{item.title}
-							</Text>
+							<Text variant='titleMedium'>{item.title}</Text>
 							<View
 								style={{
 									flexDirection: 'row',

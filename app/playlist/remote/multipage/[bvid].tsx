@@ -58,6 +58,7 @@ const mapApiItemToTrack = (
 			cid: mp.cid,
 			isMultiPage: true,
 			videoIsValid: true,
+			mainTrackTitle: video.title,
 		},
 	}
 }

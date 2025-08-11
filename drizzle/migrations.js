@@ -10,6 +10,7 @@ import m0006 from './0006_breezy_jigsaw.sql'
 import m0007 from './0007_legal_thor.sql'
 import m0008 from './0008_overrated_jimmy_woo.sql'
 import m0009 from './0009_lethal_marten_broadcloak.sql'
+import m0010 from './0010_brainy_anita_blake.sql'
 import journal from './meta/_journal.json'
 
 export default {
@@ -25,5 +26,6 @@ export default {
 		m0007,
 		m0008,
 		m0009,
+		m0010,
 	},
 }

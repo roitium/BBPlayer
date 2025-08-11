@@ -89,6 +89,7 @@
 		"react-native-screens": "~4.11.1",
 		"react-native-svg": "15.11.2",
 		"react-native-tab-view": "^4.1.2",
+		"react-native-text-ticker": "^1.15.0",
 		"react-native-toast-message": "^2.3.1",
 		"react-native-track-player": "^4.1.1",
 		"react-native-web": "~0.20.0",

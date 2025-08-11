@@ -246,6 +246,7 @@ export class SyncFacade {
 										isMultiPage: true,
 										cid: page.cid,
 										videoIsValid: true,
+										mainTrackTitle: data.title,
 									},
 									coverUrl: data.pic,
 									duration: page.duration,

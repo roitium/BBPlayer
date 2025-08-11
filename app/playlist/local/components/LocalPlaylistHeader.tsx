@@ -149,6 +149,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					alignItems: 'center',
 					justifyContent: 'flex-start',
 					marginHorizontal: 16,
+					marginBottom: playlist.description ? 0 : 16,
 				}}
 			>
 				<View style={{ flexDirection: 'row', alignItems: 'center' }}>

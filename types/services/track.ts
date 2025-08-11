@@ -3,6 +3,7 @@ export interface BilibiliMetadataPayload {
 	isMultiPage: boolean
 	cid?: number | null
 	videoIsValid: boolean
+	mainTrackTitle?: string | null // 如果是分 p 视频，保存该分 p 所在的主视频标题
 }
 
 export interface LocalMetadataPayload {

@@ -71,6 +71,13 @@
 			"when": 1754567195657,
 			"tag": "0009_lethal_marten_broadcloak",
 			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "6",
+			"when": 1754922068529,
+			"tag": "0010_brainy_anita_blake",
+			"breakpoints": true
 		}
 	]
 }

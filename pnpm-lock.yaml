@@ -247,6 +247,9 @@ importers:
       react-native-tab-view:
         specifier: ^4.1.2
         version: 4.1.2(react-native-pager-view@6.7.1(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-text-ticker:
+        specifier: ^1.15.0
+        version: 1.15.0
       react-native-toast-message:
         specifier: ^2.3.1
         version: 2.3.1(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -5246,6 +5249,9 @@ packages:
       react: '>= 18.2.0'
       react-native: '*'
       react-native-pager-view: '>= 6.0.0'
+
+  react-native-text-ticker@1.15.0:
+    resolution: {integrity: sha512-d/uK+PIOhsYMy1r8h825iq/nADiHsabz3WMbRJSnkpQYn+K9aykUAXRRhu8ZbTAzk4CgnUWajJEFxS5ZDygsdg==}
 
   react-native-toast-message@2.3.1:
     resolution: {integrity: sha512-86OpiJhggXZMUL/8KMmgRRRzGgu4lfUXVV0YkHc0F8PitVkTnhQ6P5UzIypCYQ4CbQUu9O1dCY+rlQG4c5j0sA==}
@@ -12505,6 +12511,8 @@ snapshots:
       react-native: 0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0)
       react-native-pager-view: 6.7.1(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       use-latest-callback: 0.2.4(react@19.0.0)
+
+  react-native-text-ticker@1.15.0: {}
 
   react-native-toast-message@2.3.1(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:

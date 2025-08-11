@@ -1,3 +1,4 @@
+import { AnimatedModal } from '@/components/AnimatedModal'
 import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
 import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
 import {
@@ -14,7 +15,7 @@ import {
 } from '@/hooks/queries/db/playlist'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
-import type { Track } from '@/types/core/media'
+import type { Playlist, Track } from '@/types/core/media'
 import log, { flatErrorMessage } from '@/utils/log'
 import toast from '@/utils/toast'
 import { LegendList } from '@legendapp/list'
@@ -288,18 +289,12 @@ export default function LocalPlaylistPage() {
 					disabled={
 						item.source === 'bilibili' && !item.bilibiliMetadata.videoIsValid
 					}
-					data={{
-						cover: item.coverUrl ?? undefined,
-						artistCover: item.artist?.avatarUrl ?? undefined,
-						title: item.title,
-						duration: item.duration,
-						id: item.id,
-						artistName: item.artist?.name,
-					}}
+					data={item}
+					playlist={playlistMetadata as Playlist}
 				/>
 			)
 		},
-		[handleTrackPress, trackMenuItems],
+		[handleTrackPress, playlistMetadata, trackMenuItems],
 	)
 
 	const keyExtractor = useCallback((item: Track) => String(item.id), [])
@@ -420,31 +415,29 @@ export default function LocalPlaylistPage() {
 				visiable={editPlaylistModalVisible}
 				setVisible={setEditPlaylistModalVisible}
 			/>
-			<Portal>
-				<Dialog
-					visible={duplicatePlaylistModalVisible}
-					onDismiss={() => setDuplicatePlaylistModalVisible(false)}
-				>
-					<Dialog.Title>复制播放列表</Dialog.Title>
-					<Dialog.Content>
-						<TextInput
-							label='新播放列表名称'
-							defaultValue={duplicatePlaylistName}
-							onChangeText={setDuplicatePlaylistName}
-							mode='outlined'
-							numberOfLines={1}
-							style={{ maxHeight: 200 }}
-							textAlignVertical='top'
-						/>
-					</Dialog.Content>
-					<Dialog.Actions>
-						<Button onPress={() => setDuplicatePlaylistModalVisible(false)}>
-							取消
-						</Button>
-						<Button onPress={onClickDuplicateLocalPlaylist}>确定</Button>
-					</Dialog.Actions>
-				</Dialog>
-			</Portal>
+			<AnimatedModal
+				visible={duplicatePlaylistModalVisible}
+				onDismiss={() => setDuplicatePlaylistModalVisible(false)}
+			>
+				<Dialog.Title>复制播放列表</Dialog.Title>
+				<Dialog.Content>
+					<TextInput
+						label='新播放列表名称'
+						value={duplicatePlaylistName}
+						onChangeText={setDuplicatePlaylistName}
+						mode='outlined'
+						numberOfLines={1}
+						style={{ maxHeight: 200 }}
+						textAlignVertical='top'
+					/>
+				</Dialog.Content>
+				<Dialog.Actions>
+					<Button onPress={() => setDuplicatePlaylistModalVisible(false)}>
+						取消
+					</Button>
+					<Button onPress={onClickDuplicateLocalPlaylist}>确定</Button>
+				</Dialog.Actions>
+			</AnimatedModal>
 
 			<Portal>
 				<Menu

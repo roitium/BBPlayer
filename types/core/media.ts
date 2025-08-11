@@ -35,6 +35,7 @@ export interface BilibiliTrack extends BaseTrack {
 		cid: number | null
 		isMultiPage: boolean
 		videoIsValid: boolean
+		mainTrackTitle?: string | null // 如果是分 p 视频，保存该分 p 所在的主视频标题
 		// 运行时产生的数据，在获取流后才会存在
 		bilibiliStreamUrl?: {
 			url: string
