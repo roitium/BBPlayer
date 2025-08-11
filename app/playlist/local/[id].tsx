@@ -262,7 +262,13 @@ export default function LocalPlaylistPage() {
 			}
 			return menuItems
 		},
-		[deleteTrackFromLocalPlaylist, id, playNext, playlistMetadata?.type],
+		[
+			deleteTrackFromLocalPlaylist,
+			id,
+			navigation,
+			playNext,
+			playlistMetadata?.type,
+		],
 	)
 
 	const handleTrackPress = useCallback(
