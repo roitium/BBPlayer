@@ -16,6 +16,7 @@ import {
 } from '@/hooks/queries/db/playlist'
 import type { Playlist, Track } from '@/types/core/media'
 import { AnimatedModal } from '../AnimatedModal'
+import CreatePlaylistModal from './CreatePlaylistModal'
 
 const PlaylistListItem = memo(function PlaylistListItem({
 	id,
@@ -56,6 +57,8 @@ const AddVideoToLocalPlaylistModal = memo(
 		setVisible: (visible: boolean) => void
 	}) {
 		const { colors } = useTheme()
+		const [createPlaylistModalVisible, SetCreatePlaylistModalVisible] =
+			useState(false)
 
 		const {
 			data: allPlaylists,
@@ -247,13 +250,19 @@ const AddVideoToLocalPlaylistModal = memo(
 		}
 
 		return (
-			<AnimatedModal
-				visible={visible}
-				onDismiss={handleDismiss}
-			>
-				<Dialog.Title>添加到歌单</Dialog.Title>
-				{renderContent()}
-			</AnimatedModal>
+			<>
+				<AnimatedModal
+					visible={visible}
+					onDismiss={handleDismiss}
+				>
+					<Dialog.Title>添加到歌单</Dialog.Title>
+					{renderContent()}
+				</AnimatedModal>
+				<CreatePlaylistModal
+					visiable={createPlaylistModalVisible}
+					setVisible={SetCreatePlaylistModalVisible}
+				/>
+			</>
 		)
 	},
 )

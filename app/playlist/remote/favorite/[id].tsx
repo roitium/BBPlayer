@@ -122,8 +122,8 @@ export default function FavoritePage() {
 			},
 			TrackMenuItemDividerToken,
 			{
-				title: '作为分P视频展示',
-				leadingIcon: 'eye-outline',
+				title: '查看详细信息',
+				leadingIcon: 'information',
 				onPress: () => {
 					navigation.navigate('PlaylistMultipage', {
 						bvid: item.bilibiliMetadata.bvid,

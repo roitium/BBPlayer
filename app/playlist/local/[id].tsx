@@ -238,6 +238,16 @@ export default function LocalPlaylistPage() {
 					},
 				},
 			]
+			if (item.source === 'bilibili') {
+				menuItems.push({
+					title: '查看详细信息',
+					leadingIcon: 'information',
+					onPress: () =>
+						navigation.navigate('PlaylistMultipage', {
+							bvid: item.bilibiliMetadata.bvid,
+						}),
+				})
+			}
 			if (playlistMetadata?.type === 'local') {
 				menuItems.push({
 					title: '删除歌曲',

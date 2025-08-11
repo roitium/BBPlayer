@@ -5,9 +5,9 @@ import { LegendList } from '@legendapp/list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
+import CreatePlaylistModal from '../../../../../components/modals/CreatePlaylistModal'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
-import CreatePlaylistModal from './CreatePlaylistModal'
 import LocalPlaylistItem from './LocalPlaylistItem'
 
 const LocalPlaylistListComponent = memo(() => {
