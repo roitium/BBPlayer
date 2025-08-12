@@ -100,8 +100,7 @@ export const TrackListItem = memo(function TrackListItem({
 								uri: data.cover ?? data.artistCover ?? undefined,
 							}}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
-							transition={300}
-							cachePolicy={'none'}
+							cachePolicy={'memory'}
 						/>
 					) : null}
 
