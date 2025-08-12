@@ -195,31 +195,33 @@ export const useDeletePlaylist = () => {
 	})
 }
 
-export const useDeleteTrackFromLocalPlaylist = () => {
+export const useBatchDeleteTracksFromLocalPlaylist = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'deleteTrackFromLocalPlaylist'],
+		mutationKey: ['db', 'playlists', 'batchDeleteTracksFromLocalPlaylist'],
 		mutationFn: async ({
-			trackId,
+			trackIds,
 			playlistId,
 		}: {
-			trackId: number
+			trackIds: number[]
 			playlistId: number
 		}) => {
-			const result = await playlistService.removeTrackFromLocalPlaylist(
+			const result = await playlistService.batchRemoveTracksFromLocalPlaylist(
 				playlistId,
-				trackId,
+				trackIds,
 			)
 			if (result.isErr()) {
 				throw result.error
 			}
 			return result.value
 		},
-		onSuccess: (_, variables) => {
-			toast.success('删除成功')
-			void Promise.all([
-				queryClient.invalidateQueries({
-					queryKey: playlistKeys.playlistsContainingTrack(variables.trackId),
-				}),
+		onSuccess: (data, variables) => {
+			toast.success('删除成功', {
+				description:
+					data.missingTrackIds.length !== 0
+						? `但缺少了: ${data.missingTrackIds.toString()} (理论来说不应该出现此错误)`
+						: undefined,
+			})
+			const promises = [
 				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistLists(),
 				}),
@@ -229,7 +231,15 @@ export const useDeleteTrackFromLocalPlaylist = () => {
 				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistMetadata(variables.playlistId),
 				}),
-			])
+			]
+			for (const id of data.removedTrackIds) {
+				promises.push(
+					queryClient.invalidateQueries({
+						queryKey: playlistKeys.playlistsContainingTrack(id),
+					}),
+				)
+			}
+			void Promise.all(promises)
 		},
 		onError: (error) => toastAndLogError('从播放列表中删除 track 失败', error),
 	})
@@ -264,5 +274,53 @@ export const useCreateNewLocalPlaylist = () => {
 			])
 		},
 		onError: (error) => toastAndLogError('创建播放列表失败', error),
+	})
+}
+
+/**
+ * 批量添加 tracks 到本地播放列表
+ * @param playlistId
+ * @param payloads 应包含 track 和 artist，**artist 只能为 remote 来源**
+ * @returns
+ */
+export const useBatchAddTracksToLocalPlaylist = () => {
+	return useMutation({
+		mutationFn: async ({
+			playlistId,
+			payloads,
+		}: {
+			playlistId: number
+			payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[]
+		}) => {
+			const result = await playlistFacade.batchAddTracksToLocalPlaylist(
+				playlistId,
+				payloads,
+			)
+			if (result.isErr()) throw result.error
+			return result.value
+		},
+		onSuccess: (trackIds, { playlistId }) => {
+			toast.success('添加成功')
+			const promises = [
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistLists(),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistContents(playlistId),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: playlistKeys.playlistMetadata(playlistId),
+				}),
+			]
+			for (const id of trackIds) {
+				promises.push(
+					queryClient.invalidateQueries({
+						queryKey: playlistKeys.playlistsContainingTrack(id),
+					}),
+				)
+			}
+			void Promise.all(promises)
+		},
+		onError: (error) => toastAndLogError('批量添加歌曲到播放列表失败', error),
 	})
 }

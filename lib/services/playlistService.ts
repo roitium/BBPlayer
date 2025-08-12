@@ -14,7 +14,6 @@ import {
 	DatabaseError,
 	PlaylistNotFoundError,
 	ServiceError,
-	TrackAlreadyExistsError,
 	TrackNotInPlaylistError,
 	ValidationError,
 } from '../errors/service'
@@ -139,92 +138,96 @@ export class PlaylistService {
 	}
 
 	/**
-	 * 向本地播放列表添加一首歌曲。
-	 * @param playlistId - 目标播放列表的 ID。
-	 * @param trackId - 要添加的歌曲的 ID。
-	 * @returns ResultAsync
+	 * 批量添加 tracks 到本地播放列表。
 	 */
-	public addTrackToLocalPlaylist(
+	public addManyTracksToLocalPlaylist(
 		playlistId: number,
-		trackId: number,
+		trackIds: number[],
 	): ResultAsync<
-		typeof schema.playlistTracks.$inferSelect,
-		| DatabaseError
-		| ValidationError
-		| TrackAlreadyExistsError
-		| PlaylistNotFoundError
+		(typeof schema.playlistTracks.$inferSelect)[],
+		DatabaseError | PlaylistNotFoundError
 	> {
+		if (trackIds.length === 0) {
+			return okAsync([])
+		}
+
 		return ResultAsync.fromPromise(
 			(async () => {
-				// 验证播放列表是否存在且为 'local'
+				// 验证播放列表是否存在且为 local
 				const playlist = await this.db.query.playlists.findFirst({
 					where: and(
 						eq(schema.playlists.id, playlistId),
 						eq(schema.playlists.type, 'local'),
 					),
-					columns: { id: true },
+					columns: { id: true, itemCount: true },
 				})
 				if (!playlist) {
 					throw new PlaylistNotFoundError(playlistId)
 				}
 
-				// 检查歌曲是否已在列表中
-				const existingLink = await this.db.query.playlistTracks.findFirst({
-					where: and(
-						eq(schema.playlistTracks.playlistId, playlistId),
-						eq(schema.playlistTracks.trackId, trackId),
-					),
-				})
-				if (existingLink) {
-					throw new TrackAlreadyExistsError(trackId, playlistId)
-				}
-
-				// 获取新的排序号
+				// 获取当前最大 order
 				const maxOrderResult = await this.db
 					.select({
 						maxOrder: sql<number | null>`MAX(${schema.playlistTracks.order})`,
 					})
 					.from(schema.playlistTracks)
 					.where(eq(schema.playlistTracks.playlistId, playlistId))
-				const nextOrder = (maxOrderResult[0].maxOrder ?? -1) + 1
+				let nextOrder = (maxOrderResult[0].maxOrder ?? -1) + 1
 
-				// 插入关联记录
-				const [newLink] = await this.db
+				// 构造批量插入的行
+				const values = trackIds.map((tid) => ({
+					playlistId,
+					trackId: tid,
+					order: nextOrder++,
+				}))
+
+				// 批量插入（忽略已存在的）
+				const inserted = await this.db
 					.insert(schema.playlistTracks)
-					.values({
-						playlistId: playlistId,
-						trackId: trackId,
-						order: nextOrder,
+					.values(values)
+					.onConflictDoNothing({
+						target: [
+							schema.playlistTracks.playlistId,
+							schema.playlistTracks.trackId,
+						],
 					})
 					.returning()
 
-				// 更新播放列表的 itemCount
-				await this.db
-					.update(schema.playlists)
-					.set({ itemCount: sql`${schema.playlists.itemCount} + 1` })
-					.where(eq(schema.playlists.id, playlistId))
+				// 更新播放列表的 itemCount（+ 成功插入的数量）
+				if (inserted.length > 0) {
+					await this.db
+						.update(schema.playlists)
+						.set({
+							itemCount: sql`${schema.playlists.itemCount} + ${inserted.length}`,
+						})
+						.where(eq(schema.playlists.id, playlistId))
+				}
 
-				return newLink
+				return inserted
 			})(),
-			(e) => {
-				if (e instanceof ServiceError) return e
-				return new DatabaseError('添加歌曲到播放列表的事务失败', e)
-			},
+			(e) => new DatabaseError('批量添加歌曲到播放列表失败', e),
 		)
 	}
 
 	/**
-	 * 从本地播放列表移除一首歌曲。
+	 * 从本地播放列表批量移除歌曲
 	 * @param playlistId - 目标播放列表的 ID。
-	 * @param trackId - 要移除的歌曲的 ID。
-	 * @returns ResultAsync
+	 * @param trackIdList - 要移除的歌曲的 ID 们
+	 * @returns [removedTrackIds, missingTrackIds] 分别为被移除的 ID 和不在播放列表中的 ID
 	 */
-	public removeTrackFromLocalPlaylist(
+	public batchRemoveTracksFromLocalPlaylist(
 		playlistId: number,
-		trackId: number,
-	): ResultAsync<{ trackId: number }, DatabaseError | TrackNotInPlaylistError> {
+		trackIdList: number[],
+	): ResultAsync<
+		{ removedTrackIds: number[]; missingTrackIds: number[] },
+		DatabaseError | PlaylistNotFoundError | TrackNotInPlaylistError
+	> {
 		return ResultAsync.fromPromise(
 			(async () => {
+				if (trackIdList.length === 0) {
+					return { removedTrackIds: [], missingTrackIds: [] }
+				}
+
 				// 验证播放列表是否存在且为 'local'
 				const playlist = await this.db.query.playlists.findFirst({
 					where: and(
@@ -236,32 +239,42 @@ export class PlaylistService {
 				if (!playlist) {
 					throw new PlaylistNotFoundError(playlistId)
 				}
-				// 删除关联记录
-				const [deletedLink] = await this.db
+
+				// 2) 批量删除关联记录，并拿到实际删除的 trackId
+				const deletedLinks = await this.db
 					.delete(schema.playlistTracks)
 					.where(
 						and(
 							eq(schema.playlistTracks.playlistId, playlistId),
-							eq(schema.playlistTracks.trackId, trackId),
+							inArray(schema.playlistTracks.trackId, trackIdList),
 						),
 					)
 					.returning({ trackId: schema.playlistTracks.trackId })
 
-				if (!deletedLink) {
-					throw new TrackNotInPlaylistError(trackId, playlistId)
+				const removedTrackIds = deletedLinks.map((x) => x.trackId)
+				const removedCount = removedTrackIds.length
+
+				if (removedCount === 0) {
+					throw new TrackNotInPlaylistError(trackIdList[0], playlistId)
 				}
 
-				// 更新 itemCount (使用-1，并确保不会变为负数)
+				// 更新 itemCount（不小于 0）
 				await this.db
 					.update(schema.playlists)
-					.set({ itemCount: sql`MAX(0, ${schema.playlists.itemCount} - 1)` })
+					.set({
+						itemCount: sql`MAX(0, ${schema.playlists.itemCount} - ${removedCount})`,
+					})
 					.where(eq(schema.playlists.id, playlistId))
 
-				return deletedLink
+				// 计算 missing 列表（传入但未删除，说明本就不在该列表）
+				const removedSet = new Set(removedTrackIds)
+				const missingTrackIds = trackIdList.filter((id) => !removedSet.has(id))
+
+				return { removedTrackIds, missingTrackIds }
 			})(),
 			(e) => {
 				if (e instanceof ServiceError) return e
-				return new DatabaseError('从播放列表移除歌曲的事务失败', e)
+				return new DatabaseError('从播放列表批量移除歌曲的事务失败', e)
 			},
 		)
 	}

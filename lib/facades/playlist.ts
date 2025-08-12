@@ -2,7 +2,7 @@ import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import log from '@/utils/log'
 import type { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite'
-import { ResultAsync } from 'neverthrow'
+import { errAsync, ResultAsync } from 'neverthrow'
 import {
 	bilibiliApi,
 	type bilibiliApi as BilibiliApiService,
@@ -10,6 +10,7 @@ import {
 import db from '../db/db'
 import type * as schema from '../db/schema'
 import { FacadeError } from '../errors/facade'
+import { ValidationError } from '../errors/service'
 import { artistService, type ArtistService } from '../services/artistService'
 import {
 	playlistService,
@@ -142,11 +143,15 @@ export class PlaylistFacade {
 
 				// step3: 执行增删
 				for (const pid of toAddPlaylistIds) {
-					const r = await playlistSvc.addTrackToLocalPlaylist(pid, trackId)
+					const r = await playlistSvc.addManyTracksToLocalPlaylist(pid, [
+						trackId,
+					])
 					if (r.isErr()) throw r.error
 				}
 				for (const pid of toRemovePlaylistIds) {
-					const r = await playlistSvc.removeTrackFromLocalPlaylist(pid, trackId)
+					const r = await playlistSvc.batchRemoveTracksFromLocalPlaylist(pid, [
+						trackId,
+					])
 					if (r.isErr()) throw r.error
 				}
 				logger.debug('step3: 更新本地播放列表完成', {
@@ -158,6 +163,64 @@ export class PlaylistFacade {
 				return trackId
 			}),
 			(e) => new FacadeError('更新 Track 在本地播放列表', e),
+		)
+	}
+
+	/**
+	 * 批量添加 tracks 到本地播放列表
+	 * @param playlistId
+	 * @param payloads 应包含 track 和 artist，**artist 只能为 remote 来源**
+	 * @returns
+	 */
+	public async batchAddTracksToLocalPlaylist(
+		playlistId: number,
+		payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[],
+	) {
+		for (const payload of payloads) {
+			if (payload.artist.source === 'local') {
+				return errAsync(
+					new ValidationError(
+						'批量添加 tracks 到本地播放列表时，artist 只能为 remote 来源',
+					),
+				)
+			}
+		}
+		return ResultAsync.fromPromise(
+			(async () => {
+				const playlistSvc = this.playlistService.withDB(this.db)
+				const trackSvc = this.trackService.withDB(this.db)
+				const artistSvc = this.artistService.withDB(this.db)
+
+				const artistResult = await artistSvc.findOrCreateManyRemoteArtists(
+					payloads.map((p) => p.artist),
+				)
+				if (artistResult.isErr()) {
+					throw artistResult.error
+				}
+				const artistMap = artistResult.value
+				logger.debug('step1: 批量创建 artist 完成')
+
+				const trackResult = await trackSvc.findOrCreateManyTracks(
+					payloads.map((p) => ({
+						...p.track,
+						artistId: artistMap.get(p.artist.remoteId!)?.id,
+					})),
+					'bilibili',
+				)
+				if (trackResult.isErr()) throw trackResult.error
+				const trackIds = Array.from(trackResult.value.values())
+				logger.debug('step2: 批量创建 track 完成')
+
+				const addResult = await playlistSvc.addManyTracksToLocalPlaylist(
+					playlistId,
+					trackIds,
+				)
+				if (addResult.isErr()) throw addResult.error
+				logger.debug('step3: 批量将 track 添加到本地播放列表完成')
+
+				return trackIds
+			})(),
+			(e) => new FacadeError('批量添加 tracks 到本地播放列表失败', e),
 		)
 	}
 }

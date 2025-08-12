@@ -1,4 +1,4 @@
-import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
+import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'

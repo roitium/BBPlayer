@@ -1,9 +1,10 @@
 import { AnimatedModal } from '@/components/AnimatedModal'
-import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
+import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
+import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
 import {
+	useBatchDeleteTracksFromLocalPlaylist,
 	useDeletePlaylist,
-	useDeleteTrackFromLocalPlaylist,
 	useDuplicatePlaylist,
 	usePlaylistSync,
 } from '@/hooks/mutations/db/playlist'
@@ -16,9 +17,10 @@ import {
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import type { Playlist, Track } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import log, { flatErrorMessage } from '@/utils/log'
 import toast from '@/utils/toast'
-import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
@@ -28,7 +30,7 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { TextInput as RNTextInput } from 'react-native'
-import { Alert, useWindowDimensions, View } from 'react-native'
+import { Alert, FlatList, useWindowDimensions, View } from 'react-native'
 import {
 	Appbar,
 	Button,
@@ -84,6 +86,12 @@ export default function LocalPlaylistPage() {
 	const searchbarRef = useRef<RNTextInput>(null)
 	const searchbarHeight = useSharedValue(0)
 	const debouncedQuery = useDebouncedValue(searchQuery, 200)
+	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
+	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
+		useState(false)
+	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
+		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 
 	const {
 		data: playlistData,
@@ -141,7 +149,7 @@ export default function LocalPlaylistPage() {
 	const { mutate: duplicatePlaylist } = useDuplicatePlaylist()
 	const { mutate: deletePlaylist } = useDeletePlaylist()
 	const { mutate: deleteTrackFromLocalPlaylist } =
-		useDeleteTrackFromLocalPlaylist()
+		useBatchDeleteTracksFromLocalPlaylist()
 
 	const onClickDuplicateLocalPlaylist = useCallback(() => {
 		duplicatePlaylist(
@@ -255,7 +263,7 @@ export default function LocalPlaylistPage() {
 					leadingIcon: 'delete',
 					onPress: () => {
 						deleteTrackFromLocalPlaylist({
-							trackId: item.id,
+							trackIds: [item.id],
 							playlistId: Number(id),
 						})
 					},
@@ -279,6 +287,29 @@ export default function LocalPlaylistPage() {
 		[playAll],
 	)
 
+	const toggle = useCallback((id: number) => {
+		setSelected((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) next.delete(id)
+			else next.add(id)
+			return next
+		})
+	}, [])
+
+	const enterSelectMode = useCallback(() => {
+		setSelectMode(true)
+	}, [])
+
+	const deleteSelectedTracks = useCallback(() => {
+		if (selected.size === 0) return
+		deleteTrackFromLocalPlaylist({
+			trackIds: Array.from(selected),
+			playlistId: Number(id),
+		})
+		setSelectMode(false)
+		setSelected(new Set())
+	}, [selected, id, deleteTrackFromLocalPlaylist])
+
 	const renderItem = useCallback(
 		({ item, index }: { item: Track; index: number }) => {
 			return (
@@ -291,10 +322,22 @@ export default function LocalPlaylistPage() {
 					}
 					data={item}
 					playlist={playlistMetadata as Playlist}
+					toggleSelected={toggle}
+					isSelected={selected.has(item.id)}
+					selectMode={selectMode}
+					enterSelectMode={enterSelectMode}
 				/>
 			)
 		},
-		[handleTrackPress, playlistMetadata, trackMenuItems],
+		[
+			enterSelectMode,
+			handleTrackPress,
+			playlistMetadata,
+			selectMode,
+			selected,
+			toggle,
+			trackMenuItems,
+		],
 	)
 
 	const keyExtractor = useCallback((item: Track) => String(item.id), [])
@@ -305,7 +348,11 @@ export default function LocalPlaylistPage() {
 		}
 	}, [id, navigation])
 
-	usePreventRemove(startSearch, () => setStartSearch(false))
+	usePreventRemove(startSearch || selectMode, () => {
+		setStartSearch(false)
+		setSelectMode(false)
+		setSelected(new Set())
+	})
 
 	useEffect(() => {
 		if (startSearch) {
@@ -319,6 +366,27 @@ export default function LocalPlaylistPage() {
 			withTiming(startSearch ? SEARCHBAR_HEIGHT : 0, { duration: 180 }),
 		)
 	}, [searchbarHeight, startSearch])
+
+	useEffect(() => {
+		if (batchAddTracksModalVisible) {
+			const payloads = []
+			for (const id of selected) {
+				const track = playlistData?.find((t) => t.id === id)
+				if (!track) {
+					toast.error(`批量添加歌曲失败：未找到 track: ${id}`)
+					return
+				}
+				payloads.push({
+					track: {
+						...track,
+						artistId: track.artist?.id,
+					},
+					artist: track.artist!,
+				})
+			}
+			setBatchAddTracksModalPayloads(payloads)
+		}
+	}, [batchAddTracksModalVisible, playlistData, selected])
 
 	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
 		height: searchbarHeight.value,
@@ -344,15 +412,46 @@ export default function LocalPlaylistPage() {
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<Appbar.Header elevated>
 				<Appbar.BackAction onPress={() => navigation.goBack()} />
-				<Appbar.Content title={playlistMetadata.title} />
-				<Appbar.Action
-					icon={startSearch ? 'close' : 'magnify'}
-					onPress={() => setStartSearch((prev) => !prev)}
+				<Appbar.Content
+					title={
+						selectMode ? `已选择 ${selected.size} 首` : playlistMetadata.title
+					}
 				/>
-				<Appbar.Action
-					icon='dots-vertical'
-					onPress={() => setFunctionalMenuVisible(true)}
-				/>
+				{selectMode ? (
+					<>
+						{playlistMetadata.type === 'local' && (
+							<Appbar.Action
+								icon='trash-can'
+								onPress={() =>
+									Alert.alert(
+										'移除歌曲',
+										'确定从播放列表移除这些歌曲？',
+										[
+											{ text: '取消', style: 'cancel' },
+											{ text: '确定', onPress: deleteSelectedTracks },
+										],
+										{ cancelable: true },
+									)
+								}
+							/>
+						)}
+						<Appbar.Action
+							icon='playlist-plus'
+							onPress={() => setBatchAddTracksModalVisible(true)}
+						/>
+					</>
+				) : (
+					<>
+						<Appbar.Action
+							icon={startSearch ? 'close' : 'magnify'}
+							onPress={() => setStartSearch((prev) => !prev)}
+						/>
+						<Appbar.Action
+							icon='dots-vertical'
+							onPress={() => setFunctionalMenuVisible(true)}
+						/>
+					</>
+				)}
 			</Appbar.Header>
 
 			{/* 搜索框 */}
@@ -365,9 +464,10 @@ export default function LocalPlaylistPage() {
 				/>
 			</Animated.View>
 
-			<LegendList
+			<FlatList
 				data={finalPlaylistData ?? []}
 				renderItem={renderItem}
+				extraData={{ selected, selectMode }}
 				ItemSeparatorComponent={() => <Divider />}
 				ListHeaderComponent={
 					<PlaylistHeader
@@ -483,6 +583,14 @@ export default function LocalPlaylistPage() {
 					/>
 				</Menu>
 			</Portal>
+
+			{selectMode && (
+				<BatchAddTracksToLocalPlaylistModal
+					visible={batchAddTracksModalVisible}
+					setVisible={setBatchAddTracksModalVisible}
+					payloads={batchAddTracksModalPayloads}
+				/>
+			)}
 		</View>
 	)
 }

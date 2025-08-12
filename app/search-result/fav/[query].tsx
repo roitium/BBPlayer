@@ -1,4 +1,4 @@
-import AddVideoToLocalPlaylistModal from '@/components/modals/AddVideoToLocalPlaylistModal'
+import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'

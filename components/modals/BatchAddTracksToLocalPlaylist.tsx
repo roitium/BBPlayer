@@ -1,0 +1,179 @@
+import { memo, useCallback, useState } from 'react'
+import { ActivityIndicator, FlatList, View } from 'react-native'
+import {
+	Button,
+	Dialog,
+	Divider,
+	RadioButton,
+	Text,
+	useTheme,
+} from 'react-native-paper'
+
+import { useBatchAddTracksToLocalPlaylist } from '@/hooks/mutations/db/playlist'
+import { usePlaylistLists } from '@/hooks/queries/db/playlist'
+import type { Playlist } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
+import { AnimatedModal } from '../AnimatedModal'
+
+const BatchAddTracksToLocalPlaylistModal = memo(
+	function AddTracksToLocalPlaylistModal({
+		payloads,
+		visible,
+		setVisible,
+	}: {
+		payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[]
+		visible: boolean
+		setVisible: (visible: boolean) => void
+	}) {
+		const { colors } = useTheme()
+
+		const {
+			data: allPlaylists,
+			isPending: isPlaylistsPending,
+			isError: isPlaylistsError,
+			refetch: refetchPlaylists,
+		} = usePlaylistLists()
+
+		const { mutate: batchAdd, isPending: isMutating } =
+			useBatchAddTracksToLocalPlaylist()
+
+		const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(
+			null,
+		)
+
+		const isLoading = isPlaylistsPending
+		const isError = isPlaylistsError
+
+		const handleDismiss = useCallback(() => {
+			if (isMutating) return
+			setVisible(false)
+		}, [isMutating, setVisible])
+
+		const handleRetry = useCallback(() => {
+			if (isPlaylistsError) void refetchPlaylists()
+		}, [isPlaylistsError, refetchPlaylists])
+
+		const handleConfirm = useCallback(() => {
+			if (isMutating || selectedPlaylistId == null) return
+
+			batchAdd(
+				{
+					playlistId: selectedPlaylistId,
+					payloads,
+				},
+				{
+					onSettled: () => setVisible(false),
+				},
+			)
+		}, [batchAdd, isMutating, payloads, selectedPlaylistId, setVisible])
+
+		const renderPlaylistItem = useCallback(
+			({ item }: { item: Playlist }) => {
+				const isChecked = selectedPlaylistId === item.id
+				const isDisabled = item.type !== 'local'
+
+				return (
+					<RadioButton.Item
+						label={item.title}
+						value={String(item.id)}
+						status={isChecked ? 'checked' : 'unchecked'}
+						onPress={() => !isDisabled && setSelectedPlaylistId(item.id)}
+						disabled={isDisabled}
+					/>
+				)
+			},
+			[selectedPlaylistId],
+		)
+
+		const keyExtractor = useCallback((item: Playlist) => item.id.toString(), [])
+
+		const renderContent = () => {
+			if (isLoading) {
+				return (
+					<Dialog.Content style={{ alignItems: 'center', paddingVertical: 20 }}>
+						<ActivityIndicator size={'large'} />
+					</Dialog.Content>
+				)
+			}
+
+			if (isError) {
+				return (
+					<>
+						<Dialog.Content>
+							<Text style={{ textAlign: 'center', color: colors.error }}>
+								加载歌单列表失败
+							</Text>
+						</Dialog.Content>
+						<Dialog.Actions>
+							<Button onPress={handleDismiss}>关闭</Button>
+							<Button onPress={handleRetry}>重试</Button>
+						</Dialog.Actions>
+					</>
+				)
+			}
+
+			return (
+				<>
+					<Dialog.Content>
+						<Divider bold />
+						<FlatList
+							data={allPlaylists || []}
+							renderItem={renderPlaylistItem}
+							keyExtractor={keyExtractor}
+							extraData={selectedPlaylistId}
+							style={{ height: 300 }}
+							ListEmptyComponent={
+								<View
+									style={{
+										flex: 1,
+										justifyContent: 'center',
+										alignItems: 'center',
+									}}
+								>
+									<Text style={{ padding: 16 }}>你还没有创建任何歌单</Text>
+								</View>
+							}
+						/>
+						<Divider bold />
+						<Text
+							variant='bodySmall'
+							style={{ padding: 16 }}
+						>
+							* 与远程同步的播放列表无法选择
+						</Text>
+					</Dialog.Content>
+					<Dialog.Actions>
+						<Button
+							onPress={handleDismiss}
+							disabled={isMutating}
+						>
+							取消
+						</Button>
+						<Button
+							onPress={handleConfirm}
+							loading={isMutating}
+							disabled={isMutating || selectedPlaylistId == null}
+						>
+							确认
+						</Button>
+					</Dialog.Actions>
+				</>
+			)
+		}
+
+		return (
+			<AnimatedModal
+				visible={visible}
+				onDismiss={handleDismiss}
+			>
+				<Dialog.Title>添加到歌单</Dialog.Title>
+				{renderContent()}
+			</AnimatedModal>
+		)
+	},
+)
+
+BatchAddTracksToLocalPlaylistModal.displayName = 'AddTracksToLocalPlaylistModal'
+
+export default BatchAddTracksToLocalPlaylistModal
