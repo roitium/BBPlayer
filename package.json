@@ -1,8 +1,8 @@
 {
 	"name": "bbplayer",
 	"main": "index.js",
-	"version": "1.0.0",
-	"versionCode": 53,
+	"version": "1.0.1",
+	"versionCode": 54,
 	"scripts": {
 		"start": "expo start",
 		"android": "expo run:android",
@@ -27,6 +27,7 @@
 		"@react-navigation/native-stack": "^7.3.14",
 		"@sentry/cli": "^2.43.1",
 		"@sentry/react-native": "~6.14.0",
+		"@shopify/flash-list": "1.7.6",
 		"@tanstack/react-query": "^5.75.0",
 		"@testing-library/react-native": "^13.2.0",
 		"@typescript-eslint/eslint-plugin": "^8.37.0",

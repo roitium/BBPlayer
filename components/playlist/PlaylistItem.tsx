@@ -173,7 +173,7 @@ export const TrackListItem = memo(function TrackListItem({
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && !disabled && !selectMode && (
+					{menuItems.length > 0 && !disabled && (
 						<Menu
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
@@ -181,6 +181,7 @@ export const TrackListItem = memo(function TrackListItem({
 								<IconButton
 									icon='dots-vertical'
 									size={20}
+									disabled={selectMode} // 在选择模式下不允许打开菜单
 									onPress={openMenu}
 								/>
 							}

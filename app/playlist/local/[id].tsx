@@ -28,10 +28,11 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { FlashList } from '@shopify/flash-list'
 import * as Clipboard from 'expo-clipboard'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { TextInput as RNTextInput } from 'react-native'
-import { Alert, FlatList, useWindowDimensions, View } from 'react-native'
+import { Alert, useWindowDimensions, View } from 'react-native'
 import {
 	Appbar,
 	Button,
@@ -476,11 +477,10 @@ export default function LocalPlaylistPage() {
 				/>
 			</Animated.View>
 
-			<FlatList
+			<FlashList
 				data={finalPlaylistData ?? []}
 				renderItem={renderItem}
 				extraData={{ selectMode }}
-				windowSize={7}
 				ItemSeparatorComponent={() => <Divider />}
 				ListHeaderComponent={
 					<PlaylistHeader
