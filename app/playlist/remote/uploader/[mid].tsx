@@ -1,16 +1,14 @@
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/user'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
 	BilibiliUserInfo,
@@ -20,6 +18,7 @@ import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { formatMMSSToSeconds } from '@/utils/time'
+import toast from '@/utils/toast'
 import {
 	type RouteProp,
 	useNavigation,
@@ -34,13 +33,21 @@ import {
 	ActivityIndicator,
 	Appbar,
 	Divider,
+	Searchbar,
 	Text,
 	useTheme,
 } from 'react-native-paper'
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
+
+const SEARCHBAR_HEIGHT = 72
 
 const mapApiItemToTrack = (
 	apiItem: BilibiliUserUploadedVideosResponse['list']['vlist'][0],
@@ -98,6 +105,21 @@ export default function UploaderPage() {
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 
+	const [searchQuery, setSearchQuery] = useState('')
+	const [startSearch, setStartSearch] = useState(false)
+	const searchbarHeight = useSharedValue(0)
+	const debouncedQuery = useDebouncedValue(searchQuery, 200)
+
+	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
+		height: searchbarHeight.value,
+	}))
+
+	useEffect(() => {
+		searchbarHeight.set(
+			withTiming(startSearch ? SEARCHBAR_HEIGHT : 0, { duration: 180 }),
+		)
+	}, [searchbarHeight, startSearch])
+
 	const {
 		data: uploadedVideos,
 		isPending: isUploadedVideosPending,
@@ -105,7 +127,7 @@ export default function UploaderPage() {
 		fetchNextPage,
 		refetch,
 		hasNextPage,
-	} = useInfiniteGetUserUploadedVideos(Number(mid))
+	} = useInfiniteGetUserUploadedVideos(Number(mid), debouncedQuery)
 
 	const {
 		data: uploaderUserInfo,
@@ -136,10 +158,9 @@ export default function UploaderPage() {
 		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
+				leadingIcon: 'skip-next-circle-outline',
 				onPress: () => handlePlayTrack(item, true),
 			},
-			TrackMenuItemDividerToken,
 			{
 				title: '添加到本地歌单',
 				leadingIcon: 'playlist-plus',
@@ -148,13 +169,25 @@ export default function UploaderPage() {
 					setModalVisible(true)
 				},
 			},
-			TrackMenuItemDividerToken,
 			{
 				title: '查看详细信息',
-				leadingIcon: 'information',
+				leadingIcon: 'file-document-outline',
 				onPress: () => {
 					navigation.navigate('PlaylistMultipage', {
 						bvid: item.bilibiliMetadata.bvid,
+					})
+				},
+			},
+			{
+				title: '查看 up 主作品',
+				leadingIcon: 'account-music',
+				onPress: () => {
+					if (!item.artist?.remoteId) {
+						toast.error('未找到 up 主信息')
+						return
+					}
+					navigation.navigate('PlaylistUploader', {
+						mid: item.artist?.remoteId,
 					})
 				},
 			},
@@ -227,7 +260,11 @@ export default function UploaderPage() {
 		return null
 	}
 
-	if (isUploadedVideosPending || isUserInfoPending) {
+	if (isUserInfoPending) {
+		return <PlaylistLoading />
+	}
+
+	if (isUploadedVideosPending && !startSearch) {
 		return <PlaylistLoading />
 	}
 
@@ -243,6 +280,7 @@ export default function UploaderPage() {
 						selectMode ? `已选择 ${selected.size} 首` : uploaderUserInfo.name
 					}
 				/>
+				<Appbar.BackAction onPress={() => navigation.goBack()} />
 				{selectMode ? (
 					<Appbar.Action
 						icon='playlist-plus'
@@ -262,9 +300,22 @@ export default function UploaderPage() {
 						}}
 					/>
 				) : (
-					<Appbar.BackAction onPress={() => navigation.goBack()} />
+					<Appbar.Action
+						icon={startSearch ? 'close' : 'magnify'}
+						onPress={() => setStartSearch((prev) => !prev)}
+					/>
 				)}
 			</Appbar.Header>
+
+			{/* 搜索框 */}
+			<Animated.View style={[{ overflow: 'hidden' }, searchbarAnimatedStyle]}>
+				<Searchbar
+					mode='view'
+					placeholder='搜索歌曲'
+					onChangeText={setSearchQuery}
+					value={searchQuery}
+				/>
+			</Animated.View>
 
 			<View
 				style={{
@@ -272,8 +323,8 @@ export default function UploaderPage() {
 				}}
 			>
 				<FlashList
-					data={tracks}
-					extraData={{ selectMode }}
+					data={tracks ?? []}
+					extraData={{ selectMode, selected }}
 					estimatedItemSize={70}
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
@@ -283,7 +334,7 @@ export default function UploaderPage() {
 						<PlaylistHeader
 							coverUri={uploaderUserInfo.face}
 							title={uploaderUserInfo.name}
-							subtitles={`${uploadedVideos.pages[0].page.count} 首歌曲`}
+							subtitles={`${uploadedVideos?.pages[0].page.count ?? 0} 首歌曲`}
 							description={uploaderUserInfo.sign}
 							onClickMainButton={undefined}
 							mainButtonIcon={'sync'}

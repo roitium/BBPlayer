@@ -30,8 +30,7 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { FlashList } from '@shopify/flash-list'
 import * as Clipboard from 'expo-clipboard'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { TextInput as RNTextInput } from 'react-native'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert, useWindowDimensions, View } from 'react-native'
 import {
 	Appbar,
@@ -86,7 +85,6 @@ export default function LocalPlaylistPage() {
 	const dimensions = useWindowDimensions()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [startSearch, setStartSearch] = useState(false)
-	const searchbarRef = useRef<RNTextInput>(null)
 	const searchbarHeight = useSharedValue(0)
 	const debouncedQuery = useDebouncedValue(searchQuery, 200)
 	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
@@ -238,7 +236,7 @@ export default function LocalPlaylistPage() {
 			const menuItems: TrackMenuItem[] = [
 				{
 					title: '下一首播放',
-					leadingIcon: 'play-circle-outline',
+					leadingIcon: 'skip-next-circle-outline',
 					onPress: () => playNext(item),
 				},
 				{
@@ -251,14 +249,28 @@ export default function LocalPlaylistPage() {
 				},
 			]
 			if (item.source === 'bilibili') {
-				menuItems.push({
-					title: '查看详细信息',
-					leadingIcon: 'information',
-					onPress: () =>
-						navigation.navigate('PlaylistMultipage', {
-							bvid: item.bilibiliMetadata.bvid,
-						}),
-				})
+				menuItems.push(
+					{
+						title: '查看详细信息',
+						leadingIcon: 'file-document-outline',
+						onPress: () =>
+							navigation.navigate('PlaylistMultipage', {
+								bvid: item.bilibiliMetadata.bvid,
+							}),
+					},
+					{
+						title: '查看 up 主作品',
+						leadingIcon: 'account-music',
+						onPress: () => {
+							if (!item.artist?.remoteId) {
+								return
+							}
+							navigation.navigate('PlaylistUploader', {
+								mid: item.artist?.remoteId,
+							})
+						},
+					},
+				)
 			}
 			if (playlistMetadata?.type === 'local') {
 				menuItems.push({
@@ -368,13 +380,6 @@ export default function LocalPlaylistPage() {
 	})
 
 	useEffect(() => {
-		if (startSearch) {
-			const t = setTimeout(() => searchbarRef.current?.focus?.(), 120)
-			return () => clearTimeout(t)
-		}
-	}, [startSearch])
-
-	useEffect(() => {
 		searchbarHeight.set(
 			withTiming(startSearch ? SEARCHBAR_HEIGHT : 0, { duration: 180 }),
 		)
@@ -480,7 +485,7 @@ export default function LocalPlaylistPage() {
 			<FlashList
 				data={finalPlaylistData ?? []}
 				renderItem={renderItem}
-				extraData={{ selectMode }}
+				extraData={{ selectMode, selected }}
 				ItemSeparatorComponent={() => <Divider />}
 				estimatedItemSize={70}
 				ListHeaderComponent={

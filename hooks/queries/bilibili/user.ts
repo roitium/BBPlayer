@@ -8,8 +8,8 @@ export const userQueryKeys = {
 	personalInformation: () =>
 		[...userQueryKeys.all, 'personalInformation'] as const,
 	recentlyPlayed: () => [...userQueryKeys.all, 'recentlyPlayed'] as const,
-	uploadedVideos: (mid: number) =>
-		[...userQueryKeys.all, 'uploadedVideos', mid] as const,
+	uploadedVideos: (mid: number, keyword?: string) =>
+		[...userQueryKeys.all, 'uploadedVideos', mid, keyword ?? ''] as const,
 	otherUserInfo: (mid: number) =>
 		[...userQueryKeys.all, 'otherUserInfo', mid] as const,
 }
@@ -34,12 +34,17 @@ export const useRecentlyPlayed = () => {
 	})
 }
 
-export const useInfiniteGetUserUploadedVideos = (mid: number) => {
+export const useInfiniteGetUserUploadedVideos = (
+	mid: number,
+	keyword?: string,
+) => {
 	const enabled = !!appStore.getState().bilibiliCookieString && !!mid
 	return useInfiniteQuery({
-		queryKey: userQueryKeys.uploadedVideos(mid),
+		queryKey: userQueryKeys.uploadedVideos(mid, keyword),
 		queryFn: ({ pageParam }) =>
-			returnOrThrowAsync(bilibiliApi.getUserUploadedVideos(mid, pageParam)),
+			returnOrThrowAsync(
+				bilibiliApi.getUserUploadedVideos(mid, pageParam, keyword),
+			),
 		getNextPageParam: (lastPage) => {
 			const nowLoaded = lastPage.page.pn * lastPage.page.ps
 			if (nowLoaded >= lastPage.page.count) {

@@ -187,10 +187,8 @@ export const TrackListItem = memo(function TrackListItem({
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem, index) =>
-								menuItem.title === 'divider' ? (
-									<Divider key={`divider-${index}`} />
-								) : (
+							{menuItems.map((menuItem, index) => (
+								<>
 									<Menu.Item
 										key={menuItem.title}
 										leadingIcon={menuItem.leadingIcon}
@@ -200,8 +198,14 @@ export const TrackListItem = memo(function TrackListItem({
 										}}
 										title={menuItem.title}
 									/>
-								),
-							)}
+									{index < menuItems.length - 1 && (
+										<Divider
+											bold
+											key={`divider-${index}`}
+										/>
+									)}
+								</>
+							))}
 						</Menu>
 					)}
 				</View>

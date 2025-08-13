@@ -1,4 +1,3 @@
-import { TrackMenuItemDividerToken } from '@/components/playlist/PlaylistItem'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { BilibiliTrack } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
@@ -42,26 +41,36 @@ export function useSearchInteractions() {
 		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
+				leadingIcon: 'skip-next-circle-outline',
 				onPress: () => playTrack(item, true),
 			},
-			TrackMenuItemDividerToken,
 			{
-				title: '作为分P视频展示',
-				leadingIcon: 'eye-outline',
+				title: '查看详细信息',
+				leadingIcon: 'file-document-outline',
 				onPress: () => {
 					navigation.navigate('PlaylistMultipage', {
 						bvid: item.bilibiliMetadata.bvid,
 					})
 				},
 			},
-			TrackMenuItemDividerToken,
 			{
-				title: '添加到播放列表',
-				leadingIcon: 'plus',
+				title: '添加到本地歌单',
+				leadingIcon: 'playlist-plus',
 				onPress: () => {
 					setCurrentModalTrack(item)
 					setModalVisible(true)
+				},
+			},
+			{
+				title: '查看 up 主作品',
+				leadingIcon: 'account-music',
+				onPress: () => {
+					if (!item.artist?.remoteId) {
+						return
+					}
+					navigation.navigate('PlaylistUploader', {
+						mid: item.artist?.remoteId,
+					})
 				},
 			},
 		],

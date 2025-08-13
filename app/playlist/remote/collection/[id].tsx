@@ -1,10 +1,7 @@
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import {
-	TrackListItem,
-	TrackMenuItemDividerToken,
-} from '@/components/playlist/PlaylistItem'
+import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/favorite'
@@ -114,26 +111,37 @@ export default function CollectionPage() {
 		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
+				leadingIcon: 'skip-next-circle-outline',
 				onPress: () => handlePlayTrack(item, true),
 			},
-			TrackMenuItemDividerToken,
 			{
 				title: '查看详细信息',
-				leadingIcon: 'information',
+				leadingIcon: 'file-document-outline',
 				onPress: () => {
 					navigation.navigate('PlaylistMultipage', {
 						bvid: item.bilibiliMetadata.bvid,
 					})
 				},
 			},
-			TrackMenuItemDividerToken,
 			{
 				title: '添加到本地歌单',
 				leadingIcon: 'playlist-plus',
 				onPress: () => {
 					setCurrentModalTrack(item)
 					setModalVisible(true)
+				},
+			},
+			{
+				title: '查看 up 主作品',
+				leadingIcon: 'account-music',
+				onPress: () => {
+					if (!item.artist?.remoteId) {
+						toast.error('未找到 up 主信息')
+						return
+					}
+					navigation.navigate('PlaylistUploader', {
+						mid: item.artist?.remoteId,
+					})
 				},
 			},
 		],
@@ -286,7 +294,7 @@ export default function CollectionPage() {
 					data={tracks}
 					removeClippedSubviews
 					renderItem={renderItem}
-					extraData={{ selectMode }}
+					extraData={{ selectMode, selected }}
 					estimatedItemSize={70}
 					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}

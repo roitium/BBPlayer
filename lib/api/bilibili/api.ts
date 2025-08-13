@@ -536,14 +536,17 @@ export const createBilibiliApi = () => ({
 
 	/**
 	 * 查询用户投稿视频明细
+	 * 可通过 keyword 搜索用户发布的视频
 	 */
 	getUserUploadedVideos: (
 		mid: number,
 		pn: number,
+		keyword?: string,
 	): ResultAsync<BilibiliUserUploadedVideosResponse, ApiCallingError> => {
 		const params = getWbiEncodedParams({
 			mid: mid.toString(),
 			pn: pn.toString(),
+			keyword: keyword ?? '',
 			ps: '30',
 		})
 		return params.andThen((params) => {

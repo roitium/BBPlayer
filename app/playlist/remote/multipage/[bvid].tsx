@@ -130,7 +130,7 @@ export default function MultipagePage() {
 		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
-				leadingIcon: 'play-circle-outline',
+				leadingIcon: 'skip-next-circle-outline',
 				onPress: () => playTrack(item, true),
 			},
 			{
@@ -141,8 +141,21 @@ export default function MultipagePage() {
 					setModalVisible(true)
 				},
 			},
+			{
+				title: '查看 up 主作品',
+				leadingIcon: 'account-music',
+				onPress: () => {
+					if (!item.artist?.remoteId) {
+						toast.error('未找到 up 主信息')
+						return
+					}
+					navigation.navigate('PlaylistUploader', {
+						mid: item.artist?.remoteId,
+					})
+				},
+			},
 		],
-		[playTrack],
+		[navigation, playTrack],
 	)
 
 	const toggle = useCallback((id: number) => {
@@ -265,7 +278,7 @@ export default function MultipagePage() {
 			>
 				<FlashList
 					data={tracksData}
-					extraData={{ selectMode }}
+					extraData={{ selectMode, selected }}
 					estimatedItemSize={70}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}

@@ -22,12 +22,6 @@ export interface TrackMenuItem {
 	danger?: boolean
 }
 
-export const TrackMenuItemDividerToken: TrackMenuItem = {
-	title: 'divider',
-	leadingIcon: '',
-	onPress: () => void 0,
-}
-
 interface TrackListItemProps {
 	index: number
 	onTrackPress: () => void
@@ -200,10 +194,8 @@ export const TrackListItem = memo(function TrackListItem({
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem, index) =>
-								menuItem.title === 'divider' ? (
-									<Divider key={`divider-${index}`} />
-								) : (
+							{menuItems.map((menuItem, index) => (
+								<>
 									<Menu.Item
 										key={menuItem.title}
 										titleStyle={
@@ -216,8 +208,14 @@ export const TrackListItem = memo(function TrackListItem({
 										}}
 										title={menuItem.title}
 									/>
-								),
-							)}
+									{index < menuItems.length - 1 && (
+										<Divider
+											bold
+											key={`divider-${index}`}
+										/>
+									)}
+								</>
+							))}
 						</Menu>
 					)}
 				</View>
