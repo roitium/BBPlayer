@@ -19,6 +19,7 @@ export interface TrackMenuItem {
 	title: string
 	leadingIcon: string
 	onPress: () => void
+	danger?: boolean
 }
 
 export const TrackMenuItemDividerToken: TrackMenuItem = {
@@ -67,6 +68,7 @@ export const TrackListItem = memo(function TrackListItem({
 			style={{
 				paddingVertical: 4,
 			}}
+			delayLongPress={500}
 			disabled={disabled}
 			onPress={(e) => {
 				if (selectMode) {
@@ -203,6 +205,9 @@ export const TrackListItem = memo(function TrackListItem({
 								) : (
 									<Menu.Item
 										key={menuItem.title}
+										titleStyle={
+											menuItem.danger ? { color: theme.colors.error } : {}
+										}
 										leadingIcon={menuItem.leadingIcon}
 										onPress={() => {
 											menuItem.onPress()

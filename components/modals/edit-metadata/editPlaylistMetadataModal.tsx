@@ -103,7 +103,11 @@ export default function EditPlaylistMetadataModal({
 				/>
 			</Dialog.Content>
 			<Dialog.Actions style={{ justifyContent: 'space-between' }}>
-				<Button onPress={fetchRemoteMetadata}>获取远程数据</Button>
+				{playlist.type !== 'local' ? (
+					<Button onPress={fetchRemoteMetadata}>获取远程数据</Button>
+				) : (
+					<View />
+				)}
 				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
 					<Button onPress={() => setVisible(false)}>取消</Button>
 					<Button onPress={handleConfirm}>确定</Button>

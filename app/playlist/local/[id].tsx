@@ -28,6 +28,7 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Clipboard from 'expo-clipboard'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { TextInput as RNTextInput } from 'react-native'
 import { Alert, FlatList, useWindowDimensions, View } from 'react-native'
@@ -53,6 +54,7 @@ import { PlaylistError } from '../../../components/playlist/PlaylistError'
 import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 import { PlaylistHeader } from './components/LocalPlaylistHeader'
+import type { TrackMenuItem } from './components/LocalPlaylistItem'
 import { TrackListItem } from './components/LocalPlaylistItem'
 
 const logger = log.extend('PLAYLIST/LOCAL')
@@ -232,7 +234,7 @@ export default function LocalPlaylistPage() {
 
 	const trackMenuItems = useCallback(
 		(item: Track) => {
-			const menuItems = [
+			const menuItems: TrackMenuItem[] = [
 				{
 					title: '下一首播放',
 					leadingIcon: 'play-circle-outline',
@@ -267,8 +269,17 @@ export default function LocalPlaylistPage() {
 							playlistId: Number(id),
 						})
 					},
+					danger: true,
 				})
 			}
+			menuItems.push({
+				title: '复制封面链接',
+				leadingIcon: 'link',
+				onPress: () => {
+					void Clipboard.setStringAsync(item.coverUrl ?? '')
+					toast.success('已复制到剪贴板')
+				},
+			})
 			return menuItems
 		},
 		[
