@@ -1,8 +1,5 @@
 import { AnimatedModal } from '@/components/AnimatedModal'
 import { useCreateNewLocalPlaylist } from '@/hooks/mutations/db/playlist'
-import type { RootStackParamList } from '@/types/navigation'
-import { useNavigation } from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useState } from 'react'
 import { Button, Dialog, TextInput } from 'react-native-paper'
 
@@ -17,24 +14,15 @@ export default function CreatePlaylistModal({
 	const [title, setTitle] = useState('')
 	const [description, setDescription] = useState('')
 	const [coverUrl, setCoverUrl] = useState('')
-	const navigation =
-		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
 	const handleConfirm = useCallback(() => {
-		createNewPlaylist(
-			{
-				title,
-				description,
-				coverUrl,
-			},
-			{
-				onSuccess: (playlist) => {
-					navigation.navigate('PlaylistLocal', { id: String(playlist.id) })
-				},
-			},
-		)
+		createNewPlaylist({
+			title,
+			description,
+			coverUrl,
+		})
 		setVisible(false)
-	}, [coverUrl, createNewPlaylist, description, navigation, setVisible, title])
+	}, [coverUrl, createNewPlaylist, description, setVisible, title])
 
 	return (
 		<AnimatedModal

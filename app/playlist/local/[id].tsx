@@ -272,6 +272,14 @@ export default function LocalPlaylistPage() {
 					},
 				)
 			}
+			menuItems.push({
+				title: '复制封面链接',
+				leadingIcon: 'link',
+				onPress: () => {
+					void Clipboard.setStringAsync(item.coverUrl ?? '')
+					toast.success('已复制到剪贴板')
+				},
+			})
 			if (playlistMetadata?.type === 'local') {
 				menuItems.push({
 					title: '删除歌曲',
@@ -285,14 +293,6 @@ export default function LocalPlaylistPage() {
 					danger: true,
 				})
 			}
-			menuItems.push({
-				title: '复制封面链接',
-				leadingIcon: 'link',
-				onPress: () => {
-					void Clipboard.setStringAsync(item.coverUrl ?? '')
-					toast.success('已复制到剪贴板')
-				},
-			})
 			return menuItems
 		},
 		[

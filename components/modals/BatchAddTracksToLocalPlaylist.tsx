@@ -1,5 +1,5 @@
-import { memo, useCallback, useState } from 'react'
-import { ActivityIndicator, FlatList, View } from 'react-native'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { ActivityIndicator, View } from 'react-native'
 import {
 	Button,
 	Dialog,
@@ -14,7 +14,9 @@ import { usePlaylistLists } from '@/hooks/queries/db/playlist'
 import type { Playlist } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
+import { FlashList } from '@shopify/flash-list'
 import { AnimatedModal } from '../AnimatedModal'
+import CreatePlaylistModal from './CreatePlaylistModal'
 
 const BatchAddTracksToLocalPlaylistModal = memo(
 	function AddTracksToLocalPlaylistModal({
@@ -27,6 +29,8 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 		setVisible: (visible: boolean) => void
 	}) {
 		const { colors } = useTheme()
+		const [CreatePlaylistModalVisible, setCreatePlaylistModalVisible] =
+			useState(false)
 
 		const {
 			data: allPlaylists,
@@ -34,6 +38,13 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 			isError: isPlaylistsError,
 			refetch: refetchPlaylists,
 		} = usePlaylistLists()
+		const sortedAllPlaylists = useMemo(
+			() =>
+				allPlaylists?.sort(
+					(a, b) => Number(a.type !== 'local') - Number(b.type !== 'local'),
+				),
+			[allPlaylists],
+		)
 
 		const { mutate: batchAdd, isPending: isMutating } =
 			useBatchAddTracksToLocalPlaylist()
@@ -115,26 +126,28 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 
 			return (
 				<>
-					<Dialog.Content>
+					<Dialog.Content style={{ minHeight: 400 }}>
 						<Divider bold />
-						<FlatList
-							data={allPlaylists || []}
-							renderItem={renderPlaylistItem}
-							keyExtractor={keyExtractor}
-							extraData={selectedPlaylistId}
-							style={{ height: 300 }}
-							ListEmptyComponent={
-								<View
-									style={{
-										flex: 1,
-										justifyContent: 'center',
-										alignItems: 'center',
-									}}
-								>
-									<Text style={{ padding: 16 }}>你还没有创建任何歌单</Text>
-								</View>
-							}
-						/>
+						<View style={{ flex: 1, minHeight: 300 }}>
+							<FlashList
+								data={sortedAllPlaylists ?? []}
+								renderItem={renderPlaylistItem}
+								estimatedItemSize={56}
+								keyExtractor={keyExtractor}
+								extraData={selectedPlaylistId}
+								ListEmptyComponent={
+									<View
+										style={{
+											flex: 1,
+											justifyContent: 'center',
+											alignItems: 'center',
+										}}
+									>
+										<Text style={{ padding: 16 }}>你还没有创建任何歌单</Text>
+									</View>
+								}
+							/>
+						</View>
 						<Divider bold />
 						<Text
 							variant='bodySmall'
@@ -143,33 +156,44 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 							* 与远程同步的播放列表无法选择
 						</Text>
 					</Dialog.Content>
-					<Dialog.Actions>
-						<Button
-							onPress={handleDismiss}
-							disabled={isMutating}
-						>
-							取消
+					<Dialog.Actions style={{ justifyContent: 'space-between' }}>
+						<Button onPress={() => setCreatePlaylistModalVisible(true)}>
+							创建歌单
 						</Button>
-						<Button
-							onPress={handleConfirm}
-							loading={isMutating}
-							disabled={isMutating || selectedPlaylistId == null}
-						>
-							确认
-						</Button>
+						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+							<Button
+								onPress={handleDismiss}
+								disabled={isMutating}
+							>
+								取消
+							</Button>
+							<Button
+								onPress={handleConfirm}
+								loading={isMutating}
+								disabled={isMutating || selectedPlaylistId == null}
+							>
+								确认
+							</Button>
+						</View>
 					</Dialog.Actions>
 				</>
 			)
 		}
 
 		return (
-			<AnimatedModal
-				visible={visible}
-				onDismiss={handleDismiss}
-			>
-				<Dialog.Title>添加到歌单</Dialog.Title>
-				{renderContent()}
-			</AnimatedModal>
+			<>
+				<AnimatedModal
+					visible={visible}
+					onDismiss={handleDismiss}
+				>
+					<Dialog.Title>添加到歌单</Dialog.Title>
+					{renderContent()}
+				</AnimatedModal>
+				<CreatePlaylistModal
+					visiable={CreatePlaylistModalVisible}
+					setVisible={setCreatePlaylistModalVisible}
+				/>
+			</>
 		)
 	},
 )

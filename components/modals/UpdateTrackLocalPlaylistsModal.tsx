@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, FlatList, View } from 'react-native'
+import { ActivityIndicator, View } from 'react-native'
 import {
 	Button,
 	Checkbox,
@@ -15,6 +15,7 @@ import {
 	usePlaylistsContainingTrack,
 } from '@/hooks/queries/db/playlist'
 import type { Playlist, Track } from '@/types/core/media'
+import { FlashList } from '@shopify/flash-list'
 import { AnimatedModal } from '../AnimatedModal'
 import CreatePlaylistModal from './CreatePlaylistModal'
 
@@ -57,7 +58,7 @@ const AddVideoToLocalPlaylistModal = memo(
 		setVisible: (visible: boolean) => void
 	}) {
 		const { colors } = useTheme()
-		const [createPlaylistModalVisible, SetCreatePlaylistModalVisible] =
+		const [createPlaylistModalVisible, setCreatePlaylistModalVisible] =
 			useState(false)
 
 		const {
@@ -66,6 +67,13 @@ const AddVideoToLocalPlaylistModal = memo(
 			isError: isPlaylistsError,
 			refetch: refetchPlaylists,
 		} = usePlaylistLists()
+		const sortedAllPlaylists = useMemo(
+			() =>
+				allPlaylists?.sort(
+					(a, b) => Number(a.type !== 'local') - Number(b.type !== 'local'),
+				),
+			[allPlaylists],
+		)
 
 		const {
 			data: playlistsContainingTrack,
@@ -202,26 +210,29 @@ const AddVideoToLocalPlaylistModal = memo(
 
 			return (
 				<>
-					<Dialog.Content>
+					<Dialog.Content style={{ minHeight: 400 }}>
 						<Divider bold />
-						<FlatList
-							data={allPlaylists || []}
-							renderItem={renderPlaylistItem}
-							keyExtractor={keyExtractor}
-							extraData={checkedPlaylistIds}
-							style={{ height: 300 }}
-							ListEmptyComponent={
-								<View
-									style={{
-										flex: 1,
-										justifyContent: 'center',
-										alignItems: 'center',
-									}}
-								>
-									<Text style={{ padding: 16 }}>你还没有创建任何歌单</Text>
-								</View>
-							}
-						/>
+						<View style={{ flex: 1, minHeight: 300 }}>
+							<FlashList
+								data={sortedAllPlaylists ?? []}
+								estimatedItemSize={64}
+								renderItem={renderPlaylistItem}
+								keyExtractor={keyExtractor}
+								extraData={checkedPlaylistIds}
+								style={{ height: 300 }}
+								ListEmptyComponent={
+									<View
+										style={{
+											flex: 1,
+											justifyContent: 'center',
+											alignItems: 'center',
+										}}
+									>
+										<Text style={{ padding: 16 }}>你还没有创建任何歌单</Text>
+									</View>
+								}
+							/>
+						</View>
 						<Divider bold />
 						<Text
 							variant='bodySmall'
@@ -230,20 +241,25 @@ const AddVideoToLocalPlaylistModal = memo(
 							* 与远程同步的播放列表无法选择
 						</Text>
 					</Dialog.Content>
-					<Dialog.Actions>
-						<Button
-							onPress={handleDismiss}
-							disabled={isMutating}
-						>
-							取消
+					<Dialog.Actions style={{ justifyContent: 'space-between' }}>
+						<Button onPress={() => setCreatePlaylistModalVisible(true)}>
+							创建歌单
 						</Button>
-						<Button
-							onPress={handleConfirm}
-							loading={isMutating}
-							disabled={isMutating}
-						>
-							确认
-						</Button>
+						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+							<Button
+								onPress={handleDismiss}
+								disabled={isMutating}
+							>
+								取消
+							</Button>
+							<Button
+								onPress={handleConfirm}
+								loading={isMutating}
+								disabled={isMutating}
+							>
+								确认
+							</Button>
+						</View>
 					</Dialog.Actions>
 				</>
 			)
@@ -260,7 +276,7 @@ const AddVideoToLocalPlaylistModal = memo(
 				</AnimatedModal>
 				<CreatePlaylistModal
 					visiable={createPlaylistModalVisible}
-					setVisible={SetCreatePlaylistModalVisible}
+					setVisible={setCreatePlaylistModalVisible}
 				/>
 			</>
 		)
