@@ -264,7 +264,8 @@ export default function MultipagePage() {
 			>
 				<FlatList
 					data={tracksData}
-					extraData={{ selectMode, selected }}
+					extraData={{ selectMode }}
+					windowSize={7}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					contentContainerStyle={{

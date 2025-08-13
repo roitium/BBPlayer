@@ -283,8 +283,10 @@ export default function CollectionPage() {
 			>
 				<FlatList
 					data={tracks}
+					removeClippedSubviews
 					renderItem={renderItem}
-					extraData={{ selectMode, selected }}
+					extraData={{ selectMode }}
+					windowSize={7}
 					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}
 					showsVerticalScrollIndicator={false}

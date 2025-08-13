@@ -113,6 +113,7 @@ export default function FavoritePage() {
 
 	const handlePlayTrack = useCallback(
 		(item: BilibiliTrack, playNext = false) => {
+			toast.success('添加到下一首播放成功')
 			void addToQueue({
 				tracks: [item],
 				playNow: !playNext,
@@ -293,7 +294,8 @@ export default function FavoritePage() {
 			>
 				<FlatList
 					data={tracks}
-					extraData={{ selectMode, selected }}
+					extraData={{ selectMode }}
+					windowSize={7}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={

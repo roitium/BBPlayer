@@ -468,7 +468,8 @@ export default function LocalPlaylistPage() {
 			<FlatList
 				data={finalPlaylistData ?? []}
 				renderItem={renderItem}
-				extraData={{ selected, selectMode }}
+				extraData={{ selectMode }}
+				windowSize={7}
 				ItemSeparatorComponent={() => <Divider />}
 				ListHeaderComponent={
 					<PlaylistHeader

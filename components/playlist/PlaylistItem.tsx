@@ -71,6 +71,7 @@ export const TrackListItem = memo(function TrackListItem({
 				paddingVertical: 4,
 			}}
 			disabled={disabled}
+			delayLongPress={500}
 			onPress={(e) => {
 				if (selectMode) {
 					toggleSelected(data.id)
@@ -101,24 +102,30 @@ export const TrackListItem = memo(function TrackListItem({
 						paddingVertical: 6,
 					}}
 				>
-					{/* Index Number */}
-					{selectMode ? (
-						<View style={{ marginRight: 8, width: 35 }}>
+					{/* Index Number & Checkbox Container */}
+					<View
+						style={{
+							width: 35,
+							marginRight: 8,
+							alignItems: 'center',
+							justifyContent: 'center',
+						}}
+					>
+						{/* 始终渲染，或许能降低一点性能开销？ */}
+						<View style={{ position: 'absolute', opacity: selectMode ? 1 : 0 }}>
 							<Checkbox status={isSelected ? 'checked' : 'unchecked'} />
 						</View>
-					) : (
-						<Text
-							variant='bodyMedium'
-							style={{
-								width: 35,
-								textAlign: 'center',
-								marginRight: 8,
-								color: 'grey',
-							}}
-						>
-							{index + 1}
-						</Text>
-					)}
+
+						{/* 序号也是 */}
+						<View style={{ opacity: selectMode ? 0 : 1 }}>
+							<Text
+								variant='bodyMedium'
+								style={{ color: 'grey' }}
+							>
+								{index + 1}
+							</Text>
+						</View>
+					</View>
 
 					{/* Cover Image */}
 					{showCoverImage ? (
@@ -166,7 +173,7 @@ export const TrackListItem = memo(function TrackListItem({
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && !disabled && (
+					{menuItems.length > 0 && !disabled && !selectMode && (
 						<Menu
 							visible={isMenuVisible}
 							onDismiss={closeMenu}

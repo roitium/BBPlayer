@@ -272,7 +272,8 @@ export default function UploaderPage() {
 			>
 				<FlatList
 					data={tracks}
-					extraData={{ selectMode, selected }}
+					extraData={{ selectMode }}
+					windowSize={7}
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 					}}
