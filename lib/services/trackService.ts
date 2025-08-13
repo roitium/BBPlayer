@@ -2,7 +2,9 @@ import type {
 	BilibiliMetadataPayload,
 	CreateBilibiliTrackPayload,
 	CreateTrackPayload,
+	CreateTrackPayloadBase,
 	UpdateTrackPayload,
+	UpdateTrackPayloadBase,
 } from '@/types/services/track'
 import log from '@/utils/log'
 import { and, eq, inArray, sql } from 'drizzle-orm'
@@ -127,8 +129,6 @@ export class TrackService {
 						artistId: payload.artistId,
 						coverUrl: payload.coverUrl,
 						duration: payload.duration,
-						playHistory: [],
-						// createdAt: new Date(), 直接让数据库自动生成
 						uniqueKey: uniqueKey.value,
 					})
 					.returning({ id: schema.tracks.id })
@@ -137,13 +137,19 @@ export class TrackService {
 
 				// 创建元数据
 				if (payload.source === 'bilibili') {
-					await this.db
-						.insert(schema.bilibiliMetadata)
-						.values({ trackId, ...payload.bilibiliMetadata })
+					await this.db.insert(schema.bilibiliMetadata).values({
+						trackId,
+						bvid: payload.bilibiliMetadata.bvid,
+						cid: payload.bilibiliMetadata.cid,
+						isMultiPage: payload.bilibiliMetadata.isMultiPage,
+						mainTrackTitle: payload.bilibiliMetadata.mainTrackTitle,
+						videoIsValid: payload.bilibiliMetadata.videoIsValid,
+					} satisfies BilibiliMetadataPayload & { trackId: number })
 				} else if (payload.source === 'local') {
-					await this.db
-						.insert(schema.localMetadata)
-						.values({ trackId, ...payload.localMetadata })
+					await this.db.insert(schema.localMetadata).values({
+						trackId,
+						localPath: payload.localMetadata.localPath,
+					})
 				}
 
 				return trackId
@@ -169,7 +175,12 @@ export class TrackService {
 		const updateResult = ResultAsync.fromPromise(
 			this.db
 				.update(schema.tracks)
-				.set({ ...dataToUpdate, title: dataToUpdate.title ?? undefined })
+				.set({
+					title: dataToUpdate.title ?? undefined,
+					artistId: dataToUpdate.artistId,
+					coverUrl: dataToUpdate.coverUrl,
+					duration: dataToUpdate.duration,
+				} satisfies Omit<UpdateTrackPayloadBase, 'id'>)
 				.where(eq(schema.tracks.id, id)),
 			(e) => new DatabaseError(`更新 track 失败：${id}`, e),
 		)
@@ -388,12 +399,18 @@ export class TrackService {
 		return ResultAsync.fromPromise(
 			(async () => {
 				const trackValuesToInsert = processedPayloads.map(
-					({ uniqueKey, payload }) => ({
-						...payload,
-						uniqueKey,
-						playHistory: [],
-						// createdAt: new Date(), 直接让数据库自动生成
-					}),
+					({ uniqueKey, payload }) =>
+						({
+							title: payload.title,
+							artistId: payload.artistId,
+							coverUrl: payload.coverUrl,
+							duration: payload.duration,
+							uniqueKey: uniqueKey,
+							source: payload.source,
+						}) satisfies CreateTrackPayloadBase & {
+							uniqueKey: string
+							source: string
+						},
 				)
 
 				if (trackValuesToInsert.length > 0) {

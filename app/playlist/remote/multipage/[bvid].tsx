@@ -1,3 +1,4 @@
+import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -13,17 +14,19 @@ import type {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
-import type { BilibiliTrack } from '@/types/core/media'
+import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import toast from '@/utils/toast'
-import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
@@ -81,6 +84,13 @@ export default function MultipagePage() {
 		BilibiliTrack | undefined
 	>(undefined)
 
+	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
+	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
+		useState(false)
+	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
+		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+
 	const {
 		data: rawMultipageData,
 		isPending: isMultipageDataPending,
@@ -134,6 +144,20 @@ export default function MultipagePage() {
 		[playTrack],
 	)
 
+	const toggle = useCallback((id: number) => {
+		setSelected((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) next.delete(id)
+			else next.add(id)
+			return next
+		})
+	}, [])
+
+	const enterSelectMode = useCallback((id: number) => {
+		setSelectMode(true)
+		setSelected(new Set([id]))
+	}, [])
+
 	const renderItem = useCallback(
 		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
@@ -149,10 +173,14 @@ export default function MultipagePage() {
 						id: item.id,
 						artistName: item.artist?.name,
 					}}
+					toggleSelected={toggle}
+					isSelected={selected.has(item.id)}
+					selectMode={selectMode}
+					enterSelectMode={enterSelectMode}
 				/>
 			)
 		},
-		[playTrack, trackMenuItems],
+		[playTrack, trackMenuItems, toggle, selected, selectMode, enterSelectMode],
 	)
 
 	const handleSync = useCallback(() => {
@@ -183,6 +211,11 @@ export default function MultipagePage() {
 		}
 	}, [bvid, navigation])
 
+	usePreventRemove(selectMode, () => {
+		setSelectMode(false)
+		setSelected(new Set())
+	})
+
 	if (typeof bvid !== 'string') {
 		return null
 	}
@@ -198,8 +231,30 @@ export default function MultipagePage() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<Appbar.Header elevated>
-				<Appbar.Content title={videoData.title} />
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content
+					title={selectMode ? `已选择 ${selected.size} 首` : videoData.title}
+				/>
+				{selectMode ? (
+					<Appbar.Action
+						icon='playlist-plus'
+						onPress={() => {
+							const payloads = []
+							for (const id of selected) {
+								const track = tracksData.find((t) => t.id === id)
+								if (track) {
+									payloads.push({
+										track: track as Track,
+										artist: track.artist!,
+									})
+								}
+							}
+							setBatchAddTracksModalPayloads(payloads)
+							setBatchAddTracksModalVisible(true)
+						}}
+					/>
+				) : (
+					<Appbar.BackAction onPress={() => navigation.goBack()} />
+				)}
 			</Appbar.Header>
 
 			<View
@@ -207,8 +262,9 @@ export default function MultipagePage() {
 					flex: 1,
 				}}
 			>
-				<LegendList
+				<FlatList
 					data={tracksData}
+					extraData={{ selectMode, selected }}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					contentContainerStyle={{
@@ -257,6 +313,13 @@ export default function MultipagePage() {
 					track={currentModalTrack}
 					visible={modalVisible}
 					setVisible={setModalVisible}
+				/>
+			)}
+			{selectMode && (
+				<BatchAddTracksToLocalPlaylistModal
+					visible={batchAddTracksModalVisible}
+					setVisible={setBatchAddTracksModalVisible}
+					payloads={batchAddTracksModalPayloads}
 				/>
 			)}
 		</View>

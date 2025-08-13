@@ -45,7 +45,16 @@ export class ArtistService {
 		payload: CreateArtistPayload,
 	): ResultAsync<typeof schema.artists.$inferSelect, DatabaseError> {
 		return ResultAsync.fromPromise(
-			this.db.insert(schema.artists).values(payload).returning(),
+			this.db
+				.insert(schema.artists)
+				.values({
+					name: payload.name,
+					source: payload.source,
+					remoteId: payload.remoteId,
+					avatarUrl: payload.avatarUrl,
+					signature: payload.signature,
+				} satisfies CreateArtistPayload)
+				.returning(),
 			(e) => new DatabaseError('创建artist失败', e),
 		).andThen((result) => {
 			return okAsync(result[0])
@@ -88,7 +97,13 @@ export class ArtistService {
 				// 如果不存在，则创建新的artist
 				const [newArtist] = await this.db
 					.insert(schema.artists)
-					.values(payload)
+					.values({
+						name: payload.name,
+						source: payload.source,
+						remoteId: payload.remoteId,
+						avatarUrl: payload.avatarUrl,
+						signature: payload.signature,
+					} satisfies CreateArtistPayload)
 					.returning()
 
 				return newArtist
@@ -126,7 +141,11 @@ export class ArtistService {
 
 				const [updated] = await this.db
 					.update(schema.artists)
-					.set({ ...payload, name: payload.name ?? undefined })
+					.set({
+						name: payload.name ?? undefined,
+						avatarUrl: payload.avatarUrl,
+						signature: payload.signature,
+					} satisfies UpdateArtistPayload)
 					.where(eq(schema.artists.id, artistId))
 					.returning()
 
@@ -271,7 +290,18 @@ export class ArtistService {
 				if (payloads.length > 0) {
 					await this.db
 						.insert(schema.artists)
-						.values(payloads)
+						.values(
+							payloads.map(
+								(p) =>
+									({
+										name: p.name,
+										source: p.source,
+										remoteId: p.remoteId,
+										avatarUrl: p.avatarUrl,
+										signature: p.signature,
+									}) satisfies CreateArtistPayload,
+							),
+						)
 						.onConflictDoNothing()
 				}
 
@@ -286,14 +316,26 @@ export class ArtistService {
 					where: or(...findConditions),
 				})
 
-				if (allArtists.length !== payloads.length) {
+				const fullArtists = payloads.map((p) => {
+					const existing = allArtists.find(
+						(a) =>
+							`${a.source}::${a.remoteId}` === `${p.source}::${p.remoteId}`,
+					)
+					if (existing) {
+						return existing
+					}
+					throw new DatabaseError(
+						`批量查找或创建 artists 后数据不一致，未找到 artist: ${p.source}::${p.remoteId}`,
+					)
+				})
+				if (fullArtists.length !== payloads.length) {
 					throw new DatabaseError(
 						'创建或查找 artists 后数据不一致，部分 artist 未能成功写入或查询。',
 					)
 				}
 
 				const finalResultMap = new Map(
-					allArtists.map((artist) => [artist.remoteId!, artist]),
+					fullArtists.map((artist) => [artist.remoteId!, artist]),
 				)
 
 				return finalResultMap

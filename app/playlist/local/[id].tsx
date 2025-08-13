@@ -296,8 +296,9 @@ export default function LocalPlaylistPage() {
 		})
 	}, [])
 
-	const enterSelectMode = useCallback(() => {
+	const enterSelectMode = useCallback((id: number) => {
 		setSelectMode(true)
+		setSelected(new Set([id]))
 	}, [])
 
 	const deleteSelectedTracks = useCallback(() => {

@@ -1,3 +1,4 @@
+import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
@@ -11,16 +12,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import toast from '@/utils/toast'
-import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -82,6 +85,13 @@ export default function FavoritePage() {
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,
 	)
+
+	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
+	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
+		useState(false)
+	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
+		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 
 	const {
 		data: favoriteData,
@@ -165,6 +175,20 @@ export default function FavoritePage() {
 		setRefreshing(false)
 	}, [favoriteData?.pages, id, navigation, syncFavorite])
 
+	const toggle = useCallback((id: number) => {
+		setSelected((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) next.delete(id)
+			else next.add(id)
+			return next
+		})
+	}, [])
+
+	const enterSelectMode = useCallback((id: number) => {
+		setSelectMode(true)
+		setSelected(new Set([id]))
+	}, [])
+
 	const renderItem = useCallback(
 		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
@@ -179,10 +203,21 @@ export default function FavoritePage() {
 						id: item.id,
 						artistName: item.artist?.name,
 					}}
+					toggleSelected={toggle}
+					isSelected={selected.has(item.id)}
+					selectMode={selectMode}
+					enterSelectMode={enterSelectMode}
 				/>
 			)
 		},
-		[handlePlayTrack, trackMenuItems],
+		[
+			handlePlayTrack,
+			trackMenuItems,
+			toggle,
+			selected,
+			selectMode,
+			enterSelectMode,
+		],
 	)
 
 	const keyExtractor = useCallback(
@@ -195,6 +230,11 @@ export default function FavoritePage() {
 			navigation.replace('NotFound')
 		}
 	}, [id, navigation])
+
+	usePreventRemove(selectMode, () => {
+		setSelectMode(false)
+		setSelected(new Set())
+	})
 
 	if (typeof id !== 'string') {
 		return null
@@ -216,8 +256,34 @@ export default function FavoritePage() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<Appbar.Header elevated>
-				<Appbar.Content title={favoriteData.pages[0].info.title} />
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content
+					title={
+						selectMode
+							? `已选择 ${selected.size} 首`
+							: favoriteData.pages[0].info.title
+					}
+				/>
+				{selectMode ? (
+					<Appbar.Action
+						icon='playlist-plus'
+						onPress={() => {
+							const payloads = []
+							for (const id of selected) {
+								const track = tracks.find((t) => t.id === id)
+								if (track) {
+									payloads.push({
+										track: track,
+										artist: track.artist!,
+									})
+								}
+							}
+							setBatchAddTracksModalPayloads(payloads)
+							setBatchAddTracksModalVisible(true)
+						}}
+					/>
+				) : (
+					<Appbar.BackAction onPress={() => navigation.goBack()} />
+				)}
 			</Appbar.Header>
 
 			<View
@@ -225,8 +291,9 @@ export default function FavoritePage() {
 					flex: 1,
 				}}
 			>
-				<LegendList
+				<FlatList
 					data={tracks}
+					extraData={{ selectMode, selected }}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={
@@ -301,6 +368,13 @@ export default function FavoritePage() {
 					track={currentModalTrack}
 					visible={modalVisible}
 					setVisible={setModalVisible}
+				/>
+			)}
+			{selectMode && (
+				<BatchAddTracksToLocalPlaylistModal
+					visible={batchAddTracksModalVisible}
+					setVisible={setBatchAddTracksModalVisible}
+					payloads={batchAddTracksModalPayloads}
 				/>
 			)}
 		</View>

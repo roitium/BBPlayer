@@ -53,9 +53,13 @@ export class PlaylistService {
 			this.db
 				.insert(schema.playlists)
 				.values({
-					...payload,
-					itemCount: 0,
-				})
+					title: payload.title,
+					authorId: payload.authorId,
+					description: payload.description,
+					coverUrl: payload.coverUrl,
+					type: payload.type,
+					remoteSyncId: payload.remoteSyncId,
+				} satisfies CreatePlaylistPayload)
 				.returning(),
 			(e) => new DatabaseError('创建播放列表失败', e),
 		).andThen((result) => {
@@ -91,7 +95,11 @@ export class PlaylistService {
 
 				const [updated] = await this.db
 					.update(schema.playlists)
-					.set({ ...payload, title: payload.title ?? undefined })
+					.set({
+						title: payload.title ?? undefined,
+						description: payload.description,
+						coverUrl: payload.coverUrl,
+					} satisfies UpdatePlaylistPayload)
 					.where(eq(schema.playlists.id, playlistId))
 					.returning()
 
@@ -502,9 +510,13 @@ export class PlaylistService {
 				const [newPlaylist] = await this.db
 					.insert(schema.playlists)
 					.values({
-						...payload,
-						itemCount: 0,
-					})
+						title: payload.title,
+						authorId: payload.authorId,
+						description: payload.description,
+						coverUrl: payload.coverUrl,
+						type: payload.type,
+						remoteSyncId: payload.remoteSyncId,
+					} satisfies CreatePlaylistPayload)
 					.returning()
 
 				return newPlaylist

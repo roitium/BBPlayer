@@ -1,3 +1,4 @@
+import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
@@ -10,15 +11,17 @@ import {
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import type { BilibiliTrack } from '@/types/core/media'
-import { LegendList } from '@legendapp/list'
+import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
-import { useCallback, useMemo } from 'react'
-import { View } from 'react-native'
+import { useCallback, useMemo, useState } from 'react'
+import { FlatList, View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -69,6 +72,13 @@ export default function SearchResultsPage() {
 	const insets = useSafeAreaInsets()
 	const navigation = useNavigation()
 
+	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
+	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
+		useState(false)
+	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
+		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+
 	const { data: userData } = usePersonalInformation()
 	const { data: favoriteFolderList } = useGetFavoritePlaylists(userData?.mid)
 	const {
@@ -97,6 +107,20 @@ export default function SearchResultsPage() {
 		setModalVisible,
 	} = useSearchInteractions()
 
+	const toggle = useCallback((id: number) => {
+		setSelected((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) next.delete(id)
+			else next.add(id)
+			return next
+		})
+	}, [])
+
+	const enterSelectMode = useCallback((id: number) => {
+		setSelectMode(true)
+		setSelected(new Set([id]))
+	}, [])
+
 	const renderSearchResultItem = useCallback(
 		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
@@ -111,16 +135,25 @@ export default function SearchResultsPage() {
 						id: item.id,
 						artistName: item.artist?.name,
 					}}
+					toggleSelected={toggle}
+					isSelected={selected.has(item.id)}
+					selectMode={selectMode}
+					enterSelectMode={enterSelectMode}
 				/>
 			)
 		},
-		[playTrack, trackMenuItems],
+		[playTrack, trackMenuItems, toggle, selected, selectMode, enterSelectMode],
 	)
 
 	const keyExtractor = useCallback(
 		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
 		[],
 	)
+
+	usePreventRemove(selectMode, () => {
+		setSelectMode(false)
+		setSelected(new Set())
+	})
 
 	if (isPendingSearchData) {
 		return <PlaylistLoading />
@@ -138,15 +171,40 @@ export default function SearchResultsPage() {
 			}}
 		>
 			<Appbar.Header elevated>
-				<Appbar.Content title={`搜索结果 - ${query}`} />
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content
+					title={
+						selectMode ? `已选择 ${selected.size} 首` : `搜索结果 - ${query}`
+					}
+				/>
+				{selectMode ? (
+					<Appbar.Action
+						icon='playlist-plus'
+						onPress={() => {
+							const payloads = []
+							for (const id of selected) {
+								const track = tracks.find((t) => t.id === id)
+								if (track) {
+									payloads.push({
+										track: track as Track,
+										artist: track.artist!,
+									})
+								}
+							}
+							setBatchAddTracksModalPayloads(payloads)
+							setBatchAddTracksModalVisible(true)
+						}}
+					/>
+				) : (
+					<Appbar.BackAction onPress={() => navigation.goBack()} />
+				)}
 			</Appbar.Header>
 
-			<LegendList
+			<FlatList
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
 				data={tracks}
+				extraData={{ selectMode, selected }}
 				renderItem={renderSearchResultItem}
 				ItemSeparatorComponent={() => <Divider />}
 				keyExtractor={keyExtractor}
@@ -191,6 +249,13 @@ export default function SearchResultsPage() {
 					track={currentModalTrack}
 					visible={modalVisible}
 					setVisible={setModalVisible}
+				/>
+			)}
+			{selectMode && (
+				<BatchAddTracksToLocalPlaylistModal
+					visible={batchAddTracksModalVisible}
+					setVisible={setBatchAddTracksModalVisible}
+					payloads={batchAddTracksModalPayloads}
 				/>
 			)}
 		</View>

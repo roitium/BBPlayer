@@ -38,7 +38,7 @@ interface TrackListItemProps {
 	toggleSelected: (id: number) => void
 	isSelected: boolean
 	selectMode: boolean
-	enterSelectMode: () => void
+	enterSelectMode: (id: number) => void
 }
 
 /**
@@ -79,7 +79,7 @@ export const TrackListItem = memo(function TrackListItem({
 			onLongPress={(e) => {
 				e.stopPropagation()
 				if (selectMode) return
-				enterSelectMode()
+				enterSelectMode(data.id)
 			}}
 		>
 			<Surface

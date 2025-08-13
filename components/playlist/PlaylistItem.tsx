@@ -3,6 +3,7 @@ import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
 import {
+	Checkbox,
 	Divider,
 	IconButton,
 	Menu,
@@ -39,6 +40,10 @@ interface TrackListItemProps {
 	showCoverImage?: boolean
 	data: TrackNecessaryData
 	disabled?: boolean
+	toggleSelected: (id: number) => void
+	isSelected: boolean
+	selectMode: boolean
+	enterSelectMode: (id: number) => void
 }
 
 /**
@@ -51,6 +56,10 @@ export const TrackListItem = memo(function TrackListItem({
 	showCoverImage = true,
 	data,
 	disabled = false,
+	toggleSelected,
+	isSelected,
+	selectMode,
+	enterSelectMode,
 }: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
@@ -62,7 +71,19 @@ export const TrackListItem = memo(function TrackListItem({
 				paddingVertical: 4,
 			}}
 			disabled={disabled}
-			onPress={onTrackPress}
+			onPress={(e) => {
+				if (selectMode) {
+					toggleSelected(data.id)
+					return
+				}
+				e.stopPropagation()
+				onTrackPress()
+			}}
+			onLongPress={(e) => {
+				e.stopPropagation()
+				if (selectMode) return
+				enterSelectMode(data.id)
+			}}
 		>
 			<Surface
 				style={{
@@ -81,17 +102,23 @@ export const TrackListItem = memo(function TrackListItem({
 					}}
 				>
 					{/* Index Number */}
-					<Text
-						variant='bodyMedium'
-						style={{
-							width: 35,
-							textAlign: 'center',
-							marginRight: 8,
-							color: 'grey',
-						}}
-					>
-						{index + 1}
-					</Text>
+					{selectMode ? (
+						<View style={{ marginRight: 8, width: 35 }}>
+							<Checkbox status={isSelected ? 'checked' : 'unchecked'} />
+						</View>
+					) : (
+						<Text
+							variant='bodyMedium'
+							style={{
+								width: 35,
+								textAlign: 'center',
+								marginRight: 8,
+								color: 'grey',
+							}}
+						>
+							{index + 1}
+						</Text>
+					)}
 
 					{/* Cover Image */}
 					{showCoverImage ? (

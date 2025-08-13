@@ -1,3 +1,4 @@
+import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
@@ -11,16 +12,18 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import toast from '@/utils/toast'
-import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
@@ -76,6 +79,13 @@ export default function CollectionPage() {
 		undefined,
 	)
 
+	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
+	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
+		useState(false)
+	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
+		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+
 	const {
 		data: collectionData,
 		isPending: isCollectionDataPending,
@@ -129,6 +139,20 @@ export default function CollectionPage() {
 		[handlePlayTrack, navigation],
 	)
 
+	const toggle = useCallback((id: number) => {
+		setSelected((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) next.delete(id)
+			else next.add(id)
+			return next
+		})
+	}, [])
+
+	const enterSelectMode = useCallback((id: number) => {
+		setSelectMode(true)
+		setSelected(new Set([id]))
+	}, [])
+
 	const renderItem = useCallback(
 		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
@@ -144,10 +168,21 @@ export default function CollectionPage() {
 						id: item.id,
 						artistName: item.artist?.name,
 					}}
+					toggleSelected={toggle}
+					isSelected={selected.has(item.id)}
+					selectMode={selectMode}
+					enterSelectMode={enterSelectMode}
 				/>
 			)
 		},
-		[handlePlayTrack, trackMenuItems],
+		[
+			handlePlayTrack,
+			trackMenuItems,
+			toggle,
+			selected,
+			selectMode,
+			enterSelectMode,
+		],
 	)
 
 	const keyExtractor = useCallback(
@@ -181,6 +216,11 @@ export default function CollectionPage() {
 		}
 	}, [id, navigation])
 
+	usePreventRemove(selectMode, () => {
+		setSelectMode(false)
+		setSelected(new Set())
+	})
+
 	if (typeof id !== 'string') {
 		return null
 	}
@@ -206,8 +246,34 @@ export default function CollectionPage() {
 			}}
 		>
 			<Appbar.Header elevated>
-				<Appbar.Content title={collectionData.info.title} />
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content
+					title={
+						selectMode
+							? `已选择 ${selected.size} 首`
+							: collectionData.info.title
+					}
+				/>
+				{selectMode ? (
+					<Appbar.Action
+						icon='playlist-plus'
+						onPress={() => {
+							const payloads = []
+							for (const id of selected) {
+								const track = tracks.find((t) => t.id === id)
+								if (track) {
+									payloads.push({
+										track: track as Track,
+										artist: track.artist!,
+									})
+								}
+							}
+							setBatchAddTracksModalPayloads(payloads)
+							setBatchAddTracksModalVisible(true)
+						}}
+					/>
+				) : (
+					<Appbar.BackAction onPress={() => navigation.goBack()} />
+				)}
 			</Appbar.Header>
 
 			<View
@@ -215,9 +281,10 @@ export default function CollectionPage() {
 					flex: 1,
 				}}
 			>
-				<LegendList
+				<FlatList
 					data={tracks}
 					renderItem={renderItem}
+					extraData={{ selectMode, selected }}
 					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}
 					showsVerticalScrollIndicator={false}
@@ -266,6 +333,13 @@ export default function CollectionPage() {
 					track={currentModalTrack}
 					visible={modalVisible}
 					setVisible={setModalVisible}
+				/>
+			)}
+			{selectMode && (
+				<BatchAddTracksToLocalPlaylistModal
+					visible={batchAddTracksModalVisible}
+					setVisible={setBatchAddTracksModalVisible}
+					payloads={batchAddTracksModalPayloads}
 				/>
 			)}
 		</View>

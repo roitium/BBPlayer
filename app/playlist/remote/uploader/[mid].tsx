@@ -1,3 +1,5 @@
+import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
+import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import {
 	TrackListItem,
@@ -8,23 +10,25 @@ import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/user'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
 	BilibiliUserInfo,
 	BilibiliUserUploadedVideosResponse,
 } from '@/types/apis/bilibili'
-import type { BilibiliTrack } from '@/types/core/media'
+import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { CreateArtistPayload } from '@/types/services/artist'
+import type { CreateTrackPayload } from '@/types/services/track'
 import { formatMMSSToSeconds } from '@/utils/time'
-import toast from '@/utils/toast'
-import { LegendList } from '@legendapp/list'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -80,6 +84,18 @@ export default function UploaderPage() {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const insets = useSafeAreaInsets()
+	const addToQueue = usePlayerStore((state) => state.addToQueue)
+	const [modalVisible, setModalVisible] = useState(false)
+	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
+		undefined,
+	)
+
+	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
+	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
+		useState(false)
+	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
+		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 
 	const {
 		data: uploadedVideos,
@@ -103,19 +119,32 @@ export default function UploaderPage() {
 			.map((item) => mapApiItemToTrack(item, uploaderUserInfo))
 	}, [uploadedVideos, uploaderUserInfo])
 
+	const handlePlayTrack = useCallback(
+		(item: BilibiliTrack, playNext = false) => {
+			void addToQueue({
+				tracks: [item],
+				playNow: !playNext,
+				clearQueue: false,
+				playNext: playNext,
+			})
+		},
+		[addToQueue],
+	)
+
 	const trackMenuItems = useCallback(
 		(item: BilibiliTrack) => [
 			{
 				title: '下一首播放',
 				leadingIcon: 'play-circle-outline',
-				onPress: () => toast.show('暂未实现'),
+				onPress: () => handlePlayTrack(item, true),
 			},
 			TrackMenuItemDividerToken,
 			{
-				title: '添加到收藏夹',
-				leadingIcon: 'plus',
+				title: '添加到本地歌单',
+				leadingIcon: 'playlist-plus',
 				onPress: () => {
-					toast.show('暂未实现')
+					setCurrentModalTrack(item)
+					setModalVisible(true)
 				},
 			},
 			TrackMenuItemDividerToken,
@@ -129,15 +158,29 @@ export default function UploaderPage() {
 				},
 			},
 		],
-		[navigation],
+		[navigation, handlePlayTrack],
 	)
+
+	const toggle = useCallback((id: number) => {
+		setSelected((prev) => {
+			const next = new Set(prev)
+			if (next.has(id)) next.delete(id)
+			else next.add(id)
+			return next
+		})
+	}, [])
+
+	const enterSelectMode = useCallback((id: number) => {
+		setSelectMode(true)
+		setSelected(new Set([id]))
+	}, [])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: BilibiliTrack; index: number }) => {
 			return (
 				<TrackListItem
 					index={index}
-					onTrackPress={() => toast.show('暂未实现')}
+					onTrackPress={() => handlePlayTrack(item)}
 					menuItems={trackMenuItems(item)}
 					data={{
 						cover: item.coverUrl ?? undefined,
@@ -146,10 +189,21 @@ export default function UploaderPage() {
 						id: item.id,
 						artistName: item.artist?.name,
 					}}
+					toggleSelected={toggle}
+					isSelected={selected.has(item.id)}
+					selectMode={selectMode}
+					enterSelectMode={enterSelectMode}
 				/>
 			)
 		},
-		[trackMenuItems],
+		[
+			trackMenuItems,
+			handlePlayTrack,
+			toggle,
+			selected,
+			selectMode,
+			enterSelectMode,
+		],
 	)
 
 	const keyExtractor = useCallback(
@@ -162,6 +216,11 @@ export default function UploaderPage() {
 			navigation.replace('NotFound')
 		}
 	}, [mid, navigation])
+
+	usePreventRemove(selectMode, () => {
+		setSelectMode(false)
+		setSelected(new Set())
+	})
 
 	if (typeof mid !== 'string') {
 		return null
@@ -178,8 +237,32 @@ export default function UploaderPage() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<Appbar.Header elevated>
-				<Appbar.Content title={uploaderUserInfo.name} />
-				<Appbar.BackAction onPress={() => navigation.goBack()} />
+				<Appbar.Content
+					title={
+						selectMode ? `已选择 ${selected.size} 首` : uploaderUserInfo.name
+					}
+				/>
+				{selectMode ? (
+					<Appbar.Action
+						icon='playlist-plus'
+						onPress={() => {
+							const payloads = []
+							for (const id of selected) {
+								const track = tracks.find((t) => t.id === id)
+								if (track) {
+									payloads.push({
+										track: track as Track,
+										artist: track.artist!,
+									})
+								}
+							}
+							setBatchAddTracksModalPayloads(payloads)
+							setBatchAddTracksModalVisible(true)
+						}}
+					/>
+				) : (
+					<Appbar.BackAction onPress={() => navigation.goBack()} />
+				)}
 			</Appbar.Header>
 
 			<View
@@ -187,8 +270,9 @@ export default function UploaderPage() {
 					flex: 1,
 				}}
 			>
-				<LegendList
+				<FlatList
 					data={tracks}
+					extraData={{ selectMode, selected }}
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 					}}
@@ -246,12 +330,20 @@ export default function UploaderPage() {
 				/>
 			</View>
 
-			{/* <AddToFavoriteListsModal
-				key={currentModalBvid}
-				visible={modalVisible}
-				bvid={currentModalBvid}
-				setVisible={setModalVisible}
-			/> */}
+			{currentModalTrack && (
+				<AddVideoToLocalPlaylistModal
+					track={currentModalTrack}
+					visible={modalVisible}
+					setVisible={setModalVisible}
+				/>
+			)}
+			{selectMode && (
+				<BatchAddTracksToLocalPlaylistModal
+					visible={batchAddTracksModalVisible}
+					setVisible={setBatchAddTracksModalVisible}
+					payloads={batchAddTracksModalPayloads}
+				/>
+			)}
 		</View>
 	)
 }
