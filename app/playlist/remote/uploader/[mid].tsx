@@ -27,8 +27,9 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { FlashList } from '@shopify/flash-list'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -270,10 +271,10 @@ export default function UploaderPage() {
 					flex: 1,
 				}}
 			>
-				<FlatList
+				<FlashList
 					data={tracks}
 					extraData={{ selectMode }}
-					windowSize={7}
+					estimatedItemSize={70}
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 					}}

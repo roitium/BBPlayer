@@ -20,8 +20,9 @@ import {
 	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
+import { FlashList } from '@shopify/flash-list'
 import { useCallback, useMemo, useState } from 'react'
-import { FlatList, View } from 'react-native'
+import { View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
@@ -199,11 +200,12 @@ export default function SearchResultsPage() {
 				)}
 			</Appbar.Header>
 
-			<FlatList
+			<FlashList
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
 				data={tracks}
+				estimatedItemSize={70}
 				extraData={{ selectMode, selected }}
 				renderItem={renderSearchResultItem}
 				ItemSeparatorComponent={() => <Divider />}

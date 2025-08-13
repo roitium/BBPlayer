@@ -25,8 +25,9 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { FlashList } from '@shopify/flash-list'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
 import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlaylistError } from '../../../../components/playlist/PlaylistError'
@@ -262,10 +263,10 @@ export default function MultipagePage() {
 					flex: 1,
 				}}
 			>
-				<FlatList
+				<FlashList
 					data={tracksData}
 					extraData={{ selectMode }}
-					windowSize={7}
+					estimatedItemSize={70}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					contentContainerStyle={{
