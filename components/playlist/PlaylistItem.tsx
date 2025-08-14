@@ -175,6 +175,7 @@ export const TrackListItem = memo(function TrackListItem({
 					{/* Context Menu */}
 					{menuItems.length > 0 && !disabled && (
 						<Menu
+							key={`menu-${data.id}`}
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
 							anchor={

@@ -1,7 +1,7 @@
 import { queryClient } from '@/lib/config/queryClient'
 import { playlistService } from '@/lib/services/playlistService'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, skipToken, useQuery } from '@tanstack/react-query'
 
 queryClient.setQueryDefaults(['db', 'playlists'], {
 	retry: false,
@@ -15,8 +15,8 @@ export const playlistKeys = {
 		[...playlistKeys.all, 'playlistContents', playlistId] as const,
 	playlistMetadata: (playlistId: number) =>
 		[...playlistKeys.all, 'playlistMetadata', playlistId] as const,
-	playlistsContainingTrack: (trackId: number) =>
-		[...playlistKeys.all, 'playlistsContainingTrack', trackId] as const,
+	playlistsContainingTrack: (id: number | string | undefined) =>
+		[...playlistKeys.all, 'playlistsContainingTrack', id] as const,
 	searchTracksInPlaylist: (playlistId: number, query: string) =>
 		[...playlistKeys.all, 'searchTracksInPlaylist', playlistId, query] as const,
 }
@@ -44,14 +44,19 @@ export const usePlaylistMetadata = (playlistId: number) => {
 	})
 }
 
-export const usePlaylistsContainingTrack = (trackId: number) => {
+export const usePlaylistsContainingTrack = (uniqueKey: string | undefined) => {
 	return useQuery({
-		queryKey: playlistKeys.playlistsContainingTrack(trackId),
-		queryFn: () =>
-			returnOrThrowAsync(
-				playlistService.getLocalPlaylistsContainingTrack(trackId),
-			),
-		enabled: !!trackId,
+		queryKey: ['playlistsContainingTrack', 'byUniqueKey', uniqueKey],
+		queryFn:
+			uniqueKey !== undefined
+				? () =>
+						returnOrThrowAsync(
+							playlistService.getLocalPlaylistsContainingTrackByUniqueKey(
+								uniqueKey,
+							),
+						)
+				: skipToken,
+		enabled: uniqueKey !== undefined,
 	})
 }
 

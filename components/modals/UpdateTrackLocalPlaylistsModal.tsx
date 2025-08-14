@@ -14,7 +14,9 @@ import {
 	usePlaylistLists,
 	usePlaylistsContainingTrack,
 } from '@/hooks/queries/db/playlist'
+import generateUniqueTrackKey from '@/lib/services/genKey'
 import type { Playlist, Track } from '@/types/core/media'
+import toast from '@/utils/toast'
 import { FlashList } from '@shopify/flash-list'
 import { AnimatedModal } from '../AnimatedModal'
 import CreatePlaylistModal from './CreatePlaylistModal'
@@ -75,12 +77,14 @@ const AddVideoToLocalPlaylistModal = memo(
 			[allPlaylists],
 		)
 
+		const uniqueKey = generateUniqueTrackKey(track).unwrapOr(undefined)
+		if (!uniqueKey) toast.error('无法生成 uniqueKey')
 		const {
 			data: playlistsContainingTrack,
 			isPending: isContainingTrackPending,
 			isError: isContainingTrackError,
 			refetch: refetchContainingTrack,
-		} = usePlaylistsContainingTrack(track.id)
+		} = usePlaylistsContainingTrack(uniqueKey)
 
 		const { mutate: updateTracks, isPending: isMutating } =
 			useUpdateTrackLocalPlaylists()
@@ -101,8 +105,6 @@ const AddVideoToLocalPlaylistModal = memo(
 			// 初始化组件的勾选状态
 			setCheckedPlaylistIds(initialCheckedPlaylistIdList)
 		}, [initialCheckedPlaylistIdList])
-
-		const shouldEnforceSingleItemRule = initialCheckedPlaylistIdSet.size > 0
 
 		const handleCheckboxPress = useCallback((playlistId: number) => {
 			setCheckedPlaylistIds((currentIds) => {
@@ -162,11 +164,7 @@ const AddVideoToLocalPlaylistModal = memo(
 		const renderPlaylistItem = useCallback(
 			({ item }: { item: Playlist }) => {
 				const isChecked = checkedPlaylistIds.includes(item.id)
-				const isDisabled =
-					item.type !== 'local' ||
-					(shouldEnforceSingleItemRule &&
-						isChecked &&
-						checkedPlaylistIds.length === 1)
+				const isDisabled = item.type !== 'local'
 
 				return (
 					<PlaylistListItem
@@ -178,7 +176,7 @@ const AddVideoToLocalPlaylistModal = memo(
 					/>
 				)
 			},
-			[checkedPlaylistIds, handleCheckboxPress, shouldEnforceSingleItemRule],
+			[checkedPlaylistIds, handleCheckboxPress],
 		)
 
 		const keyExtractor = useCallback((item: Playlist) => item.id.toString(), [])
@@ -219,7 +217,6 @@ const AddVideoToLocalPlaylistModal = memo(
 								renderItem={renderPlaylistItem}
 								keyExtractor={keyExtractor}
 								extraData={checkedPlaylistIds}
-								style={{ height: 300 }}
 								ListEmptyComponent={
 									<View
 										style={{

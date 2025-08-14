@@ -611,10 +611,41 @@ export class PlaylistService {
 	}
 
 	/**
-	 * 获取包含指定歌曲的所有本地播放列表
-	 * @param trackId
+	 * 通过 uniqueKey 获取包含指定歌曲的所有本地播放列表
+	 * @param uniqueKey:  track uniqueKey
 	 */
-	public getLocalPlaylistsContainingTrack(
+	public getLocalPlaylistsContainingTrackByUniqueKey(
+		uniqueKey: string,
+	): ResultAsync<(typeof schema.playlists.$inferSelect)[], DatabaseError> {
+		return this.trackService
+			.findTrackIdsByUniqueKeys([uniqueKey])
+			.andThen((trackIds) => {
+				if (!trackIds.has(uniqueKey)) return okAsync([])
+				return ResultAsync.fromPromise(
+					this.db.query.playlists.findMany({
+						where: and(
+							eq(schema.playlists.type, 'local'),
+							inArray(
+								schema.playlists.id,
+								this.db
+									.select({ playlistId: schema.playlistTracks.playlistId })
+									.from(schema.playlistTracks)
+									.where(
+										eq(schema.playlistTracks.trackId, trackIds.get(uniqueKey)!),
+									),
+							),
+						),
+					}),
+					(e) => new DatabaseError('获取包含该歌曲的本地播放列表失败', e),
+				)
+			})
+	}
+
+	/**
+	 * 获取包含指定歌曲的所有本地播放列表
+	 * @param trackId:  track id（number）
+	 */
+	public getLocalPlaylistsContainingTrackById(
 		trackId: number,
 	): ResultAsync<(typeof schema.playlists.$inferSelect)[], DatabaseError> {
 		return ResultAsync.fromPromise(
