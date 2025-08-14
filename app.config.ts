@@ -27,6 +27,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	plugins: [
 		'./plugins/withAndroidPlugin',
 		[
+			'./withAbiFilters',
+			{
+				abiFilters: ['arm64-v8a'],
+			},
+		],
+		[
 			'expo-dev-client',
 			{
 				launchMode: 'most-recent',
@@ -53,6 +59,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			{
 				android: {
 					usesCleartextTraffic: true,
+					enableProguardInReleaseBuilds: true,
+					enableShrinkResourcesInReleaseBuilds: true,
 				},
 			},
 		],

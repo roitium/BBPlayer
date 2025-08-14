@@ -10,7 +10,6 @@ on:
         type: choice
         options:
           - prod-v8a
-          - prod-universal
           - dev
           - blank-test
 
