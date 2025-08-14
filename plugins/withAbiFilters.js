@@ -4,8 +4,6 @@ const {
 } = require('@expo/config-plugins')
 
 const withAbiFilters = (config, { abiFilters = ['arm64-v8a'] } = {}) => {
-	console.log('🔧 ABI Filter plugin is running!', abiFilters)
-
 	// Set gradle.properties
 	config = withGradleProperties(config, (config) => {
 		// Convert array to comma-separated string for gradle.properties
