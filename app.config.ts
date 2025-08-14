@@ -27,7 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	plugins: [
 		'./plugins/withAndroidPlugin',
 		[
-			'./withAbiFilters',
+			'./plugins/withAbiFilters',
 			{
 				abiFilters: ['arm64-v8a'],
 			},
