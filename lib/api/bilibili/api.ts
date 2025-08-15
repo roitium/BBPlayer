@@ -120,14 +120,21 @@ export const createBilibiliApi = () => ({
 		BilibiliApiError
 	> {
 		const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params
-		return bilibiliApiClient
-			.get<BilibiliAudioStreamResponse>('/x/player/wbi/playurl', {
-				bvid,
-				cid: String(cid),
-				fnval: '16', // 16 表示 dash 格式
-				fnver: '0',
-				fourk: '1',
-				qlt: String(audioQuality),
+		const wbiParams = getWbiEncodedParams({
+			bvid,
+			cid: String(cid),
+			fnval: '16', // 16 表示 dash 格式
+			fnver: '0',
+			fourk: '1',
+			qlt: String(audioQuality),
+		})
+
+		return wbiParams
+			.andThen((params) => {
+				return bilibiliApiClient.get<BilibiliAudioStreamResponse>(
+					'/x/player/wbi/playurl',
+					params,
+				)
 			})
 			.andThen((response) => {
 				const { dash } = response

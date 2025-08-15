@@ -233,6 +233,7 @@ async function checkAndUpdateAudioStream(
  */
 async function reportPlaybackHistory(track: Track): Promise<void> {
 	if (!useAppStore.getState().settings.sendPlayHistory) return
+	if (!useAppStore.getState().hasBilibiliCookie()) return
 	if (
 		track.source !== 'bilibili' ||
 		!track.bilibiliMetadata.cid ||

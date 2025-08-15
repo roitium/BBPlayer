@@ -94,9 +94,7 @@ function getWbiKeys(): ResultAsync<
 > {
 	const localKeys = getWbiKeysFromStorage()
 	if (localKeys) {
-		wbiLog.debug('从本地获取 wbi_keys')
 		if (isSameDayAsToday(localKeys.timestamp)) {
-			wbiLog.debug('本地 wbi_keys 有效')
 			return okAsync(localKeys)
 		}
 		wbiLog.debug('本地 wbi_keys 已过期，重新获取')
@@ -109,7 +107,6 @@ function getWbiKeys(): ResultAsync<
 			img_url.lastIndexOf('/') + 1,
 			img_url.lastIndexOf('.'),
 		)
-		console.log(img_url, sub_url)
 		const sub_key = sub_url.slice(sub_url.lastIndexOf('/') + 1)
 		storage.set(
 			'wbi_keys',
