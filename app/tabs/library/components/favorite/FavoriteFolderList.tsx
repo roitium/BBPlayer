@@ -1,16 +1,18 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
-import { LegendList } from '@legendapp/list'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Searchbar, Text, useTheme } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../../types/navigation'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
+import TabDisable from '../shared/TabDisabled'
 import FavoriteFolderListItem from './FavoriteFolderListItem'
 
 const FavoriteFolderListComponent = memo(() => {
@@ -20,6 +22,10 @@ const FavoriteFolderListComponent = memo(() => {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const [query, setQuery] = useState('')
+	const enable = useAppStore(
+		(state) =>
+			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
+	)
 
 	const { data: userInfo } = usePersonalInformation()
 	const {
@@ -45,6 +51,10 @@ const FavoriteFolderListComponent = memo(() => {
 		setRefreshing(true)
 		await refetch()
 		setRefreshing(false)
+	}
+
+	if (!enable) {
+		return <TabDisable />
 	}
 
 	if (playlistsIsPending) {
@@ -102,10 +112,10 @@ const FavoriteFolderListComponent = memo(() => {
 					navigation.navigate('SearchResultFav', { query })
 				}}
 			/>
-			<LegendList
-				style={{ flex: 1 }}
+			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
+				estimatedItemSize={72}
 				data={filteredPlaylists}
 				renderItem={renderPlaylistItem}
 				refreshControl={

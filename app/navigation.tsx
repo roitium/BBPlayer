@@ -1,4 +1,7 @@
+import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import WelcomeModal from '@/components/modals/WelcomeModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
+import useAppStore from '@/hooks/stores/useAppStore'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { View } from 'react-native'
 import type { RootStackParamList } from '../types/navigation'
@@ -17,6 +20,19 @@ import TestPage from './test/test'
 export const RootStack = createNativeStackNavigator<RootStackParamList>()
 
 export function RootLayoutNav() {
+	const qrCodeLoginModalVisible = useAppStore(
+		(state) => state.modals.qrCodeLoginModalVisible,
+	)
+	const setQrCodeLoginModalVisible = useAppStore(
+		(state) => state.setQrCodeLoginModalVisible,
+	)
+	const welcomeModalVisible = useAppStore(
+		(state) => state.modals.welcomeModalVisible,
+	)
+	const setWelcomeModalVisible = useAppStore(
+		(state) => state.setWelcomeModalVisible,
+	)
+
 	return (
 		<View style={{ flex: 1 }}>
 			<RootStack.Navigator
@@ -71,6 +87,14 @@ export function RootLayoutNav() {
 					component={NotFoundScreen}
 				/>
 			</RootStack.Navigator>
+			<QrCodeLoginModal
+				visible={qrCodeLoginModalVisible}
+				setVisible={setQrCodeLoginModalVisible}
+			/>
+			<WelcomeModal
+				visible={welcomeModalVisible}
+				setVisible={setWelcomeModalVisible}
+			/>
 			<View
 				style={{
 					position: 'absolute',

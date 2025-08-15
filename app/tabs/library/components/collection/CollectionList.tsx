@@ -1,8 +1,10 @@
+import TabDisable from '@/app/tabs/library/components/shared/TabDisabled'
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteCollectionsList } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
-import { LegendList } from '@legendapp/list'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
@@ -14,6 +16,10 @@ const CollectionListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
+	const enable = useAppStore(
+		(state) =>
+			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
+	)
 
 	const { data: userInfo } = usePersonalInformation()
 	const {
@@ -41,6 +47,10 @@ const CollectionListComponent = memo(() => {
 		setRefreshing(true)
 		await refetch()
 		setRefreshing(false)
+	}
+
+	if (!enable) {
+		return <TabDisable />
 	}
 
 	if (collectionsIsPending) {
@@ -76,7 +86,7 @@ const CollectionListComponent = memo(() => {
 					{collections.pages[0]?.count ?? 0} 个追更
 				</Text>
 			</View>
-			<LegendList
+			<FlashList
 				data={collections.pages.flatMap((page) => page.list)}
 				renderItem={renderCollectionItem}
 				refreshControl={
@@ -90,6 +100,7 @@ const CollectionListComponent = memo(() => {
 				keyExtractor={keyExtractor}
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
+				estimatedItemSize={84}
 				onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
 				ListFooterComponent={
 					hasNextPage ? (

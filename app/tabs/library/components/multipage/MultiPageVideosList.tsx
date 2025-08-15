@@ -4,19 +4,25 @@ import {
 	useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
-import { LegendList } from '@legendapp/list'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
+import TabDisable from '../shared/TabDisabled'
 import MultiPageVideosItem from './MultiPageVideosItem'
 
 const MultiPageVideosListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
+	const enable = useAppStore(
+		(state) =>
+			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
+	)
 
 	const { data: userInfo } = usePersonalInformation()
 	const {
@@ -53,6 +59,10 @@ const MultiPageVideosListComponent = memo(() => {
 		setRefreshing(true)
 		await Promise.all([refetchPlaylists(), refetchFavoriteData()])
 		setRefreshing(false)
+	}
+
+	if (!enable) {
+		return <TabDisable />
 	}
 
 	if (playlistsIsPending || isFavoriteDataPending) {
@@ -101,10 +111,10 @@ const MultiPageVideosListComponent = memo(() => {
 					{favoriteData.pages[0]?.info?.media_count ?? 0} 个分P视频
 				</Text>
 			</View>
-			<LegendList
-				style={{ flex: 1 }}
+			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
+				estimatedItemSize={85}
 				data={favoriteData.pages.flatMap((page) => page.medias) ?? []}
 				renderItem={renderPlaylistItem}
 				keyExtractor={keyExtractor}

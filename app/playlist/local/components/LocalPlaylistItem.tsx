@@ -5,7 +5,6 @@ import { memo, useState } from 'react'
 import { Easing, View } from 'react-native'
 import {
 	Checkbox,
-	Divider,
 	IconButton,
 	Menu,
 	Surface,
@@ -194,27 +193,19 @@ export const TrackListItem = memo(function TrackListItem({
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem, index) => (
-								<>
-									<Menu.Item
-										key={menuItem.title}
-										titleStyle={
-											menuItem.danger ? { color: theme.colors.error } : {}
-										}
-										leadingIcon={menuItem.leadingIcon}
-										onPress={() => {
-											menuItem.onPress()
-											closeMenu()
-										}}
-										title={menuItem.title}
-									/>
-									{index < menuItems.length - 1 && (
-										<Divider
-											bold
-											key={`divider-${index}`}
-										/>
-									)}
-								</>
+							{menuItems.map((menuItem) => (
+								<Menu.Item
+									key={menuItem.title}
+									titleStyle={
+										menuItem.danger ? { color: theme.colors.error } : {}
+									}
+									leadingIcon={menuItem.leadingIcon}
+									onPress={() => {
+										menuItem.onPress()
+										closeMenu()
+									}}
+									title={menuItem.title}
+								/>
 							))}
 						</Menu>
 					)}

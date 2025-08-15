@@ -64,10 +64,10 @@ export const favoriteListQueryKeys = {
  * @param favoriteId
  */
 export const useInfiniteFavoriteList = (favoriteId?: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!favoriteId
+	const enabled = appStore.getState().hasBilibiliCookie() && !!favoriteId
 	return useInfiniteQuery({
 		queryKey: favoriteListQueryKeys.infiniteFavoriteList(favoriteId),
-		queryFn: favoriteId
+		queryFn: enabled
 			? ({ pageParam }) =>
 					returnOrThrowAsync(
 						bilibiliApi.getFavoriteListContents(favoriteId, pageParam),
@@ -77,7 +77,6 @@ export const useInfiniteFavoriteList = (favoriteId?: number) => {
 		getNextPageParam: (lastPage, _allPages, lastPageParam) =>
 			lastPage.has_more ? lastPageParam + 1 : undefined,
 		staleTime: 5 * 60 * 1000,
-		enabled: enabled,
 	})
 }
 
@@ -87,14 +86,13 @@ export const useInfiniteFavoriteList = (favoriteId?: number) => {
  * @param userMid
  */
 export const useGetFavoritePlaylists = (userMid?: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!userMid
+	const enabled = appStore.getState().hasBilibiliCookie() && !!userMid
 	return useQuery({
 		queryKey: favoriteListQueryKeys.allFavoriteList(userMid),
-		queryFn: userMid
+		queryFn: enabled
 			? () => returnOrThrowAsync(bilibiliApi.getFavoritePlaylists(userMid))
 			: skipToken,
 		staleTime: 5 * 60 * 1000, // 5 minutes
-		enabled: enabled,
 	})
 }
 
@@ -143,10 +141,10 @@ export const useBatchDeleteFavoriteListContents = () => {
  * 获取追更合集列表（分页）
  */
 export const useInfiniteCollectionsList = (mid?: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!mid
+	const enabled = appStore.getState().hasBilibiliCookie() && !!mid
 	return useInfiniteQuery({
 		queryKey: favoriteListQueryKeys.infiniteCollectionList(mid),
-		queryFn: mid
+		queryFn: enabled
 			? ({ pageParam }) =>
 					returnOrThrowAsync(bilibiliApi.getCollectionsList(pageParam, mid))
 			: skipToken,
@@ -154,21 +152,19 @@ export const useInfiniteCollectionsList = (mid?: number) => {
 		getNextPageParam: (lastPage, _allPages, lastPageParam) =>
 			lastPage.hasMore ? lastPageParam + 1 : undefined,
 		staleTime: 1,
-		enabled: enabled,
 	})
 }
 
 /**
  * 获取合集详细信息和完整内容
+ * (非登录可访问)
  */
 export const useCollectionAllContents = (collectionId: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString
 	return useQuery({
 		queryKey: favoriteListQueryKeys.collectionAllContents(collectionId),
 		queryFn: () =>
 			returnOrThrowAsync(bilibiliApi.getCollectionAllContents(collectionId)),
 		staleTime: 1,
-		enabled: enabled,
 	})
 }
 
@@ -177,10 +173,10 @@ export const useCollectionAllContents = (collectionId: number) => {
  */
 export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
 	const enabled =
-		!!appStore.getState().bilibiliCookieString && !!userMid && bvid.length > 0
+		appStore.getState().hasBilibiliCookie() && !!userMid && bvid.length > 0
 	return useQuery({
 		queryKey: favoriteListQueryKeys.favoriteForOneVideo(bvid, userMid),
-		queryFn: userMid
+		queryFn: enabled
 			? () =>
 					returnOrThrowAsync(
 						bilibiliApi.getTargetVideoFavoriteStatus(userMid, bvid),
@@ -188,7 +184,6 @@ export const useGetFavoriteForOneVideo = (bvid: string, userMid?: number) => {
 			: skipToken,
 		staleTime: 0,
 		gcTime: 0,
-		enabled: enabled,
 	})
 }
 
@@ -203,7 +198,7 @@ export const useInfiniteSearchFavoriteItems = (
 	const enabled =
 		!!keyword &&
 		keyword.trim().length > 0 &&
-		!!appStore.getState().bilibiliCookieString &&
+		appStore.getState().hasBilibiliCookie() &&
 		!!favoriteId
 	return useInfiniteQuery({
 		queryKey: favoriteListQueryKeys.infiniteSearchFavoriteItems(
@@ -211,22 +206,20 @@ export const useInfiniteSearchFavoriteItems = (
 			keyword,
 			favoriteId,
 		),
-		queryFn:
-			keyword && favoriteId
-				? ({ pageParam }) =>
-						returnOrThrowAsync(
-							bilibiliApi.searchFavoriteListContents(
-								favoriteId,
-								scope,
-								pageParam,
-								keyword,
-							),
-						)
-				: skipToken,
+		queryFn: enabled
+			? ({ pageParam }) =>
+					returnOrThrowAsync(
+						bilibiliApi.searchFavoriteListContents(
+							favoriteId,
+							scope,
+							pageParam,
+							keyword,
+						),
+					)
+			: skipToken,
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, _allPages, lastPageParam) =>
 			lastPage.has_more ? lastPageParam + 1 : undefined,
 		staleTime: 1,
-		enabled: enabled,
 	})
 }

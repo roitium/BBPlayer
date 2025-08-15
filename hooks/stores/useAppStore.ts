@@ -2,28 +2,24 @@ import type { AppState } from '@/types/core/appStore'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import * as parseCookie from 'cookie'
+import { produce } from 'immer'
 import { err, ok, type Result } from 'neverthrow'
 import { create } from 'zustand'
 
-export const parseCookieString = (
+export const parseCookieToObject = (
 	cookie?: string,
-): Result<Record<string, string>[], Error> => {
+): Result<Record<string, string>, Error> => {
 	if (!cookie?.trim()) {
-		return ok([])
+		return ok({})
 	}
-
 	try {
 		const cookieObj = parseCookie.parse(cookie)
-		const cookieArray: Record<string, string>[] = []
-
-		for (const [key, value] of Object.entries(cookieObj)) {
-			if (value === undefined || value === null) {
-				return err(new Error(`Cookie "${key}" 的值无效`))
+		for (const value of Object.values(cookieObj)) {
+			if (value === undefined) {
+				return err(new Error(`无效的 cookie 字符串：值为 undefined：${value}`))
 			}
-			cookieArray.push({ key, value })
 		}
-
-		return ok(cookieArray)
+		return ok(cookieObj as Record<string, string>)
 	} catch (error) {
 		return err(
 			new Error(
@@ -33,69 +29,87 @@ export const parseCookieString = (
 	}
 }
 
-const serializeCookieList = (cookieList: Record<string, string>[]): string => {
-	return cookieList
-		.map((c) => (c.key && c.value ? parseCookie.serialize(c.key, c.value) : ''))
-		.filter(Boolean)
+export const serializeCookieObject = (
+	cookieObj: Record<string, string>,
+): string => {
+	return Object.entries(cookieObj)
+		.map(([key, value]) => parseCookie.serialize(key, value))
 		.join('; ')
 }
 
 export const useAppStore = create<AppState>()((set, get) => {
 	const sendPlayHistory = storage.getBoolean('send_play_history') ?? true
 	const initialCookieString = storage.getString('bilibili_cookie')
+	let initialCookie: Record<string, string> | null = null
 
-	log.debug('AppStore Initializing', {
-		initialCookieString: initialCookieString
-			? initialCookieString.slice(0, 10) + '...'
-			: undefined,
-		sendPlayHistory,
-	})
+	if (initialCookieString) {
+		const result = parseCookieToObject(initialCookieString)
+		if (result.isOk()) {
+			initialCookie = result.value
+		} else {
+			log.error('从 storage 中读取 cookie 失败', result.error)
+		}
+	}
+
+	log.debug('初始化 AppStore', { hasCookie: !!initialCookie })
 
 	return {
-		bilibiliCookieString: initialCookieString,
-
-		settings: {
-			sendPlayHistory,
-		},
-
-		getBilibiliCookieList: () => {
-			const { bilibiliCookieString } = get()
-			return parseCookieString(bilibiliCookieString)
-		},
+		bilibiliCookie: initialCookie,
+		settings: { sendPlayHistory },
+		modals: { qrCodeLoginModalVisible: false, welcomeModalVisible: false },
 
 		hasBilibiliCookie: () => {
-			const { bilibiliCookieString } = get()
-			return Boolean(bilibiliCookieString?.trim())
+			const { bilibiliCookie } = get()
+			return !!bilibiliCookie && Object.keys(bilibiliCookie).length > 0
 		},
 
-		setEnableSendPlayHistory: (value: boolean) => {
+		setEnableSendPlayHistory: (value) => {
 			set((state) => ({
 				settings: { ...state.settings, sendPlayHistory: value },
 			}))
 			storage.set('send_play_history', value)
 		},
 
-		setBilibiliCookie: (cookieString: string) => {
-			const result = parseCookieString(cookieString)
-
+		setBilibiliCookie: (cookieString) => {
+			const result = parseCookieToObject(cookieString)
 			if (result.isErr()) {
 				return err(result.error)
 			}
 
-			set({ bilibiliCookieString: cookieString })
+			const cookieObj = result.value
+			set({ bilibiliCookie: cookieObj })
 			storage.set('bilibili_cookie', cookieString)
-
 			return ok(undefined)
 		},
 
-		setBilibiliCookieFromList: (cookieList: Record<string, string>[]) => {
-			const cookieString = serializeCookieList(cookieList)
-			return get().setBilibiliCookie(cookieString)
+		updateBilibiliCookie: (updates) => {
+			const currentCookie = get().bilibiliCookie ?? {}
+			const newCookie = { ...currentCookie, ...updates }
+
+			set({ bilibiliCookie: newCookie })
+			storage.set('bilibili_cookie', serializeCookieObject(newCookie))
+			return ok(undefined)
 		},
 
 		clearBilibiliCookie: () => {
-			set({ bilibiliCookieString: undefined })
+			set({ bilibiliCookie: null })
 			storage.delete('bilibili_cookie')
+		},
+
+		setQrCodeLoginModalVisible: (visible) => {
+			set(
+				produce((state: AppState) => {
+					state.modals.qrCodeLoginModalVisible = visible
+				}),
+			)
+		},
+
+		setWelcomeModalVisible: (visible) => {
+			set(
+				produce((state: AppState) => {
+					state.modals.welcomeModalVisible = visible
+				}),
+			)
 		},
 	}
 })

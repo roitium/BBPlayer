@@ -1,4 +1,3 @@
-import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import { skipToken, useQuery } from '@tanstack/react-query'
@@ -15,14 +14,13 @@ export const videoDataQueryKeys = {
  * 获取分P列表
  */
 export const useGetMultiPageList = (bvid: string | undefined) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!bvid
+	const enabled = !!bvid
 	return useQuery({
 		queryKey: videoDataQueryKeys.getMultiPageList(bvid),
-		queryFn: bvid
+		queryFn: enabled
 			? () => returnOrThrowAsync(bilibiliApi.getPageList(bvid))
 			: skipToken,
 		staleTime: 1,
-		enabled: enabled,
 	})
 }
 
@@ -30,13 +28,12 @@ export const useGetMultiPageList = (bvid: string | undefined) => {
  * 获取视频详细信息
  */
 export const useGetVideoDetails = (bvid: string | undefined) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!bvid
+	const enabled = !!bvid
 	return useQuery({
 		queryKey: videoDataQueryKeys.getVideoDetails(bvid),
-		queryFn: bvid
+		queryFn: enabled
 			? () => returnOrThrowAsync(bilibiliApi.getVideoDetails(bvid))
 			: skipToken,
 		staleTime: 60 * 60 * 1000, // 我们不需要获取实时的视频详细信息
-		enabled: enabled,
 	})
 }

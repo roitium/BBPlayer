@@ -192,7 +192,7 @@ export default function SearchResultsPage() {
 				}}
 				estimatedItemSize={70}
 				extraData={{ selectMode, selected }}
-				data={uniqueSearchData}
+				data={uniqueSearchData ?? []}
 				renderItem={renderSearchResultItem}
 				keyExtractor={keyExtractor}
 				onEndReached={hasNextPage ? () => fetchNextPage() : undefined}

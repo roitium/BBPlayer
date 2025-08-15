@@ -1,7 +1,7 @@
 import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlaylistLists } from '@/hooks/queries/db/playlist'
 import type { Playlist } from '@/types/core/media'
-import { LegendList } from '@legendapp/list'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
@@ -76,12 +76,12 @@ const LocalPlaylistListComponent = memo(() => {
 					/>
 				</View>
 			</View>
-			<LegendList
-				style={{ flex: 1 }}
+			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
 				data={playlists ?? []}
 				renderItem={renderPlaylistItem}
+				estimatedItemSize={81}
 				refreshControl={
 					<RefreshControl
 						refreshing={refreshing || playlistsIsRefetching}

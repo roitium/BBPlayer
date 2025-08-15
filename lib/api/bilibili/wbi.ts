@@ -109,6 +109,7 @@ function getWbiKeys(): ResultAsync<
 			img_url.lastIndexOf('/') + 1,
 			img_url.lastIndexOf('.'),
 		)
+		console.log(img_url, sub_url)
 		const sub_key = sub_url.slice(sub_url.lastIndexOf('/') + 1)
 		storage.set(
 			'wbi_keys',

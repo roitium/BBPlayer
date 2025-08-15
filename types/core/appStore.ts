@@ -7,23 +7,26 @@ interface Settings {
 	sendPlayHistory: boolean
 }
 
+interface Modals {
+	qrCodeLoginModalVisible: boolean
+	welcomeModalVisible: boolean
+}
+
 interface AppState {
-	bilibiliCookieString: string | undefined
-
-	// Settings
+	bilibiliCookie: Record<string, string> | null
 	settings: Settings
+	modals: Modals
 
-	// Computed getters
-	getBilibiliCookieList: () => Result<Record<string, string>[], Error>
+	// Cookies
 	hasBilibiliCookie: () => boolean
-
-	// Actions
 	setEnableSendPlayHistory: (value: boolean) => void
 	setBilibiliCookie: (cookieString: string) => Result<void, Error>
-	setBilibiliCookieFromList: (
-		cookieList: Record<string, string>[],
-	) => Result<void, Error>
+	updateBilibiliCookie: (updates: Record<string, string>) => Result<void, Error>
 	clearBilibiliCookie: () => void
+
+	// Modals
+	setQrCodeLoginModalVisible: (visible: boolean) => void
+	setWelcomeModalVisible: (visible: boolean) => void
 }
 
 export type { AppState, Settings }

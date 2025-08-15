@@ -97,7 +97,7 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	setVisible: (visible: boolean) => void
 }) {
 	const queryClient = useQueryClient()
-	const setCookie = useAppStore((state) => state.setBilibiliCookieFromList)
+	const setCookie = useAppStore((state) => state.updateBilibiliCookie)
 
 	const [state, dispatch] = useReducer(reducer, initialState)
 	const { status, statusText, qrcodeKey, qrcodeUrl } = state
@@ -145,11 +145,10 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 					pollData.cookies,
 				)
 				const parsedCookie = setCookieParser.parse(splitedCookie)
-				const finalCookie = parsedCookie.map((c) => ({
-					key: c.name,
-					value: c.value,
-				}))
-				const result = setCookie(finalCookie)
+				const finalCookieObject = Object.fromEntries(
+					parsedCookie.map((c) => [c.name, c.value]),
+				)
+				const result = setCookie(finalCookieObject)
 				if (result.isErr()) {
 					toast.error('保存 cookie 失败：' + result.error.message)
 					Sentry.captureException(result.error, {

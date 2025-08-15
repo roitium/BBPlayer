@@ -1,4 +1,4 @@
-import useAppStore from '@/hooks/stores/useAppStore'
+import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { BilibiliApiError, BilibiliApiErrorType } from '../../errors/bilibili'
 
@@ -22,21 +22,21 @@ class ApiClient {
 		endpoint: string,
 		options: RequestInit = {},
 		fullUrl?: string,
-		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> => {
 		const url = fullUrl ?? `${this.baseUrl}${endpoint}`
-		const cookie = useAppStore.getState().bilibiliCookieString
-		if (!cookie && !allowMissingCookie) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未设置 bilibili Cookie，请先登录',
-					type: BilibiliApiErrorType.NoCookie,
-				}),
-			)
-		}
+		const cookieList = useAppStore.getState().bilibiliCookie
+		// if (!cookieList && !allowMissingCookie) {
+		// 	return errAsync(
+		// 		new BilibiliApiError({
+		// 			message: '未设置 bilibili Cookie，请先登录',
+		// 			type: BilibiliApiErrorType.NoCookie,
+		// 		}),
+		// 	)
+		// }
+		const cookie = cookieList ? serializeCookieObject(cookieList) : ''
 
 		const headers = {
-			Cookie: cookie ?? '',
+			Cookie: cookie,
 			'User-Agent':
 				'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 BiliApp/6.66.0',
 			...options.headers,
@@ -76,6 +76,10 @@ class ApiClient {
 				)
 			})
 			.andThen((data) => {
+				// 对于 wbi 接口，直接返回 data，因为未登录状态下 code 为 -101
+				if (endpoint === '/x/web-interface/nav') {
+					return okAsync(data.data)
+				}
 				if (data.code !== 0) {
 					return errAsync(
 						new BilibiliApiError({
@@ -102,7 +106,6 @@ class ApiClient {
 		endpoint: string,
 		params?: Record<string, string> | string,
 		fullUrl?: string,
-		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> {
 		let url = endpoint
 		if (typeof params === 'string') {
@@ -110,7 +113,7 @@ class ApiClient {
 		} else if (params) {
 			url = `${endpoint}?${new URLSearchParams(params).toString()}`
 		}
-		return this.request<T>(url, { method: 'GET' }, fullUrl, allowMissingCookie)
+		return this.request<T>(url, { method: 'GET' }, fullUrl)
 	}
 
 	/**
@@ -127,7 +130,6 @@ class ApiClient {
 		data?: BodyInit,
 		headers?: Record<string, string>,
 		fullUrl?: string,
-		allowMissingCookie = false,
 	): ResultAsync<T, BilibiliApiError> {
 		return this.request<T>(
 			endpoint,
@@ -140,7 +142,6 @@ class ApiClient {
 				body: data,
 			},
 			fullUrl,
-			allowMissingCookie,
 		)
 	}
 }

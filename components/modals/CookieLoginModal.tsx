@@ -1,11 +1,16 @@
 import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
 import { userQueryKeys } from '@/hooks/queries/bilibili/user'
-import useAppStore from '@/hooks/stores/useAppStore'
+import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
+import log from '@/utils/log'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
-import { memo, useState } from 'react'
+import * as Expo from 'expo'
+import { memo, useEffect, useMemo, useState } from 'react'
+import { Alert } from 'react-native'
 import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
 import { AnimatedModal } from '../AnimatedModal'
+
+const logger = log.extend('Components/CookieLoginModal')
 
 function SetCookieDialog({
 	visible,
@@ -15,39 +20,77 @@ function SetCookieDialog({
 	setVisible: (visible: boolean) => void
 }) {
 	const queryClient = useQueryClient()
-	const cookie = useAppStore((state) => state.bilibiliCookieString)
-	const [inputCookie, setInputCookie] = useState(cookie)
+	const cookieObjectFromStore = useAppStore((state) => state.bilibiliCookie)
 	const setBilibiliCookie = useAppStore((state) => state.setBilibiliCookie)
 	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
+
+	const displayCookieString = useMemo(() => {
+		if (!cookieObjectFromStore) return ''
+		return serializeCookieObject(cookieObjectFromStore)
+	}, [cookieObjectFromStore])
+
+	const [inputCookie, setInputCookie] = useState(displayCookieString)
+	const [isLoading, setIsLoading] = useState(false)
+	useEffect(() => {
+		if (visible) {
+			setInputCookie(displayCookieString)
+		}
+	}, [displayCookieString, visible])
+
 	const handleConfirm = () => {
-		if (!inputCookie?.trim()) {
-			clearBilibiliCookie()
+		setIsLoading(true)
+		try {
+			if (!inputCookie?.trim()) {
+				Alert.alert(
+					'清除 Cookie',
+					'确定要清除 Cookie 吗？软件会自动重启。',
+					[
+						{ text: '取消', style: 'cancel' },
+						{
+							text: '确定',
+							style: 'destructive',
+							onPress: () => {
+								clearBilibiliCookie()
+								void Expo.reloadAppAsync()
+							},
+						},
+					],
+					{ cancelable: true },
+				)
+				return
+			}
+
+			if (inputCookie === displayCookieString) {
+				setVisible(false)
+				return
+			}
+
+			const result = setBilibiliCookie(inputCookie)
+			if (result.isErr()) {
+				toast.error(result.error.message)
+				return
+			}
+			toast.success('Cookie 已更新')
+			queryClient.removeQueries({ queryKey: favoriteListQueryKeys.all })
+			queryClient.removeQueries({ queryKey: userQueryKeys.all })
 			setVisible(false)
-			// 清除所有缓存数据
-			queryClient.clear()
-			return
+		} catch (error) {
+			toast.error('操作失败，请稍后重试')
+			logger.error('Failed to confirm cookie change:', error)
+		} finally {
+			setIsLoading(false)
 		}
-		if (inputCookie === cookie) {
-			setVisible(false)
-			return
-		}
-		const result = setBilibiliCookie(inputCookie)
-		if (result.isErr()) {
-			toast.error(result.error.message)
-			return
-		}
+	}
+
+	const handleDismiss = () => {
+		if (isLoading) return
 		setVisible(false)
-		const refetchs = Promise.all([
-			queryClient.refetchQueries({ queryKey: favoriteListQueryKeys.all }),
-			queryClient.refetchQueries({ queryKey: userQueryKeys.all }),
-		])
-		void refetchs
 	}
 
 	return (
 		<AnimatedModal
 			visible={visible}
-			onDismiss={() => setVisible(false)}
+			onDismiss={handleDismiss}
 		>
 			<Dialog.Title>设置 Bilibili Cookie</Dialog.Title>
 			<Dialog.Content>
@@ -65,7 +108,7 @@ function SetCookieDialog({
 					variant='bodySmall'
 					style={{ marginTop: 8 }}
 				>
-					请在此处粘贴您的 Bilibili Cookie 以获取个人数据。
+					请在此处粘贴您的 Bilibili Cookie 以使用完整 BBPlayer 功能。
 				</Text>
 				<Divider style={{ marginTop: 16, marginBottom: 16 }} />
 			</Dialog.Content>

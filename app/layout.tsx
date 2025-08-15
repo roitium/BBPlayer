@@ -1,9 +1,11 @@
 import { toastConfig } from '@/components/toast/ToastConfig'
+import appStore from '@/hooks/stores/appStore'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
 import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
 import log from '@/utils/log'
+import { storage } from '@/utils/mmkv'
 import toast from '@/utils/toast'
 import { useNavigationContainerRef } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
@@ -132,6 +134,13 @@ export default Sentry.wrap(function RootLayout() {
 		if (appIsReady) {
 			if (migrationsError) SplashScreen.hide() // 当有错误时，表明迁移已经结束，需要隐藏 SplashScreen 展示错误信息
 			if (migrationsSuccess) SplashScreen.hide()
+			// 如果是第一次打开，则显示欢迎对话框
+			const firstOpen = storage.getBoolean('first_open') ?? true
+			if (firstOpen) {
+				appStore.setState((store) => ({
+					modals: { ...store.modals, welcomeModalVisible: true },
+				}))
+			}
 		}
 	}, [appIsReady, migrationsError, migrationsSuccess])
 

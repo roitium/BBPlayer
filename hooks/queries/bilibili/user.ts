@@ -1,7 +1,7 @@
 import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const userQueryKeys = {
 	all: ['bilibili', 'user'] as const,
@@ -15,22 +15,24 @@ export const userQueryKeys = {
 }
 
 export const usePersonalInformation = () => {
-	const enabled = !!appStore.getState().bilibiliCookieString
+	const enabled = appStore.getState().hasBilibiliCookie()
 	return useQuery({
 		queryKey: userQueryKeys.personalInformation(),
-		queryFn: () => returnOrThrowAsync(bilibiliApi.getUserInfo()),
+		queryFn: enabled
+			? () => returnOrThrowAsync(bilibiliApi.getUserInfo())
+			: skipToken,
 		staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
-		enabled: enabled,
 	})
 }
 
 export const useRecentlyPlayed = () => {
-	const enabled = !!appStore.getState().bilibiliCookieString
+	const enabled = appStore.getState().hasBilibiliCookie()
 	return useQuery({
 		queryKey: userQueryKeys.recentlyPlayed(),
-		queryFn: () => returnOrThrowAsync(bilibiliApi.getHistory()),
+		queryFn: enabled
+			? () => returnOrThrowAsync(bilibiliApi.getHistory())
+			: skipToken,
 		staleTime: 1 * 60 * 1000,
-		enabled: enabled,
 	})
 }
 
@@ -38,13 +40,15 @@ export const useInfiniteGetUserUploadedVideos = (
 	mid: number,
 	keyword?: string,
 ) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!mid
+	const enabled = !!mid
 	return useInfiniteQuery({
 		queryKey: userQueryKeys.uploadedVideos(mid, keyword),
-		queryFn: ({ pageParam }) =>
-			returnOrThrowAsync(
-				bilibiliApi.getUserUploadedVideos(mid, pageParam, keyword),
-			),
+		queryFn: enabled
+			? ({ pageParam }) =>
+					returnOrThrowAsync(
+						bilibiliApi.getUserUploadedVideos(mid, pageParam, keyword),
+					)
+			: skipToken,
 		getNextPageParam: (lastPage) => {
 			const nowLoaded = lastPage.page.pn * lastPage.page.ps
 			if (nowLoaded >= lastPage.page.count) {
@@ -54,16 +58,16 @@ export const useInfiniteGetUserUploadedVideos = (
 		},
 		initialPageParam: 1,
 		staleTime: 1,
-		enabled: enabled,
 	})
 }
 
 export const useOtherUserInfo = (mid: number) => {
-	const enabled = !!appStore.getState().bilibiliCookieString && !!mid
+	const enabled = !!mid
 	return useQuery({
 		queryKey: userQueryKeys.otherUserInfo(mid),
-		queryFn: () => returnOrThrowAsync(bilibiliApi.getOtherUserInfo(mid)),
+		queryFn: enabled
+			? () => returnOrThrowAsync(bilibiliApi.getOtherUserInfo(mid))
+			: skipToken,
 		staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
-		enabled: enabled,
 	})
 }

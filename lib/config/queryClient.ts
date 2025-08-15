@@ -1,8 +1,10 @@
+import appStore from '@/hooks/stores/appStore'
 import { ApiCallingError } from '@/lib/errors'
 import log from '@/utils/log'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
 import { QueryCache, QueryClient } from '@tanstack/react-query'
+import { BilibiliApiError } from '../errors/bilibili'
 
 const rootLog = log.extend('ROOT')
 
@@ -23,6 +25,11 @@ export const queryClient = new QueryClient({
 				duration: Number.POSITIVE_INFINITY,
 			})
 			rootLog.error(`请求 [${query.queryKey.toString()}] 失败：`, error)
+
+			if (error instanceof BilibiliApiError && error.msgCode === -101) {
+				toast.error('登录状态失效，请重新登录')
+				appStore.getState().setQrCodeLoginModalVisible(true)
+			}
 
 			// 这个错误属于三方依赖的错误，不应该报告到 Sentry
 			if (error instanceof ApiCallingError) {

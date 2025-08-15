@@ -1,4 +1,3 @@
-import useAppStore from '@/hooks/stores/useAppStore'
 import { ApiCallingError } from '@/lib/errors'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
 import {
@@ -23,7 +22,7 @@ import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './client'
-import { bv2av, convertToFormDataString } from './utils'
+import { bv2av, convertToFormDataString, getCsrfToken } from './utils'
 import getWbiEncodedParams from './wbi'
 
 const bilibiliApiLog = log.extend('BILIBILI_API/API')
@@ -82,18 +81,18 @@ export const createBilibiliApi = () => ({
 		{ result: BilibiliSearchVideo[]; numPages: number },
 		BilibiliApiError
 	> {
-		return bilibiliApiClient.get<{
-			result: BilibiliSearchVideo[]
-			numPages: number
-		}>('/x/web-interface/wbi/search/type', {
+		const params = getWbiEncodedParams({
 			keyword,
 			search_type: 'video',
 			page: page.toString(),
 		})
-		// .map((response) => ({
-		// 	tracks: transformSearchResultsToTracks(response.result),
-		// 	numPages: response.numPages,
-		// }))
+
+		return params.andThen((params) => {
+			return bilibiliApiClient.get<{
+				result: BilibiliSearchVideo[]
+				numPages: number
+			}>('/x/web-interface/wbi/search/type', params)
+		})
 	},
 
 	/**
@@ -334,26 +333,8 @@ export const createBilibiliApi = () => ({
 	): ResultAsync<0, ApiCallingError> {
 		const resourcesIds = bvids.map((bvid) => `${bv2av(bvid)}:2`)
 
-		const csrfToken = useAppStore
-			.getState()
-			.getBilibiliCookieList()
-			.map((cookieList) => cookieList.find((c) => c.key === 'bili_jct')?.value)
-		if (csrfToken.isErr()) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未找到 CSRF Token',
-					type: BilibiliApiErrorType.CsrfError,
-				}),
-			)
-		}
-		if (!csrfToken.value) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未找到 CSRF Token',
-					type: BilibiliApiErrorType.CsrfError,
-				}),
-			)
-		}
+		const csrfToken = getCsrfToken()
+		if (csrfToken.isErr()) return errAsync(csrfToken.error)
 
 		const data = {
 			resources: resourcesIds.join(','),
@@ -436,26 +417,9 @@ export const createBilibiliApi = () => ({
 		const avid = bv2av(bvid)
 		const addToFavoriteIdsCombined = addToFavoriteIds.join(',')
 		const delInFavoriteIdsCombined = delInFavoriteIds.join(',')
-		const csrfToken = useAppStore
-			.getState()
-			.getBilibiliCookieList()
-			.map((cookieList) => cookieList.find((c) => c.key === 'bili_jct')?.value)
-		if (csrfToken.isErr()) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未找到 CSRF Token',
-					type: BilibiliApiErrorType.CsrfError,
-				}),
-			)
-		}
-		if (!csrfToken.value) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未找到 CSRF Token',
-					type: BilibiliApiErrorType.CsrfError,
-				}),
-			)
-		}
+		const csrfToken = getCsrfToken()
+		if (csrfToken.isErr()) return errAsync(csrfToken.error)
+
 		const data = {
 			rid: String(avid),
 			add_media_ids: addToFavoriteIdsCombined,
@@ -502,26 +466,9 @@ export const createBilibiliApi = () => ({
 		cid: number,
 	): ResultAsync<0, ApiCallingError> => {
 		const avid = bv2av(bvid)
-		const csrfToken = useAppStore
-			.getState()
-			.getBilibiliCookieList()
-			.map((cookieList) => cookieList.find((c) => c.key === 'bili_jct')?.value)
-		if (csrfToken.isErr()) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未找到 CSRF Token',
-					type: BilibiliApiErrorType.CsrfError,
-				}),
-			)
-		}
-		if (!csrfToken.value) {
-			return errAsync(
-				new BilibiliApiError({
-					message: '未找到 CSRF Token',
-					type: BilibiliApiErrorType.CsrfError,
-				}),
-			)
-		}
+		const csrfToken = getCsrfToken()
+		if (csrfToken.isErr()) return errAsync(csrfToken.error)
+
 		const data = {
 			aid: String(avid),
 			cid: String(cid),
@@ -568,7 +515,6 @@ export const createBilibiliApi = () => ({
 			'',
 			undefined,
 			'https://passport.bilibili.com/x/passport-login/web/qrcode/generate',
-			true,
 		)
 	},
 

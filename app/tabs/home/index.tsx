@@ -1,13 +1,9 @@
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
-import useAppStore from '@/hooks/stores/useAppStore'
-import { BilibiliApiError } from '@/lib/errors/bilibili'
 import { toastAndLogError } from '@/utils/log'
-import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Alert, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
@@ -27,9 +23,6 @@ interface SearchHistoryItem {
 function HomePage() {
 	const { colors } = useTheme()
 	const insets = useSafeAreaInsets()
-	const bilibiliCookie = useAppStore((state) => state.bilibiliCookieString)
-	const [loginDialogVisible, setLoginDialogVisible] = useState(false)
-	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const [searchQuery, setSearchQuery] = useState('')
@@ -41,7 +34,6 @@ function HomePage() {
 		data: personalInfo,
 		isPending: personalInfoPending,
 		isError: personalInfoError,
-		error: personalInfoErrorObject,
 	} = usePersonalInformation()
 
 	const getGreetingMsg = () => {
@@ -55,21 +47,6 @@ function HomePage() {
 
 	const greeting = getGreetingMsg()
 
-	useEffect(() => {
-		if (!bilibiliCookie) {
-			toast.info('看起来你是第一次打开 BBPlayer，先登录一下吧！')
-			setLoginDialogVisible(true)
-		}
-		if (personalInfoErrorObject instanceof BilibiliApiError) {
-			if (personalInfoErrorObject.msgCode === -101) {
-				toast.error('登录状态失效，已清空 cookie，请重新登录')
-				clearBilibiliCookie()
-				setLoginDialogVisible(true)
-			}
-		}
-	}, [bilibiliCookie, clearBilibiliCookie, personalInfoErrorObject])
-
-	// --- 从 search.tsx 移入的函数 ---
 	const saveSearchHistory = useCallback(
 		(history: SearchHistoryItem[]) => {
 			try {
@@ -300,11 +277,6 @@ function HomePage() {
 					)}
 				</View>
 			</View>
-
-			<QrCodeLoginModal
-				visible={loginDialogVisible}
-				setVisible={setLoginDialogVisible}
-			/>
 		</View>
 	)
 }

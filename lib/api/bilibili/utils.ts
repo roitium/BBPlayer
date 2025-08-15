@@ -1,3 +1,7 @@
+import useAppStore from '@/hooks/stores/useAppStore'
+import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
+import { err, ok } from 'neverthrow'
+
 /**
  * 转换B站bvid为avid
  * 这种基础函数报错的可能性很小，不做处理
@@ -49,4 +53,25 @@ export function convertToFormDataString(data: Record<string, string>): string {
 	return Object.keys(data)
 		.map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)
 		.join('&')
+}
+
+export function getCsrfToken() {
+	const cookieList = useAppStore.getState().bilibiliCookie
+	if (!cookieList)
+		return err(
+			new BilibiliApiError({
+				message: '未找到 Cookie',
+				type: BilibiliApiErrorType.NoCookie,
+			}),
+		)
+	const csrfToken = cookieList.bili_jct as string | undefined
+	if (!csrfToken) {
+		return err(
+			new BilibiliApiError({
+				message: '未找到 CSRF Token',
+				type: BilibiliApiErrorType.CsrfError,
+			}),
+		)
+	}
+	return ok(csrfToken)
 }

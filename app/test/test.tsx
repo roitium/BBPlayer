@@ -155,11 +155,11 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							throw new Error('测试错误')
+							navigation.navigate('PlaylistCollection', { id: '114514' })
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						扔个错误
+						测试页面
 					</Button>
 				</View>
 

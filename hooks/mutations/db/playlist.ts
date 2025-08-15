@@ -15,6 +15,7 @@ queryClient.setMutationDefaults(['db', 'playlists'], {
 	retry: false,
 })
 
+// TODO: 我们是否应该使用 removeQueries / resetQueries？refetchQuery 会不会导致一次请求过多？invalidateQueries 真的有效吗？？？我搞不懂 React Query。。。
 export const usePlaylistSync = () => {
 	return useMutation({
 		mutationKey: ['db', 'playlists', 'sync'],
