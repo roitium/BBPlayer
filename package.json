@@ -34,6 +34,7 @@
 		"babel-plugin-inline-import": "^3.0.0",
 		"babel-plugin-transform-remove-console": "^6.9.4",
 		"babel-preset-expo": "~13.0.0",
+		"cookie": "^1.0.2",
 		"dayjs": "^1.11.13",
 		"drizzle-orm": "^0.44.2",
 		"eslint-plugin-drizzle": "^0.2.3",
