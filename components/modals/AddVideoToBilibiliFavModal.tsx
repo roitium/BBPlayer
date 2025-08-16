@@ -194,7 +194,6 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 			<>
 				<Dialog.Content>
 					<Divider bold />
-					{/* 这里用 LegendList 会有 bug，添加了 extraData={checkedList} 会导致卡顿，不添加又会导致数据不同步 */}
 					<FlatList
 						data={playlists || []}
 						extraData={checkedList} // 必须添加

@@ -87,6 +87,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 		],
 		'expo-web-browser',
 		'expo-sqlite',
+		[
+			'expo-share-intent',
+			{
+				androidIntentFilters: ['text/*'],
+				disableIOS: true,
+			},
+		],
 	],
 	experiments: {
 		reactCompiler: true,
