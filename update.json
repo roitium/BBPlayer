@@ -1,6 +1,6 @@
 {
-	"version": "1.0.2",
-	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.0.2/bbplayer-v1.0.2-arm64v8a-prod.apk",
-	"notes": "",
+	"version": "1.0.3",
+	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.0.3/bbplayer-v1.0.3-arm64v8a-prod.apk",
+	"notes": "1. 增加更新提醒 \n 2. 允许退出 sentry 上报 \n 3. 进一步规范日志",
 	"forced": false
 }
