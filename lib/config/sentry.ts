@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
 import * as Updates from 'expo-updates'
 
-const logger = log.extend('Utils/Sentry')
+const logger = log.extend('Utils.Sentry')
 
 const manifest = Updates.manifest
 const metadata = 'metadata' in manifest ? manifest.metadata : undefined

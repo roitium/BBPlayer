@@ -5,7 +5,7 @@ import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-const logger = log.extend('mutations/blibili/favorite')
+const logger = log.extend('Mutation.Bilibili.Favorite')
 
 /**
  * 单个视频添加/删除到多个收藏夹

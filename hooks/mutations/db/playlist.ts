@@ -11,6 +11,8 @@ import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useMutation } from '@tanstack/react-query'
 
+const SCOPE = 'Mutation.DB.Playlist'
+
 queryClient.setMutationDefaults(['db', 'playlists'], {
 	retry: false,
 })
@@ -51,6 +53,7 @@ export const usePlaylistSync = () => {
 			toastAndLogError(
 				`同步播放列表失败: remoteSyncId=${remoteSyncId}, type=${type}`,
 				error,
+				SCOPE,
 			),
 	})
 }
@@ -105,6 +108,7 @@ export const useUpdateTrackLocalPlaylists = () => {
 			toastAndLogError(
 				`操作音频收藏位置失败: trackTitle=${trackPayload.title}`,
 				error,
+				SCOPE,
 			),
 	})
 }
@@ -135,6 +139,7 @@ export const useDuplicatePlaylist = () => {
 			toastAndLogError(
 				`复制播放列表失败: playlistId=${playlistId}, name=${name}`,
 				error,
+				SCOPE,
 			),
 	})
 }
@@ -171,7 +176,11 @@ export const useEditPlaylistMetadata = () => {
 			])
 		},
 		onError: (error, { playlistId }) =>
-			toastAndLogError(`修改播放列表信息失败：playlistId=${playlistId}`, error),
+			toastAndLogError(
+				`修改播放列表信息失败：playlistId=${playlistId}`,
+				error,
+				SCOPE,
+			),
 	})
 }
 
@@ -192,7 +201,11 @@ export const useDeletePlaylist = () => {
 			})
 		},
 		onError: (error, { playlistId }) =>
-			toastAndLogError(`删除播放列表失败: playlistId=${playlistId}`, error),
+			toastAndLogError(
+				`删除播放列表失败: playlistId=${playlistId}`,
+				error,
+				SCOPE,
+			),
 	})
 }
 
@@ -242,7 +255,8 @@ export const useBatchDeleteTracksFromLocalPlaylist = () => {
 			}
 			void Promise.all(promises)
 		},
-		onError: (error) => toastAndLogError('从播放列表中删除 track 失败', error),
+		onError: (error) =>
+			toastAndLogError('从播放列表中删除 track 失败', error, SCOPE),
 	})
 }
 
@@ -274,7 +288,7 @@ export const useCreateNewLocalPlaylist = () => {
 				}),
 			])
 		},
-		onError: (error) => toastAndLogError('创建播放列表失败', error),
+		onError: (error) => toastAndLogError('创建播放列表失败', error, SCOPE),
 	})
 }
 
@@ -322,6 +336,7 @@ export const useBatchAddTracksToLocalPlaylist = () => {
 			}
 			void Promise.all(promises)
 		},
-		onError: (error) => toastAndLogError('批量添加歌曲到播放列表失败', error),
+		onError: (error) =>
+			toastAndLogError('批量添加歌曲到播放列表失败', error, SCOPE),
 	})
 }

@@ -1,7 +1,7 @@
 import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
-import log from '@/utils/log'
+import { toastAndLogError } from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'
 import {
@@ -11,8 +11,6 @@ import {
 	useQuery,
 	useQueryClient,
 } from '@tanstack/react-query'
-
-const favoriteListLog = log.extend('QUERIES/FAVORITE')
 
 export const favoriteListQueryKeys = {
 	all: ['bilibili', 'favoriteList'] as const,
@@ -128,11 +126,7 @@ export const useBatchDeleteFavoriteListContents = () => {
 				}
 			}
 
-			toast.error('操作失败', {
-				description: errorMessage,
-				duration: Number.POSITIVE_INFINITY,
-			})
-			favoriteListLog.error('删除收藏夹内容失败:', error)
+			toastAndLogError(errorMessage, error, 'Query.Bilibili.Favorite')
 		},
 	})
 }

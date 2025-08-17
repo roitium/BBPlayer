@@ -27,7 +27,7 @@ import TrackPlayer, {
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-const playerLog = log.extend('PLAYER/STORE')
+const logger = log.extend('Store.Player')
 
 const checkPlayerReady = () => {
 	if (!global.playerIsReady) {
@@ -80,10 +80,11 @@ export const usePlayerStore = create<PlayerStore>()(
 					if (!global.playerIsReady) return
 
 					try {
+						logger.info('重置播放器')
 						await TrackPlayer.reset()
 						set(initialState)
 					} catch (error) {
-						playerLog.error('重置播放器失败', error)
+						logger.error('重置播放器失败', error)
 						reportErrorToSentry(error, '重置播放器失败', ProjectScope.Player)
 					}
 				},
@@ -95,7 +96,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				},
 
 				removeTrack: async (uniqueKey: string) => {
-					playerLog.debug('removeTrack()', { id: uniqueKey })
+					logger.debug('removeTrack()', { id: uniqueKey })
 					const { tracks, currentTrackUniqueKey: initialCurrentUniqueKey } =
 						get()
 
@@ -189,6 +190,14 @@ export const usePlayerStore = create<PlayerStore>()(
 					if (!checkPlayerReady() || tracks.length === 0) return
 					if (clearQueue) await get().resetStore()
 
+					logger.info('加入队列', {
+						count: tracks.length,
+						playNow,
+						clearQueue,
+						playNext,
+						startFromId: startFromId ?? null,
+					})
+
 					const existingTracks = get().tracks
 					// 找出需要新加入的 tracks
 					const newTracks = tracks.filter(
@@ -203,7 +212,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							if (targetIndex !== -1) {
 								await get().skipToTrack(targetIndex)
 							} else {
-								playerLog.warning('指定的 startFromId 在当前队列中不存在', {
+								logger.warning('指定的 startFromId 在当前队列中不存在', {
 									key: startFromId,
 								})
 							}
@@ -255,7 +264,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					if (playNow) {
 						const keyToPlay = get().currentTrackUniqueKey
 						if (!keyToPlay) {
-							playerLog.error('播放器异常，无法找到当前播放的 key')
+							logger.error('播放器异常，无法找到当前播放的 key')
 							return
 						}
 						const indexToPlay = get()._getActiveList().indexOf(keyToPlay)
@@ -279,8 +288,16 @@ export const usePlayerStore = create<PlayerStore>()(
 						}
 
 						if (isPlaying) {
+							logger.info('暂停', {
+								key: currentTrack.uniqueKey,
+								title: currentTrack.title,
+							})
 							await TrackPlayer.pause()
 						} else {
+							logger.info('播放', {
+								key: currentTrack.uniqueKey,
+								title: currentTrack.title,
+							})
 							const isExpired = checkBilibiliAudioExpiry(currentTrack)
 							if (!isExpired) {
 								await TrackPlayer.play()
@@ -288,7 +305,7 @@ export const usePlayerStore = create<PlayerStore>()(
 								return
 							}
 
-							playerLog.debug('音频流已过期, 正在更新...')
+							logger.debug('音频流已过期, 正在更新...')
 							const result = await get().patchAudio(currentTrack)
 							if (result.isErr()) {
 								reportErrorToSentry(
@@ -304,7 +321,7 @@ export const usePlayerStore = create<PlayerStore>()(
 								const { position } = await TrackPlayer.getProgress()
 								const rntpTrack = convertToRNTPTrack(track)
 								if (rntpTrack.isErr()) {
-									playerLog.error('转换为 RNTPTrack 失败', rntpTrack.error)
+									logger.error('转换为 RNTPTrack 失败', rntpTrack.error)
 									reportErrorToSentry(
 										rntpTrack.error,
 										'转换为 RNTPTrack 失败',
@@ -319,7 +336,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						}
 						set({ isPlaying: !isPlaying })
 					} catch (error) {
-						playerLog.error('切换播放状态失败', error)
+						logger.error('切换播放状态失败', error)
 						reportErrorToSentry(error, '切换播放状态失败', ProjectScope.Player)
 					}
 				},
@@ -380,7 +397,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						await TrackPlayer.setRepeatMode(RepeatMode.Off)
 					}
 					set({ repeatMode: newMode })
-					playerLog.debug('重复模式已更改', { newMode })
+					logger.debug('重复模式已更改', { newMode })
 				},
 
 				toggleShuffleMode: () => {
@@ -394,7 +411,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					const newShuffleMode = !shuffleMode
 					if (newShuffleMode) {
 						// 进入随机模式
-						playerLog.debug('开启随机模式')
+						logger.debug('开启随机模式')
 						const newShuffledList = [...orderedList]
 						// Fisher-Yates shuffle
 						for (let i = newShuffledList.length - 1; i > 0; i--) {
@@ -416,16 +433,17 @@ export const usePlayerStore = create<PlayerStore>()(
 						}
 						set({ shuffleMode: true, shuffledList: newShuffledList })
 					} else {
-						playerLog.debug('关闭随机模式')
+						logger.debug('关闭随机模式')
 						set({ shuffleMode: false, shuffledList: [] })
 					}
 				},
 
 				resetStore: async () => {
-					playerLog.debug('清空队列')
+					logger.debug('清空队列')
 					if (!checkPlayerReady()) return
 					await TrackPlayer.reset()
 					set((state) => ({ ...initialState, repeatMode: state.repeatMode }))
+					logger.info('已清空队列')
 				},
 
 				patchAudio: async (
@@ -455,7 +473,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					const activeList = get()._getActiveList()
 
 					if (!checkPlayerReady() || index < 0 || index >= activeList.length) {
-						playerLog.debug('skipToTrack 索引超出范围', {
+						logger.debug('skipToTrack 索引超出范围', {
 							index,
 							queueSize: activeList.length,
 						})
@@ -466,19 +484,24 @@ export const usePlayerStore = create<PlayerStore>()(
 					const initialTrack = get().tracks[keyToPlay]
 
 					if (!initialTrack) {
-						playerLog.error('未找到指定 key 的曲目', { key: keyToPlay })
+						logger.error('未找到指定 key 的曲目', { key: keyToPlay })
 						return
 					}
 
-					playerLog.debug(
+					logger.debug(
 						`跳转到曲目: index=${index}, key=${keyToPlay}, title=${initialTrack.title}`,
 					)
+					logger.info('开始播放', {
+						index,
+						key: keyToPlay,
+						title: initialTrack.title,
+					})
 					set({ currentTrackUniqueKey: keyToPlay, isBuffering: true })
 
 					// 1. 获取最新的音频流
 					const updatedTrackResult = await get().patchAudio(initialTrack)
 					if (updatedTrackResult.isErr()) {
-						playerLog.error('更新音频流失败', updatedTrackResult.error)
+						logger.error('更新音频流失败', updatedTrackResult.error)
 						reportErrorToSentry(
 							updatedTrackResult.error,
 							'更新音频流失败',
@@ -496,7 +519,7 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					const rntpTrackResult = convertToRNTPTrack(finalTrack)
 					if (rntpTrackResult.isErr()) {
-						playerLog.error('转换为 RNTPTrack 失败', rntpTrackResult.error)
+						logger.error('转换为 RNTPTrack 失败', rntpTrackResult.error)
 						reportErrorToSentry(
 							rntpTrackResult.error,
 							'转换为 RNTPTrack 失败',
@@ -508,7 +531,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					await TrackPlayer.load(rntpTrackResult.value)
 					await TrackPlayer.play()
 					reportPlaybackHistory(finalTrack).catch((error) =>
-						playerLog.error('上报播放历史失败', error),
+						logger.error('上报播放历史失败', error),
 					)
 
 					set({

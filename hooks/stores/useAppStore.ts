@@ -8,7 +8,7 @@ import { err, ok, type Result } from 'neverthrow'
 import { Alert } from 'react-native'
 import { create } from 'zustand'
 
-const logger = log.extend('Store/App')
+const logger = log.extend('Store.App')
 
 export const parseCookieToObject = (
 	cookie?: string,
