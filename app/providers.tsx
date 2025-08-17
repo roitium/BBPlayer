@@ -1,4 +1,5 @@
 import GlobalErrorFallback from '@/components/ErrorBoundary'
+import UpdateGate from '@/components/UpdateGate'
 import { queryClient } from '@/lib/config/queryClient'
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import { NavigationContainer } from '@react-navigation/native'
@@ -60,6 +61,7 @@ export function AppProviders({
 					<GestureHandlerRootView style={{ flex: 1 }}>
 						<QueryClientProvider client={queryClient}>
 							<PaperProvider theme={paperTheme}>
+								<UpdateGate />
 								<NavigationContainer
 									ref={navRef}
 									linking={linking}

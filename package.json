@@ -57,6 +57,7 @@
 		"expo-modules-autolinking": "~2.1.9",
 		"expo-network": "~7.1.5",
 		"expo-share-intent": "^3.2.3",
+		"expo-sharing": "~13.1.5",
 		"expo-splash-screen": "~0.30.10",
 		"expo-sqlite": "~15.2.14",
 		"expo-sqlite-devtools": "^0.0.2",
