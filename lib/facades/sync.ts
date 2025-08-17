@@ -405,7 +405,7 @@ export class SyncFacade {
 			}
 			if (addedBvidSet.size > 0) {
 				const tip = `Bilibili 隐藏了被 up 设置为仅自己可见的稿件，却没有更新索引，所以你会看到同步到的歌曲数量少于收藏夹实际显示的数量，具体隐藏稿件：${[...addedBvidSet].join(',')}`
-				logger.warn(tip)
+				logger.warning(tip)
 				toast.info(tip)
 				// 在复制的 allBvids Set 中删除隐藏的视频
 				for (const bvid of addedBvidSet) {

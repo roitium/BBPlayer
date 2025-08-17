@@ -1,10 +1,7 @@
 import { playlistService } from '@/lib/services/playlistService'
 import type { Playlist } from '@/types/core/media'
-import log, { flatErrorMessage } from '@/utils/log'
-import toast from '@/utils/toast'
+import { toastAndLogError } from '@/utils/log'
 import { useEffect, useState } from 'react'
-
-const logger = log.extend('App/Playlist/Remote')
 
 /**
  * 检查某个 remoteId 是否已经被关联到本地播放列表
@@ -27,12 +24,10 @@ export default function useCheckLinkedToPlaylist(
 				remoteId,
 			)
 			if (playlist.isErr()) {
-				toast.error(`查询 ${type}-${remoteId} 是否在本地存在失败`, {
-					description: flatErrorMessage(playlist.error),
-				})
-				logger.error(
-					'查询收藏夹是否在本地存在失败：',
-					flatErrorMessage(playlist.error),
+				toastAndLogError(
+					`查询 ${type}-${remoteId} 是否在本地存在失败`,
+					playlist.error,
+					'UI.Playlist.Remote',
 				)
 				return
 			}

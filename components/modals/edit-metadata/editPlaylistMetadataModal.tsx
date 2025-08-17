@@ -2,15 +2,13 @@ import { AnimatedModal } from '@/components/AnimatedModal'
 import { useEditPlaylistMetadata } from '@/hooks/mutations/db/playlist'
 import { bilibiliFacade } from '@/lib/facades/bilibili'
 import type { Playlist } from '@/types/core/media'
-import log, { flatErrorMessage } from '@/utils/log'
+import log, { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, TextInput } from 'react-native-paper'
 
-const logger = log.extend(
-	'Components/Modals/Edit-Metadata/EditPlaylistMetadataModal',
-)
+const logger = log.extend('Components.EditPlaylistMetadataModal')
 
 export default function EditPlaylistMetadataModal({
 	playlist,
@@ -36,10 +34,11 @@ export default function EditPlaylistMetadataModal({
 			playlist.type,
 		)
 		if (result.isErr()) {
-			toast.error('获取远程播放列表元数据失败', {
-				description: flatErrorMessage(result.error),
-			})
-			logger.error('获取远程播放列表元数据失败', result.error)
+			toastAndLogError(
+				'获取远程播放列表元数据失败',
+				result.error,
+				'Components.EditPlaylistMetadataModal',
+			)
 			return
 		}
 		const metadata = result.value

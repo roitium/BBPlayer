@@ -1,7 +1,7 @@
 import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
 import { userQueryKeys } from '@/hooks/queries/bilibili/user'
 import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
-import log from '@/utils/log'
+import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import * as Expo from 'expo'
@@ -9,8 +9,6 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { Alert } from 'react-native'
 import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
 import { AnimatedModal } from '../AnimatedModal'
-
-const logger = log.extend('Components/CookieLoginModal')
 
 function SetCookieDialog({
 	visible,
@@ -75,8 +73,11 @@ function SetCookieDialog({
 			queryClient.removeQueries({ queryKey: userQueryKeys.all })
 			setVisible(false)
 		} catch (error) {
-			toast.error('操作失败，请稍后重试')
-			logger.error('Failed to confirm cookie change:', error)
+			toastAndLogError(
+				'操作失败',
+				error as Error,
+				'Components.CookieLoginModal',
+			)
 		} finally {
 			setIsLoading(false)
 		}

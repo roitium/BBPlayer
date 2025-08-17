@@ -6,5 +6,5 @@ export enum ProjectScope {
 	Service = 'Service',
 	Facade = 'Facade',
 	UI = 'UI',
-	PlayerStore = 'PlayerStore',
+	Player = 'Player',
 }

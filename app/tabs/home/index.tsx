@@ -9,7 +9,7 @@ import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
-import { matchSearchStrategies } from './matchSearchStrategies'
+import { matchSearchStrategies } from '../../../utils/search'
 
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
 const MAX_SEARCH_HISTORY = 10
@@ -52,7 +52,7 @@ function HomePage() {
 			try {
 				setSearchHistory(history)
 			} catch (error) {
-				toastAndLogError('保存搜索历史失败', error as Error)
+				toastAndLogError('保存搜索历史失败', error as Error, 'UI.Home')
 			}
 		},
 		[setSearchHistory],

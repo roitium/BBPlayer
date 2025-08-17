@@ -27,7 +27,7 @@ import {
 } from '../errors/service'
 import generateUniqueTrackKey from './genKey'
 
-const logger = log.extend('Service/Track')
+const logger = log.extend('Service.Track')
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx
 type SelectTrackWithMetadata = typeof schema.tracks.$inferSelect & {
@@ -87,7 +87,7 @@ export class TrackService {
 			} as LocalTrack
 		}
 
-		logger.warn(`track ${dbTrack.id} 存在不一致的 source 和 metadata。`)
+		logger.warning(`track ${dbTrack.id} 存在不一致的 source 和 metadata。`)
 		return null
 	}
 

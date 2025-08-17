@@ -19,7 +19,7 @@ import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import type { Playlist, Track } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
-import log, { flatErrorMessage } from '@/utils/log'
+import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import {
 	type RouteProp,
@@ -57,9 +57,8 @@ import { PlaylistHeader } from './components/LocalPlaylistHeader'
 import type { TrackMenuItem } from './components/LocalPlaylistItem'
 import { TrackListItem } from './components/LocalPlaylistItem'
 
-const logger = log.extend('PLAYLIST/LOCAL')
-
 const SEARCHBAR_HEIGHT = 72
+const SCOPE = 'UI.Playlist.Local'
 
 export default function LocalPlaylistPage() {
 	const route = useRoute<RouteProp<RootStackParamList, 'PlaylistLocal'>>()
@@ -118,10 +117,7 @@ export default function LocalPlaylistPage() {
 		if (!startSearch || !debouncedQuery.trim()) return playlistData ?? []
 
 		if (isSearchError) {
-			toast.error('搜索失败', {
-				description: flatErrorMessage(searchError),
-			})
-			logger.error('搜索失败: ', flatErrorMessage(searchError))
+			toastAndLogError('搜索失败', searchError, SCOPE)
 			return []
 		}
 
@@ -201,10 +197,7 @@ export default function LocalPlaylistPage() {
 				})
 				toast.success('添加到下一首播放成功')
 			} catch (error) {
-				logger.error('添加到队列失败', error)
-				toast.error('添加到队列失败', {
-					description: flatErrorMessage(error as Error),
-				})
+				toastAndLogError('添加到队列失败', error as Error, SCOPE)
 			}
 		},
 		[addToQueue],
@@ -222,10 +215,7 @@ export default function LocalPlaylistPage() {
 					playNext: false,
 				})
 			} catch (error) {
-				logger.error('播放全部失败', error)
-				toast.error('播放全部失败', {
-					description: flatErrorMessage(error as Error),
-				})
+				toastAndLogError('播放全部失败', error as Error, SCOPE)
 			}
 		},
 		[addToQueue, filteredPlaylistData],

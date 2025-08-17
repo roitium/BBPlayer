@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react-native'
 import * as EXPOFS from 'expo-file-system'
 import { err, ok, type Result } from 'neverthrow'
 import { InteractionManager } from 'react-native'
+import type { transportFunctionType } from 'react-native-logs'
 import {
 	fileAsyncTransport,
 	logger,
@@ -10,26 +11,36 @@ import {
 } from 'react-native-logs'
 import toast from './toast'
 
+const isDev = __DEV__
+
+const sentryBreadcrumbTransport: transportFunctionType<object> = (props) => {
+	Sentry.addBreadcrumb({
+		category: 'log',
+		level: props.level.text as Sentry.SeverityLevel,
+		message: props.msg,
+	})
+}
+
 // 创建 Logger 实例
 const config = {
 	severity: 'debug',
-	transport: [mapConsoleTransport, fileAsyncTransport],
+	transport: isDev
+		? [mapConsoleTransport, fileAsyncTransport]
+		: [sentryBreadcrumbTransport, fileAsyncTransport],
 	levels: {
 		debug: 0,
 		info: 1,
-		warn: 2,
+		warning: 2,
 		error: 3,
 	},
 	transportOptions: {
-		SENTRY: Sentry,
-		errorLevels: 'sentry',
 		FS: EXPOFS,
 		fileName: 'logs_{date-today}.log',
-		fileNameDateType: 'iso',
+		fileNameDateType: 'iso' as const,
 		mapLevels: {
 			debug: 'log',
 			info: 'info',
-			warn: 'warn',
+			warning: 'warn',
 			error: 'error',
 		},
 	},
@@ -66,7 +77,7 @@ export async function cleanOldLogFiles(
 					deleted += 1
 				} catch (e) {
 					// 记录但不中断
-					log.warn('删除日志文件失败', { path, error: String(e) })
+					log.warning('删除日志文件失败', { path, error: String(e) })
 				}
 			}
 		}
@@ -116,7 +127,11 @@ export function reportErrorToSentry(
 	message?: string,
 	scope?: ProjectScope,
 ) {
-	Sentry.captureException(error, {
+	const _error =
+		error instanceof Error
+			? error
+			: new Error(`非 Error 类型错误：${String(error)}`, { cause: error })
+	const id = Sentry.captureException(_error, {
 		tags: {
 			appScope: scope,
 		},
@@ -124,19 +139,21 @@ export function reportErrorToSentry(
 			message,
 		},
 	})
+	log.error(`已上报错误到 sentry，id: ${id}`)
 }
 
 /**
  * 将错误消息和错误堆栈信息显示在 toast 上，并将错误信息记录到日志中（用于最顶端的调用者消费错误）
  * @param error 原始错误对象
  * @param message 需要显示的信息
+ * @param scope 日志作用域
  */
-export function toastAndLogError(message: string, error: Error) {
+export function toastAndLogError(message: string, error: Error, scope: string) {
 	toast.error(message, {
 		description: message ?? flatErrorMessage(error),
 		duration: Number.POSITIVE_INFINITY,
 	})
-	log.error(`${message}: ${flatErrorMessage(error)}`)
+	log.extend(scope).error(`${message}: ${flatErrorMessage(error)}`)
 }
 
 // @ts-expect-error 忽略 TS 报错

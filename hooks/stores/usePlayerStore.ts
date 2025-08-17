@@ -84,11 +84,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						set(initialState)
 					} catch (error) {
 						playerLog.error('重置播放器失败', error)
-						reportErrorToSentry(
-							error,
-							'重置播放器失败',
-							ProjectScope.PlayerStore,
-						)
+						reportErrorToSentry(error, '重置播放器失败', ProjectScope.Player)
 					}
 				},
 
@@ -207,7 +203,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							if (targetIndex !== -1) {
 								await get().skipToTrack(targetIndex)
 							} else {
-								playerLog.warn('指定的 startFromId 在当前队列中不存在', {
+								playerLog.warning('指定的 startFromId 在当前队列中不存在', {
 									key: startFromId,
 								})
 							}
@@ -298,7 +294,7 @@ export const usePlayerStore = create<PlayerStore>()(
 								reportErrorToSentry(
 									result.error,
 									'更新音频流失败',
-									ProjectScope.PlayerStore,
+									ProjectScope.Player,
 								)
 								return
 							}
@@ -312,7 +308,7 @@ export const usePlayerStore = create<PlayerStore>()(
 									reportErrorToSentry(
 										rntpTrack.error,
 										'转换为 RNTPTrack 失败',
-										ProjectScope.PlayerStore,
+										ProjectScope.Player,
 									)
 									return
 								}
@@ -324,11 +320,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						set({ isPlaying: !isPlaying })
 					} catch (error) {
 						playerLog.error('切换播放状态失败', error)
-						reportErrorToSentry(
-							error,
-							'切换播放状态失败',
-							ProjectScope.PlayerStore,
-						)
+						reportErrorToSentry(error, '切换播放状态失败', ProjectScope.Player)
 					}
 				},
 
@@ -490,7 +482,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						reportErrorToSentry(
 							updatedTrackResult.error,
 							'更新音频流失败',
-							ProjectScope.PlayerStore,
+							ProjectScope.Player,
 						)
 						await TrackPlayer.pause()
 						toast.error('播放失败: 更新音频流失败', {
@@ -508,7 +500,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						reportErrorToSentry(
 							rntpTrackResult.error,
 							'转换为 RNTPTrack 失败',
-							ProjectScope.PlayerStore,
+							ProjectScope.Player,
 						)
 						return
 					}

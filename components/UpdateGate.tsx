@@ -1,5 +1,8 @@
 import UpdateAppModal from '@/components/modals/UpdateAppModal'
-import { checkForAppUpdate, type ReleaseInfo } from '@/lib/services/update'
+import {
+	checkForAppUpdate,
+	type ReleaseInfo,
+} from '@/lib/services/updateService'
 import { storage } from '@/utils/mmkv'
 import { useEffect, useState } from 'react'
 

@@ -7,7 +7,7 @@ import type { RNTPTrack } from '@/types/rntp'
 import { err, ok, type Result } from 'neverthrow'
 import log from './log'
 
-const playerLog = log.extend('PLAYER/UTILS')
+const logger = log.extend('Player.Utils')
 
 // 音频流过期时间 120 分钟
 const STREAM_EXPIRY_TIME = 120 * 60 * 1000
@@ -20,7 +20,7 @@ const STREAM_EXPIRY_TIME = 120 * 60 * 1000
 function convertToRNTPTrack(
 	track: Track,
 ): Result<RNTPTrack, AudioUrlNotFoundError | BilibiliApiError> {
-	playerLog.debug('转换 Track 为 RNTPTrack', {
+	logger.debug('转换 Track 为 RNTPTrack', {
 		trackId: track.id,
 		title: track.title,
 		artist: track.artist,
@@ -29,18 +29,18 @@ function convertToRNTPTrack(
 	let url = ''
 	if (track.source === 'bilibili' && track.bilibiliMetadata.bilibiliStreamUrl) {
 		url = track.bilibiliMetadata.bilibiliStreamUrl.url
-		playerLog.debug('使用 B 站音频流 URL', {
+		logger.debug('使用 B 站音频流 URL', {
 			quality: track.bilibiliMetadata.bilibiliStreamUrl.quality,
 		})
 	} else if (track.source === 'local' && track.localMetadata) {
 		url = track.localMetadata.localPath
-		playerLog.debug('使用本地音频流 URL', { url })
+		logger.debug('使用本地音频流 URL', { url })
 	}
 
 	// 如果没有有效的 URL，返回错误
 	if (!url) {
 		const errorMsg = '没有找到有效的音频流 URL'
-		playerLog.warn(`${errorMsg}`, track)
+		logger.warning(`${errorMsg}`, track)
 		return err(new AudioUrlNotFoundError(`${errorMsg}: ${track.id}`))
 	}
 
@@ -58,7 +58,7 @@ function convertToRNTPTrack(
 		},
 	}
 
-	playerLog.debug('RNTPTrack 转换完成', {
+	logger.debug('RNTPTrack 转换完成', {
 		title: rnTrack.title,
 		id: rnTrack.id,
 	})
@@ -76,7 +76,7 @@ function checkBilibiliAudioExpiry(_track: Track): boolean {
 	const isExpired =
 		!track.bilibiliMetadata.bilibiliStreamUrl ||
 		now - track.bilibiliMetadata.bilibiliStreamUrl.getTime > STREAM_EXPIRY_TIME
-	playerLog.debug('检查 B 站音频流过期状态', {
+	logger.debug('检查 B 站音频流过期状态', {
 		trackId: track.id,
 		hasStream: !!track.bilibiliMetadata.bilibiliStreamUrl,
 		// streamAge: track.bilibiliStreamUrl ? now - track.bilibiliStreamUrl.getTime : 'N/A',
@@ -101,13 +101,13 @@ async function checkAndUpdateAudioStream(
 		BilibiliApiError | UnknownSourceError
 	>
 > {
-	playerLog.debug('开始检查并更新音频流', {
+	logger.debug('开始检查并更新音频流', {
 		trackId: track.id,
 		title: track.title,
 	})
 
 	if (track.source === 'local') {
-		playerLog.debug('本地音频，无需更新流', { trackId: track.id })
+		logger.debug('本地音频，无需更新流', { trackId: track.id })
 		return ok({ track, needsUpdate: false })
 	}
 
@@ -118,13 +118,13 @@ async function checkAndUpdateAudioStream(
 			return ok({ track, needsUpdate: false }) // 流有效，返回 ok
 		}
 
-		playerLog.debug('需要更新 B 站音频流', { trackId: track.id })
+		logger.debug('需要更新 B 站音频流', { trackId: track.id })
 		const bvid = track.bilibiliMetadata.bvid
 		let cid = track.bilibiliMetadata.cid
 
 		// 获取 CID (如果需要)
 		if (!cid) {
-			playerLog.debug('尝试获取视频分 P 列表以确定 CID', { bvid })
+			logger.debug('尝试获取视频分 P 列表以确定 CID', { bvid })
 			const pageListResult = await bilibiliApi.getPageList(bvid)
 
 			// 使用 match 处理 Result
@@ -132,13 +132,13 @@ async function checkAndUpdateAudioStream(
 				(pages) => {
 					if (pages.length > 0) {
 						const firstPageCid = pages[0].cid
-						playerLog.debug('使用第一个分 P 的 CID', {
+						logger.debug('使用第一个分 P 的 CID', {
 							bvid,
 							cid: firstPageCid,
 						})
 						return ok(firstPageCid)
 					}
-					playerLog.debug('警告：视频没有分 P 信息，无法获取 CID', {
+					logger.debug('警告：视频没有分 P 信息，无法获取 CID', {
 						bvid,
 					})
 					return err(
@@ -161,11 +161,11 @@ async function checkAndUpdateAudioStream(
 			}
 			cid = cidResult.value // 获取 CID 成功
 		} else {
-			playerLog.debug('使用已有的 CID', { bvid, cid })
+			logger.debug('使用已有的 CID', { bvid, cid })
 		}
 
 		// 3.2 获取新的音频流
-		playerLog.debug('开始获取新的音频流', { bvid, cid })
+		logger.debug('开始获取新的音频流', { bvid, cid })
 		const streamUrlResult = await bilibiliApi.getAudioStream({
 			bvid,
 			cid: cid, // cid 此时一定有值
@@ -191,7 +191,7 @@ async function checkAndUpdateAudioStream(
 					) // 返回错误
 				}
 
-				playerLog.debug('音频流获取成功', {
+				logger.debug('音频流获取成功', {
 					bvid,
 					cid,
 					// url: streamInfo.url,
@@ -240,7 +240,7 @@ async function reportPlaybackHistory(track: Track): Promise<void> {
 		!track.bilibiliMetadata.bvid
 	)
 		return
-	playerLog.debug('上报播放记录', {
+	logger.debug('上报播放记录', {
 		bvid: track.bilibiliMetadata.bvid,
 		cid: track.bilibiliMetadata.cid,
 	})
@@ -249,7 +249,7 @@ async function reportPlaybackHistory(track: Track): Promise<void> {
 		track.bilibiliMetadata.cid,
 	)
 	if (result.isErr()) {
-		playerLog.warn('上报播放记录到 bilibili 失败', {
+		logger.warning('上报播放记录到 bilibili 失败', {
 			params: {
 				bvid: track.bilibiliMetadata.bvid,
 				cid: track.bilibiliMetadata.cid,

@@ -4,7 +4,12 @@ import useAppStore from '@/hooks/stores/useAppStore'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
 import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
-import log, { cleanOldLogFiles } from '@/utils/log'
+import { ProjectScope } from '@/types/core/scope'
+import log, {
+	cleanOldLogFiles,
+	reportErrorToSentry,
+	toastAndLogError,
+} from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import toast from '@/utils/toast'
 import { useNavigationContainerRef } from '@react-navigation/native'
@@ -27,6 +32,8 @@ import { Text } from 'react-native-paper'
 import Toast from 'react-native-toast-message'
 import migrations from '../drizzle/migrations'
 import { AppProviders } from './providers'
+
+const logger = log.extend('UI.RootLayout')
 
 // 在获取资源时保持启动画面可见
 void SplashScreen.preventAutoHideAsync()
@@ -81,8 +88,8 @@ export default Sentry.wrap(function RootLayout() {
 			try {
 				useAppStore.getState()
 			} catch (error) {
-				log.error('初始化 Zustand store 失败:', error)
-				Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })
+				logger.error('初始化 Zustand store 失败:', error)
+				reportErrorToSentry(error, '初始化 Zustand store 失败', ProjectScope.UI)
 			} finally {
 				setAppIsReady(true)
 			}
@@ -103,10 +110,7 @@ export default Sentry.wrap(function RootLayout() {
 				}
 			})
 			.catch((error: Error) => {
-				console.error('检测更新失败', error)
-				toast.error('检测更新失败', {
-					description: error.message,
-				})
+				toastAndLogError('检测更新失败', error, 'UI.RootLayout')
 			})
 	}, [])
 
@@ -116,9 +120,9 @@ export default Sentry.wrap(function RootLayout() {
 		InteractionManager.runAfterInteractions(() => {
 			void cleanOldLogFiles(7).then((res) => {
 				if (res.isErr()) {
-					log.warn('清理旧日志失败', { error: res.error.message })
+					logger.warning('清理旧日志失败', { error: res.error.message })
 				} else if (res.value > 0) {
-					log.info(`已清理 ${res.value} 个过期日志文件`)
+					logger.info(`已清理 ${res.value} 个过期日志文件`)
 				}
 			})
 		})
@@ -131,10 +135,8 @@ export default Sentry.wrap(function RootLayout() {
 					try {
 						await initPlayer()
 					} catch (error) {
-						log.error('播放器初始化失败: ', error)
-						Sentry.captureException(error, {
-							tags: { scope: 'DeferredPlayerSetup' },
-						})
+						logger.error('播放器初始化失败: ', error)
+						reportErrorToSentry(error, '播放器初始化失败', ProjectScope.Player)
 						global.playerIsReady = false
 					}
 				}
@@ -159,7 +161,7 @@ export default Sentry.wrap(function RootLayout() {
 	}, [appIsReady, migrationsError, migrationsSuccess])
 
 	if (migrationsError) {
-		log.error('数据库迁移失败:', migrationsError)
+		logger.error('数据库迁移失败:', migrationsError)
 		return (
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
 				<Text>数据库迁移失败: {migrationsError?.message}</Text>

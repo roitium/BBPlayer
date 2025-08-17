@@ -24,7 +24,7 @@ export default function WelcomeModal({
 	return (
 		<AnimatedModal
 			visible={visible}
-			onDismiss={() => setVisible(false)}
+			onDismiss={() => void 0}
 		>
 			<Dialog.Title>欢迎使用 BBPlayer</Dialog.Title>
 			<Dialog.Content>

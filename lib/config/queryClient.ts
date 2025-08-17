@@ -1,12 +1,10 @@
 import appStore from '@/hooks/stores/appStore'
 import { ApiCallingError } from '@/lib/errors'
-import log from '@/utils/log'
+import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { BilibiliApiError } from '../errors/bilibili'
-
-const rootLog = log.extend('ROOT')
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -20,11 +18,7 @@ export const queryClient = new QueryClient({
 	},
 	queryCache: new QueryCache({
 		onError: (error, query) => {
-			toast.error(`请求 [${query.queryKey.toString()}] 失败`, {
-				description: error.message,
-				duration: Number.POSITIVE_INFINITY,
-			})
-			rootLog.error(`请求 [${query.queryKey.toString()}] 失败：`, error)
+			toastAndLogError('查询失败', error, 'Query')
 
 			if (error instanceof BilibiliApiError && error.msgCode === -101) {
 				toast.error('登录状态失效，请重新登录')

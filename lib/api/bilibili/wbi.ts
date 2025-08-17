@@ -77,7 +77,7 @@ function getWbiKeysFromStorage() {
 	try {
 		return JSON.parse(keys) as WbiKeys
 	} catch (error) {
-		wbiLog.warn('从本地解析 wbi_keys 失败，尝试重新获取:', error)
+		wbiLog.warning('从本地解析 wbi_keys 失败，尝试重新获取:', error)
 		return null
 	}
 }

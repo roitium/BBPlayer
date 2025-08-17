@@ -5,7 +5,7 @@ import log, { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
-const logger = log.extend('UI/Tabs/Search[SearchStrategy]')
+const logger = log.extend('Utils.Search')
 
 const BV_REGEX = /(?<![A-Za-z0-9])(bv[0-9A-Za-z]{10})(?![A-Za-z0-9])/i
 const AV_REGEX = /(?<![A-Za-z0-9])av(\d+)(?![A-Za-z0-9])/i

@@ -18,16 +18,16 @@
 - 示例：
   {
   "version": "1.2.3",
-  "url": "https://example.com/bbplayer-1.2.3.apk",
+  "url": "<https://example.com/bbplayer-1.2.3.apk>",
   "notes": "• 修复崩溃\n• 优化启动速度",
   "forced": false
   }
 
 ## 3. 推送与发布
 
-- 将修改提交并合并到默认分支（`main`）。
+- 将修改提交并合并到默认分支（`master`）。
 - 通过 jsDelivr 暴露清单（无需额外配置）：
-  https://cdn.jsdelivr.net/gh/yanyao2333/bbplayer@main/update.json
+  <https://cdn.jsdelivr.net/gh/yanyao2333/bbplayer@master/update.json>
 - 确保 `app.config.ts` 的 `extra.updateManifestUrl` 指向上述地址。
 
 ## 4. 构建与分发

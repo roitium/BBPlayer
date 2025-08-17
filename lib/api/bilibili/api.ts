@@ -189,7 +189,7 @@ export const createBilibiliApi = () => ({
 					bilibiliApiLog.debug('找到指定质量音频流', { quality: audioQuality })
 				} else {
 					// Fallback: 使用最高质量如果未找到指定质量
-					bilibiliApiLog.warn('未找到指定质量音频流，使用最高质量', {
+					bilibiliApiLog.warning('未找到指定质量音频流，使用最高质量', {
 						requestedQuality: audioQuality,
 						availableQualities: dash.audio.map((a) => a.id),
 					})
