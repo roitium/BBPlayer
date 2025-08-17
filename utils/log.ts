@@ -1,6 +1,7 @@
 import type { ProjectScope } from '@/types/core/scope'
 import * as Sentry from '@sentry/react-native'
 import * as EXPOFS from 'expo-file-system'
+import { err, ok, type Result } from 'neverthrow'
 import { InteractionManager } from 'react-native'
 import {
 	fileAsyncTransport,
@@ -34,6 +35,45 @@ const config = {
 	},
 	asyncFunc: InteractionManager.runAfterInteractions.bind(InteractionManager),
 	async: true,
+}
+
+/**
+ * 清理 {keepDays} 天之前的日志文件
+ * 文件命名规则：logs_YYYY-MM-DD.log，路径：EXPOFS.documentDirectory
+ */
+export async function cleanOldLogFiles(
+	keepDays = 7,
+): Promise<Result<number, Error>> {
+	try {
+		const dir = EXPOFS.documentDirectory
+		if (!dir) return err(new Error('No documentDirectory'))
+		const list = await EXPOFS.readDirectoryAsync(dir)
+		const now = Date.now()
+		const threshold = now - keepDays * 24 * 60 * 60 * 1000
+		const re = /^logs_(\d{4}-\d{2}-\d{2})\.log$/
+
+		let deleted = 0
+		for (const name of list) {
+			const m = re.exec(name)
+			if (!m) continue
+			const dateStr = m[1]
+			const time = Date.parse(dateStr)
+			if (Number.isNaN(time)) continue
+			if (time <= threshold) {
+				const path = `${dir}${name}`
+				try {
+					await EXPOFS.deleteAsync(path, { idempotent: true })
+					deleted += 1
+				} catch (e) {
+					// 记录但不中断
+					log.warn('删除日志文件失败', { path, error: String(e) })
+				}
+			}
+		}
+		return ok(deleted)
+	} catch (e) {
+		return err(e instanceof Error ? e : new Error(String(e)))
+	}
 }
 
 /**

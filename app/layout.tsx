@@ -4,7 +4,7 @@ import useAppStore from '@/hooks/stores/useAppStore'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
 import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
-import log from '@/utils/log'
+import log, { cleanOldLogFiles } from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import toast from '@/utils/toast'
 import { useNavigationContainerRef } from '@react-navigation/native'
@@ -109,6 +109,20 @@ export default Sentry.wrap(function RootLayout() {
 				})
 			})
 	}, [])
+
+	// 启动时清理 7 天前日志
+	useEffect(() => {
+		if (!appIsReady) return
+		InteractionManager.runAfterInteractions(() => {
+			void cleanOldLogFiles(7).then((res) => {
+				if (res.isErr()) {
+					log.warn('清理旧日志失败', { error: res.error.message })
+				} else if (res.value > 0) {
+					log.info(`已清理 ${res.value} 个过期日志文件`)
+				}
+			})
+		})
+	}, [appIsReady])
 
 	useEffect(() => {
 		if (appIsReady) {
