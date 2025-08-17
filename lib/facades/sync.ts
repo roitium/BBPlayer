@@ -51,6 +51,7 @@ export class SyncFacade {
 		Track,
 		BilibiliApiError | TrackNotFoundError | DatabaseError | ValidationError
 	> {
+		logger.info('开始添加 Track（Bilibili）', { bvid, cid })
 		const apiData = this.bilibiliApi.getVideoDetails(bvid)
 		return apiData.andThen((data) => {
 			const trackPayload = {
@@ -70,7 +71,15 @@ export class SyncFacade {
 					source: 'bilibili' as const,
 				},
 			}
-			return this.trackService.findOrCreateTrack(trackPayload)
+			return this.trackService
+				.findOrCreateTrack(trackPayload)
+				.andTee((track) => {
+					logger.info('添加 Track 成功', {
+						trackId: track.id,
+						title: track.title,
+						source: track.source,
+					})
+				})
 		})
 	}
 
@@ -83,11 +92,16 @@ export class SyncFacade {
 		collectionId: number,
 	): ResultAsync<number, BilibiliApiError | FacadeError> {
 		if (this.syncingIds.has(`collection::${collectionId}`)) {
+			logger.info('已有同步任务在进行，跳过', {
+				type: 'collection',
+				id: collectionId,
+			})
 			return errAsync(new SyncTaskAlreadyRunningError())
 		}
 		try {
 			this.syncingIds.add(`collection::${collectionId}`)
 			logger = log.extend('[Facade/SyncCollection: ' + collectionId + ']')
+			logger.info('开始同步合集', { collectionId })
 			logger.debug('syncCollection', { collectionId })
 			return this.bilibiliApi
 				.getCollectionAllContents(collectionId)
@@ -97,6 +111,10 @@ export class SyncFacade {
 					),
 				)
 				.andThen((contents) => {
+					logger.info('获取合集详情成功', {
+						title: contents.info.title,
+						total: contents.medias.length,
+					})
 					return ResultAsync.fromPromise(
 						this.db.transaction(async (tx) => {
 							const playlistSvc = this.playlistService.withDB(tx)
@@ -197,19 +215,24 @@ export class SyncFacade {
 		bvid: string,
 	): ResultAsync<number, BilibiliApiError | FacadeError> {
 		if (this.syncingIds.has(`multiPage::${bvid}`)) {
+			logger.info('已有同步任务在进行，跳过', { type: 'multi_page', bvid })
 			return errAsync(new SyncTaskAlreadyRunningError())
 		}
 		try {
 			this.syncingIds.add(`multiPage::${bvid}`)
 			// HACK: 有空了需要统一一下日志格式，这种 monkeypatch 的方式太不好看了
 			logger = log.extend('[Facade/SyncMultiPageVideo: ' + bvid + ']')
-			logger.info('syncMultiPageVideo', { bvid })
+			logger.info('开始同步多集视频', { bvid })
 			return this.bilibiliApi
 				.getVideoDetails(bvid)
 				.andTee(() =>
 					logger.debug('step 1: 调用 bilibiliapi getVideoDetails 完成'),
 				)
 				.andThen((data) => {
+					logger.info('获取多集视频详情成功', {
+						title: data.title,
+						pages: data.pages.length,
+					})
 					return ResultAsync.fromPromise(
 						this.db.transaction(async () => {
 							const playlistSvc = this.playlistService.withDB(this.db)
@@ -299,6 +322,7 @@ export class SyncFacade {
 		try {
 			this.syncingIds.add(`favorite::${favoriteId}`)
 			logger = log.extend('[Facade/SyncFavorite: ' + favoriteId + ']')
+			logger.info('开始同步收藏夹', { favoriteId })
 			logger.debug('syncFavorite', { favoriteId })
 
 			// 从 bilibili 获取基本元数据和收藏夹所有 bvid
@@ -366,6 +390,10 @@ export class SyncFacade {
 				removeBvidSet = diff.removed
 			}
 			logger.debug('step 3: 对远程和本地的 tracks 进行 diff 完成', {
+				added: addedBvidSet.size,
+				removed: removeBvidSet.size,
+			})
+			logger.info('收藏夹变更统计', {
 				added: addedBvidSet.size,
 				removed: removeBvidSet.size,
 			})

@@ -1,6 +1,10 @@
+import appStore from '@/hooks/stores/appStore'
+import log from '@/utils/log'
 import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
 import * as Updates from 'expo-updates'
+
+const logger = log.extend('Utils/Sentry')
 
 const manifest = Updates.manifest
 const metadata = 'metadata' in manifest ? manifest.metadata : undefined
@@ -14,6 +18,11 @@ export const navigationIntegration = Sentry.reactNavigationIntegration({
 	enableTimeToInitialDisplay: !isRunningInExpoGo(),
 })
 
+logger.info(
+	'Sentry 启用状态为：',
+	!developement && appStore.getState().settings.enableSentryReport,
+)
+
 export function initializeSentry() {
 	Sentry.init({
 		dsn: 'https://893ea8eb3743da1e065f56b3aa5e96f9@o4508985265618944.ingest.us.sentry.io/4508985267191808',
@@ -22,7 +31,7 @@ export function initializeSentry() {
 		sendDefaultPii: false,
 		integrations: [navigationIntegration],
 		enableNativeFramesTracking: !isRunningInExpoGo(),
-		enabled: !developement,
+		enabled: !developement && appStore.getState().settings.enableSentryReport,
 		environment: developement ? 'development' : 'production',
 	})
 

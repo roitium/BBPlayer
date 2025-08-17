@@ -2,9 +2,13 @@ import type { AppState } from '@/types/core/appStore'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import * as parseCookie from 'cookie'
+import * as Expo from 'expo'
 import { produce } from 'immer'
 import { err, ok, type Result } from 'neverthrow'
+import { Alert } from 'react-native'
 import { create } from 'zustand'
+
+const logger = log.extend('Store/App')
 
 export const parseCookieToObject = (
 	cookie?: string,
@@ -39,6 +43,7 @@ export const serializeCookieObject = (
 
 export const useAppStore = create<AppState>()((set, get) => {
 	const sendPlayHistory = storage.getBoolean('send_play_history') ?? true
+	const enableSentryReport = storage.getBoolean('enable_sentry_report') ?? true
 	const initialCookieString = storage.getString('bilibili_cookie')
 	let initialCookie: Record<string, string> | null = null
 
@@ -47,15 +52,19 @@ export const useAppStore = create<AppState>()((set, get) => {
 		if (result.isOk()) {
 			initialCookie = result.value
 		} else {
-			log.error('从 storage 中读取 cookie 失败', result.error)
+			logger.error('从 storage 中读取 cookie 失败', result.error)
 		}
 	}
 
-	log.debug('初始化 AppStore', { hasCookie: !!initialCookie })
+	logger.info('初始化 AppStore', {
+		hasCookie: !!initialCookie,
+		sendPlayHistory,
+		enableSentryReport,
+	})
 
 	return {
 		bilibiliCookie: initialCookie,
-		settings: { sendPlayHistory },
+		settings: { sendPlayHistory, enableSentryReport },
 		modals: { qrCodeLoginModalVisible: false, welcomeModalVisible: false },
 
 		hasBilibiliCookie: () => {
@@ -109,6 +118,22 @@ export const useAppStore = create<AppState>()((set, get) => {
 				produce((state: AppState) => {
 					state.modals.welcomeModalVisible = visible
 				}),
+			)
+		},
+
+		setEnableSentryReport: (value) => {
+			set((state) => ({
+				settings: { ...state.settings, enableSentryReport: value },
+			}))
+			storage.set('enable_sentry_report', value)
+			Alert.alert(
+				'重启？',
+				'切换 Sentry 上报后，需要重启应用才能生效。',
+				[
+					{ text: '取消', style: 'cancel' },
+					{ text: '确定', onPress: () => Expo.reloadAppAsync() },
+				],
+				{ cancelable: true },
 			)
 		},
 	}

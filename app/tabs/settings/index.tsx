@@ -22,6 +22,7 @@ export default function SettingsPage() {
 	const insets = useSafeAreaInsets()
 	const currentTrack = useCurrentTrack()
 	const colors = useTheme().colors
+
 	return (
 		<View
 			style={{
@@ -137,6 +138,12 @@ const SettingsSection = memo(function SettingsSection() {
 	const [cookieDialogVisible, setCookieDialogVisible] = useState(false)
 	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
 		useState(false)
+	const setEnableSentryReport = useAppStore(
+		(state) => state.setEnableSentryReport,
+	)
+	const enableSentryReport = useAppStore(
+		(state) => state.settings.enableSentryReport,
+	)
 
 	return (
 		<View style={{ flexDirection: 'column' }}>
@@ -152,6 +159,20 @@ const SettingsSection = memo(function SettingsSection() {
 				<Switch
 					value={sendPlayHistory}
 					onValueChange={setSendPlayHistory}
+				/>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: 16,
+				}}
+			>
+				<Text>向 Sentry 上报错误</Text>
+				<Switch
+					value={enableSentryReport}
+					onValueChange={setEnableSentryReport}
 				/>
 			</View>
 			<View

@@ -40,14 +40,22 @@ export async function matchSearchStrategies(
 			if (/(^|\.)b23\.tv$/i.test(url.hostname)) {
 				const resolved = await bilibiliApi.getB23ResolvedUrl(url.toString())
 				if (resolved.isErr()) {
-					toastAndLogError('解析 b23.tv 短链接失败', resolved.error)
+					toastAndLogError(
+						'解析 b23.tv 短链接失败',
+						resolved.error,
+						'Utils.Search',
+					)
 					logger.debug('1.1 短链解析失败，走搜索', { query })
 					navigation.navigate('SearchResult', { query })
 					return 1
 				}
 				const bvid = BV_REGEX.exec(resolved.value)?.[1]
 				if (!bvid) {
-					toastAndLogError('未能从短链解析出 bvid', new Error(resolved.value))
+					toastAndLogError(
+						'未能从短链解析出 bvid',
+						new Error(resolved.value),
+						'Utils.Search',
+					)
 					logger.debug('1.1 短链解析出错（无BV号），走搜索', {
 						query,
 					})
@@ -105,7 +113,7 @@ export async function matchSearchStrategies(
 			navigation.navigate('PlaylistMultipage', { bvid })
 			return 0
 		} else {
-			toastAndLogError('解析 avid 失败', new Error(query))
+			toastAndLogError('解析 avid 失败', new Error(query), 'Utils.Search')
 			logger.debug('3 AV 号解析失败，走搜索', { query })
 			navigation.navigate('SearchResult', { query })
 			return 1

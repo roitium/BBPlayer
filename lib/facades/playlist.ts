@@ -36,6 +36,7 @@ export class PlaylistFacade {
 	 * @returns 如果成功，则为 local playlist 的 ID
 	 */
 	public async duplicatePlaylist(playlistId: number, name: string) {
+		logger.info('开始复制播放列表', { playlistId, name })
 		return ResultAsync.fromPromise(
 			this.db.transaction(async (tx) => {
 				const playlistSvc = this.playlistService.withDB(tx)
@@ -64,6 +65,9 @@ export class PlaylistFacade {
 				}
 				const localPlaylist = localPlaylistResult.value
 				logger.debug('step2: 创建本地播放列表', localPlaylist)
+				logger.info('创建本地播放列表成功', {
+					localPlaylistId: localPlaylist.id,
+				})
 
 				const tracksMetadata = await playlistSvc.getPlaylistTracks(playlistId)
 				if (tracksMetadata.isErr()) {
@@ -88,8 +92,11 @@ export class PlaylistFacade {
 					throw replaceResult.error
 				}
 				logger.debug('step4: 替换本地播放列表中的所有歌曲')
-
-				logger.debug('复制播放列表成功')
+				logger.info('复制播放列表成功', {
+					sourcePlaylistId: playlistId,
+					targetPlaylistId: localPlaylist.id,
+					trackCount: finalIds.length,
+				})
 
 				return localPlaylist.id
 			}),
@@ -116,6 +123,12 @@ export class PlaylistFacade {
 			artistPayload,
 		} = params
 
+		logger.info('开始更新 Track 在本地播放列表', {
+			toAdd: toAddPlaylistIds.length,
+			toRemove: toRemovePlaylistIds.length,
+			source: trackPayload.source,
+			title: trackPayload.title,
+		})
 		return ResultAsync.fromPromise(
 			this.db.transaction(async (tx) => {
 				const playlistSvc = this.playlistService.withDB(tx)
@@ -160,6 +173,11 @@ export class PlaylistFacade {
 				})
 
 				logger.debug('更新 Track 在本地播放列表成功')
+				logger.info('更新 Track 在本地播放列表成功', {
+					trackId,
+					added: toAddPlaylistIds.length,
+					removed: toRemovePlaylistIds.length,
+				})
 				return trackId
 			}),
 			(e) => new FacadeError('更新 Track 在本地播放列表', e),
@@ -176,6 +194,10 @@ export class PlaylistFacade {
 		playlistId: number,
 		payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[],
 	) {
+		logger.info('开始批量添加 tracks 到本地播放列表', {
+			playlistId,
+			count: payloads.length,
+		})
 		for (const payload of payloads) {
 			if (payload.artist.source === 'local') {
 				return errAsync(
@@ -217,6 +239,10 @@ export class PlaylistFacade {
 				)
 				if (addResult.isErr()) throw addResult.error
 				logger.debug('step3: 批量将 track 添加到本地播放列表完成')
+				logger.info('批量添加 tracks 到本地播放列表成功', {
+					playlistId,
+					added: trackIds.length,
+				})
 
 				return trackIds
 			})(),
