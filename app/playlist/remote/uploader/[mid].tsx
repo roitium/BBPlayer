@@ -7,6 +7,7 @@ import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/user'
+import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import { bv2av } from '@/lib/api/bilibili/utils'
@@ -32,6 +33,7 @@ import { RefreshControl, View } from 'react-native'
 import {
 	ActivityIndicator,
 	Appbar,
+	Button,
 	Divider,
 	Searchbar,
 	Text,
@@ -96,6 +98,13 @@ export default function UploaderPage() {
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,
+	)
+	const enable = useAppStore(
+		(state) =>
+			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
+	)
+	const setIsQrCodeLoginDialogVisible = useAppStore(
+		(state) => state.setQrCodeLoginModalVisible,
 	)
 
 	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
@@ -258,6 +267,39 @@ export default function UploaderPage() {
 
 	if (typeof mid !== 'string') {
 		return null
+	}
+
+	if (!enable) {
+		return (
+			<View
+				style={{
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'center',
+					backgroundColor: colors.background,
+					gap: 16,
+					paddingHorizontal: 25,
+				}}
+			>
+				<Text
+					variant='titleMedium'
+					style={{ textAlign: 'center' }}
+				>
+					登录 bilibili 账号后才能查看 up 主作品
+					{'\n\n'}
+					为什么：bilibili
+					对访问用户个人空间和上传的视频接口有莫名其妙的风控校验
+				</Text>
+				<Button
+					mode='contained'
+					onPress={() => {
+						setIsQrCodeLoginDialogVisible(true)
+					}}
+				>
+					登录
+				</Button>
+			</View>
+		)
 	}
 
 	if (isUserInfoPending) {

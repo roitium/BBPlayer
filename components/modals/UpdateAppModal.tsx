@@ -1,6 +1,7 @@
 import { AnimatedModal } from '@/components/AnimatedModal'
 import { storage } from '@/utils/mmkv'
 import * as WebBrowser from 'expo-web-browser'
+import { View } from 'react-native'
 import { Button, Dialog, Text } from 'react-native-paper'
 
 export interface UpdateModalProps {
@@ -51,19 +52,12 @@ export default function UpdateAppModal({
 					{notes?.trim() || '提高软件稳定性，优化软件流畅度'}
 				</Text>
 			</Dialog.Content>
-			<Dialog.Actions>
-				{!forced && (
-					<>
-						<Button onPress={onCancel}>取消</Button>
-						<Button onPress={onSkip}>跳过此版本</Button>
-					</>
-				)}
-				<Button
-					mode='contained'
-					onPress={onUpdate}
-				>
-					去更新
-				</Button>
+			<Dialog.Actions style={{ justifyContent: 'space-between' }}>
+				{forced ? <Button onPress={onSkip}>跳过此版本</Button> : <View />}
+				<View style={{ flexDirection: 'row' }}>
+					<Button onPress={onCancel}>取消</Button>
+					<Button onPress={onUpdate}>去更新</Button>
+				</View>
 			</Dialog.Actions>
 		</AnimatedModal>
 	)

@@ -15,7 +15,6 @@ class ApiClient {
 	 * 核心请求方法，使用 neverthrow 进行封装
 	 * @param endpoint API 端点
 	 * @param options Fetch 请求选项
-	 * @param allowMissingCookie 是否允许缺少 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	private request = <T>(
@@ -25,14 +24,6 @@ class ApiClient {
 	): ResultAsync<T, BilibiliApiError> => {
 		const url = fullUrl ?? `${this.baseUrl}${endpoint}`
 		const cookieList = useAppStore.getState().bilibiliCookie
-		// if (!cookieList && !allowMissingCookie) {
-		// 	return errAsync(
-		// 		new BilibiliApiError({
-		// 			message: '未设置 bilibili Cookie，请先登录',
-		// 			type: BilibiliApiErrorType.NoCookie,
-		// 		}),
-		// 	)
-		// }
 		const cookie = cookieList ? serializeCookieObject(cookieList) : ''
 
 		const headers = {
@@ -99,13 +90,14 @@ class ApiClient {
 	 * @param endpoint API 端点
 	 * @param params URL 查询参数
 	 * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
-	 * @param allowMissingCookie 是否允许缺少 cookie
+	 * @param customCookie 自定义 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	get<T>(
 		endpoint: string,
 		params?: Record<string, string> | string,
 		fullUrl?: string,
+		customCookie?: string,
 	): ResultAsync<T, BilibiliApiError> {
 		let url = endpoint
 		if (typeof params === 'string') {
@@ -113,7 +105,11 @@ class ApiClient {
 		} else if (params) {
 			url = `${endpoint}?${new URLSearchParams(params).toString()}`
 		}
-		return this.request<T>(url, { method: 'GET' }, fullUrl)
+		return this.request<T>(
+			url,
+			{ method: 'GET', headers: { Cookie: customCookie ?? '' } },
+			fullUrl,
+		)
 	}
 
 	/**
@@ -122,7 +118,7 @@ class ApiClient {
 	 * @param data 请求体数据
 	 * @param headers 请求头（默认请求类型为 application/x-www-form-urlencoded）
 	 * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
-	 * @param allowMissingCookie 是否允许缺少 cookie
+	 * @param customCookie 自定义 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	post<T>(
@@ -130,6 +126,7 @@ class ApiClient {
 		data?: BodyInit,
 		headers?: Record<string, string>,
 		fullUrl?: string,
+		customCookie?: string,
 	): ResultAsync<T, BilibiliApiError> {
 		return this.request<T>(
 			endpoint,
@@ -137,6 +134,7 @@ class ApiClient {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
+					Cookie: customCookie ?? '',
 					...headers,
 				},
 				body: data,

@@ -4,6 +4,7 @@ import {
 	useGetFavoriteForOneVideo,
 } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
@@ -59,6 +60,13 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 	const { colors } = useTheme()
 	const queryClient = useQueryClient()
 	const { data: personalInfo } = usePersonalInformation()
+	const enable = useAppStore(
+		(state) =>
+			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
+	)
+	const setIsQrCodeLoginDialogVisible = useAppStore(
+		(state) => state.setQrCodeLoginModalVisible,
+	)
 
 	const {
 		data: playlists,
@@ -159,6 +167,34 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 	)
 
 	const renderContent = () => {
+		if (!enable) {
+			return (
+				<View
+					style={{
+						paddingTop: 16,
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 16,
+					}}
+				>
+					<Text
+						variant='titleMedium'
+						style={{ textAlign: 'center' }}
+					>
+						登录 bilibili 账号后才能查看收藏夹
+					</Text>
+					<Button
+						mode='contained'
+						onPress={() => {
+							setVisible(false)
+							setIsQrCodeLoginDialogVisible(true)
+						}}
+					>
+						登录
+					</Button>
+				</View>
+			)
+		}
 		if (isPending) {
 			return (
 				<Dialog.Content style={{ alignItems: 'center', paddingVertical: 20 }}>

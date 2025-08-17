@@ -250,6 +250,8 @@ export const createBilibiliApi = () => ({
 			return bilibiliApiClient.get<BilibiliUserInfo>(
 				'/x/space/wbi/acc/info',
 				params,
+				undefined,
+				'buvid3=1145141919810',
 			)
 		})
 	},

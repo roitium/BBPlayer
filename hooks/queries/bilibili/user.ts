@@ -40,7 +40,8 @@ export const useInfiniteGetUserUploadedVideos = (
 	mid: number,
 	keyword?: string,
 ) => {
-	const enabled = !!mid
+	// 这个接口有风控校验
+	const enabled = !!mid && appStore.getState().hasBilibiliCookie()
 	return useInfiniteQuery({
 		queryKey: userQueryKeys.uploadedVideos(mid, keyword),
 		queryFn: enabled
@@ -62,7 +63,8 @@ export const useInfiniteGetUserUploadedVideos = (
 }
 
 export const useOtherUserInfo = (mid: number) => {
-	const enabled = !!mid
+	// 这个接口有风控校验
+	const enabled = !!mid && appStore.getState().hasBilibiliCookie()
 	return useQuery({
 		queryKey: userQueryKeys.otherUserInfo(mid),
 		queryFn: enabled

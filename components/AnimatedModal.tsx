@@ -31,7 +31,7 @@ export const AnimatedModal = ({
 
 	return (
 		<Modal
-			animationType='fade'
+			animationType='none'
 			transparent={true}
 			visible={visible}
 			onDismiss={onDismiss}

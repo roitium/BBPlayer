@@ -8,6 +8,9 @@ export default function UpdateGate() {
 	const [release, setRelease] = useState<ReleaseInfo | null>(null)
 
 	useEffect(() => {
+		if (__DEV__) {
+			return
+		}
 		let canceled = false
 		const run = async () => {
 			const skipped = storage.getString('skip_version') ?? ''
