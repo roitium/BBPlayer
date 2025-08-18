@@ -1,3 +1,4 @@
+import { CustomError } from '@/lib/errors'
 import type { ProjectScope } from '@/types/core/scope'
 import * as Sentry from '@sentry/react-native'
 import * as EXPOFS from 'expo-file-system'
@@ -131,14 +132,22 @@ export function reportErrorToSentry(
 		error instanceof Error
 			? error
 			: new Error(`非 Error 类型错误：${String(error)}`, { cause: error })
-	const id = Sentry.captureException(_error, {
-		tags: {
-			appScope: scope,
-		},
-		extra: {
-			message,
-		},
-	})
+
+	const isCustom = _error instanceof CustomError
+
+	const tags: Record<string, string | number | boolean | undefined> = {
+		appScope: scope,
+	}
+	if (isCustom && typeof _error.type === 'string') {
+		tags.errorType = _error.type
+	}
+
+	const extra: Record<string, unknown> = { message }
+	if (isCustom && _error.data !== undefined) {
+		extra.errorData = _error.data
+	}
+
+	const id = Sentry.captureException(_error, { tags, extra })
 	log.error(`已上报错误到 sentry，id: ${id}`)
 }
 

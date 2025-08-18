@@ -1,5 +1,5 @@
 import type { BilibiliApiError } from '@/lib/errors/bilibili'
-import type { UnknownSourceError } from '@/lib/errors/player'
+import type { PlayerError } from '@/lib/errors/player'
 import type { Track } from '@/types/core/media'
 import type {
 	addToQueueParams,
@@ -451,7 +451,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				): Promise<
 					Result<
 						{ track: Track; needsUpdate: boolean },
-						BilibiliApiError | UnknownSourceError
+						BilibiliApiError | PlayerError
 					>
 				> => {
 					const result = await checkAndUpdateAudioStream(track)

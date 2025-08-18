@@ -20,10 +20,10 @@ import db from '../db/db'
 import * as schema from '../db/schema'
 import {
 	DatabaseError,
-	NotImplementedError,
 	ServiceError,
-	TrackNotFoundError,
-	ValidationError,
+	createNotImplementedError,
+	createTrackNotFound,
+	createValidationError,
 } from '../errors/service'
 import generateUniqueTrackKey from './genKey'
 
@@ -98,18 +98,20 @@ export class TrackService {
 	 */
 	private _createTrack(
 		payload: CreateTrackPayload,
-	): ResultAsync<Track, ValidationError | DatabaseError | TrackNotFoundError> {
+	): ResultAsync<Track, ServiceError | DatabaseError> {
 		// validate
 		if (payload.source === 'bilibili' && !payload.bilibiliMetadata) {
 			return errAsync(
-				new ValidationError(
+				createValidationError(
 					'当 source 为 bilibili 时，bilibiliMetadata 不能为空。',
 				),
 			)
 		}
 		if (payload.source === 'local' && !payload.localMetadata) {
 			return errAsync(
-				new ValidationError('当 source 为 local 时，localMetadata 不能为空。'),
+				createValidationError(
+					'当 source 为 local 时，localMetadata 不能为空。',
+				),
 			)
 		}
 
@@ -154,7 +156,10 @@ export class TrackService {
 
 				return trackId
 			})(),
-			(e) => new DatabaseError('创建 track 事务失败', e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('创建 track 事务失败', { cause: e }),
 		)
 
 		return transactionResult.andThen((newTrackId) =>
@@ -169,7 +174,7 @@ export class TrackService {
 	 */
 	public updateTrack(
 		payload: UpdateTrackPayload,
-	): ResultAsync<Track, TrackNotFoundError | DatabaseError> {
+	): ResultAsync<Track, ServiceError | DatabaseError> {
 		const { id, ...dataToUpdate } = payload
 
 		const updateResult = ResultAsync.fromPromise(
@@ -182,7 +187,10 @@ export class TrackService {
 					duration: dataToUpdate.duration,
 				} satisfies Omit<UpdateTrackPayloadBase, 'id'>)
 				.where(eq(schema.tracks.id, id)),
-			(e) => new DatabaseError(`更新 track 失败：${id}`, e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`更新 track 失败：${id}`, { cause: e }),
 		)
 
 		return updateResult.andThen(() => this.getTrackById(id))
@@ -195,7 +203,7 @@ export class TrackService {
 	 */
 	public getTrackById(
 		id: number,
-	): ResultAsync<Track, TrackNotFoundError | DatabaseError> {
+	): ResultAsync<Track, ServiceError | DatabaseError> {
 		return ResultAsync.fromPromise(
 			this.db.query.tracks.findFirst({
 				where: eq(schema.tracks.id, id),
@@ -205,11 +213,14 @@ export class TrackService {
 					localMetadata: true,
 				},
 			}),
-			(e) => new DatabaseError(`查找 track 失败：${id}`, e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`查找 track 失败：${id}`, { cause: e }),
 		).andThen((dbTrack) => {
 			const result = this.formatTrack(dbTrack)
 			if (!result) {
-				return errAsync(new TrackNotFoundError(id))
+				return errAsync(createTrackNotFound(id))
 			}
 			return okAsync(result)
 		})
@@ -222,17 +233,20 @@ export class TrackService {
 	 */
 	public deleteTrack(
 		id: number,
-	): ResultAsync<{ deletedId: number }, TrackNotFoundError | DatabaseError> {
+	): ResultAsync<{ deletedId: number }, ServiceError | DatabaseError> {
 		return ResultAsync.fromPromise(
 			this.db
 				.delete(schema.tracks)
 				.where(eq(schema.tracks.id, id))
 				.returning({ deletedId: schema.tracks.id }),
-			(e) => new DatabaseError(`删除 track 失败：${id}`, e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`删除 track 失败：${id}`, { cause: e }),
 		).andThen((results) => {
 			const result = results[0]
 			if (!result) {
-				return errAsync(new TrackNotFoundError(id))
+				return errAsync(createTrackNotFound(id))
 			}
 			return okAsync(result)
 		})
@@ -247,7 +261,7 @@ export class TrackService {
 	public addPlayRecord(
 		trackId: number,
 		record: PlayRecord,
-	): ResultAsync<true, TrackNotFoundError | DatabaseError> {
+	): ResultAsync<true, ServiceError | DatabaseError> {
 		return ResultAsync.fromPromise(
 			(async () => {
 				const recordJson = JSON.stringify(record)
@@ -265,7 +279,10 @@ export class TrackService {
 
 				return true as const
 			})(),
-			(e) => new DatabaseError(`增加播放记录失败：${trackId}`, e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`增加播放记录失败：${trackId}`, { cause: e }),
 		)
 	}
 
@@ -276,7 +293,7 @@ export class TrackService {
 	 */
 	public getTrackByBilibiliMetadata(
 		bilibiliMetadata: BilibiliMetadataPayload,
-	): ResultAsync<Track, TrackNotFoundError | DatabaseError | ValidationError> {
+	): ResultAsync<Track, ServiceError | DatabaseError> {
 		const identifier = generateUniqueTrackKey({
 			source: 'bilibili',
 			bilibiliMetadata: bilibiliMetadata,
@@ -293,16 +310,21 @@ export class TrackService {
 					localMetadata: true,
 				},
 			}),
-			(e) => new DatabaseError('根据 Bilibili 元数据查找 track 失败', e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('根据 Bilibili 元数据查找 track 失败', {
+							cause: e,
+						}),
 		).andThen((track) => {
 			if (!track) {
-				return errAsync(new TrackNotFoundError(`uniqueKey=${identifier.value}`))
+				return errAsync(createTrackNotFound(`uniqueKey=${identifier.value}`))
 			}
 
 			const formattedTrack = this.formatTrack(track)
 			if (!formattedTrack) {
 				return errAsync(
-					new ValidationError(
+					createValidationError(
 						`根据 Bilibili 元数据查找 track 失败：元数据不匹配。`,
 					),
 				)
@@ -320,7 +342,7 @@ export class TrackService {
 	 */
 	public findOrCreateTrack(
 		payload: CreateTrackPayload,
-	): ResultAsync<Track, TrackNotFoundError | DatabaseError | ValidationError> {
+	): ResultAsync<Track, ServiceError | DatabaseError> {
 		const uniqueKeyResult = generateUniqueTrackKey(payload)
 		if (uniqueKeyResult.isErr()) {
 			return errAsync(uniqueKeyResult.error)
@@ -336,7 +358,10 @@ export class TrackService {
 					localMetadata: true,
 				},
 			}),
-			(e) => new DatabaseError('根据 uniqueKey 查找 track 失败', e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('根据 uniqueKey 查找 track 失败', { cause: e }),
 		)
 			.andThen((dbTrack) => {
 				if (dbTrack) {
@@ -345,15 +370,15 @@ export class TrackService {
 						return okAsync(formattedTrack)
 					}
 					return errAsync(
-						new ValidationError(
+						createValidationError(
 							`已存在的 track ${dbTrack.id} source 与 metadata 不匹配`,
 						),
 					)
 				}
-				return errAsync(new TrackNotFoundError(uniqueKey))
+				return errAsync(createTrackNotFound(uniqueKey))
 			})
 			.orElse((error) => {
-				if (error instanceof TrackNotFoundError) {
+				if (error instanceof ServiceError && error.type === 'TrackNotFound') {
 					return this._createTrack(payload)
 				}
 				return errAsync(error)
@@ -370,10 +395,7 @@ export class TrackService {
 	public findOrCreateManyTracks(
 		payloads: CreateTrackPayload[],
 		source: Track['source'],
-	): ResultAsync<
-		Map<string, number>,
-		ValidationError | DatabaseError | NotImplementedError
-	> {
+	): ResultAsync<Map<string, number>, ServiceError | DatabaseError> {
 		if (payloads.length === 0) {
 			return okAsync(new Map<string, number>())
 		}
@@ -381,7 +403,7 @@ export class TrackService {
 		const processedPayloadsResult = Result.combine(
 			payloads.map((p) => {
 				if (p.source !== source)
-					return err(new ValidationError('source 不一致'))
+					return err(createValidationError('source 不一致'))
 				return generateUniqueTrackKey(p).map((uniqueKey) => ({
 					uniqueKey,
 					payload: p,
@@ -464,15 +486,16 @@ export class TrackService {
 						break
 					}
 					case 'local': {
-						throw new NotImplementedError('处理 local source 的逻辑尚未实现')
+						throw createNotImplementedError('处理 local source 的逻辑尚未实现')
 					}
 				}
 
 				return finalUniqueKeyToIdMap
 			})(),
-			(e) => {
-				return new ServiceError('批量查找或创建 tracks 失败', e)
-			},
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('批量查找或创建 tracks 失败', { cause: e }),
 		)
 	}
 
@@ -495,7 +518,10 @@ export class TrackService {
 					uniqueKey: true,
 				},
 			}),
-			(e) => new DatabaseError('批量查找 tracks 失败', e),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('批量查找 tracks 失败', { cause: e }),
 		).andThen((existingTracks) => {
 			const uniqueKeyToIdMap = new Map<string, number>()
 			for (const track of existingTracks) {

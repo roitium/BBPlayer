@@ -1,4 +1,4 @@
-import { ApiCallingError } from '@/lib/errors'
+import { ThirdPartyError } from '@/lib/errors'
 
 export enum BilibiliApiErrorType {
 	RequestFailed = 'RequestFailed',
@@ -13,18 +13,31 @@ interface BilibiliApiErrorDetails {
 	msgCode?: number
 	rawData?: unknown
 	type?: BilibiliApiErrorType
+	cause?: unknown
 }
 
-export class BilibiliApiError extends ApiCallingError {
-	public readonly source = 'Bilibili'
-	public msgCode?: number
-	public rawData?: unknown
-	public type?: BilibiliApiErrorType
+interface BilibiliErrorData {
+	msgCode: number
+	rawData: unknown
+}
 
-	constructor({ message, msgCode, rawData, type }: BilibiliApiErrorDetails) {
-		super(`[Bilibili API Error] ${message}`)
-		this.msgCode = msgCode
-		this.rawData = rawData
-		this.type = type
+export class BilibiliApiError extends ThirdPartyError {
+	declare data: BilibiliErrorData
+	constructor({
+		message,
+		msgCode,
+		rawData,
+		type,
+		cause,
+	}: BilibiliApiErrorDetails) {
+		super(message, {
+			vendor: 'Bilibili',
+			type,
+			data: {
+				rawData,
+				msgCode,
+			},
+			cause,
+		})
 	}
 }

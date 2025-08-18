@@ -9,8 +9,8 @@ import {
 } from '../api/bilibili/api'
 import db from '../db/db'
 import type * as schema from '../db/schema'
-import { FacadeError } from '../errors/facade'
-import { ValidationError } from '../errors/service'
+import { createFacadeError, FacadeErrorType } from '../errors/facade'
+import { createValidationError } from '../errors/service'
 import { artistService, type ArtistService } from '../services/artistService'
 import {
 	playlistService,
@@ -48,7 +48,7 @@ export class PlaylistFacade {
 				const playlistMetadata = playlist.value
 
 				if (!playlistMetadata)
-					throw new FacadeError(`未找到播放列表：${playlistId}`)
+					throw createValidationError(`未找到播放列表：${playlistId}`)
 
 				logger.debug('step1: 获取播放列表', playlistMetadata.id)
 
@@ -100,7 +100,12 @@ export class PlaylistFacade {
 
 				return localPlaylist.id
 			}),
-			(e) => new FacadeError('复制播放列表', e),
+			(e) =>
+				createFacadeError(
+					FacadeErrorType.PlaylistDuplicateFailed,
+					'复制播放列表失败',
+					{ cause: e },
+				),
 		)
 	}
 
@@ -180,7 +185,12 @@ export class PlaylistFacade {
 				})
 				return trackId
 			}),
-			(e) => new FacadeError('更新 Track 在本地播放列表', e),
+			(e) =>
+				createFacadeError(
+					FacadeErrorType.UpdateTrackLocalPlaylistsFailed,
+					'更新 Track 在本地播放列表失败',
+					{ cause: e },
+				),
 		)
 	}
 
@@ -201,7 +211,7 @@ export class PlaylistFacade {
 		for (const payload of payloads) {
 			if (payload.artist.source === 'local') {
 				return errAsync(
-					new ValidationError(
+					createValidationError(
 						'批量添加 tracks 到本地播放列表时，artist 只能为 remote 来源',
 					),
 				)
@@ -246,7 +256,12 @@ export class PlaylistFacade {
 
 				return trackIds
 			})(),
-			(e) => new FacadeError('批量添加 tracks 到本地播放列表失败', e),
+			(e) =>
+				createFacadeError(
+					FacadeErrorType.BatchAddTracksToLocalPlaylistFailed,
+					'批量添加 tracks 到本地播放列表失败',
+					{ cause: e },
+				),
 		)
 	}
 }

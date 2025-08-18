@@ -10,10 +10,10 @@ import type {
 import db from '../db/db'
 import * as schema from '../db/schema'
 import {
-	ArtistNotFoundError,
 	DatabaseError,
 	ServiceError,
-	ValidationError,
+	createArtistNotFound,
+	createValidationError,
 } from '../errors/service'
 import type { TrackService } from './trackService'
 import { trackService } from './trackService'
@@ -55,7 +55,7 @@ export class ArtistService {
 					signature: payload.signature,
 				} satisfies CreateArtistPayload)
 				.returning(),
-			(e) => new DatabaseError('创建artist失败', e),
+			(e) => new DatabaseError('创建artist失败', { cause: e }),
 		).andThen((result) => {
 			return okAsync(result[0])
 		})
@@ -71,12 +71,12 @@ export class ArtistService {
 		payload: CreateArtistPayload,
 	): ResultAsync<
 		typeof schema.artists.$inferSelect,
-		DatabaseError | ValidationError
+		DatabaseError | ServiceError
 	> {
 		const { source, remoteId } = payload
 		if (!source || !remoteId) {
 			return errAsync(
-				new ValidationError('source 和 remoteId 在此方法中是必需的'),
+				createValidationError('source 和 remoteId 在此方法中是必需的'),
 			)
 		}
 
@@ -108,10 +108,10 @@ export class ArtistService {
 
 				return newArtist
 			})(),
-			(e) => {
-				if (e instanceof ValidationError) return e
-				return new DatabaseError('查找或创建artist的事务失败', e)
-			},
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('查找或创建artist的事务失败', { cause: e }),
 		)
 	}
 
@@ -126,7 +126,7 @@ export class ArtistService {
 		payload: UpdateArtistPayload,
 	): ResultAsync<
 		typeof schema.artists.$inferSelect,
-		DatabaseError | ArtistNotFoundError
+		DatabaseError | ServiceError
 	> {
 		return ResultAsync.fromPromise(
 			(async () => {
@@ -136,7 +136,7 @@ export class ArtistService {
 					columns: { id: true },
 				})
 				if (!existing) {
-					throw new ArtistNotFoundError(artistId)
+					throw createArtistNotFound(artistId)
 				}
 
 				const [updated] = await this.db
@@ -151,10 +151,10 @@ export class ArtistService {
 
 				return updated
 			})(),
-			(e) => {
-				if (e instanceof ArtistNotFoundError) return e
-				return new DatabaseError(`更新artist ${artistId} 失败`, e)
-			},
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`更新artist ${artistId} 失败`, { cause: e }),
 		)
 	}
 
@@ -165,7 +165,7 @@ export class ArtistService {
 	 */
 	public deleteArtist(
 		artistId: number,
-	): ResultAsync<{ deletedId: number }, DatabaseError | ArtistNotFoundError> {
+	): ResultAsync<{ deletedId: number }, DatabaseError | ServiceError> {
 		return ResultAsync.fromPromise(
 			(async () => {
 				// 验证artist是否存在
@@ -174,7 +174,7 @@ export class ArtistService {
 					columns: { id: true },
 				})
 				if (!existing) {
-					throw new ArtistNotFoundError(artistId)
+					throw createArtistNotFound(artistId)
 				}
 
 				const [deleted] = await this.db
@@ -184,10 +184,10 @@ export class ArtistService {
 
 				return deleted
 			})(),
-			(e) => {
-				if (e instanceof ArtistNotFoundError) return e
-				return new DatabaseError(`删除artist ${artistId} 失败`, e)
-			},
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`删除artist ${artistId} 失败`, { cause: e }),
 		)
 	}
 
@@ -208,7 +208,8 @@ export class ArtistService {
 					localMetadata: true,
 				},
 			}),
-			(e) => new DatabaseError(`获取artist ${artistId} 的歌曲失败`, e),
+			(e) =>
+				new DatabaseError(`获取artist ${artistId} 的歌曲失败`, { cause: e }),
 		).andThen((dbTracks) => {
 			const formattedTracks: Track[] = []
 			for (const dbTrack of dbTracks) {
@@ -236,7 +237,7 @@ export class ArtistService {
 	> {
 		return ResultAsync.fromPromise(
 			this.db.query.artists.findMany(),
-			(e) => new DatabaseError('获取所有artist列表失败', e),
+			(e) => new DatabaseError('获取所有artist列表失败', { cause: e }),
 		)
 	}
 
@@ -255,7 +256,8 @@ export class ArtistService {
 			this.db.query.artists.findFirst({
 				where: eq(schema.artists.id, artistId),
 			}),
-			(e) => new DatabaseError(`通过 ID ${artistId} 获取artist失败`, e),
+			(e) =>
+				new DatabaseError(`通过 ID ${artistId} 获取artist失败`, { cause: e }),
 		)
 	}
 
@@ -269,7 +271,7 @@ export class ArtistService {
 		payloads: CreateArtistPayload[],
 	): ResultAsync<
 		Map<string, typeof schema.artists.$inferSelect>,
-		ServiceError | ValidationError
+		ServiceError
 	> {
 		if (payloads.length === 0) {
 			return okAsync(new Map<string, typeof schema.artists.$inferSelect>())
@@ -278,7 +280,7 @@ export class ArtistService {
 		for (const p of payloads) {
 			if (!p.source || !p.remoteId) {
 				return errAsync(
-					new ValidationError(
+					createValidationError(
 						'payloads 中存在 source 或 remoteId 为空的对象，该方法仅用于处理 remote artist',
 					),
 				)
@@ -340,12 +342,10 @@ export class ArtistService {
 
 				return finalResultMap
 			})(),
-			(e) => {
-				if (e instanceof DatabaseError || e instanceof ValidationError) {
-					return e
-				}
-				return new ServiceError('批量查找或创建 artist 失败', e)
-			},
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('批量查找或创建 artist 失败', { cause: e }),
 		)
 	}
 }

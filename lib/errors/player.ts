@@ -1,7 +1,29 @@
-import { CustomError } from '.'
+import { UIError } from '.'
 
-export class PlayerError extends CustomError {}
+// export enum PlayerErrorType {
+// 	UnknownSource = 'UnknownSource',
+// 	AudioUrlNotFound = 'AudioUrlNotFound',
+// }
 
-export class UnknownSourceError extends PlayerError {}
+export type PlayerErrorType = 'UnknownSource' | 'AudioUrlNotFound'
 
-export class AudioUrlNotFoundError extends PlayerError {}
+export class PlayerError extends UIError {
+	constructor(
+		message: string,
+		opts?: { type?: PlayerErrorType; data?: unknown; cause?: unknown },
+	) {
+		super(message, { type: opts?.type, data: opts?.data, cause: opts?.cause })
+	}
+}
+
+export function createPlayerError(
+	type: PlayerErrorType,
+	message: string,
+	options?: { data?: unknown; cause?: unknown },
+) {
+	return new PlayerError(message, {
+		type,
+		data: options?.data,
+		cause: options?.cause,
+	})
+}

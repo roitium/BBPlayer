@@ -122,7 +122,7 @@ export const useBatchDeleteFavoriteListContents = () => {
 				if (error.type === BilibiliApiErrorType.CsrfError) {
 					errorMessage = '删除失败：csrf token 过期，请检查 cookie 后重试'
 				} else {
-					errorMessage = `删除失败：${error.message} (${error.msgCode})`
+					errorMessage = `删除失败：${error.message} (${error.data.msgCode})`
 				}
 			}
 

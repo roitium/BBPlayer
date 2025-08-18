@@ -1,17 +1,40 @@
-import { CustomError } from '.'
+import { FacadeError as BaseFacadeError } from '.'
 
-export class FacadeError extends CustomError {}
+export enum FacadeErrorType {
+	SyncTaskAlreadyRunning = 'SyncTaskAlreadyRunning',
+	SyncCollectionFailed = 'SyncCollectionFailed',
+	SyncMultiPageFailed = 'SyncMultiPageFailed',
+	SyncFavoriteFailed = 'SyncFavoriteFailed',
+	FetchRemotePlaylistMetadataFailed = 'fetchRemotePlaylistMetadataFailed',
+	PlaylistDuplicateFailed = 'PlaylistDuplicateFailed',
+	UpdateTrackLocalPlaylistsFailed = 'UpdateTrackLocalPlaylistsFailed',
+	BatchAddTracksToLocalPlaylistFailed = 'BatchAddTracksToLocalPlaylistFailed',
+}
 
-export class SyncTaskAlreadyRunningError extends FacadeError {
-	constructor() {
-		super('同步任务正在进行中，请稍后再试')
+export class FacadeError extends BaseFacadeError {
+	constructor(
+		message: string,
+		opts?: { type?: FacadeErrorType; data?: unknown; cause?: unknown },
+	) {
+		super(message, { type: opts?.type, data: opts?.data, cause: opts?.cause })
 	}
 }
 
-export class SoBilibiliFuckUError extends FacadeError {
-	constructor(ids: string[]) {
-		super(
-			`Bilibili 隐藏了被 up 设置为仅自己可见的稿件，却没有更新索引，所以你会看到同步到的歌曲数量少于收藏夹实际显示的数量，具体隐藏稿件：${ids.join(',')}`,
-		)
-	}
+export function createSyncTaskAlreadyRunningError(cause?: unknown) {
+	return new FacadeError('同步任务正在进行中，请稍后再试', {
+		type: FacadeErrorType.SyncTaskAlreadyRunning,
+		cause,
+	})
+}
+
+export function createFacadeError(
+	type: FacadeErrorType,
+	message: string,
+	options?: { data?: unknown; cause?: unknown },
+) {
+	return new FacadeError(message, {
+		type,
+		data: options?.data,
+		cause: options?.cause,
+	})
 }

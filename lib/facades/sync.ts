@@ -11,13 +11,14 @@ import { bilibiliApi } from '../api/bilibili/api'
 import { av2bv, bv2av } from '../api/bilibili/utils'
 import db from '../db/db'
 import type * as schema from '../db/schema'
+import type { DatabaseError, ServiceError } from '../errors'
 import type { BilibiliApiError } from '../errors/bilibili'
-import { FacadeError, SyncTaskAlreadyRunningError } from '../errors/facade'
-import type {
-	DatabaseError,
-	TrackNotFoundError,
-	ValidationError,
-} from '../errors/service'
+import type { FacadeError } from '../errors/facade'
+import {
+	createFacadeError,
+	createSyncTaskAlreadyRunningError,
+	FacadeErrorType,
+} from '../errors/facade'
 import type { ArtistService } from '../services/artistService'
 import { artistService } from '../services/artistService'
 import generateUniqueTrackKey from '../services/genKey'
@@ -47,10 +48,7 @@ export class SyncFacade {
 	public addTrackFromBilibiliApi(
 		bvid: string,
 		cid?: number,
-	): ResultAsync<
-		Track,
-		BilibiliApiError | TrackNotFoundError | DatabaseError | ValidationError
-	> {
+	): ResultAsync<Track, BilibiliApiError | DatabaseError | ServiceError> {
 		logger.info('开始添加 Track（Bilibili）', { bvid, cid })
 		const apiData = this.bilibiliApi.getVideoDetails(bvid)
 		return apiData.andThen((data) => {
@@ -96,7 +94,7 @@ export class SyncFacade {
 				type: 'collection',
 				id: collectionId,
 			})
-			return errAsync(new SyncTaskAlreadyRunningError())
+			return errAsync(createSyncTaskAlreadyRunningError())
 		}
 		try {
 			this.syncingIds.add(`collection::${collectionId}`)
@@ -199,7 +197,12 @@ export class SyncFacade {
 							})
 							return playlistRes.value.id
 						}),
-						(e) => new FacadeError('同步合集失败', e),
+						(e) =>
+							createFacadeError(
+								FacadeErrorType.SyncCollectionFailed,
+								'同步合集失败',
+								{ cause: e },
+							),
 					)
 				})
 		} finally {
@@ -216,11 +219,10 @@ export class SyncFacade {
 	): ResultAsync<number, BilibiliApiError | FacadeError> {
 		if (this.syncingIds.has(`multiPage::${bvid}`)) {
 			logger.info('已有同步任务在进行，跳过', { type: 'multi_page', bvid })
-			return errAsync(new SyncTaskAlreadyRunningError())
+			return errAsync(createSyncTaskAlreadyRunningError())
 		}
 		try {
 			this.syncingIds.add(`multiPage::${bvid}`)
-			// HACK: 有空了需要统一一下日志格式，这种 monkeypatch 的方式太不好看了
 			logger = log.extend('[Facade/SyncMultiPageVideo: ' + bvid + ']')
 			logger.info('开始同步多集视频', { bvid })
 			return this.bilibiliApi
@@ -299,7 +301,12 @@ export class SyncFacade {
 
 							return playlistRes.value.id
 						}),
-						(e) => new FacadeError('同步多集视频失败', e),
+						(e) =>
+							createFacadeError(
+								FacadeErrorType.SyncMultiPageFailed,
+								'同步多集视频失败',
+								{ cause: e },
+							),
 					)
 				})
 		} finally {
@@ -317,7 +324,7 @@ export class SyncFacade {
 	): Promise<Result<number | undefined, FacadeError | BilibiliApiError>> {
 		// getFavoriteListAllContents 获取到的 bvid 中会包含被 up 隐藏的视频，但这部分视频在 getFavoriteListContents 中是找不到的，也就无法添加到本地数据库。这导致对于包含这种视频的收藏夹，每次同步都会重新「同步」这些视频，但咱们没办法......
 		if (this.syncingIds.has(`favorite::${favoriteId}`)) {
-			return err(new SyncTaskAlreadyRunningError())
+			return err(createSyncTaskAlreadyRunningError())
 		}
 		try {
 			this.syncingIds.add(`favorite::${favoriteId}`)
@@ -376,7 +383,8 @@ export class SyncFacade {
 				}
 				if (existTracks.value.find((item) => item.source !== 'bilibili')) {
 					return err(
-						new FacadeError(
+						createFacadeError(
+							FacadeErrorType.SyncFavoriteFailed,
 							'同步收藏夹失败，收藏夹中存在非 Bilibili 的 Track，你的数据库似乎已经坏掉惹。',
 						),
 					)
@@ -588,7 +596,8 @@ export class SyncFacade {
 						.map((key) => uniqueKeyToIdMap.get(key))
 						.filter((id) => {
 							if (id === undefined)
-								throw new FacadeError(
+								throw createFacadeError(
+									FacadeErrorType.SyncFavoriteFailed,
 									'已完成 tracks 创建后，却依然没有找到 uniqueKey 对应的 ID',
 								)
 							return id !== undefined
@@ -612,7 +621,12 @@ export class SyncFacade {
 
 					return localPlaylist.value.id
 				}),
-				(e) => new FacadeError('同步收藏夹失败', e),
+				(e) =>
+					createFacadeError(
+						FacadeErrorType.SyncFavoriteFailed,
+						'同步收藏夹失败',
+						{ cause: e },
+					),
 			)
 			if (txResult.isErr()) {
 				return err(txResult.error)

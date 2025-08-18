@@ -1,7 +1,8 @@
 import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
-import { AudioUrlNotFoundError, UnknownSourceError } from '@/lib/errors/player'
+import type { PlayerError } from '@/lib/errors/player'
+import { createPlayerError } from '@/lib/errors/player'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { RNTPTrack } from '@/types/rntp'
 import { err, ok, type Result } from 'neverthrow'
@@ -19,7 +20,7 @@ const STREAM_EXPIRY_TIME = 120 * 60 * 1000
  */
 function convertToRNTPTrack(
 	track: Track,
-): Result<RNTPTrack, AudioUrlNotFoundError | BilibiliApiError> {
+): Result<RNTPTrack, BilibiliApiError | PlayerError> {
 	logger.debug('转换 Track 为 RNTPTrack', {
 		trackId: track.id,
 		title: track.title,
@@ -41,7 +42,9 @@ function convertToRNTPTrack(
 	if (!url) {
 		const errorMsg = '没有找到有效的音频流 URL'
 		logger.warning(`${errorMsg}`, track)
-		return err(new AudioUrlNotFoundError(`${errorMsg}: ${track.id}`))
+		return err(
+			createPlayerError('AudioUrlNotFound', `${errorMsg}: ${track.id}`),
+		)
 	}
 
 	const rnTrack: RNTPTrack = {
@@ -96,10 +99,7 @@ function checkBilibiliAudioExpiry(_track: Track): boolean {
 async function checkAndUpdateAudioStream(
 	track: Track,
 ): Promise<
-	Result<
-		{ track: Track; needsUpdate: boolean },
-		BilibiliApiError | UnknownSourceError
-	>
+	Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | PlayerError>
 > {
 	logger.debug('开始检查并更新音频流', {
 		trackId: track.id,
@@ -223,7 +223,10 @@ async function checkAndUpdateAudioStream(
 		)
 	}
 	return err(
-		new UnknownSourceError(`未知的 Track source: ${(track as Track).source}`),
+		createPlayerError(
+			'UnknownSource',
+			`未知的 Track source: ${(track as Track).source}`,
+		),
 	)
 }
 

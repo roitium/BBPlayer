@@ -1,24 +1,36 @@
-/**
- * 通用的自定义错误基类，用于统一处理错误名称和堆栈信息。
- */
 export class CustomError extends Error {
-	constructor(message: string, cause?: unknown) {
-		super(message, { cause: cause })
+	readonly type?: string
+	readonly data?: unknown
+	constructor(
+		message: string,
+		opts?: { type?: string; data?: unknown; cause?: unknown },
+	) {
+		super(message, { cause: opts?.cause })
 		this.name = this.constructor.name
+		this.type = opts?.type
+		this.data = opts?.data
 	}
 }
 
-/**
- * 所有与 API 调用相关的错误的基类，提供语义上的区分。
- */
-export class ApiCallingError extends CustomError {}
+export class ServiceError extends CustomError {}
 
-/**
- * 表示文件系统操作失败的错误。
- */
-export class FileSystemError extends CustomError {}
+export class FacadeError extends CustomError {}
 
-/**
- * 表示数据解析或转换失败的错误。
- */
-export class DataParsingError extends CustomError {}
+export class UIError extends CustomError {}
+
+export class ThirdPartyError extends CustomError {
+	readonly vendor?: string
+	readonly type?: string
+	readonly data?: unknown
+	constructor(
+		message: string,
+		opts?: { vendor?: string; type?: string; data?: unknown; cause?: unknown },
+	) {
+		super(message, { type: opts?.type, data: opts?.data, cause: opts?.cause })
+		this.vendor = opts?.vendor
+		this.type = opts?.type
+		this.data = opts?.data
+	}
+}
+
+export class DatabaseError extends CustomError {}

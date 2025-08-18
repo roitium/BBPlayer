@@ -1,4 +1,3 @@
-import { ApiCallingError } from '@/lib/errors'
 import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
 import {
 	type BilibiliAudioStreamParams,
@@ -338,7 +337,7 @@ export const createBilibiliApi = () => ({
 	batchDeleteFavoriteListContents(
 		favoriteId: number,
 		bvids: string[],
-	): ResultAsync<0, ApiCallingError> {
+	): ResultAsync<0, BilibiliApiError> {
 		const resourcesIds = bvids.map((bvid) => `${bv2av(bvid)}:2`)
 
 		const csrfToken = getCsrfToken()
@@ -421,7 +420,7 @@ export const createBilibiliApi = () => ({
 		bvid: string,
 		addToFavoriteIds: string[],
 		delInFavoriteIds: string[],
-	): ResultAsync<BilibiliDealFavoriteForOneVideoResponse, ApiCallingError> => {
+	): ResultAsync<BilibiliDealFavoriteForOneVideoResponse, BilibiliApiError> => {
 		const avid = bv2av(bvid)
 		const addToFavoriteIdsCombined = addToFavoriteIds.join(',')
 		const delInFavoriteIdsCombined = delInFavoriteIds.join(',')
@@ -472,7 +471,7 @@ export const createBilibiliApi = () => ({
 	reportPlaybackHistory: (
 		bvid: string,
 		cid: number,
-	): ResultAsync<0, ApiCallingError> => {
+	): ResultAsync<0, BilibiliApiError> => {
 		const avid = bv2av(bvid)
 		const csrfToken = getCsrfToken()
 		if (csrfToken.isErr()) return errAsync(csrfToken.error)
@@ -497,7 +496,7 @@ export const createBilibiliApi = () => ({
 		mid: number,
 		pn: number,
 		keyword?: string,
-	): ResultAsync<BilibiliUserUploadedVideosResponse, ApiCallingError> => {
+	): ResultAsync<BilibiliUserUploadedVideosResponse, BilibiliApiError> => {
 		const params = getWbiEncodedParams({
 			mid: mid.toString(),
 			pn: pn.toString(),
@@ -517,7 +516,7 @@ export const createBilibiliApi = () => ({
 	 */
 	getLoginQrCode: (): ResultAsync<
 		{ url: string; qrcode_key: string },
-		ApiCallingError
+		BilibiliApiError
 	> => {
 		return bilibiliApiClient.get<{ url: string; qrcode_key: string }>(
 			'',
@@ -533,7 +532,7 @@ export const createBilibiliApi = () => ({
 		qrcode_key: string,
 	): ResultAsync<
 		{ status: BilibiliQrCodeLoginStatus; cookies: string },
-		ApiCallingError
+		BilibiliApiError
 	> => {
 		const reqFunction = async () => {
 			const response = await fetch(
@@ -588,7 +587,7 @@ export const createBilibiliApi = () => ({
 		}
 
 		return ResultAsync.fromPromise(reqFunction(), (error) => {
-			if (error instanceof ApiCallingError) {
+			if (error instanceof BilibiliApiError) {
 				return error
 			}
 			return new BilibiliApiError({
@@ -603,7 +602,9 @@ export const createBilibiliApi = () => ({
 	/**
 	 * 获取 b23.tv 短链接的解析后结果
 	 */
-	getB23ResolvedUrl: (b23Url: string): ResultAsync<string, ApiCallingError> => {
+	getB23ResolvedUrl: (
+		b23Url: string,
+	): ResultAsync<string, BilibiliApiError> => {
 		return ResultAsync.fromPromise(
 			fetch(b23Url, {
 				headers: {
