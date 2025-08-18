@@ -258,7 +258,7 @@ export class TrackService {
 	 * @param record - 播放记录。
 	 * @returns ResultAsync 包含 true 或一个错误。
 	 */
-	public addPlayRecord(
+	public addPlayRecordFromTrackId(
 		trackId: number,
 		record: PlayRecord,
 	): ResultAsync<true, ServiceError | DatabaseError> {
@@ -283,6 +283,32 @@ export class TrackService {
 				e instanceof ServiceError
 					? e
 					: new DatabaseError(`增加播放记录失败：${trackId}`, { cause: e }),
+		)
+	}
+
+	public addPlayRecordFromUniqueKey(
+		uniqueKey: string,
+		record: PlayRecord,
+	): ResultAsync<true, ServiceError | DatabaseError> {
+		return ResultAsync.fromPromise(
+			(async () => {
+				const track = await this.findTrackIdsByUniqueKeys([uniqueKey])
+				if (track.isErr()) {
+					throw track.error
+				}
+				const trackId = track.value.get(uniqueKey)
+				if (!trackId) {
+					throw createTrackNotFound(uniqueKey)
+				}
+
+				await this.addPlayRecordFromTrackId(trackId, record)
+
+				return true as const
+			})(),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError(`增加播放记录失败：${uniqueKey}`, { cause: e }),
 		)
 	}
 

@@ -18,6 +18,9 @@ interface PlayerState {
 	isBuffering: boolean
 	repeatMode: RepeatMode
 	shuffleMode: boolean
+
+	// 播放统计
+	currentPlayStartAt: number | null // 当前曲目开始播放的时间戳(ms)
 }
 
 interface addToQueueParams {
@@ -34,6 +37,9 @@ interface PlayerActions {
 	_getActiveList: () => string[]
 	_getCurrentTrack: () => Track | null
 	_getCurrentIndex: () => number
+	_finalizeAndRecordCurrentPlay: (
+		reason?: 'skip' | 'ended' | 'stop',
+	) => Promise<void>
 
 	// 队列操作
 	addToQueue: ({

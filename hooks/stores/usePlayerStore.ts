@@ -1,5 +1,6 @@
 import type { BilibiliApiError } from '@/lib/errors/bilibili'
 import type { PlayerError } from '@/lib/errors/player'
+import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import type {
 	addToQueueParams,
@@ -53,6 +54,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				isBuffering: false,
 				repeatMode: RepeatMode.Off,
 				shuffleMode: false,
+				currentPlayStartAt: null,
 			}
 
 			const store = {
@@ -76,16 +78,44 @@ export const usePlayerStore = create<PlayerStore>()(
 					return get()._getActiveList().indexOf(currentTrackUniqueKey)
 				},
 
-				resetPlayer: async () => {
-					if (!global.playerIsReady) return
-
+				_finalizeAndRecordCurrentPlay: async (
+					reason: 'skip' | 'ended' | 'stop' = 'skip',
+				) => {
 					try {
-						logger.info('重置播放器')
-						await TrackPlayer.reset()
-						set(initialState)
+						const { currentPlayStartAt } = get()
+						const track = get()._getCurrentTrack()
+						if (!track || !currentPlayStartAt) return
+
+						const { position } = await TrackPlayer.getProgress()
+						const playedSeconds = Math.max(0, Math.floor(position))
+						const duration = Math.max(1, Math.floor(track.duration))
+						const threshold = Math.max(Math.floor(duration * 0.9), duration - 2)
+						const completed = playedSeconds >= threshold || reason === 'ended'
+
+						const res = await trackService.addPlayRecordFromUniqueKey(
+							track.uniqueKey,
+							{
+								startTime: currentPlayStartAt,
+								durationPlayed: playedSeconds,
+								completed,
+							},
+						)
+
+						if (res.isErr()) {
+							logger.debug('增加播放记录失败（忽略）', {
+								reason,
+								trackKey: track.uniqueKey,
+								message: flatErrorMessage(res.error),
+							})
+						}
+						logger.debug('增加播放记录成功', {
+							trackKey: track.uniqueKey,
+							title: track.title,
+						})
 					} catch (error) {
-						logger.error('重置播放器失败', error)
-						reportErrorToSentry(error, '重置播放器失败', ProjectScope.Player)
+						logger.debug('增加播放记录异常（忽略）', error)
+					} finally {
+						set({ currentPlayStartAt: null })
 					}
 				},
 
@@ -154,8 +184,6 @@ export const usePlayerStore = create<PlayerStore>()(
 							const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
 							if (shuffledIndex > -1)
 								state.shuffledList.splice(shuffledIndex, 1)
-
-							state.currentTrackUniqueKey = nextTrackKeyToPlay
 						}),
 					)
 
@@ -439,11 +467,12 @@ export const usePlayerStore = create<PlayerStore>()(
 				},
 
 				resetStore: async () => {
-					logger.debug('清空队列')
+					logger.debug('重置 store')
 					if (!checkPlayerReady()) return
+					await get()._finalizeAndRecordCurrentPlay('stop')
 					await TrackPlayer.reset()
 					set((state) => ({ ...initialState, repeatMode: state.repeatMode }))
-					logger.info('已清空队列')
+					logger.info('已重置 store')
 				},
 
 				patchAudio: async (
@@ -496,6 +525,8 @@ export const usePlayerStore = create<PlayerStore>()(
 						key: keyToPlay,
 						title: initialTrack.title,
 					})
+					// 先结算上一首的播放记录
+					await get()._finalizeAndRecordCurrentPlay('skip')
 					set({ currentTrackUniqueKey: keyToPlay, isBuffering: true })
 
 					// 1. 获取最新的音频流
@@ -538,6 +569,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						currentTrackUniqueKey: String(finalTrack.uniqueKey),
 						isPlaying: true,
 						isBuffering: false,
+						currentPlayStartAt: Date.now(),
 					})
 				},
 			}
@@ -551,6 +583,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				...state,
 				isPlaying: false,
 				isBuffering: false,
+				currentPlayStartAt: null,
 			}),
 		},
 	),

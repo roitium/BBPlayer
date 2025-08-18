@@ -122,9 +122,18 @@ const PlayerLogic = {
 				repeatMode,
 			})
 
+			// 先记录当前曲目的播放记录（自然结束）
+			await store._finalizeAndRecordCurrentPlay('ended')
+
 			// 单曲结束后的行为
 			if (repeatMode !== RepeatMode.Track) {
 				await store.skipToNext()
+			} else {
+				// 单曲循环：重置开始时间，用于下一次循环的统计
+				usePlayerStore.setState((state) => ({
+					...state,
+					currentPlayStartAt: Date.now(),
+				}))
 			}
 		})
 
