@@ -1,8 +1,10 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { DatabaseError } from '@/lib/errors'
+import { createServiceError } from '@/lib/errors/service'
 import { ProjectScope } from '@/types/core/scope'
-import { reportErrorToSentry } from '@/utils/log'
+import { reportErrorToSentry, toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -128,15 +130,25 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							reportErrorToSentry(
-								new Error('测试错误'),
-								'测试错误',
-								ProjectScope.UI,
+							const err1 = new DatabaseError('创建播放列表失败', {
+								cause: new Error('测试错误'),
+							})
+							const err2 = createServiceError(
+								'NotImplemented',
+								'不存在xxxxxx',
+								{
+									cause: err1,
+									data: {
+										fuck: 1,
+									},
+								},
 							)
+							toastAndLogError('测试错误', err2, 'Test')
+							reportErrorToSentry(err2, '测试错误', ProjectScope.UI)
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						向 sentry 上报一个错误
+						创建一个错误
 					</Button>
 				</View>
 
