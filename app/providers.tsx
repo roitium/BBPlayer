@@ -45,11 +45,7 @@ export function AppProviders({
 	}
 
 	return (
-		<ShareIntentProvider
-			options={{
-				debug: true,
-			}}
-		>
+		<ShareIntentProvider>
 			<SafeAreaProvider>
 				<View
 					onLayout={onLayoutRootView}

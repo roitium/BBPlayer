@@ -1,7 +1,10 @@
 import { AnimatedModal } from '@/components/AnimatedModal'
 import { useCreateNewLocalPlaylist } from '@/hooks/mutations/db/playlist'
+import * as DocumentPicker from 'expo-document-picker'
+import * as FileSystem from 'expo-file-system'
 import { useCallback, useState } from 'react'
-import { Button, Dialog, TextInput } from 'react-native-paper'
+import { View } from 'react-native'
+import { Button, Dialog, IconButton, TextInput } from 'react-native-paper'
 
 export default function CreatePlaylistModal({
 	visiable,
@@ -23,6 +26,30 @@ export default function CreatePlaylistModal({
 		})
 		setVisible(false)
 	}, [coverUrl, createNewPlaylist, description, setVisible, title])
+
+	const handleImagePicker = useCallback(async () => {
+		const result = await DocumentPicker.getDocumentAsync({
+			type: 'image/*',
+			copyToCacheDirectory: true,
+			multiple: false,
+		})
+		if (result.canceled || result.assets.length === 0) return
+		const asset = result.assets[0]
+		const COVERS_DIR = FileSystem.documentDirectory + 'covers/'
+		const dirInfo = await FileSystem.getInfoAsync(COVERS_DIR)
+		if (!dirInfo.exists) {
+			await FileSystem.makeDirectoryAsync(COVERS_DIR, { intermediates: true })
+		}
+		const fileInfo = await FileSystem.getInfoAsync(COVERS_DIR + asset.name)
+		if (fileInfo.exists) {
+			await FileSystem.deleteAsync(COVERS_DIR + asset.name)
+		}
+		await FileSystem.copyAsync({
+			from: asset.uri,
+			to: COVERS_DIR + asset.name,
+		})
+		setCoverUrl(COVERS_DIR + asset.name)
+	}, [])
 
 	return (
 		<AnimatedModal
@@ -48,16 +75,25 @@ export default function CreatePlaylistModal({
 					style={{ maxHeight: 150 }}
 					textAlignVertical='top'
 				/>
-				<TextInput
-					label='封面'
-					onChangeText={setCoverUrl}
-					value={coverUrl ?? undefined}
-					mode='outlined'
-					numberOfLines={1}
-					textAlignVertical='top'
-				/>
+				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+					<TextInput
+						label='封面'
+						onChangeText={setCoverUrl}
+						value={coverUrl ?? undefined}
+						mode='outlined'
+						numberOfLines={1}
+						textAlignVertical='top'
+						style={{ flex: 1 }}
+					/>
+					<IconButton
+						icon='image-plus'
+						size={20}
+						style={{ marginTop: 13 }} // 让按钮看起来像居中
+						onPress={handleImagePicker}
+					/>
+				</View>
 			</Dialog.Content>
-			<Dialog.Actions style={{ justifyContent: 'space-between' }}>
+			<Dialog.Actions>
 				<Button onPress={() => setVisible(false)}>取消</Button>
 				<Button onPress={handleConfirm}>确定</Button>
 			</Dialog.Actions>

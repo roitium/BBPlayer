@@ -4,9 +4,11 @@ import { bilibiliFacade } from '@/lib/facades/bilibili'
 import type { Playlist } from '@/types/core/media'
 import log, { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
+import * as DocumentPicker from 'expo-document-picker'
+import * as FileSystem from 'expo-file-system'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
-import { Button, Dialog, TextInput } from 'react-native-paper'
+import { Button, Dialog, IconButton, TextInput } from 'react-native-paper'
 
 const logger = log.extend('Components.EditPlaylistMetadataModal')
 
@@ -68,6 +70,30 @@ export default function EditPlaylistMetadataModal({
 		title,
 	])
 
+	const handleImagePicker = useCallback(async () => {
+		const result = await DocumentPicker.getDocumentAsync({
+			type: 'image/*',
+			copyToCacheDirectory: true,
+			multiple: false,
+		})
+		if (result.canceled || result.assets.length === 0) return
+		const asset = result.assets[0]
+		const COVERS_DIR = FileSystem.documentDirectory + 'covers/'
+		const dirInfo = await FileSystem.getInfoAsync(COVERS_DIR)
+		if (!dirInfo.exists) {
+			await FileSystem.makeDirectoryAsync(COVERS_DIR, { intermediates: true })
+		}
+		const fileInfo = await FileSystem.getInfoAsync(COVERS_DIR + asset.name)
+		if (fileInfo.exists) {
+			await FileSystem.deleteAsync(COVERS_DIR + asset.name)
+		}
+		await FileSystem.copyAsync({
+			from: asset.uri,
+			to: COVERS_DIR + asset.name,
+		})
+		setCoverUrl(COVERS_DIR + asset.name)
+	}, [])
+
 	return (
 		<AnimatedModal
 			visible={visiable}
@@ -92,14 +118,23 @@ export default function EditPlaylistMetadataModal({
 					style={{ maxHeight: 150 }}
 					textAlignVertical='top'
 				/>
-				<TextInput
-					label='封面'
-					onChangeText={setCoverUrl}
-					value={coverUrl ?? undefined}
-					mode='outlined'
-					numberOfLines={1}
-					textAlignVertical='top'
-				/>
+				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+					<TextInput
+						label='封面'
+						onChangeText={setCoverUrl}
+						value={coverUrl ?? undefined}
+						mode='outlined'
+						numberOfLines={1}
+						textAlignVertical='top'
+						style={{ flex: 1 }}
+					/>
+					<IconButton
+						icon='image-plus'
+						size={20}
+						style={{ marginTop: 13 }} // 让按钮看起来像居中
+						onPress={handleImagePicker}
+					/>
+				</View>
 			</Dialog.Content>
 			<Dialog.Actions style={{ justifyContent: 'space-between' }}>
 				{playlist.type !== 'local' ? (

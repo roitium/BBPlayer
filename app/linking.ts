@@ -41,14 +41,9 @@ export const linking = {
 	},
 
 	subscribe(listener: (url: string) => void): undefined | void | (() => void) {
-		console.debug('react-navigation[subscribe]')
 		const shareIntentStateSubscription = ShareIntentModule?.addListener(
 			'onStateChange',
 			(event) => {
-				console.debug(
-					'react-navigation[subscribe] shareIntentStateListener',
-					event.value,
-				)
 				if (event.value === 'pending') {
 					listener(`${getScheme()}://tabs/home`)
 				}
@@ -61,14 +56,9 @@ export const linking = {
 	},
 	// https://reactnavigation.org/docs/deep-linking/#third-party-integrations
 	getInitialURL() {
-		console.debug('react-navigation[getInitialURL] ?')
 		// REQUIRED FOR ANDROID FIRST LAUNCH
 		const needRedirect = ShareIntentModule?.hasShareIntent(
 			getShareExtensionKey(),
-		)
-		console.debug(
-			'react-navigation[getInitialURL] redirect to ShareIntent screen:',
-			needRedirect,
 		)
 		if (needRedirect) {
 			return `bbplayer://shareintent`
