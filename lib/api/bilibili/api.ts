@@ -25,7 +25,7 @@ import { bilibiliApiClient } from './client'
 import { bv2av, convertToFormDataString, getCsrfToken } from './utils'
 import getWbiEncodedParams from './wbi'
 
-const bilibiliApiLog = log.extend('BILIBILI_API/API')
+const logger = log.extend('3Party.Bilibili.Api')
 
 /**
  * 创建B站API客户端
@@ -140,7 +140,7 @@ export const createBilibiliApi = () => ({
 				const { dash } = response
 
 				if (enableDolby && dash?.dolby?.audio && dash.dolby.audio.length > 0) {
-					bilibiliApiLog.debug('优先使用 Dolby 音频流')
+					logger.debug('优先使用 Dolby 音频流')
 					return okAsync({
 						url: dash.dolby.audio[0].baseUrl,
 						quality: dash.dolby.audio[0].id,
@@ -150,7 +150,7 @@ export const createBilibiliApi = () => ({
 				}
 
 				if (enableHiRes && dash?.flac?.audio) {
-					bilibiliApiLog.debug('次级使用 Hi-Res 音频流')
+					logger.debug('次级使用 Hi-Res 音频流')
 					return okAsync({
 						url: dash.flac.audio.baseUrl,
 						quality: dash.flac.audio.id,
@@ -160,7 +160,7 @@ export const createBilibiliApi = () => ({
 				}
 
 				if (!dash?.audio || dash.audio.length === 0) {
-					bilibiliApiLog.error('未找到有效的音频流数据', { response })
+					logger.error('未找到有效的音频流数据', { response })
 					return errAsync(
 						new BilibiliApiError({
 							message: '未找到有效的音频流数据',
@@ -186,10 +186,10 @@ export const createBilibiliApi = () => ({
 						getTime,
 						type: 'dash',
 					}
-					bilibiliApiLog.debug('找到指定质量音频流', { quality: audioQuality })
+					logger.debug('找到指定质量音频流', { quality: audioQuality })
 				} else {
 					// Fallback: 使用最高质量如果未找到指定质量
-					bilibiliApiLog.warning('未找到指定质量音频流，使用最高质量', {
+					logger.warning('未找到指定质量音频流，使用最高质量', {
 						requestedQuality: audioQuality,
 						availableQualities: dash.audio.map((a) => a.id),
 					})
@@ -205,7 +205,7 @@ export const createBilibiliApi = () => ({
 				}
 
 				if (!stream) {
-					bilibiliApiLog.error('未能确定任何可用的音频流', { response })
+					logger.error('未能确定任何可用的音频流', { response })
 					return errAsync(
 						new BilibiliApiError({
 							message: '未能确定任何可用的音频流',
@@ -251,7 +251,6 @@ export const createBilibiliApi = () => ({
 				'/x/space/wbi/acc/info',
 				params,
 				undefined,
-				'buvid3=1145141919810',
 			)
 		})
 	},
@@ -352,7 +351,7 @@ export const createBilibiliApi = () => ({
 			csrf: csrfToken.value,
 		}
 
-		bilibiliApiLog.debug('批量删除收藏', new URLSearchParams(data).toString())
+		logger.debug('批量删除收藏', new URLSearchParams(data).toString())
 
 		return bilibiliApiClient.post<0>(
 			'/x/v3/fav/resource/batch-del',
@@ -558,7 +557,6 @@ export const createBilibiliApi = () => ({
 				data: { code: number }
 				code: number
 			}
-			bilibiliApiLog.debug('获取二维码登录状态响应数据', data)
 			if (data.code !== 0) {
 				throw new BilibiliApiError({
 					message: `获取二维码登录状态失败: ${data.code}`,

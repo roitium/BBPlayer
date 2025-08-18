@@ -90,14 +90,12 @@ class ApiClient {
 	 * @param endpoint API 端点
 	 * @param params URL 查询参数
 	 * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
-	 * @param customCookie 自定义 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	get<T>(
 		endpoint: string,
 		params?: Record<string, string> | string,
 		fullUrl?: string,
-		customCookie?: string,
 	): ResultAsync<T, BilibiliApiError> {
 		let url = endpoint
 		if (typeof params === 'string') {
@@ -105,11 +103,7 @@ class ApiClient {
 		} else if (params) {
 			url = `${endpoint}?${new URLSearchParams(params).toString()}`
 		}
-		return this.request<T>(
-			url,
-			{ method: 'GET', headers: { Cookie: customCookie ?? '' } },
-			fullUrl,
-		)
+		return this.request<T>(url, { method: 'GET' }, fullUrl)
 	}
 
 	/**
@@ -118,7 +112,6 @@ class ApiClient {
 	 * @param data 请求体数据
 	 * @param headers 请求头（默认请求类型为 application/x-www-form-urlencoded）
 	 * @param fullUrl 完整的 URL，如果提供则忽略 baseUrl
-	 * @param customCookie 自定义 cookie
 	 * @returns ResultAsync 包含成功数据或错误
 	 */
 	post<T>(
@@ -126,7 +119,6 @@ class ApiClient {
 		data?: BodyInit,
 		headers?: Record<string, string>,
 		fullUrl?: string,
-		customCookie?: string,
 	): ResultAsync<T, BilibiliApiError> {
 		return this.request<T>(
 			endpoint,
@@ -134,7 +126,6 @@ class ApiClient {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
-					Cookie: customCookie ?? '',
 					...headers,
 				},
 				body: data,

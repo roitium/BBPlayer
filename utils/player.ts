@@ -7,7 +7,7 @@ import type { RNTPTrack } from '@/types/rntp'
 import { err, ok, type Result } from 'neverthrow'
 import log from './log'
 
-const logger = log.extend('Player.Utils')
+const logger = log.extend('Utils.Player')
 
 // 音频流过期时间 120 分钟
 const STREAM_EXPIRY_TIME = 120 * 60 * 1000

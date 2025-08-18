@@ -197,7 +197,7 @@ export default function LocalPlaylistPage() {
 				})
 				toast.success('添加到下一首播放成功')
 			} catch (error) {
-				toastAndLogError('添加到队列失败', error as Error, SCOPE)
+				toastAndLogError('添加到队列失败', error, SCOPE)
 			}
 		},
 		[addToQueue],
@@ -215,7 +215,7 @@ export default function LocalPlaylistPage() {
 					playNext: false,
 				})
 			} catch (error) {
-				toastAndLogError('播放全部失败', error as Error, SCOPE)
+				toastAndLogError('播放全部失败', error, SCOPE)
 			}
 		},
 		[addToQueue, filteredPlaylistData],

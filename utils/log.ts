@@ -23,7 +23,7 @@ const sentryBreadcrumbTransport: transportFunctionType<object> = (props) => {
 
 // 创建 Logger 实例
 const config = {
-	severity: 'debug',
+	severity: isDev ? 'debug' : 'info',
 	transport: isDev
 		? [mapConsoleTransport, fileAsyncTransport]
 		: [sentryBreadcrumbTransport, fileAsyncTransport],
@@ -148,12 +148,24 @@ export function reportErrorToSentry(
  * @param message 需要显示的信息
  * @param scope 日志作用域
  */
-export function toastAndLogError(message: string, error: Error, scope: string) {
-	toast.error(message, {
-		description: message ?? flatErrorMessage(error),
-		duration: Number.POSITIVE_INFINITY,
-	})
-	log.extend(scope).error(`${message}: ${flatErrorMessage(error)}`)
+export function toastAndLogError(
+	message: string,
+	error: unknown,
+	scope: string,
+) {
+	if (error instanceof Error) {
+		toast.error(message, {
+			description: flatErrorMessage(error),
+			duration: Number.POSITIVE_INFINITY,
+		})
+		log.extend(scope).error(`${message}: ${flatErrorMessage(error)}`)
+	} else {
+		toast.error(message, {
+			description: String(error),
+			duration: Number.POSITIVE_INFINITY,
+		})
+		log.extend(scope).error(`${message}`, error)
+	}
 }
 
 // @ts-expect-error 忽略 TS 报错

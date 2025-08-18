@@ -52,7 +52,7 @@ function HomePage() {
 			try {
 				setSearchHistory(history)
 			} catch (error) {
-				toastAndLogError('保存搜索历史失败', error as Error, 'UI.Home')
+				toastAndLogError('保存搜索历史失败', error, 'UI.Home')
 			}
 		},
 		[setSearchHistory],

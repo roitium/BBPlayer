@@ -5,7 +5,7 @@ import md5 from 'md5'
 import { okAsync, type ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './client'
 
-const wbiLog = log.extend('BILIBILI_API/WBI')
+const logger = log.extend('3Party.Bilibili.Wbi')
 
 const mixinKeyEncTab = [
 	46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49,
@@ -52,7 +52,7 @@ function isSameDayAsToday(timestamp: number) {
 	const dateToCompare = new Date(timestamp)
 
 	if (Number.isNaN(dateToCompare.getTime())) {
-		wbiLog.error('提供的时间戳无效:', timestamp)
+		logger.error('提供的时间戳无效:', timestamp)
 		return false
 	}
 
@@ -77,7 +77,7 @@ function getWbiKeysFromStorage() {
 	try {
 		return JSON.parse(keys) as WbiKeys
 	} catch (error) {
-		wbiLog.warning('从本地解析 wbi_keys 失败，尝试重新获取:', error)
+		logger.warning('从本地解析 wbi_keys 失败，尝试重新获取:', error)
 		return null
 	}
 }
@@ -97,7 +97,7 @@ function getWbiKeys(): ResultAsync<
 		if (isSameDayAsToday(localKeys.timestamp)) {
 			return okAsync(localKeys)
 		}
-		wbiLog.debug('本地 wbi_keys 已过期，重新获取')
+		logger.debug('本地 wbi_keys 已过期，重新获取')
 	}
 	const result = bilibiliApiClient.get<{
 		wbi_img: { img_url: string; sub_url: string }

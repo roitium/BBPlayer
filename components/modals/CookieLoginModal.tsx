@@ -73,11 +73,7 @@ function SetCookieDialog({
 			queryClient.removeQueries({ queryKey: userQueryKeys.all })
 			setVisible(false)
 		} catch (error) {
-			toastAndLogError(
-				'操作失败',
-				error as Error,
-				'Components.CookieLoginModal',
-			)
+			toastAndLogError('操作失败', error, 'Components.CookieLoginModal')
 		} finally {
 			setIsLoading(false)
 		}

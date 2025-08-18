@@ -1,14 +1,14 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { ProjectScope } from '@/types/core/scope'
+import { reportErrorToSentry } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import * as EXPOFS from 'expo-file-system'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../types/navigation'
@@ -64,25 +64,6 @@ export default function TestPage() {
 			console.error('更新失败:', error)
 			toast.error('更新失败', { description: String(error) })
 		}
-	}
-
-	const openLogFile = () => {
-		let date = new Date()
-		const offset = date.getTimezoneOffset()
-		date = new Date(date.getTime() - offset * 60 * 1000)
-		const logFilePath = `${EXPOFS.documentDirectory}logs_${date.toISOString().split('T')[0]}.log`
-
-		FileViewer.open(logFilePath)
-			.then(() => {
-				console.log('open file')
-			})
-			.catch((err) => {
-				console.log('open file error', err)
-				toast.error('打开文件失败', {
-					description: String(err),
-					duration: Number.POSITIVE_INFINITY,
-				})
-			})
 	}
 
 	// 清空队列
@@ -145,21 +126,17 @@ export default function TestPage() {
 						拉取更新并重载
 					</Button>
 					<Button
-						mode='contained'
-						loading={loading}
-						style={{ marginBottom: 8 }}
-						onPress={openLogFile}
-					>
-						打开运行日志
-					</Button>
-					<Button
 						mode='outlined'
 						onPress={() => {
-							navigation.navigate('PlaylistCollection', { id: '114514' })
+							reportErrorToSentry(
+								new Error('测试错误'),
+								'测试错误',
+								ProjectScope.UI,
+							)
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						测试页面
+						向 sentry 上报一个错误
 					</Button>
 				</View>
 
