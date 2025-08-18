@@ -1,12 +1,11 @@
 import { ThirdPartyError } from '@/lib/errors'
 
-export enum BilibiliApiErrorType {
-	RequestFailed = 'RequestFailed',
-	ResponseFailed = 'ResponseFailed',
-	NoCookie = 'NoCookie',
-	CsrfError = 'CsrfError',
-	AudioStreamError = 'AudioStreamError',
-}
+export type BilibiliApiErrorType =
+	| 'RequestFailed'
+	| 'ResponseFailed'
+	| 'NoCookie'
+	| 'CsrfError'
+	| 'AudioStreamError'
 
 interface BilibiliApiErrorDetails {
 	message: string
@@ -23,6 +22,7 @@ interface BilibiliErrorData {
 
 export class BilibiliApiError extends ThirdPartyError {
 	declare data: BilibiliErrorData
+	declare type?: BilibiliApiErrorType
 	constructor({
 		message,
 		msgCode,

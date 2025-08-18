@@ -9,7 +9,7 @@ import {
 } from '../api/bilibili/api'
 import db from '../db/db'
 import type * as schema from '../db/schema'
-import { createFacadeError, FacadeErrorType } from '../errors/facade'
+import { createFacadeError } from '../errors/facade'
 import { createValidationError } from '../errors/service'
 import { artistService, type ArtistService } from '../services/artistService'
 import {
@@ -101,11 +101,9 @@ export class PlaylistFacade {
 				return localPlaylist.id
 			}),
 			(e) =>
-				createFacadeError(
-					FacadeErrorType.PlaylistDuplicateFailed,
-					'复制播放列表失败',
-					{ cause: e },
-				),
+				createFacadeError('PlaylistDuplicateFailed', '复制播放列表失败', {
+					cause: e,
+				}),
 		)
 	}
 
@@ -187,7 +185,7 @@ export class PlaylistFacade {
 			}),
 			(e) =>
 				createFacadeError(
-					FacadeErrorType.UpdateTrackLocalPlaylistsFailed,
+					'UpdateTrackLocalPlaylistsFailed',
 					'更新 Track 在本地播放列表失败',
 					{ cause: e },
 				),
@@ -258,7 +256,7 @@ export class PlaylistFacade {
 			})(),
 			(e) =>
 				createFacadeError(
-					FacadeErrorType.BatchAddTracksToLocalPlaylistFailed,
+					'BatchAddTracksToLocalPlaylistFailed',
 					'批量添加 tracks 到本地播放列表失败',
 					{ cause: e },
 				),

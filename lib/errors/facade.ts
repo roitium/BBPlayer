@@ -1,15 +1,14 @@
 import { FacadeError as BaseFacadeError } from '.'
 
-export enum FacadeErrorType {
-	SyncTaskAlreadyRunning = 'SyncTaskAlreadyRunning',
-	SyncCollectionFailed = 'SyncCollectionFailed',
-	SyncMultiPageFailed = 'SyncMultiPageFailed',
-	SyncFavoriteFailed = 'SyncFavoriteFailed',
-	FetchRemotePlaylistMetadataFailed = 'fetchRemotePlaylistMetadataFailed',
-	PlaylistDuplicateFailed = 'PlaylistDuplicateFailed',
-	UpdateTrackLocalPlaylistsFailed = 'UpdateTrackLocalPlaylistsFailed',
-	BatchAddTracksToLocalPlaylistFailed = 'BatchAddTracksToLocalPlaylistFailed',
-}
+export type FacadeErrorType =
+	| 'SyncTaskAlreadyRunning'
+	| 'SyncCollectionFailed'
+	| 'SyncMultiPageFailed'
+	| 'SyncFavoriteFailed'
+	| 'fetchRemotePlaylistMetadataFailed'
+	| 'PlaylistDuplicateFailed'
+	| 'UpdateTrackLocalPlaylistsFailed'
+	| 'BatchAddTracksToLocalPlaylistFailed'
 
 export class FacadeError extends BaseFacadeError {
 	constructor(
@@ -22,7 +21,7 @@ export class FacadeError extends BaseFacadeError {
 
 export function createSyncTaskAlreadyRunningError(cause?: unknown) {
 	return new FacadeError('同步任务正在进行中，请稍后再试', {
-		type: FacadeErrorType.SyncTaskAlreadyRunning,
+		type: 'SyncTaskAlreadyRunning',
 		cause,
 	})
 }

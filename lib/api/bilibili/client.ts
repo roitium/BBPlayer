@@ -1,6 +1,6 @@
 import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
-import { BilibiliApiError, BilibiliApiErrorType } from '../../errors/bilibili'
+import { BilibiliApiError } from '../../errors/bilibili'
 
 interface ReqResponse<T> {
 	code: number
@@ -44,7 +44,7 @@ class ApiClient {
 			(error) =>
 				new BilibiliApiError({
 					message: error instanceof Error ? error.message : String(error),
-					type: BilibiliApiErrorType.RequestFailed,
+					type: 'RequestFailed',
 				}),
 		)
 			.andThen((response) => {
@@ -53,7 +53,7 @@ class ApiClient {
 						new BilibiliApiError({
 							message: `请求 bilibili API 失败: ${response.status} ${response.statusText}`,
 							msgCode: response.status,
-							type: BilibiliApiErrorType.RequestFailed,
+							type: 'RequestFailed',
 						}),
 					)
 				}
@@ -62,7 +62,7 @@ class ApiClient {
 					(error) =>
 						new BilibiliApiError({
 							message: error instanceof Error ? error.message : String(error),
-							type: BilibiliApiErrorType.ResponseFailed,
+							type: 'ResponseFailed',
 						}),
 				)
 			})
@@ -77,7 +77,7 @@ class ApiClient {
 							message: data.message,
 							msgCode: data.code,
 							rawData: data.data,
-							type: BilibiliApiErrorType.ResponseFailed,
+							type: 'ResponseFailed',
 						}),
 					)
 				}

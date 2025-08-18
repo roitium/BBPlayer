@@ -17,7 +17,6 @@ import type { FacadeError } from '../errors/facade'
 import {
 	createFacadeError,
 	createSyncTaskAlreadyRunningError,
-	FacadeErrorType,
 } from '../errors/facade'
 import type { ArtistService } from '../services/artistService'
 import { artistService } from '../services/artistService'
@@ -198,11 +197,9 @@ export class SyncFacade {
 							return playlistRes.value.id
 						}),
 						(e) =>
-							createFacadeError(
-								FacadeErrorType.SyncCollectionFailed,
-								'同步合集失败',
-								{ cause: e },
-							),
+							createFacadeError('SyncCollectionFailed', '同步合集失败', {
+								cause: e,
+							}),
 					)
 				})
 		} finally {
@@ -302,11 +299,9 @@ export class SyncFacade {
 							return playlistRes.value.id
 						}),
 						(e) =>
-							createFacadeError(
-								FacadeErrorType.SyncMultiPageFailed,
-								'同步多集视频失败',
-								{ cause: e },
-							),
+							createFacadeError('SyncMultiPageFailed', '同步多集视频失败', {
+								cause: e,
+							}),
 					)
 				})
 		} finally {
@@ -384,7 +379,7 @@ export class SyncFacade {
 				if (existTracks.value.find((item) => item.source !== 'bilibili')) {
 					return err(
 						createFacadeError(
-							FacadeErrorType.SyncFavoriteFailed,
+							'SyncFavoriteFailed',
 							'同步收藏夹失败，收藏夹中存在非 Bilibili 的 Track，你的数据库似乎已经坏掉惹。',
 						),
 					)
@@ -597,7 +592,7 @@ export class SyncFacade {
 						.filter((id) => {
 							if (id === undefined)
 								throw createFacadeError(
-									FacadeErrorType.SyncFavoriteFailed,
+									'SyncFavoriteFailed',
 									'已完成 tracks 创建后，却依然没有找到 uniqueKey 对应的 ID',
 								)
 							return id !== undefined
@@ -622,11 +617,9 @@ export class SyncFacade {
 					return localPlaylist.value.id
 				}),
 				(e) =>
-					createFacadeError(
-						FacadeErrorType.SyncFavoriteFailed,
-						'同步收藏夹失败',
-						{ cause: e },
-					),
+					createFacadeError('SyncFavoriteFailed', '同步收藏夹失败', {
+						cause: e,
+					}),
 			)
 			if (txResult.isErr()) {
 				return err(txResult.error)

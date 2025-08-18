@@ -1,5 +1,5 @@
 import useAppStore from '@/hooks/stores/useAppStore'
-import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/bilibili'
 import { err, ok } from 'neverthrow'
 
 /**
@@ -61,7 +61,7 @@ export function getCsrfToken() {
 		return err(
 			new BilibiliApiError({
 				message: '未找到 Cookie',
-				type: BilibiliApiErrorType.NoCookie,
+				type: 'NoCookie',
 			}),
 		)
 	const csrfToken = cookieList.bili_jct as string | undefined
@@ -69,7 +69,7 @@ export function getCsrfToken() {
 		return err(
 			new BilibiliApiError({
 				message: '未找到 CSRF Token',
-				type: BilibiliApiErrorType.CsrfError,
+				type: 'CsrfError',
 			}),
 		)
 	}

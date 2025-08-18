@@ -1,16 +1,7 @@
 import appStore from '@/hooks/stores/appStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
-import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
-import { toastAndLogError } from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import toast from '@/utils/toast'
-import {
-	skipToken,
-	useInfiniteQuery,
-	useMutation,
-	useQuery,
-	useQueryClient,
-} from '@tanstack/react-query'
+import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const favoriteListQueryKeys = {
 	all: ['bilibili', 'favoriteList'] as const,
@@ -91,43 +82,6 @@ export const useGetFavoritePlaylists = (userMid?: number) => {
 			? () => returnOrThrowAsync(bilibiliApi.getFavoritePlaylists(userMid))
 			: skipToken,
 		staleTime: 5 * 60 * 1000, // 5 minutes
-	})
-}
-
-/**
- * 删除收藏夹内容
- */
-export const useBatchDeleteFavoriteListContents = () => {
-	const queryClient = useQueryClient()
-
-	return useMutation({
-		mutationFn: (params: { bvids: string[]; favoriteId: number }) =>
-			returnOrThrowAsync(
-				bilibiliApi.batchDeleteFavoriteListContents(
-					params.favoriteId,
-					params.bvids,
-				),
-			),
-		onSuccess: async (_data, variables) => {
-			toast.success('删除成功')
-			await queryClient.refetchQueries({
-				queryKey: favoriteListQueryKeys.infiniteFavoriteList(
-					variables.favoriteId,
-				),
-			})
-		},
-		onError: (error) => {
-			let errorMessage = '删除失败，请稍后重试'
-			if (error instanceof BilibiliApiError) {
-				if (error.type === BilibiliApiErrorType.CsrfError) {
-					errorMessage = '删除失败：csrf token 过期，请检查 cookie 后重试'
-				} else {
-					errorMessage = `删除失败：${error.message} (${error.data.msgCode})`
-				}
-			}
-
-			toastAndLogError(errorMessage, error, 'Query.Bilibili.Favorite')
-		},
 	})
 }
 

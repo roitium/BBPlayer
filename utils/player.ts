@@ -1,6 +1,6 @@
 import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
-import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/bilibili'
 import type { PlayerError } from '@/lib/errors/player'
 import { createPlayerError } from '@/lib/errors/player'
 import type { BilibiliTrack, Track } from '@/types/core/media'
@@ -145,7 +145,7 @@ async function checkAndUpdateAudioStream(
 						new BilibiliApiError({
 							message: `视频 ${bvid} 没有分 P 信息`,
 							rawData: pages,
-							type: BilibiliApiErrorType.AudioStreamError,
+							type: 'AudioStreamError',
 						}),
 					)
 				},
@@ -181,14 +181,13 @@ async function checkAndUpdateAudioStream(
 			(streamInfo) => {
 				if (!streamInfo?.url) {
 					const errorMsg = `${track.bilibiliMetadata.bvid} 获取音频流成功但没有有效的 URL`
-					// playerLog.sentry(errorMsg, { streamInfo, bvid, cid })
 					return err(
 						new BilibiliApiError({
 							message: errorMsg,
-							type: BilibiliApiErrorType.AudioStreamError,
+							type: 'AudioStreamError',
 							rawData: streamInfo,
 						}),
-					) // 返回错误
+					)
 				}
 
 				logger.debug('音频流获取成功', {

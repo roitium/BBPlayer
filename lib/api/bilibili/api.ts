@@ -1,4 +1,4 @@
-import { BilibiliApiError, BilibiliApiErrorType } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/bilibili'
 import {
 	type BilibiliAudioStreamParams,
 	type BilibiliAudioStreamResponse,
@@ -163,7 +163,7 @@ export const createBilibiliApi = () => ({
 					return errAsync(
 						new BilibiliApiError({
 							message: '未找到有效的音频流数据',
-							type: BilibiliApiErrorType.AudioStreamError,
+							type: 'AudioStreamError',
 						}),
 					)
 				}
@@ -208,7 +208,7 @@ export const createBilibiliApi = () => ({
 					return errAsync(
 						new BilibiliApiError({
 							message: '未能确定任何可用的音频流',
-							type: BilibiliApiErrorType.AudioStreamError,
+							type: 'AudioStreamError',
 						}),
 					)
 				}
@@ -549,7 +549,7 @@ export const createBilibiliApi = () => ({
 				throw new BilibiliApiError({
 					message: `请求 bilibili API 失败: ${response.status} ${response.statusText}`,
 					msgCode: response.status,
-					type: BilibiliApiErrorType.RequestFailed,
+					type: 'RequestFailed',
 				})
 			}
 			const data = (await response.json()) as {
@@ -561,7 +561,7 @@ export const createBilibiliApi = () => ({
 					message: `获取二维码登录状态失败: ${data.code}`,
 					msgCode: data.code,
 					rawData: data,
-					type: BilibiliApiErrorType.ResponseFailed,
+					type: 'ResponseFailed',
 				})
 			}
 			const code = data.data.code as BilibiliQrCodeLoginStatus
@@ -577,7 +577,7 @@ export const createBilibiliApi = () => ({
 					message: '未获取到 Set-Cookie 头信息',
 					msgCode: 0,
 					rawData: null,
-					type: BilibiliApiErrorType.ResponseFailed,
+					type: 'ResponseFailed',
 				})
 			}
 			return {
@@ -594,7 +594,7 @@ export const createBilibiliApi = () => ({
 				message: error instanceof Error ? error.message : String(error),
 				msgCode: 0,
 				rawData: null,
-				type: BilibiliApiErrorType.ResponseFailed,
+				type: 'ResponseFailed',
 			})
 		})
 	},
@@ -615,7 +615,7 @@ export const createBilibiliApi = () => ({
 			(e) =>
 				new BilibiliApiError({
 					message: (e as Error).message,
-					type: BilibiliApiErrorType.RequestFailed,
+					type: 'RequestFailed',
 				}),
 		).andThen((response) => {
 			if (!response.ok) {
@@ -623,7 +623,7 @@ export const createBilibiliApi = () => ({
 					new BilibiliApiError({
 						message: `请求 b23.tv 短链接失败: ${response.status} ${response.statusText}`,
 						msgCode: response.status,
-						type: BilibiliApiErrorType.RequestFailed,
+						type: 'RequestFailed',
 					}),
 				)
 			}
@@ -634,7 +634,7 @@ export const createBilibiliApi = () => ({
 						message: '未获取到 b23.tv 短链接的解析结果',
 						msgCode: 0,
 						rawData: null,
-						type: BilibiliApiErrorType.ResponseFailed,
+						type: 'ResponseFailed',
 					}),
 				)
 			}

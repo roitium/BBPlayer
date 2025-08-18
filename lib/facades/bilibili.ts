@@ -5,7 +5,7 @@ import {
 	type bilibiliApi as BilibiliApiService,
 } from '../api/bilibili/api'
 import { av2bv } from '../api/bilibili/utils'
-import { createFacadeError, FacadeErrorType } from '../errors/facade'
+import { createFacadeError } from '../errors/facade'
 
 export class BilibiliFacade {
 	constructor(private readonly bilibiliApi: typeof BilibiliApiService) {}
@@ -20,7 +20,7 @@ export class BilibiliFacade {
 				if (result.isErr()) {
 					return err(
 						createFacadeError(
-							FacadeErrorType.FetchRemotePlaylistMetadataFailed,
+							'fetchRemotePlaylistMetadataFailed',
 							'获取合集元数据失败',
 							{ cause: result.error },
 						),
@@ -38,7 +38,7 @@ export class BilibiliFacade {
 				if (result.isErr()) {
 					return err(
 						createFacadeError(
-							FacadeErrorType.FetchRemotePlaylistMetadataFailed,
+							'fetchRemotePlaylistMetadataFailed',
 							'获取多集视频元数据失败',
 							{ cause: result.error },
 						),
@@ -59,7 +59,7 @@ export class BilibiliFacade {
 				if (result.isErr()) {
 					return err(
 						createFacadeError(
-							FacadeErrorType.FetchRemotePlaylistMetadataFailed,
+							'fetchRemotePlaylistMetadataFailed',
 							'获取收藏夹元数据失败',
 							{ cause: result.error },
 						),
@@ -75,7 +75,7 @@ export class BilibiliFacade {
 			default:
 				return err(
 					createFacadeError(
-						FacadeErrorType.FetchRemotePlaylistMetadataFailed,
+						'fetchRemotePlaylistMetadataFailed',
 						`获取播放列表元数据失败：未知的播放列表类型：${type}`,
 					),
 				)
