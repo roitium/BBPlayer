@@ -1,3 +1,4 @@
+import PlayCountLeaderboardModal from '@/components/modals/PlayCountLeaderboardModal'
 import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import type { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
@@ -5,7 +6,7 @@ import type { RouteProp } from '@react-navigation/native'
 import { useFocusEffect, useRoute } from '@react-navigation/native'
 import { useState } from 'react'
 import { Dimensions, View } from 'react-native'
-import { Text, useTheme } from 'react-native-paper'
+import { IconButton, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view'
 import CollectionListComponent from './components/collection/CollectionList'
@@ -36,6 +37,7 @@ export enum Tabs {
 
 export default function Library() {
 	const [index, setIndex] = useState(Tabs.Local)
+	const [leaderboardVisible, setLeaderboardVisible] = useState(false)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
@@ -75,6 +77,10 @@ export default function Library() {
 					>
 						音乐库
 					</Text>
+					<IconButton
+						icon='trophy'
+						onPress={() => setLeaderboardVisible(true)}
+					/>
 				</View>
 				<TabView
 					style={{ flex: 1, backgroundColor: colors.background }}
@@ -150,6 +156,10 @@ export default function Library() {
 					}}
 				/>
 			</View>
+			<PlayCountLeaderboardModal
+				visible={leaderboardVisible}
+				setVisible={setLeaderboardVisible}
+			/>
 		</View>
 	)
 }

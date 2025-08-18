@@ -556,6 +556,51 @@ export class TrackService {
 			return okAsync(uniqueKeyToIdMap)
 		})
 	}
+
+	/**
+	 * 获取播放次数排行榜（按播放次数降序）。
+	 * @param limit 返回的最大条目数，默认 50
+	 * @param options.onlyCompleted 是否仅统计完整播放（completed=true），默认 false
+	 */
+	public getPlayCountLeaderboard(
+		limit = 20,
+		options?: { onlyCompleted?: boolean },
+	): ResultAsync<
+		{ track: Track; playCount: number }[],
+		DatabaseError | ServiceError
+	> {
+		const onlyCompleted = options?.onlyCompleted ?? true
+		return ResultAsync.fromPromise(
+			this.db.query.tracks.findMany({
+				with: {
+					artist: true,
+					bilibiliMetadata: true,
+					localMetadata: true,
+				},
+			}),
+			(e) => new DatabaseError('获取播放次数排行榜失败', { cause: e }),
+		).andThen((rows) => {
+			const items: { track: Track; playCount: number }[] = []
+			for (const row of rows) {
+				const track = this.formatTrack(row)
+				if (!track) continue
+				const history = row.playHistory ?? []
+				const count = onlyCompleted
+					? history.filter((r) => r?.completed === true).length
+					: history.length
+				if (count > 0) items.push({ track, playCount: count })
+			}
+			items.sort((a, b) => {
+				if (b.playCount !== a.playCount) return b.playCount - a.playCount
+				// 次排序：最近更新在前（防止顺序抖动）
+				return (
+					new Date(b.track.updatedAt).getTime() -
+					new Date(a.track.updatedAt).getTime()
+				)
+			})
+			return okAsync(items.slice(0, Math.max(0, limit)))
+		})
+	}
 }
 
 export const trackService = new TrackService(db)

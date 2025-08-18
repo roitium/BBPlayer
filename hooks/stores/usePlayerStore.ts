@@ -89,14 +89,23 @@ export const usePlayerStore = create<PlayerStore>()(
 						const { position } = await TrackPlayer.getProgress()
 						const playedSeconds = Math.max(0, Math.floor(position))
 						const duration = Math.max(1, Math.floor(track.duration))
+						const elapsedSeconds = Math.max(
+							0,
+							Math.floor((Date.now() - currentPlayStartAt) / 1000),
+						)
+						const effectivePlayed = Math.min(
+							playedSeconds,
+							elapsedSeconds,
+							duration,
+						)
 						const threshold = Math.max(Math.floor(duration * 0.9), duration - 2)
-						const completed = playedSeconds >= threshold || reason === 'ended'
+						const completed = effectivePlayed >= threshold || reason === 'ended'
 
 						const res = await trackService.addPlayRecordFromUniqueKey(
 							track.uniqueKey,
 							{
 								startTime: currentPlayStartAt,
-								durationPlayed: playedSeconds,
+								durationPlayed: effectivePlayed,
 								completed,
 							},
 						)
