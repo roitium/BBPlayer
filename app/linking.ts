@@ -1,4 +1,10 @@
 import { getStateFromPath as getStateFromPathDefault } from '@react-navigation/native'
+import * as Linking from 'expo-linking'
+import {
+	ShareIntentModule,
+	getScheme,
+	getShareExtensionKey,
+} from 'expo-share-intent'
 
 export const linking = {
 	prefixes: ['bbplayer://', 'trackplayer://'],
@@ -9,7 +15,6 @@ export const linking = {
 				path: 'tabs',
 				screens: {
 					Home: 'home',
-					Search: 'search',
 					Library: 'library',
 					About: 'about',
 				},
@@ -33,5 +38,42 @@ export const linking = {
 			return { routes: [{ name: 'Player' }] }
 		}
 		return getStateFromPathDefault(path, options)
+	},
+
+	subscribe(listener: (url: string) => void): undefined | void | (() => void) {
+		console.debug('react-navigation[subscribe]')
+		const shareIntentStateSubscription = ShareIntentModule?.addListener(
+			'onStateChange',
+			(event) => {
+				console.debug(
+					'react-navigation[subscribe] shareIntentStateListener',
+					event.value,
+				)
+				if (event.value === 'pending') {
+					listener(`${getScheme()}://tabs/home`)
+				}
+			},
+		)
+		return () => {
+			// Clean up the event listeners
+			shareIntentStateSubscription?.remove()
+		}
+	},
+	// https://reactnavigation.org/docs/deep-linking/#third-party-integrations
+	getInitialURL() {
+		console.debug('react-navigation[getInitialURL] ?')
+		// REQUIRED FOR ANDROID FIRST LAUNCH
+		const needRedirect = ShareIntentModule?.hasShareIntent(
+			getShareExtensionKey(),
+		)
+		console.debug(
+			'react-navigation[getInitialURL] redirect to ShareIntent screen:',
+			needRedirect,
+		)
+		if (needRedirect) {
+			return `bbplayer://shareintent`
+		}
+		const url = Linking.getLinkingURL()
+		return url
 	},
 }

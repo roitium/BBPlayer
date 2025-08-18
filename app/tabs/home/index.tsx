@@ -3,7 +3,8 @@ import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { useCallback, useState } from 'react'
+import { useShareIntentContext } from 'expo-share-intent'
+import { useCallback, useEffect, useState } from 'react'
 import { Alert, View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
@@ -29,6 +30,8 @@ function HomePage() {
 	const [searchHistory, setSearchHistory] =
 		useMMKVObject<SearchHistoryItem[]>(SEARCH_HISTORY_KEY)
 	const [isLoading, setIsLoading] = useState(false)
+	const { hasShareIntent, shareIntent, resetShareIntent } =
+		useShareIntentContext()
 
 	const {
 		data: personalInfo,
@@ -95,21 +98,36 @@ function HomePage() {
 		[searchHistory, saveSearchHistory],
 	)
 
-	const handleEnter = async (query: string) => {
-		if (!query.trim()) return
-		setIsLoading(true)
-		const addToHistory = await matchSearchStrategies(query, navigation)
-		if (addToHistory) {
-			addSearchHistory(query)
-		}
-		setIsLoading(false)
-	}
+	const handleEnter = useCallback(
+		async (query: string) => {
+			if (!query.trim()) return
+			setIsLoading(true)
+			const addToHistory = await matchSearchStrategies(query, navigation)
+			if (addToHistory) {
+				addSearchHistory(query)
+			}
+			setIsLoading(false)
+		},
+		[addSearchHistory, navigation],
+	)
 
 	const handleSearchItemClick = (query: string) => {
 		setSearchQuery(query)
 		// 直接跳转到搜索页面，我们可以确定，所有保存的搜索历史都是有效的关键词，而非 url/id 什么的
 		navigation.navigate('SearchResult', { query })
 	}
+
+	useEffect(() => {
+		if (!hasShareIntent) return
+		const query = (shareIntent?.webUrl ?? shareIntent?.text ?? '').trim()
+		if (!query) {
+			resetShareIntent()
+			return
+		}
+
+		resetShareIntent()
+		void handleEnter(query)
+	}, [hasShareIntent, shareIntent, navigation, resetShareIntent, handleEnter])
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>

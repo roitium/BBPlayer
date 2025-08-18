@@ -5,6 +5,7 @@ import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
 import { NavigationContainer } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { ShareIntentProvider } from 'expo-share-intent'
 import { useMemo } from 'react'
 import { useColorScheme, View } from 'react-native'
 import { SystemBars } from 'react-native-edge-to-edge'
@@ -44,41 +45,47 @@ export function AppProviders({
 	}
 
 	return (
-		<SafeAreaProvider>
-			<View
-				onLayout={onLayoutRootView}
-				style={{ flex: 1 }}
-			>
-				<Sentry.ErrorBoundary
-					// eslint-disable-next-line @typescript-eslint/unbound-method
-					fallback={({ error, resetError }) => (
-						<GlobalErrorFallback
-							error={error}
-							resetError={resetError}
-						/>
-					)}
+		<ShareIntentProvider
+			options={{
+				debug: true,
+			}}
+		>
+			<SafeAreaProvider>
+				<View
+					onLayout={onLayoutRootView}
+					style={{ flex: 1 }}
 				>
-					<GestureHandlerRootView style={{ flex: 1 }}>
-						<QueryClientProvider client={queryClient}>
-							<PaperProvider theme={paperTheme}>
-								<UpdateGate />
-								<NavigationContainer
-									ref={navRef}
-									linking={linking}
-									fallback={
-										<View style={{ flex: 1, justifyContent: 'center' }}>
-											<ActivityIndicator size={'large'} />
-										</View>
-									}
-								>
-									<RootLayoutNav />
-								</NavigationContainer>
-							</PaperProvider>
-						</QueryClientProvider>
-					</GestureHandlerRootView>
-				</Sentry.ErrorBoundary>
-				<SystemBars style='auto' />
-			</View>
-		</SafeAreaProvider>
+					<Sentry.ErrorBoundary
+						// eslint-disable-next-line @typescript-eslint/unbound-method
+						fallback={({ error, resetError }) => (
+							<GlobalErrorFallback
+								error={error}
+								resetError={resetError}
+							/>
+						)}
+					>
+						<GestureHandlerRootView style={{ flex: 1 }}>
+							<QueryClientProvider client={queryClient}>
+								<PaperProvider theme={paperTheme}>
+									<UpdateGate />
+									<NavigationContainer
+										ref={navRef}
+										linking={linking}
+										fallback={
+											<View style={{ flex: 1, justifyContent: 'center' }}>
+												<ActivityIndicator size={'large'} />
+											</View>
+										}
+									>
+										<RootLayoutNav />
+									</NavigationContainer>
+								</PaperProvider>
+							</QueryClientProvider>
+						</GestureHandlerRootView>
+					</Sentry.ErrorBoundary>
+					<SystemBars style='auto' />
+				</View>
+			</SafeAreaProvider>
+		</ShareIntentProvider>
 	)
 }
