@@ -147,6 +147,8 @@ const SettingsSection = memo(function SettingsSection() {
 	const enableSentryReport = useAppStore(
 		(state) => state.settings.enableSentryReport,
 	)
+	const setEnableDebugLog = useAppStore((state) => state.setEnableDebugLog)
+	const enableDebugLog = useAppStore((state) => state.settings.enableDebugLog)
 
 	const shareLogFile = async () => {
 		const d = new Date()
@@ -188,6 +190,20 @@ const SettingsSection = memo(function SettingsSection() {
 				<Switch
 					value={enableSentryReport}
 					onValueChange={setEnableSentryReport}
+				/>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: 16,
+				}}
+			>
+				<Text>打开 Debug 日志</Text>
+				<Switch
+					value={enableDebugLog}
+					onValueChange={setEnableDebugLog}
 				/>
 			</View>
 			<View

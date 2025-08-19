@@ -9,6 +9,10 @@ interface Settings {
 	 * 启用 Sentry 错误报告
 	 */
 	enableSentryReport: boolean
+	/**
+	 * 打开 DEBUG 等级日志
+	 */
+	enableDebugLog: boolean
 }
 
 interface Modals {
@@ -34,6 +38,7 @@ interface AppState {
 	// Settings
 	setEnableSendPlayHistory: (value: boolean) => void
 	setEnableSentryReport: (value: boolean) => void
+	setEnableDebugLog: (value: boolean) => void
 }
 
 export type { AppState, Settings }

@@ -44,6 +44,8 @@ export const serializeCookieObject = (
 export const useAppStore = create<AppState>()((set, get) => {
 	const sendPlayHistory = storage.getBoolean('send_play_history') ?? true
 	const enableSentryReport = storage.getBoolean('enable_sentry_report') ?? true
+	const enableDebugLog = storage.getBoolean('enable_debug_log') ?? false
+	log.setSeverity(enableDebugLog ? 'debug' : 'info')
 	const initialCookieString = storage.getString('bilibili_cookie')
 	let initialCookie: Record<string, string> | null = null
 
@@ -60,11 +62,12 @@ export const useAppStore = create<AppState>()((set, get) => {
 		hasCookie: !!initialCookie,
 		sendPlayHistory,
 		enableSentryReport,
+		enableDebugLog,
 	})
 
 	return {
 		bilibiliCookie: initialCookie,
-		settings: { sendPlayHistory, enableSentryReport },
+		settings: { sendPlayHistory, enableSentryReport, enableDebugLog },
 		modals: { qrCodeLoginModalVisible: false, welcomeModalVisible: false },
 
 		hasBilibiliCookie: () => {
@@ -135,6 +138,14 @@ export const useAppStore = create<AppState>()((set, get) => {
 				],
 				{ cancelable: true },
 			)
+		},
+
+		setEnableDebugLog: (value) => {
+			set((state) => ({
+				settings: { ...state.settings, enableDebugLog: value },
+			}))
+			storage.set('enable_debug_log', value)
+			log.setSeverity(value ? 'debug' : 'info')
 		},
 	}
 })

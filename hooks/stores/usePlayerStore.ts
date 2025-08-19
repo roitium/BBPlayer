@@ -84,6 +84,11 @@ export const usePlayerStore = create<PlayerStore>()(
 					try {
 						const { currentPlayStartAt } = get()
 						const track = get()._getCurrentTrack()
+						logger.debug('调用 _finalizeAndRecordCurrentPlay', {
+							currentPlayStartAt,
+							reason,
+							trackTitle: track?.title,
+						})
 						if (!track || !currentPlayStartAt) return
 
 						const { position } = await TrackPlayer.getProgress()
@@ -100,6 +105,17 @@ export const usePlayerStore = create<PlayerStore>()(
 						)
 						const threshold = Math.max(Math.floor(duration * 0.9), duration - 2)
 						const completed = effectivePlayed >= threshold || reason === 'ended'
+						logger.debug('完成播放标记', {
+							currentPlayStartAt,
+							reason,
+							trackTitle: track?.title,
+							playedSeconds,
+							elapsedSeconds,
+							duration,
+							effectivePlayed,
+							threshold,
+							completed,
+						})
 
 						const res = await trackService.addPlayRecordFromUniqueKey(
 							track.uniqueKey,
