@@ -16,11 +16,8 @@ const initPlayer = async () => {
 	logger.info('开始初始化播放器')
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
-	// 在初始化时修改一次重复模式，与水合后的 store 状态保持一致
-	const repeatMode = usePlayerStore.getState().repeatMode
-	await TrackPlayer.setRepeatMode(
-		repeatMode === RepeatMode.Track ? RepeatMode.Track : RepeatMode.Off,
-	)
+	// 初始化后强制将 RNTP 重复模式设为 Off，循环由我们内部管理
+	await TrackPlayer.setRepeatMode(RepeatMode.Off)
 	global.playerIsReady = true
 	logger.info('播放器初始化完成')
 }
@@ -129,6 +126,8 @@ const PlayerLogic = {
 			if (repeatMode !== RepeatMode.Track) {
 				await store.skipToNext()
 			} else {
+				await store.seekTo(0)
+				await TrackPlayer.play()
 				// 单曲循环：重置开始时间，用于下一次循环的统计
 				usePlayerStore.setState((state) => ({
 					...state,

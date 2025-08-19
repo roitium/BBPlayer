@@ -104,7 +104,7 @@ export const usePlayerStore = create<PlayerStore>()(
 							duration,
 						)
 						const threshold = Math.max(Math.floor(duration * 0.9), duration - 2)
-						const completed = effectivePlayed >= threshold || reason === 'ended'
+						const completed = effectivePlayed >= threshold
 						logger.debug('完成播放标记', {
 							currentPlayStartAt,
 							reason,
@@ -399,7 +399,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					const { repeatMode } = get()
 					const currentIndex = get()._getCurrentIndex()
 
-					if (currentIndex === -1 || activeList.length <= 1) {
+					if (currentIndex === -1) {
 						await TrackPlayer.pause()
 						set({ isPlaying: false })
 						return
@@ -438,10 +438,10 @@ export const usePlayerStore = create<PlayerStore>()(
 					if (!checkPlayerReady()) return
 
 					let newMode: RepeatMode
-					// 在设置播放器的重复模式时，列表循环、关闭循环模式都设置为 Off，方便靠我们自己的逻辑管理
+					// 单曲循环也改为我们自己管理：RNTP 永远保持 Off
 					if (repeatMode === RepeatMode.Off) {
 						newMode = RepeatMode.Track
-						await TrackPlayer.setRepeatMode(newMode)
+						await TrackPlayer.setRepeatMode(RepeatMode.Off)
 					} else if (repeatMode === RepeatMode.Track) {
 						newMode = RepeatMode.Queue
 						await TrackPlayer.setRepeatMode(RepeatMode.Off)

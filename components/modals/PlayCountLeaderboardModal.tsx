@@ -2,9 +2,8 @@ import { AnimatedModal } from '@/components/AnimatedModal'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'
-import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { FlatList, View } from 'react-native'
 import { Button, Dialog, Divider, Text, useTheme } from 'react-native-paper'
 
 interface LeaderboardItem {
@@ -131,7 +130,7 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 			onDismiss={handleDismiss}
 		>
 			<Dialog.Title>播放排行榜</Dialog.Title>
-			<Dialog.Content style={{ minHeight: 200 }}>
+			<Dialog.Content>
 				<Text
 					variant='bodySmall'
 					style={{ marginBottom: 8, opacity: 0.7 }}
@@ -148,16 +147,14 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 						<Text>{error}</Text>
 					</View>
 				) : (
-					<View style={{ flex: 1, minHeight: 280 }}>
-						<FlashList
-							data={data ?? []}
-							estimatedItemSize={70}
-							keyExtractor={keyExtractor}
-							renderItem={renderItem}
-							ListEmptyComponent={ListEmpty}
-							ItemSeparatorComponent={ItemSeparator}
-						/>
-					</View>
+					<FlatList
+						data={data ?? []}
+						style={{ height: 300 }}
+						keyExtractor={keyExtractor}
+						renderItem={renderItem}
+						ListEmptyComponent={ListEmpty}
+						ItemSeparatorComponent={ItemSeparator}
+					/>
 				)}
 			</Dialog.Content>
 			<Dialog.Actions>
