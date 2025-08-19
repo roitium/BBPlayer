@@ -60,10 +60,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 	const { colors } = useTheme()
 	const queryClient = useQueryClient()
 	const { data: personalInfo } = usePersonalInformation()
-	const enable = useAppStore(
-		(state) =>
-			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
-	)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 	const setIsQrCodeLoginDialogVisible = useAppStore(
 		(state) => state.setQrCodeLoginModalVisible,
 	)

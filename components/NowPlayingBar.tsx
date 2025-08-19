@@ -1,4 +1,4 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import {
 	usePlaybackProgress,
 	usePlayerStore,

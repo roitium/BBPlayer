@@ -1,5 +1,5 @@
 import type { Track } from '@/types/core/media'
-import { usePlayerStore } from '../stores/usePlayerStore'
+import { usePlayerStore } from '../usePlayerStore'
 
 const useCurrentTrack = (): Track | null => {
 	return usePlayerStore((state) =>

@@ -2,11 +2,11 @@ import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTrac
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
@@ -99,10 +99,7 @@ export default function UploaderPage() {
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,
 	)
-	const enable = useAppStore(
-		(state) =>
-			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
-	)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 	const setIsQrCodeLoginDialogVisible = useAppStore(
 		(state) => state.setQrCodeLoginModalVisible,
 	)

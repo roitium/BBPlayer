@@ -1,7 +1,7 @@
 import AddToFavoriteListsModal from '@/components/modals/AddVideoToBilibiliFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'

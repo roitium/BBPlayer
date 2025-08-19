@@ -1,6 +1,8 @@
 import type { RootStackParamList } from '@/types/navigation'
+import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
@@ -51,7 +53,17 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 					style={{ width: 120, height: 120, borderRadius: 8 }}
 				/>
 				<View style={{ marginLeft: 16, flex: 1, justifyContent: 'center' }}>
-					<TouchableRipple onPress={() => setShowFullTitle(!showFullTitle)}>
+					<TouchableRipple
+						onPress={() => setShowFullTitle(!showFullTitle)}
+						onLongPress={async () => {
+							const result = await Clipboard.setStringAsync(title)
+							if (!result) {
+								toast.error('复制失败')
+							} else {
+								toast.success('已复制标题到剪贴板')
+							}
+						}}
+					>
 						<Text
 							variant='titleLarge'
 							style={{ fontWeight: 'bold' }}

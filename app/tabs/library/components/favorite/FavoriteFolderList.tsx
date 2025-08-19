@@ -1,6 +1,6 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useNavigation } from '@react-navigation/native'
@@ -22,10 +22,7 @@ const FavoriteFolderListComponent = memo(() => {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const [query, setQuery] = useState('')
-	const enable = useAppStore(
-		(state) =>
-			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
-	)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
 	const { data: userInfo } = usePersonalInformation()
 	const {

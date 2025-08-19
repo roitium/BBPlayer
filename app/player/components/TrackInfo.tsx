@@ -1,4 +1,4 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { Image } from 'expo-image'
 import { Dimensions, TouchableOpacity, View } from 'react-native'
 import { IconButton, Text, TouchableRipple, useTheme } from 'react-native-paper'

@@ -2,18 +2,19 @@ import { AnimatedModal } from '@/components/AnimatedModal'
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
+import EditTrackMetadataModal from '@/components/modals/edit-metadata/editTrackMetadataModal'
 import {
 	useBatchDeleteTracksFromLocalPlaylist,
 	useDeletePlaylist,
 	useDuplicatePlaylist,
 	usePlaylistSync,
 } from '@/hooks/mutations/db/playlist'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	usePlaylistContents,
 	usePlaylistMetadata,
 	useSearchTracksInPlaylist,
 } from '@/hooks/queries/db/playlist'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import type { Playlist, Track } from '@/types/core/media'
@@ -92,6 +93,7 @@ export default function LocalPlaylistPage() {
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const [editTrackModalVisible, setEditTrackModalVisible] = useState(false)
 
 	const {
 		data: playlistData,
@@ -262,14 +264,24 @@ export default function LocalPlaylistPage() {
 					},
 				)
 			}
-			menuItems.push({
-				title: '复制封面链接',
-				leadingIcon: 'link',
-				onPress: () => {
-					void Clipboard.setStringAsync(item.coverUrl ?? '')
-					toast.success('已复制到剪贴板')
+			menuItems.push(
+				{
+					title: '复制封面链接',
+					leadingIcon: 'link',
+					onPress: () => {
+						void Clipboard.setStringAsync(item.coverUrl ?? '')
+						toast.success('已复制到剪贴板')
+					},
 				},
-			})
+				{
+					title: '改名',
+					leadingIcon: 'pencil',
+					onPress: () => {
+						setCurrentModalTrack(item)
+						setEditTrackModalVisible(true)
+					},
+				},
+			)
 			if (playlistMetadata?.type === 'local') {
 				menuItems.push({
 					title: '删除歌曲',
@@ -598,6 +610,14 @@ export default function LocalPlaylistPage() {
 					visible={batchAddTracksModalVisible}
 					setVisible={setBatchAddTracksModalVisible}
 					payloads={batchAddTracksModalPayloads}
+				/>
+			)}
+
+			{currentModalTrack && (
+				<EditTrackMetadataModal
+					track={currentModalTrack}
+					visiable={editTrackModalVisible}
+					setVisible={setEditTrackModalVisible}
 				/>
 			)}
 		</View>

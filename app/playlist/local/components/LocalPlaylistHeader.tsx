@@ -1,5 +1,7 @@
 import type { Playlist } from '@/types/core/media'
 import { formatRelativeTime } from '@/utils/time'
+import toast from '@/utils/toast'
+import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
 import { memo, useMemo, useState } from 'react'
 import { View } from 'react-native'
@@ -99,7 +101,17 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 						marginVertical: 8,
 					}}
 				>
-					<TouchableRipple onPress={() => setShowFullTitle(!showFullTitle)}>
+					<TouchableRipple
+						onPress={() => setShowFullTitle(!showFullTitle)}
+						onLongPress={async () => {
+							const result = await Clipboard.setStringAsync(playlist.title)
+							if (!result) {
+								toast.error('复制失败')
+							} else {
+								toast.success('已复制标题到剪贴板')
+							}
+						}}
+					>
 						<Text
 							variant='titleLarge'
 							style={{ fontWeight: 'bold' }}

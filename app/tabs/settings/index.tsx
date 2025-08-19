@@ -1,6 +1,6 @@
 import CookieLoginModal from '@/components/modals/CookieLoginModal'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'

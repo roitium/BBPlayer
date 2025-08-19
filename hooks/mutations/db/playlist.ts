@@ -13,14 +13,15 @@ import { useMutation } from '@tanstack/react-query'
 
 const SCOPE = 'Mutation.DB.Playlist'
 
-queryClient.setMutationDefaults(['db', 'playlists'], {
+queryClient.setMutationDefaults(['db', 'playlist'], {
 	retry: false,
 })
 
-// TODO: 我们是否应该使用 removeQueries / resetQueries？refetchQuery 会不会导致一次请求过多？invalidateQueries 真的有效吗？？？我搞不懂 React Query。。。
+// React Query 的 invalidateQueries 会直接在后台刷新当前页面活跃的查询，能满足咱们的需求。
+// 只有当我们需要在 mutate 之后要跳转到另一个页面时，才需要去 invalidateQueries
 export const usePlaylistSync = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'sync'],
+		mutationKey: ['db', 'playlist', 'sync'],
 		mutationFn: async ({
 			remoteSyncId,
 			type,
@@ -34,17 +35,17 @@ export const usePlaylistSync = () => {
 			}
 			return result.value
 		},
-		onSuccess: (id) => {
+		onSuccess: async (id) => {
 			toast.success('同步成功')
 			if (!id) return
-			void Promise.all([
-				queryClient.refetchQueries({
+			await Promise.all([
+				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistContents(id),
 				}),
-				queryClient.refetchQueries({
+				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistMetadata(id),
 				}),
-				queryClient.refetchQueries({
+				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistLists(),
 				}),
 			])
@@ -66,7 +67,7 @@ export const usePlaylistSync = () => {
  */
 export const useUpdateTrackLocalPlaylists = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'updateTrackLocalPlaylists'],
+		mutationKey: ['db', 'playlist', 'updateTrackLocalPlaylists'],
 		mutationFn: async (args: {
 			toAddPlaylistIds: number[]
 			toRemovePlaylistIds: number[]
@@ -77,7 +78,7 @@ export const useUpdateTrackLocalPlaylists = () => {
 			if (res.isErr()) throw res.error
 			return res.value
 		},
-		onSuccess: (trackId, { toAddPlaylistIds, toRemovePlaylistIds }) => {
+		onSuccess: async (trackId, { toAddPlaylistIds, toRemovePlaylistIds }) => {
 			toast.success('操作成功')
 			const promises: Promise<unknown>[] = []
 			promises.push(
@@ -102,7 +103,7 @@ export const useUpdateTrackLocalPlaylists = () => {
 					}),
 				)
 			}
-			void Promise.all(promises)
+			await Promise.all(promises)
 		},
 		onError: (error, { trackPayload }) =>
 			toastAndLogError(
@@ -115,7 +116,7 @@ export const useUpdateTrackLocalPlaylists = () => {
 
 export const useDuplicatePlaylist = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'duplicatePlaylist'],
+		mutationKey: ['db', 'playlist', 'duplicatePlaylist'],
 		mutationFn: async ({
 			playlistId,
 			name,
@@ -129,9 +130,9 @@ export const useDuplicatePlaylist = () => {
 			}
 			return result.value
 		},
-		onSuccess: () => {
+		onSuccess: async () => {
 			toast.success('复制成功')
-			void queryClient.refetchQueries({
+			await queryClient.invalidateQueries({
 				queryKey: playlistKeys.playlistLists(),
 			})
 		},
@@ -146,7 +147,7 @@ export const useDuplicatePlaylist = () => {
 
 export const useEditPlaylistMetadata = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'editPlaylistMetadata'],
+		mutationKey: ['db', 'playlist', 'editPlaylistMetadata'],
 		mutationFn: async ({
 			playlistId,
 			payload,
@@ -164,9 +165,9 @@ export const useEditPlaylistMetadata = () => {
 			}
 			return result.value
 		},
-		onSuccess: (_, variables) => {
+		onSuccess: async (_, variables) => {
 			toast.success('操作成功')
-			void Promise.all([
+			await Promise.all([
 				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistLists(),
 				}),
@@ -186,7 +187,7 @@ export const useEditPlaylistMetadata = () => {
 
 export const useDeletePlaylist = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'deletePlaylist'],
+		mutationKey: ['db', 'playlist', 'deletePlaylist'],
 		mutationFn: async ({ playlistId }: { playlistId: number }) => {
 			const result = await playlistService.deletePlaylist(playlistId)
 			if (result.isErr()) {
@@ -194,9 +195,9 @@ export const useDeletePlaylist = () => {
 			}
 			return result.value
 		},
-		onSuccess: () => {
+		onSuccess: async () => {
 			toast.success('删除成功')
-			void queryClient.invalidateQueries({
+			await queryClient.invalidateQueries({
 				queryKey: playlistKeys.playlistLists(),
 			})
 		},
@@ -211,7 +212,7 @@ export const useDeletePlaylist = () => {
 
 export const useBatchDeleteTracksFromLocalPlaylist = () => {
 	return useMutation({
-		mutationKey: ['db', 'playlists', 'batchDeleteTracksFromLocalPlaylist'],
+		mutationKey: ['db', 'playlist', 'batchDeleteTracksFromLocalPlaylist'],
 		mutationFn: async ({
 			trackIds,
 			playlistId,
@@ -228,7 +229,7 @@ export const useBatchDeleteTracksFromLocalPlaylist = () => {
 			}
 			return result.value
 		},
-		onSuccess: (data, variables) => {
+		onSuccess: async (data, variables) => {
 			toast.success('删除成功', {
 				description:
 					data.missingTrackIds.length !== 0
@@ -253,7 +254,7 @@ export const useBatchDeleteTracksFromLocalPlaylist = () => {
 					}),
 				)
 			}
-			void Promise.all(promises)
+			await Promise.all(promises)
 		},
 		onError: (error) =>
 			toastAndLogError('从播放列表中删除 track 失败', error, SCOPE),
@@ -262,6 +263,7 @@ export const useBatchDeleteTracksFromLocalPlaylist = () => {
 
 export const useCreateNewLocalPlaylist = () => {
 	return useMutation({
+		mutationKey: ['db', 'playlist', 'createNewLocalPlaylist'],
 		mutationFn: async (payload: {
 			title: string
 			description?: string
@@ -274,9 +276,9 @@ export const useCreateNewLocalPlaylist = () => {
 			if (result.isErr()) throw result.error
 			return result.value
 		},
-		onSuccess: (playlist) => {
+		onSuccess: async (playlist) => {
 			toast.success('创建播放列表成功')
-			void Promise.all([
+			await Promise.all([
 				queryClient.invalidateQueries({
 					queryKey: playlistKeys.playlistLists(),
 				}),
@@ -300,6 +302,7 @@ export const useCreateNewLocalPlaylist = () => {
  */
 export const useBatchAddTracksToLocalPlaylist = () => {
 	return useMutation({
+		mutationKey: ['db', 'playlist', 'batchAddTracksToLocalPlaylist'],
 		mutationFn: async ({
 			playlistId,
 			payloads,
@@ -314,7 +317,7 @@ export const useBatchAddTracksToLocalPlaylist = () => {
 			if (result.isErr()) throw result.error
 			return result.value
 		},
-		onSuccess: (trackIds, { playlistId }) => {
+		onSuccess: async (trackIds, { playlistId }) => {
 			toast.success('添加成功')
 			const promises = [
 				queryClient.invalidateQueries({
@@ -334,7 +337,7 @@ export const useBatchAddTracksToLocalPlaylist = () => {
 					}),
 				)
 			}
-			void Promise.all(promises)
+			await Promise.all(promises)
 		},
 		onError: (error) =>
 			toastAndLogError('批量添加歌曲到播放列表失败', error, SCOPE),

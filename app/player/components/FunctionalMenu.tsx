@@ -1,4 +1,4 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'

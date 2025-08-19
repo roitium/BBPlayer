@@ -1,5 +1,5 @@
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'

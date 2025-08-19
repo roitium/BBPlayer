@@ -1,3 +1,5 @@
+import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
+import { userQueryKeys } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
@@ -157,7 +159,11 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 					return
 				}
 				toast.success('登录成功', { id: 'bilibili-qrcode-login-success' })
-				await queryClient.refetchQueries({ queryKey: ['bilibili'] })
+				await queryClient.cancelQueries()
+				await queryClient.invalidateQueries({
+					queryKey: favoriteListQueryKeys.all,
+				})
+				await queryClient.invalidateQueries({ queryKey: userQueryKeys.all })
 				setTimeout(() => setVisible(false), 1000)
 			} else {
 				dispatch({ type: 'POLL_UPDATE', payload: { code: pollData.status } })

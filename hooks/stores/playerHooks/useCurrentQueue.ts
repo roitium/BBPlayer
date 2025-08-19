@@ -1,6 +1,6 @@
 import type { Track } from '@/types/core/media'
 import { useShallow } from 'zustand/shallow'
-import { usePlayerStore } from '../stores/usePlayerStore'
+import { usePlayerStore } from '../usePlayerStore'
 
 /**
  * 一个自定义 Hook，用于从 PlayerStore 中获取当前要显示的播放队列。

@@ -4,9 +4,7 @@ import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
 import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
-import * as Expo from 'expo'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { Alert } from 'react-native'
 import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
 import { AnimatedModal } from '../AnimatedModal'
 
@@ -35,26 +33,15 @@ function SetCookieDialog({
 		}
 	}, [displayCookieString, visible])
 
-	const handleConfirm = () => {
+	const handleConfirm = async () => {
 		setIsLoading(true)
 		try {
 			if (!inputCookie?.trim()) {
-				Alert.alert(
-					'清除 Cookie',
-					'确定要清除 Cookie 吗？软件会自动重启。',
-					[
-						{ text: '取消', style: 'cancel' },
-						{
-							text: '确定',
-							style: 'destructive',
-							onPress: () => {
-								clearBilibiliCookie()
-								void Expo.reloadAppAsync()
-							},
-						},
-					],
-					{ cancelable: true },
-				)
+				clearBilibiliCookie()
+				await queryClient.cancelQueries()
+				queryClient.clear()
+				toast.success('Cookie 已清除')
+				setVisible(false)
 				return
 			}
 
@@ -69,8 +56,11 @@ function SetCookieDialog({
 				return
 			}
 			toast.success('Cookie 已更新')
-			queryClient.removeQueries({ queryKey: favoriteListQueryKeys.all })
-			queryClient.removeQueries({ queryKey: userQueryKeys.all })
+			await queryClient.cancelQueries()
+			await queryClient.invalidateQueries({
+				queryKey: favoriteListQueryKeys.all,
+			})
+			await queryClient.invalidateQueries({ queryKey: userQueryKeys.all })
 			setVisible(false)
 		} catch (error) {
 			toastAndLogError('操作失败', error, 'Components.CookieLoginModal')

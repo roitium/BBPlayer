@@ -1,5 +1,5 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
+import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { DatabaseError } from '@/lib/errors'
 import { createServiceError } from '@/lib/errors/service'

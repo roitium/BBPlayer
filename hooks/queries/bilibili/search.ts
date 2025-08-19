@@ -1,6 +1,6 @@
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const searchQueryKeys = {
 	all: ['bilibili', 'search'] as const,
@@ -14,10 +14,9 @@ export const useSearchResults = (query: string) => {
 	const enabled = query.trim().length > 0
 	return useInfiniteQuery({
 		queryKey: searchQueryKeys.results(query),
-		queryFn: enabled
-			? ({ pageParam = 1 }) =>
-					returnOrThrowAsync(bilibiliApi.searchVideos(query, pageParam))
-			: skipToken,
+		queryFn: ({ pageParam = 1 }) =>
+			returnOrThrowAsync(bilibiliApi.searchVideos(query, pageParam)),
+		enabled,
 		staleTime: 5 * 60 * 1000,
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, allPages) => {

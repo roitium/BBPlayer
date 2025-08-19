@@ -1,5 +1,5 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { usePlaylistLists } from '@/hooks/queries/db/playlist'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { Playlist } from '@/types/core/media'
 import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'

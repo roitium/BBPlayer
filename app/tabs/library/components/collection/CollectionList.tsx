@@ -1,7 +1,7 @@
 import TabDisable from '@/app/tabs/library/components/shared/TabDisabled'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import { useInfiniteCollectionsList } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
 import { FlashList } from '@shopify/flash-list'
@@ -16,10 +16,7 @@ const CollectionListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	const enable = useAppStore(
-		(state) =>
-			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
-	)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
 	const { data: userInfo } = usePersonalInformation()
 	const {

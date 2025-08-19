@@ -1,7 +1,7 @@
-import appStore from '@/hooks/stores/appStore'
+import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
-import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const userQueryKeys = {
 	all: ['bilibili', 'user'] as const,
@@ -15,23 +15,23 @@ export const userQueryKeys = {
 }
 
 export const usePersonalInformation = () => {
-	const enabled = appStore.getState().hasBilibiliCookie()
+	const hasCookie = useAppStore((s) => s.hasBilibiliCookie())
+	const enabled = hasCookie
 	return useQuery({
 		queryKey: userQueryKeys.personalInformation(),
-		queryFn: enabled
-			? () => returnOrThrowAsync(bilibiliApi.getUserInfo())
-			: skipToken,
+		queryFn: () => returnOrThrowAsync(bilibiliApi.getUserInfo()),
+		enabled,
 		staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
 	})
 }
 
 export const useRecentlyPlayed = () => {
-	const enabled = appStore.getState().hasBilibiliCookie()
+	const hasCookie = useAppStore((s) => s.hasBilibiliCookie())
+	const enabled = hasCookie
 	return useQuery({
 		queryKey: userQueryKeys.recentlyPlayed(),
-		queryFn: enabled
-			? () => returnOrThrowAsync(bilibiliApi.getHistory())
-			: skipToken,
+		queryFn: () => returnOrThrowAsync(bilibiliApi.getHistory()),
+		enabled,
 		staleTime: 1 * 60 * 1000,
 	})
 }
@@ -41,15 +41,15 @@ export const useInfiniteGetUserUploadedVideos = (
 	keyword?: string,
 ) => {
 	// 这个接口有风控校验
-	const enabled = !!mid && appStore.getState().hasBilibiliCookie()
+	const hasCookie = useAppStore((s) => s.hasBilibiliCookie())
+	const enabled = !!mid && hasCookie
 	return useInfiniteQuery({
 		queryKey: userQueryKeys.uploadedVideos(mid, keyword),
-		queryFn: enabled
-			? ({ pageParam }) =>
-					returnOrThrowAsync(
-						bilibiliApi.getUserUploadedVideos(mid, pageParam, keyword),
-					)
-			: skipToken,
+		queryFn: ({ pageParam }) =>
+			returnOrThrowAsync(
+				bilibiliApi.getUserUploadedVideos(mid, pageParam, keyword),
+			),
+		enabled,
 		getNextPageParam: (lastPage) => {
 			const nowLoaded = lastPage.page.pn * lastPage.page.ps
 			if (nowLoaded >= lastPage.page.count) {
@@ -64,12 +64,12 @@ export const useInfiniteGetUserUploadedVideos = (
 
 export const useOtherUserInfo = (mid: number) => {
 	// 这个接口有风控校验
-	const enabled = !!mid && appStore.getState().hasBilibiliCookie()
+	const hasCookie = useAppStore((s) => s.hasBilibiliCookie())
+	const enabled = !!mid && hasCookie
 	return useQuery({
 		queryKey: userQueryKeys.otherUserInfo(mid),
-		queryFn: enabled
-			? () => returnOrThrowAsync(bilibiliApi.getOtherUserInfo(mid))
-			: skipToken,
+		queryFn: () => returnOrThrowAsync(bilibiliApi.getOtherUserInfo(mid)),
+		enabled,
 		staleTime: 24 * 60 * 1000, // 不需要刷新太频繁
 	})
 }

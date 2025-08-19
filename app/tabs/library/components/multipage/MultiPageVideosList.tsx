@@ -1,9 +1,9 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteFavoriteList,
 } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import { FlashList } from '@shopify/flash-list'
@@ -19,10 +19,7 @@ const MultiPageVideosListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	const enable = useAppStore(
-		(state) =>
-			!!state.bilibiliCookie && Object.keys(state.bilibiliCookie).length > 0,
-	)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
 	const { data: userInfo } = usePersonalInformation()
 	const {

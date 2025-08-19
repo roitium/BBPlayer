@@ -3,11 +3,11 @@ import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPl
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
 import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetMultiPageList,
 	useGetVideoDetails,
 } from '@/hooks/queries/bilibili/video'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
