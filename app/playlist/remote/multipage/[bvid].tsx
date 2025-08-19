@@ -54,7 +54,6 @@ const mapApiItemToTrack = (
 		},
 		coverUrl: video.pic,
 		duration: mp.duration,
-		playHistory: [],
 		createdAt: new Date(video.pubdate),
 		updatedAt: new Date(video.pubdate),
 		bilibiliMetadata: {

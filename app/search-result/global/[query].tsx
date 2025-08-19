@@ -40,7 +40,6 @@ const mapApiItemToTrack = (apiItem: BilibiliSearchVideo): BilibiliTrack => {
 		},
 		coverUrl: `https:${apiItem.pic}`,
 		duration: apiItem.duration ? formatMMSSToSeconds(apiItem.duration) : 0,
-		playHistory: [],
 		createdAt: new Date(apiItem.senddate),
 		updatedAt: new Date(apiItem.senddate),
 		bilibiliMetadata: {

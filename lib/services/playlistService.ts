@@ -719,10 +719,7 @@ export class PlaylistService {
 
 				const newTracks = []
 				for (const row of rows) {
-					const t = this.trackService.formatTrack({
-						...row.track,
-						playHistory: [],
-					})
+					const t = this.trackService.formatTrack(row.track)
 					if (!t)
 						throw new ServiceError(
 							`在格式化歌曲：${row.track.id} 时出错，可能是原数据不存在或 source & metadata 不匹配`,

@@ -30,11 +30,22 @@ import generateUniqueTrackKey from './genKey'
 const logger = log.extend('Service.Track')
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 type DBLike = ExpoSQLiteDatabase<typeof schema> | Tx
-type SelectTrackWithMetadata = typeof schema.tracks.$inferSelect & {
-	artist: typeof schema.artists.$inferSelect | null
-	bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
-	localMetadata: typeof schema.localMetadata.$inferSelect | null
-}
+type SelectTrackBaseFull = typeof schema.tracks.$inferSelect
+type SelectTrackBaseSlim = Omit<
+	typeof schema.tracks.$inferSelect,
+	'playHistory'
+>
+type SelectTrackWithMetadata =
+	| (SelectTrackBaseFull & {
+			artist: typeof schema.artists.$inferSelect | null
+			bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
+			localMetadata: typeof schema.localMetadata.$inferSelect | null
+	  })
+	| (SelectTrackBaseSlim & {
+			artist: typeof schema.artists.$inferSelect | null
+			bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
+			localMetadata: typeof schema.localMetadata.$inferSelect | null
+	  })
 
 export class TrackService {
 	constructor(private readonly db: DBLike) {}
@@ -67,7 +78,6 @@ export class TrackService {
 			artist: dbTrack.artist,
 			coverUrl: dbTrack.coverUrl,
 			duration: dbTrack.duration,
-			playHistory: dbTrack.playHistory,
 			createdAt: dbTrack.createdAt,
 			source: dbTrack.source,
 			updatedAt: dbTrack.updatedAt,
@@ -207,6 +217,7 @@ export class TrackService {
 		return ResultAsync.fromPromise(
 			this.db.query.tracks.findFirst({
 				where: eq(schema.tracks.id, id),
+				columns: { playHistory: false },
 				with: {
 					artist: true,
 					bilibiliMetadata: true,
@@ -330,6 +341,7 @@ export class TrackService {
 		return ResultAsync.fromPromise(
 			this.db.query.tracks.findFirst({
 				where: (track, { eq }) => eq(track.uniqueKey, identifier.value),
+				columns: { playHistory: false },
 				with: {
 					artist: true,
 					bilibiliMetadata: true,
@@ -378,6 +390,7 @@ export class TrackService {
 		return ResultAsync.fromPromise(
 			this.db.query.tracks.findFirst({
 				where: (track, { eq }) => eq(track.uniqueKey, uniqueKey),
+				columns: { playHistory: false },
 				with: {
 					artist: true,
 					bilibiliMetadata: true,
@@ -572,6 +585,7 @@ export class TrackService {
 		const onlyCompleted = options?.onlyCompleted ?? true
 		return ResultAsync.fromPromise(
 			this.db.query.tracks.findMany({
+				columns: { playHistory: false },
 				with: {
 					artist: true,
 					bilibiliMetadata: true,
@@ -580,25 +594,41 @@ export class TrackService {
 			}),
 			(e) => new DatabaseError('获取播放次数排行榜失败', { cause: e }),
 		).andThen((rows) => {
-			const items: { track: Track; playCount: number }[] = []
-			for (const row of rows) {
-				const track = this.formatTrack(row)
-				if (!track) continue
-				const history = row.playHistory ?? []
-				const count = onlyCompleted
-					? history.filter((r) => r?.completed === true).length
-					: history.length
-				if (count > 0) items.push({ track, playCount: count })
-			}
-			items.sort((a, b) => {
-				if (b.playCount !== a.playCount) return b.playCount - a.playCount
-				// 次排序：最近更新在前（防止顺序抖动）
-				return (
-					new Date(b.track.updatedAt).getTime() -
-					new Date(a.track.updatedAt).getTime()
+			const ids = rows.map((r) => r.id)
+			if (ids.length === 0)
+				return okAsync([] as { track: Track; playCount: number }[])
+
+			return ResultAsync.fromPromise(
+				this.db
+					.select({
+						id: schema.tracks.id,
+						playCount: onlyCompleted
+							? sql<number>`(select count(*) from json_each(${schema.tracks.playHistory}) as je where json_extract(je.value, '$.completed') = 1)`
+							: sql<number>`json_array_length(${schema.tracks.playHistory})`,
+					})
+					.from(schema.tracks)
+					.where(inArray(schema.tracks.id, ids)),
+				(e) => new DatabaseError('统计播放次数失败', { cause: e }),
+			).andThen((counts) => {
+				const countMap = new Map<number, number>(
+					counts.map((c) => [c.id, c.playCount ?? 0]),
 				)
+				const items: { track: Track; playCount: number }[] = []
+				for (const row of rows) {
+					const track = this.formatTrack(row)
+					if (!track) continue
+					const count = countMap.get(track.id) ?? 0
+					if (count > 0) items.push({ track, playCount: count })
+				}
+				items.sort((a, b) => {
+					if (b.playCount !== a.playCount) return b.playCount - a.playCount
+					return (
+						new Date(b.track.updatedAt).getTime() -
+						new Date(a.track.updatedAt).getTime()
+					)
+				})
+				return okAsync(items.slice(0, Math.max(0, limit)))
 			})
-			return okAsync(items.slice(0, Math.max(0, limit)))
 		})
 	}
 }

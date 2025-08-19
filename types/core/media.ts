@@ -22,7 +22,6 @@ interface BaseTrack {
 	artist: Artist | null
 	coverUrl: string | null
 	source: 'bilibili' | 'local'
-	playHistory: PlayRecord[]
 	createdAt: Date
 	duration: number
 	updatedAt: Date

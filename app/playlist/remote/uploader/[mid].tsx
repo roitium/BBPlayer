@@ -71,7 +71,6 @@ const mapApiItemToTrack = (
 		},
 		coverUrl: apiItem.pic,
 		duration: formatMMSSToSeconds(apiItem.length),
-		playHistory: [],
 		bilibiliMetadata: {
 			bvid: apiItem.bvid,
 			cid: null,

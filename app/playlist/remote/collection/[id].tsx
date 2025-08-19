@@ -47,7 +47,6 @@ const mapApiItemToTrack = (
 		},
 		coverUrl: apiItem.cover,
 		duration: apiItem.duration,
-		playHistory: [],
 		createdAt: new Date(apiItem.pubtime),
 		updatedAt: new Date(apiItem.pubtime),
 		bilibiliMetadata: {
