@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	icon: './assets/images/icon.png',
 	scheme: 'bbplayer',
 	userInterfaceStyle: 'automatic',
-	newArchEnabled: false,
+	newArchEnabled: true,
 	platforms: ['android'],
 	android: {
 		adaptiveIcon: {
@@ -19,13 +19,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			monochromeImage: './assets/images/adaptive-icon.png',
 			backgroundColor: '#ffffff',
 		},
-		package: 'com.roitium.BBPlayer',
+		package: 'com.roitium.bbplayer',
 		versionCode: versionCode,
 		edgeToEdgeEnabled: true,
 		runtimeVersion: version,
 	},
 	plugins: [
 		'./plugins/withAndroidPlugin',
+		[
+			'./plugins/withAbiFilters',
+			{
+				abiFilters: ['arm64-v8a'],
+			},
+		],
 		[
 			'expo-dev-client',
 			{
@@ -53,6 +59,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			{
 				android: {
 					usesCleartextTraffic: true,
+					enableProguardInReleaseBuilds: true,
+					enableShrinkResourcesInReleaseBuilds: true,
 				},
 			},
 		],
@@ -78,6 +86,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			},
 		],
 		'expo-web-browser',
+		'expo-sqlite',
+		[
+			'expo-share-intent',
+			{
+				androidIntentFilters: ['text/*'],
+				disableIOS: true,
+			},
+		],
 	],
 	experiments: {
 		reactCompiler: true,
@@ -86,12 +102,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 		eas: {
 			projectId: '1cbd8d50-e322-4ead-98b6-4ee8b6f2a707',
 		},
+		updateManifestUrl:
+			'https://cdn.jsdelivr.net/gh/yanyao2333/bbplayer@master/update.json',
 	},
 	owner: 'roitium',
 	updates: {
 		url: 'https://u.expo.dev/1cbd8d50-e322-4ead-98b6-4ee8b6f2a707',
 	},
 	ios: {
-		bundleIdentifier: 'com.roitium.BBPlayer',
+		bundleIdentifier: 'com.roitium.bbplayer',
+		runtimeVersion: {
+			policy: 'appVersion',
+		},
 	},
 })

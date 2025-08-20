@@ -7,5 +7,11 @@
 		},
 		"jsx": "react-jsx"
 	},
-	"include": ["**/*.ts", "**/*.tsx", "index.js", "jest.config.js"]
+	"include": [
+		"**/*.ts",
+		"**/*.tsx",
+		"index.js",
+		"jest.config.js",
+		"plugins/withAbiFilters.js"
+	]
 }

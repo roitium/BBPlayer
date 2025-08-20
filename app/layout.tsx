@@ -1,202 +1,52 @@
-import GlobalErrorFallback from '@/components/ErrorBoundary'
 import { toastConfig } from '@/components/toast/ToastConfig'
+import appStore from '@/hooks/stores/appStore'
 import useAppStore from '@/hooks/stores/useAppStore'
-import { ApiCallingError } from '@/lib/core/errors'
+import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
+import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
-import log from '@/utils/log'
+import { ProjectScope } from '@/types/core/scope'
+import log, {
+	cleanOldLogFiles,
+	reportErrorToSentry,
+	toastAndLogError,
+} from '@/utils/log'
+import { storage } from '@/utils/mmkv'
 import toast from '@/utils/toast'
-import { useMaterial3Theme } from '@pchmn/expo-material3-theme'
-import {
-	getStateFromPath as getStateFromPathDefault,
-	NavigationContainer,
-	useNavigationContainerRef,
-} from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { useNavigationContainerRef } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
-import {
-	focusManager,
-	onlineManager,
-	QueryCache,
-	QueryClient,
-	QueryClientProvider,
-} from '@tanstack/react-query'
-import { isRunningInExpoGo } from 'expo'
+import { focusManager, onlineManager } from '@tanstack/react-query'
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator'
 import * as Network from 'expo-network'
 import * as SplashScreen from 'expo-splash-screen'
+import { useSQLiteDevTools } from 'expo-sqlite-devtools'
 import * as Updates from 'expo-updates'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
 	AppState,
 	type AppStateStatus,
 	InteractionManager,
 	Platform,
-	Text,
-	useColorScheme,
 	View,
 } from 'react-native'
-import { SystemBars } from 'react-native-edge-to-edge'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper'
-import 'react-native-reanimated'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { Text } from 'react-native-paper'
 import Toast from 'react-native-toast-message'
-import type { RootStackParamList } from '../types/navigation'
-import NotFoundScreen from './not-found'
-// Screen imports
-import NowPlayingBar from '@/components/NowPlayingBar'
-import PlayerPage from './player/player'
-import PlaylistCollectionPage from './playlist/collection/[id]'
-import PlaylistFavoritePage from './playlist/favorite/[id]'
-import PlaylistMultipagePage from './playlist/multipage/[bvid]'
-import PlaylistUploaderPage from './playlist/uploader/[mid]'
-import SearchResultFavPage from './search-result/fav/[query]'
-import SearchResultsPage from './search-result/global/[query]'
-import TabLayout from './tabs/layout'
-import TestPage from './test/test'
+import migrations from '../drizzle/migrations'
+import { AppProviders } from './providers'
 
-const rootLog = log.extend('ROOT')
+const logger = log.extend('UI.RootLayout')
 
-const manifest = Updates.manifest
-const metadata = 'metadata' in manifest ? manifest.metadata : undefined
-const extra = 'extra' in manifest ? manifest.extra : undefined
-const updateGroup =
-	metadata && 'updateGroup' in metadata ? metadata.updateGroup : undefined
-
-const developement = process.env.NODE_ENV === 'development'
-
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync()
+// 在获取资源时保持启动画面可见
+void SplashScreen.preventAutoHideAsync()
 
 SplashScreen.setOptions({
 	duration: 200,
 	fade: true,
 })
 
-const navigationIntegration = Sentry.reactNavigationIntegration({
-	enableTimeToInitialDisplay: !isRunningInExpoGo(),
-})
+// 初始化 Sentry
+initializeSentry()
 
-Sentry.init({
-	dsn: 'https://893ea8eb3743da1e065f56b3aa5e96f9@o4508985265618944.ingest.us.sentry.io/4508985267191808',
-	debug: false,
-	tracesSampleRate: 0.7,
-	sendDefaultPii: true,
-	integrations: [navigationIntegration, Sentry.mobileReplayIntegration()],
-	enableNativeFramesTracking: !isRunningInExpoGo(),
-	enabled: !developement,
-	environment: developement ? 'development' : 'production',
-})
-
-const scope = Sentry.getGlobalScope()
-
-scope.setTag('expo-update-id', Updates.updateId)
-scope.setTag('expo-is-embedded-update', Updates.isEmbeddedLaunch)
-
-if (typeof updateGroup === 'string') {
-	scope.setTag('expo-update-group-id', updateGroup)
-
-	const owner = extra?.expoClient?.owner ?? '[account]'
-	const slug = extra?.expoClient?.slug ?? '[project]'
-	scope.setTag(
-		'expo-update-debug-url',
-		`https://expo.dev/accounts/${owner}/projects/${slug}/updates/${updateGroup}`,
-	)
-} else if (Updates.isEmbeddedLaunch) {
-	scope.setTag('expo-update-debug-url', 'not applicable for embedded updates')
-}
-
-// 设置全局错误处理器，捕获未被处理的 JS 错误
-if (!developement) {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const errorUtils = (global as any).ErrorUtils
-	if (errorUtils) {
-		const originalErrorHandler = errorUtils.getGlobalHandler()
-
-		errorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
-			Sentry.captureException(error, {
-				tags: {
-					scope: 'GlobalErrorHandler',
-					isFatal: String(isFatal),
-				},
-			})
-
-			originalErrorHandler(error, isFatal)
-		})
-	}
-}
-
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			retry: 2,
-			refetchOnWindowFocus: true,
-			refetchOnMount: true,
-			refetchOnReconnect: true,
-			refetchInterval: false,
-		},
-	},
-	queryCache: new QueryCache({
-		onError: (error, query) => {
-			toast.error(`请求 ${query.queryKey} 失败`, {
-				description: error.message,
-				duration: Number.POSITIVE_INFINITY,
-			})
-			rootLog.error(`请求 ${query.queryKey} 失败`, error)
-
-			// 这个错误属于三方依赖的错误，不应该报告到 Sentry
-			if (error instanceof ApiCallingError) {
-				return
-			}
-
-			Sentry.captureException(error, {
-				tags: {
-					scope: 'QueryCache',
-					queryKey: JSON.stringify(query.queryKey),
-				},
-				extra: {
-					queryHash: query.queryHash,
-					retry: query.options.retry,
-				},
-			})
-		},
-	}),
-})
-
-export const RootStack = createNativeStackNavigator<RootStackParamList>()
-
-const linking = {
-	prefixes: ['bbplayer://', 'trackplayer://'],
-	config: {
-		screens: {
-			Player: 'player',
-			MainTabs: {
-				path: 'tabs',
-				screens: {
-					Home: 'home',
-					Search: 'search',
-					Library: 'library',
-					About: 'about',
-				},
-			},
-			PlaylistCollection: 'playlist/collection/:id',
-			PlaylistFavorite: 'playlist/favorite/:id',
-			PlaylistMultipage: 'playlist/multipage/:bvid',
-			PlaylistUploader: 'playlist/uploader/:mid',
-			SearchResult: 'search-result/global/:query',
-			SearchResultFav: 'search-result/fav/:query',
-			Test: 'test',
-			NotFound: '*',
-		},
-	},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	getStateFromPath(path: string, options: any) {
-		console.log(path)
-		if (path.startsWith('notification.click')) {
-			return { routes: [{ name: 'Player' }] }
-		}
-		return getStateFromPathDefault(path, options)
-	},
-}
+const developement = process.env.NODE_ENV === 'development'
 
 function onAppStateChange(status: AppStateStatus) {
 	if (Platform.OS !== 'web') {
@@ -204,92 +54,23 @@ function onAppStateChange(status: AppStateStatus) {
 	}
 }
 
-function RootLayoutNav() {
-	return (
-		<View style={{ flex: 1 }}>
-			<RootStack.Navigator
-				initialRouteName='MainTabs'
-				screenOptions={{ headerShown: false }}
-			>
-				<RootStack.Screen
-					name='MainTabs'
-					component={TabLayout}
-				/>
-				<RootStack.Screen
-					name='Player'
-					component={PlayerPage}
-					options={{
-						animation: 'slide_from_bottom',
-					}}
-				/>
-				<RootStack.Screen
-					name='Test'
-					component={TestPage}
-				/>
-				<RootStack.Screen
-					name='SearchResult'
-					component={SearchResultsPage}
-				/>
-				<RootStack.Screen
-					name='NotFound'
-					component={NotFoundScreen}
-				/>
-				<RootStack.Screen
-					name='PlaylistCollection'
-					component={PlaylistCollectionPage}
-				/>
-				<RootStack.Screen
-					name='PlaylistFavorite'
-					component={PlaylistFavoritePage}
-				/>
-				<RootStack.Screen
-					name='PlaylistMultipage'
-					component={PlaylistMultipagePage}
-				/>
-				<RootStack.Screen
-					name='PlaylistUploader'
-					component={PlaylistUploaderPage}
-				/>
-				<RootStack.Screen
-					name='SearchResultFav'
-					component={SearchResultFavPage}
-				/>
-			</RootStack.Navigator>
-			<View
-				style={{
-					position: 'absolute',
-					bottom: 0,
-					left: 0,
-					right: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
-		</View>
-	)
-}
-
 export default Sentry.wrap(function RootLayout() {
 	const ref = useNavigationContainerRef()
 	const [appIsReady, setAppIsReady] = useState(false)
-
-	const colorScheme = useColorScheme()
-	const { theme } = useMaterial3Theme()
-	const paperTheme = useMemo(
-		() =>
-			colorScheme === 'dark'
-				? { ...MD3DarkTheme, colors: theme.dark }
-				: { ...MD3LightTheme, colors: theme.light },
-		[colorScheme, theme],
+	const { success: migrationsSuccess, error: migrationsError } = useMigrations(
+		drizzleDb,
+		migrations,
 	)
-	useEffect(() => {
-		onlineManager.setEventListener((setOnline) => {
-			const eventSubscription = Network.addNetworkStateListener((state) => {
-				setOnline(!!state.isConnected)
-			})
-			return eventSubscription.remove
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+	useSQLiteDevTools(expoDb)
+
+	onlineManager.setEventListener((setOnline) => {
+		const eventSubscription = Network.addNetworkStateListener((state) => {
+			setOnline(!!state.isConnected)
 		})
-	}, [])
+		return eventSubscription.remove.bind(eventSubscription)
+	})
 
 	useEffect(() => {
 		if (ref?.current) {
@@ -299,26 +80,21 @@ export default Sentry.wrap(function RootLayout() {
 
 	useEffect(() => {
 		const subscription = AppState.addEventListener('change', onAppStateChange)
-
 		return () => subscription.remove()
 	}, [])
 
 	useEffect(() => {
-		async function prepare() {
+		function prepare() {
 			try {
 				useAppStore.getState()
 			} catch (error) {
-				console.error('Initial preparation error:', error)
-				Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })
+				logger.error('初始化 Zustand store 失败:', error)
+				reportErrorToSentry(error, '初始化 Zustand store 失败', ProjectScope.UI)
 			} finally {
 				setAppIsReady(true)
 			}
 		}
-
-		prepare().catch((error) => {
-			console.error('Initial preparation error:', error)
-			Sentry.captureException(error, { tags: { scope: 'PrepareFunction' } })
-		})
+		prepare()
 	}, [])
 
 	useEffect(() => {
@@ -333,80 +109,78 @@ export default Sentry.wrap(function RootLayout() {
 					})
 				}
 			})
-			.catch((error) => {
-				console.error('检测更新失败', error)
-				toast.error('检测更新失败', {
-					description: error.message,
-				})
+			.catch((error: Error) => {
+				toastAndLogError('检测更新失败', error, 'UI.RootLayout')
 			})
 	}, [])
 
-	// 异步初始化播放器 (在 appIsReady 后执行)
+	// 启动时清理 7 天前日志
+	useEffect(() => {
+		if (!appIsReady) return
+		InteractionManager.runAfterInteractions(() => {
+			void cleanOldLogFiles(7).then((res) => {
+				if (res.isErr()) {
+					logger.warning('清理旧日志失败', { error: res.error.message })
+				} else if (res.value > 0) {
+					logger.info(`已清理 ${res.value} 个过期日志文件`)
+				}
+			})
+		})
+	}, [appIsReady])
+
 	useEffect(() => {
 		if (appIsReady) {
 			const initializePlayer = async () => {
 				if (!global.playerIsReady) {
 					try {
 						await initPlayer()
-						console.log('Deferred player setup complete.')
 					} catch (error) {
-						console.error('Deferred player setup failed:', error)
-						Sentry.captureException(error, {
-							tags: { scope: 'DeferredPlayerSetup' },
-						})
+						logger.error('播放器初始化失败: ', error)
+						reportErrorToSentry(error, '播放器初始化失败', ProjectScope.Player)
 						global.playerIsReady = false
 					}
 				}
 			}
 
-			InteractionManager.runAfterInteractions(() =>
-				Sentry.startSpan({ name: 'initializePlayer' }, initializePlayer),
-			)
+			InteractionManager.runAfterInteractions(initializePlayer)
 		}
 	}, [appIsReady])
 
 	const onLayoutRootView = useCallback(() => {
 		if (appIsReady) {
-			SplashScreen.hide()
+			if (migrationsError) SplashScreen.hide() // 当有错误时，表明迁移已经结束，需要隐藏 SplashScreen 展示错误信息
+			if (migrationsSuccess) SplashScreen.hide()
+			// 如果是第一次打开，则显示欢迎对话框
+			const firstOpen = storage.getBoolean('first_open') ?? true
+			if (firstOpen) {
+				appStore.setState((store) => ({
+					modals: { ...store.modals, welcomeModalVisible: true },
+				}))
+			}
 		}
-	}, [appIsReady])
+	}, [appIsReady, migrationsError, migrationsSuccess])
 
-	if (!appIsReady) {
+	if (migrationsError) {
+		logger.error('数据库迁移失败:', migrationsError)
+		return (
+			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+				<Text>数据库迁移失败: {migrationsError?.message}</Text>
+				<Text>建议截图报错信息，发到项目 issues 反馈</Text>
+			</View>
+		)
+	}
+
+	if (!migrationsSuccess || !appIsReady) {
 		return null
 	}
 
 	return (
 		<>
-			<SafeAreaProvider>
-				<View
-					onLayout={onLayoutRootView}
-					style={{ flex: 1 }}
-				>
-					<Sentry.ErrorBoundary
-						fallback={({ error, resetError }) => (
-							<GlobalErrorFallback
-								error={error}
-								resetError={resetError}
-							/>
-						)}
-					>
-						<GestureHandlerRootView style={{ flex: 1 }}>
-							<QueryClientProvider client={queryClient}>
-								<PaperProvider theme={paperTheme}>
-									<NavigationContainer
-										ref={ref}
-										linking={linking}
-										fallback={<Text>Loading...</Text>}
-									>
-										<RootLayoutNav />
-									</NavigationContainer>
-								</PaperProvider>
-							</QueryClientProvider>
-						</GestureHandlerRootView>
-					</Sentry.ErrorBoundary>
-					<SystemBars style='auto' />
-				</View>
-			</SafeAreaProvider>
+			<AppProviders
+				appIsReady={appIsReady}
+				onLayoutRootView={onLayoutRootView}
+				navRef={ref}
+			/>
 			<Toast config={toastConfig} />
 		</>
 	)

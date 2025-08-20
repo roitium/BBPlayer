@@ -1,16 +1,18 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { Playlist } from '@/types/core/media'
-import { LegendList } from '@legendapp/list'
+import { useGetFavoritePlaylists } from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import useAppStore from '@/hooks/stores/useAppStore'
+import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Searchbar, Text, useTheme } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../../types/navigation'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
+import TabDisable from '../shared/TabDisabled'
 import FavoriteFolderListItem from './FavoriteFolderListItem'
 
 const FavoriteFolderListComponent = memo(() => {
@@ -20,6 +22,7 @@ const FavoriteFolderListComponent = memo(() => {
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
 	const [query, setQuery] = useState('')
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
 	const { data: userInfo } = usePersonalInformation()
 	const {
@@ -31,15 +34,24 @@ const FavoriteFolderListComponent = memo(() => {
 	} = useGetFavoritePlaylists(userInfo?.mid)
 
 	const renderPlaylistItem = useCallback(
-		({ item }: { item: Playlist }) => <FavoriteFolderListItem item={item} />,
+		({ item }: { item: BilibiliPlaylist }) => (
+			<FavoriteFolderListItem item={item} />
+		),
 		[],
 	)
-	const keyExtractor = useCallback((item: Playlist) => item.id.toString(), [])
+	const keyExtractor = useCallback(
+		(item: BilibiliPlaylist) => item.id.toString(),
+		[],
+	)
 
 	const onRefresh = async () => {
 		setRefreshing(true)
 		await refetch()
 		setRefreshing(false)
+	}
+
+	if (!enable) {
+		return <TabDisable />
 	}
 
 	if (playlistsIsPending) {
@@ -60,7 +72,7 @@ const FavoriteFolderListComponent = memo(() => {
 	)
 
 	return (
-		<View style={{ flex: 1 }}>
+		<View style={{ flex: 1, marginHorizontal: 16 }}>
 			<View
 				style={{
 					marginBottom: 8,
@@ -97,8 +109,7 @@ const FavoriteFolderListComponent = memo(() => {
 					navigation.navigate('SearchResultFav', { query })
 				}}
 			/>
-			<LegendList
-				style={{ flex: 1 }}
+			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
 				data={filteredPlaylists}

@@ -1,4 +1,4 @@
-import { formatDurationToHHMMSS } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/time'
 import Slider from '@react-native-community/slider'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
@@ -19,7 +19,7 @@ export function PlayerSlider() {
 	return (
 		<View>
 			<Slider
-				style={{ width: '100%', height: 40 }}
+				style={{ width: '100%', height: 40, zIndex: 0 }}
 				minimumValue={0}
 				maximumValue={maxSliderValue}
 				value={currentSliderPosition}

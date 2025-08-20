@@ -1,6 +1,6 @@
+import { flatErrorMessage } from '@/utils/log'
 import { Text, View } from 'react-native'
 import { Button } from 'react-native-paper'
-import TouchableOpacity from './TouchableOpacity'
 
 export default function GlobalErrorFallback({
 	error,
@@ -19,31 +19,18 @@ export default function GlobalErrorFallback({
 			}}
 		>
 			<Text style={{ marginBottom: 8, fontWeight: 'bold', fontSize: 20 }}>
-				出错了
+				发生未捕获错误
 			</Text>
 			<Text style={{ marginBottom: 20, textAlign: 'center' }}>
-				{error instanceof Error && error.message
-					? error.message
-					: JSON.stringify(error)}
+				{error instanceof Error ? flatErrorMessage(error) : String(error)}
 			</Text>
-			<TouchableOpacity
-				style={{
-					borderRadius: 4,
-					backgroundColor: '#3b82f6',
-					paddingLeft: 20,
-					paddingRight: 20,
-					paddingTop: 8,
-					paddingBottom: 8,
-				}}
+			<Button
+				mode='contained'
+				labelStyle={{ fontWeight: 'bold' }}
 				onPress={resetError}
 			>
-				<Button
-					labelStyle={{ fontWeight: 'bold' }}
-					buttonColor='white'
-				>
-					重试
-				</Button>
-			</TouchableOpacity>
+				重试
+			</Button>
 		</View>
 	)
 }

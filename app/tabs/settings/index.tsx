@@ -1,15 +1,18 @@
 import CookieLoginModal from '@/components/modals/CookieLoginModal'
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Application from 'expo-application'
+import * as FileSystem from 'expo-file-system'
+import * as Sharing from 'expo-sharing'
 import * as Updates from 'expo-updates'
 import * as WebBrowser from 'expo-web-browser'
 import { memo, useCallback, useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import { Button, Divider, Switch, Text, useTheme } from 'react-native-paper'
+import { Divider, IconButton, Switch, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
@@ -22,6 +25,7 @@ export default function SettingsPage() {
 	const insets = useSafeAreaInsets()
 	const currentTrack = useCurrentTrack()
 	const colors = useTheme().colors
+
 	return (
 		<View
 			style={{
@@ -137,6 +141,26 @@ const SettingsSection = memo(function SettingsSection() {
 	const [cookieDialogVisible, setCookieDialogVisible] = useState(false)
 	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
 		useState(false)
+	const setEnableSentryReport = useAppStore(
+		(state) => state.setEnableSentryReport,
+	)
+	const enableSentryReport = useAppStore(
+		(state) => state.settings.enableSentryReport,
+	)
+	const setEnableDebugLog = useAppStore((state) => state.setEnableDebugLog)
+	const enableDebugLog = useAppStore((state) => state.settings.enableDebugLog)
+
+	const shareLogFile = async () => {
+		const d = new Date()
+		const dateString = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+		const logFilePath = `${FileSystem.documentDirectory}logs_${dateString}.log`
+		const exists = await FileSystem.getInfoAsync(logFilePath)
+		if (exists.exists) {
+			await Sharing.shareAsync(logFilePath)
+		} else {
+			toastAndLogError('', new Error('无法分享日志：未找到日志文件'), 'UI.Test')
+		}
+	}
 
 	return (
 		<View style={{ flexDirection: 'column' }}>
@@ -162,13 +186,40 @@ const SettingsSection = memo(function SettingsSection() {
 					marginTop: 16,
 				}}
 			>
+				<Text>向 Sentry 上报错误</Text>
+				<Switch
+					value={enableSentryReport}
+					onValueChange={setEnableSentryReport}
+				/>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: 16,
+				}}
+			>
+				<Text>打开 Debug 日志</Text>
+				<Switch
+					value={enableDebugLog}
+					onValueChange={setEnableDebugLog}
+				/>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: 16,
+				}}
+			>
 				<Text>手动设置 Cookie</Text>
-				<Button
-					mode='contained'
+				<IconButton
+					icon='open-in-new'
+					size={20}
 					onPress={() => setCookieDialogVisible(true)}
-				>
-					打开窗口
-				</Button>
+				/>
 			</View>
 			<View
 				style={{
@@ -179,12 +230,26 @@ const SettingsSection = memo(function SettingsSection() {
 				}}
 			>
 				<Text>重新扫码登录</Text>
-				<Button
-					mode='contained'
+				<IconButton
+					icon='open-in-new'
+					size={20}
 					onPress={() => setIsQrCodeLoginDialogVisible(true)}
-				>
-					打开窗口
-				</Button>
+				/>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: 16,
+				}}
+			>
+				<Text>分享今日运行日志</Text>
+				<IconButton
+					icon='share-variant'
+					size={20}
+					onPress={shareLogFile}
+				/>
 			</View>
 
 			<CookieLoginModal

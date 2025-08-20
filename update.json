@@ -1,0 +1,6 @@
+{
+	"version": "1.0.4",
+	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.0.4/bbplayer-v1.0.4-arm64v8a-prod.apk",
+	"notes": "1. 可选的 sentry 上报 \n 2. 软件更新提醒 \n 3. 可通过 b 站直接分享视频到 bbplayer \n 4. 一个简单的播放次数排行榜 \n 5. 一些优化",
+	"forced": false
+}

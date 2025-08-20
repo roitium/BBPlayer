@@ -2,28 +2,28 @@ import type { AppState } from '@/types/core/appStore'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import * as parseCookie from 'cookie'
+import * as Expo from 'expo'
 import { err, ok, type Result } from 'neverthrow'
+import { Alert } from 'react-native'
 import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
 
-const parseCookieString = (
+const logger = log.extend('Store.App')
+
+export const parseCookieToObject = (
 	cookie?: string,
-): Result<Record<string, string>[], Error> => {
-	if (!cookie) {
-		return err(new Error('Cookie 字符串不能为空'))
-	}
-	if (!cookie.trim()) {
-		return ok([])
+): Result<Record<string, string>, Error> => {
+	if (!cookie?.trim()) {
+		return ok({})
 	}
 	try {
 		const cookieObj = parseCookie.parse(cookie)
-		const cookieArray: Record<string, string>[] = []
-		for (const [key, value] of Object.entries(cookieObj)) {
-			if (value === undefined || value === null) {
-				throw new Error(`Cookie "${key}" 的值无效`)
+		for (const value of Object.values(cookieObj)) {
+			if (value === undefined) {
+				return err(new Error(`无效的 cookie 字符串：值为 undefined：${value}`))
 			}
-			cookieArray.push({ key, value })
 		}
-		return ok(cookieArray)
+		return ok(cookieObj as Record<string, string>)
 	} catch (error) {
 		return err(
 			new Error(
@@ -33,61 +33,120 @@ const parseCookieString = (
 	}
 }
 
-export const useAppStore = create<AppState>()((set, get) => {
-	const sendPlayHistory = storage.getBoolean('send_play_history') ?? true
-	const initialCookieString = storage.getString('bilibili_cookie')
+export const serializeCookieObject = (
+	cookieObj: Record<string, string>,
+): string => {
+	return Object.entries(cookieObj)
+		.map(([key, value]) => parseCookie.serialize(key, value))
+		.join('; ')
+}
 
-	const initialCookieList = parseCookieString(initialCookieString)
-	const initialCookieError = initialCookieList.isErr()
-		? initialCookieList.error
-		: null
-	const initialCookieListValue = initialCookieList.isOk()
-		? initialCookieList.value
-		: []
+export const useAppStore = create<AppState>()(
+	immer((set, get) => {
+		const sendPlayHistory = storage.getBoolean('send_play_history') ?? true
+		const enableSentryReport =
+			storage.getBoolean('enable_sentry_report') ?? true
+		const enableDebugLog = storage.getBoolean('enable_debug_log') ?? false
+		log.setSeverity(enableDebugLog ? 'debug' : 'info')
+		const initialCookieString = storage.getString('bilibili_cookie')
+		let initialCookie: Record<string, string> | null = null
 
-	log.debug('AppStore Initializing', {
-		initialCookieString,
-		initialCookieList: initialCookieListValue,
-		initialCookieError: initialCookieError,
-		sendPlayHistory,
-	})
+		if (initialCookieString) {
+			const result = parseCookieToObject(initialCookieString)
+			if (result.isOk()) {
+				initialCookie = result.value
+			} else {
+				logger.error('从 storage 中读取 cookie 失败', result.error)
+			}
+		}
 
-	return {
-		bilibiliCookieString: initialCookieString,
-		bilibiliCookieList: initialCookieListValue,
-		bilibiliCookieError: initialCookieError,
-		settings: {
+		logger.info('初始化 AppStore', {
+			hasCookie: !!initialCookie,
 			sendPlayHistory,
-		},
+			enableSentryReport,
+			enableDebugLog,
+		})
 
-		setEnableSendPlayHistory: (value: boolean) => {
-			set((state) => ({
-				settings: { ...state.settings, sendPlayHistory: value },
-			}))
-			storage.set('send_play_history', value)
-		},
+		return {
+			bilibiliCookie: initialCookie,
+			settings: { sendPlayHistory, enableSentryReport, enableDebugLog },
+			modals: { qrCodeLoginModalVisible: false, welcomeModalVisible: false },
 
-		setBilibiliCookieString: (cookieString: string) => {
-			const cookieList = parseCookieString(cookieString)
-			const error = cookieList.isErr() ? cookieList.error : null
-			set({
-				bilibiliCookieString: cookieString,
-				bilibiliCookieList: cookieList.isOk() ? cookieList.value : [],
-				bilibiliCookieError: error,
-			})
-			storage.set('bilibili_cookie', cookieString)
-		},
+			hasBilibiliCookie: () => {
+				const { bilibiliCookie } = get()
+				return !!bilibiliCookie && Object.keys(bilibiliCookie).length > 0
+			},
 
-		setBilibiliCookie: (cookieList: Record<string, string>[]) => {
-			const cookieString = cookieList
-				.map((c) =>
-					c.key && c.value ? parseCookie.serialize(c.key, c.value) : '',
+			setEnableSendPlayHistory: (value) => {
+				set((state) => ({
+					settings: { ...state.settings, sendPlayHistory: value },
+				}))
+				storage.set('send_play_history', value)
+			},
+
+			setBilibiliCookie: (cookieString) => {
+				const result = parseCookieToObject(cookieString)
+				if (result.isErr()) {
+					return err(result.error)
+				}
+
+				const cookieObj = result.value
+				set({ bilibiliCookie: cookieObj })
+				storage.set('bilibili_cookie', cookieString)
+				return ok(undefined)
+			},
+
+			updateBilibiliCookie: (updates) => {
+				const currentCookie = get().bilibiliCookie ?? {}
+				const newCookie = { ...currentCookie, ...updates }
+
+				set({ bilibiliCookie: newCookie })
+				storage.set('bilibili_cookie', serializeCookieObject(newCookie))
+				return ok(undefined)
+			},
+
+			clearBilibiliCookie: () => {
+				set({ bilibiliCookie: null })
+				storage.delete('bilibili_cookie')
+			},
+
+			setQrCodeLoginModalVisible: (visible) => {
+				set((state) => {
+					state.modals.qrCodeLoginModalVisible = visible
+				})
+			},
+
+			setWelcomeModalVisible: (visible) => {
+				set((state) => {
+					state.modals.welcomeModalVisible = visible
+				})
+			},
+
+			setEnableSentryReport: (value) => {
+				set((state) => ({
+					settings: { ...state.settings, enableSentryReport: value },
+				}))
+				storage.set('enable_sentry_report', value)
+				Alert.alert(
+					'重启？',
+					'切换 Sentry 上报后，需要重启应用才能生效。',
+					[
+						{ text: '取消', style: 'cancel' },
+						{ text: '确定', onPress: () => Expo.reloadAppAsync() },
+					],
+					{ cancelable: true },
 				)
-				.filter(Boolean)
-				.join('; ')
-			get().setBilibiliCookieString(cookieString)
-		},
-	}
-})
+			},
+
+			setEnableDebugLog: (value) => {
+				set((state) => ({
+					settings: { ...state.settings, enableDebugLog: value },
+				}))
+				storage.set('enable_debug_log', value)
+				log.setSeverity(value ? 'debug' : 'info')
+			},
+		}
+	}),
+)
 
 export default useAppStore

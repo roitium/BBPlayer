@@ -7,6 +7,25 @@ export default (api) => {
 				plugins: ['react-native-paper/babel'],
 			},
 		},
-		plugins: ['babel-plugin-react-compiler', 'react-native-reanimated/plugin'],
+		plugins: [
+			[
+				'babel-plugin-react-compiler',
+				{
+					logLevel: 'verbose',
+
+					logger: {
+						logEvent(filename, event) {
+							if (event.kind === 'CompileSuccess') {
+								console.log('✔ Compiled:', filename)
+							} else {
+								console.warn('ℹ Compilation error in:', filename, event.reason)
+							}
+						},
+					},
+				},
+			],
+			'react-native-reanimated/plugin',
+			['inline-import', { extensions: ['.sql'] }],
+		],
 	}
 }

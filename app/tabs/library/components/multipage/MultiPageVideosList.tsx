@@ -1,22 +1,25 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteFavoriteList,
-} from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
-import type { Track } from '@/types/core/media'
-import { LegendList } from '@legendapp/list'
+} from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import useAppStore from '@/hooks/stores/useAppStore'
+import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
+import TabDisable from '../shared/TabDisabled'
 import MultiPageVideosItem from './MultiPageVideosItem'
 
 const MultiPageVideosListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
 	const { data: userInfo } = usePersonalInformation()
 	const {
@@ -39,15 +42,24 @@ const MultiPageVideosListComponent = memo(() => {
 	)
 
 	const renderPlaylistItem = useCallback(
-		({ item }: { item: Track }) => <MultiPageVideosItem item={item} />,
+		({ item }: { item: BilibiliFavoriteListContent }) => (
+			<MultiPageVideosItem item={item} />
+		),
 		[],
 	)
-	const keyExtractor = useCallback((item: Track) => item.id.toString(), [])
+	const keyExtractor = useCallback(
+		(item: BilibiliFavoriteListContent) => item.bvid,
+		[],
+	)
 
 	const onRefresh = async () => {
 		setRefreshing(true)
 		await Promise.all([refetchPlaylists(), refetchFavoriteData()])
 		setRefreshing(false)
+	}
+
+	if (!enable) {
+		return <TabDisable />
 	}
 
 	if (playlistsIsPending || isFavoriteDataPending) {
@@ -77,7 +89,7 @@ const MultiPageVideosListComponent = memo(() => {
 	}
 
 	return (
-		<View style={{ flex: 1 }}>
+		<View style={{ flex: 1, marginHorizontal: 16 }}>
 			<View
 				style={{
 					marginBottom: 8,
@@ -93,14 +105,13 @@ const MultiPageVideosListComponent = memo(() => {
 					分P视频
 				</Text>
 				<Text variant='bodyMedium'>
-					{favoriteData.pages[0]?.favoriteMeta?.media_count ?? 0} 个分P视频
+					{favoriteData.pages[0]?.info?.media_count ?? 0} 个分P视频
 				</Text>
 			</View>
-			<LegendList
-				style={{ flex: 1 }}
+			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
-				data={favoriteData.pages.flatMap((page) => page.tracks) ?? []}
+				data={favoriteData.pages.flatMap((page) => page.medias) ?? []}
 				renderItem={renderPlaylistItem}
 				keyExtractor={keyExtractor}
 				refreshControl={

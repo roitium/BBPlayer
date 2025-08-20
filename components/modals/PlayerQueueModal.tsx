@@ -1,11 +1,19 @@
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
-import { isTargetTrack } from '@/utils/player'
+import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet'
 import { usePreventRemove } from '@react-navigation/native'
-import { memo, type RefObject, useCallback, useState } from 'react'
+import {
+	memo,
+	type RefObject,
+	useCallback,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
 import { View } from 'react-native'
 import {
 	IconButton,
@@ -14,6 +22,7 @@ import {
 	TouchableRipple,
 	useTheme,
 } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const TrackItem = memo(
 	({
@@ -62,14 +71,14 @@ const TrackItem = memo(
 								numberOfLines={1}
 								style={{ fontWeight: 'bold' }}
 							>
-								{track.title || track.id}
+								{track.title}
 							</Text>
 							<Text
 								variant='bodySmall'
 								style={{ fontWeight: 'thin' }}
 								numberOfLines={1}
 							>
-								{track.artist || '待加载...'}
+								{track.artist?.name ?? '未知作者'}
 							</Text>
 						</View>
 						<IconButton
@@ -96,34 +105,36 @@ function PlayerQueueModal({
 	const currentTrack = useCurrentTrack()
 	const skipToTrack = usePlayerStore((state) => state.skipToTrack)
 	const theme = useTheme()
-	const [currentPosition, setCurrentPosition] = useState(-1)
+	const [isVisible, setIsVisible] = useState(false)
+	const [didInitialScroll, setDidInitialScroll] = useState(false)
+	const flatListRef = useRef<BottomSheetFlatListMethods>(null)
+	const currentIndex = useMemo(() => {
+		if (!currentTrack || !queue.length) return -1
+		return queue.findIndex((t) => t.uniqueKey === currentTrack.uniqueKey)
+	}, [queue, currentTrack])
+	const insets = useSafeAreaInsets()
 
-	usePreventRemove(currentPosition !== -1, () => {
+	usePreventRemove(isVisible, () => {
 		sheetRef.current?.close()
 	})
 
 	const switchTrackHandler = useCallback(
 		(track: Track) => {
-			const index = queue.findIndex((t) =>
-				isTargetTrack(t, track.id, track.cid),
-			)
+			const index = queue.findIndex((t) => t.uniqueKey === track.uniqueKey)
 			if (index === -1) return
-			skipToTrack(index)
+			void skipToTrack(index)
 		},
 		[skipToTrack, queue],
 	)
 
 	const removeTrackHandler = useCallback(
 		async (track: Track) => {
-			await removeTrack(track.id, track.cid)
+			await removeTrack(track.uniqueKey)
 		},
 		[removeTrack],
 	)
 
-	const keyExtractor = useCallback(
-		(item: Track) => `${item.id}-${item.cid}`,
-		[],
-	)
+	const keyExtractor = useCallback((item: Track) => item.uniqueKey, [])
 
 	const renderItem = useCallback(
 		({ item }: { item: Track }) => (
@@ -131,15 +142,23 @@ function PlayerQueueModal({
 				track={item}
 				onSwitchTrack={switchTrackHandler}
 				onRemoveTrack={removeTrackHandler}
-				isCurrentTrack={
-					item.isMultiPage
-						? item.cid === currentTrack?.cid
-						: item.id === currentTrack?.id
-				}
+				isCurrentTrack={item.uniqueKey === currentTrack?.uniqueKey}
 			/>
 		),
 		[switchTrackHandler, removeTrackHandler, currentTrack],
 	)
+
+	useLayoutEffect(() => {
+		// 当菜单被打开时，曲目改变不应该触发滚动。
+		if (currentIndex !== -1 && isVisible && !didInitialScroll) {
+			flatListRef.current?.scrollToIndex({
+				animated: false,
+				index: currentIndex,
+				viewPosition: 0.5,
+			})
+			setDidInitialScroll(true)
+		}
+	}, [isVisible, currentIndex, didInitialScroll])
 
 	return (
 		<BottomSheet
@@ -149,7 +168,11 @@ function PlayerQueueModal({
 			enablePanDownToClose={true}
 			snapPoints={['75%']}
 			onChange={(index) => {
-				setCurrentPosition(index)
+				const isVisible = index !== -1
+				setIsVisible(isVisible)
+				if (!isVisible) {
+					setDidInitialScroll(false)
+				}
 			}}
 			backgroundStyle={{
 				backgroundColor: theme.colors.elevation.level1,
@@ -161,11 +184,20 @@ function PlayerQueueModal({
 		>
 			<BottomSheetFlatList
 				data={queue}
+				ref={flatListRef}
 				keyExtractor={keyExtractor}
+				getItemLayout={(_, index) => {
+					return {
+						length: 68,
+						offset: 68 * index,
+						index,
+					}
+				}}
 				renderItem={renderItem}
 				contentContainerStyle={{
 					backgroundColor: theme.colors.elevation.level1,
 				}}
+				style={{ marginBottom: insets.bottom }}
 			/>
 		</BottomSheet>
 	)

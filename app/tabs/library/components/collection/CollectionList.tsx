@@ -1,8 +1,10 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { useInfiniteCollectionsList } from '@/hooks/queries/bilibili/useFavoriteData'
-import { usePersonalInformation } from '@/hooks/queries/bilibili/useUserData'
+import TabDisable from '@/app/tabs/library/components/shared/TabDisabled'
+import { useInfiniteCollectionsList } from '@/hooks/queries/bilibili/favorite'
+import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import useAppStore from '@/hooks/stores/useAppStore'
 import type { BilibiliCollection } from '@/types/apis/bilibili'
-import { LegendList } from '@legendapp/list'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper'
@@ -14,6 +16,7 @@ const CollectionListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
+	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
 	const { data: userInfo } = usePersonalInformation()
 	const {
@@ -43,6 +46,10 @@ const CollectionListComponent = memo(() => {
 		setRefreshing(false)
 	}
 
+	if (!enable) {
+		return <TabDisable />
+	}
+
 	if (collectionsIsPending) {
 		return <DataFetchingPending />
 	}
@@ -57,7 +64,7 @@ const CollectionListComponent = memo(() => {
 	}
 
 	return (
-		<View style={{ flex: 1 }}>
+		<View style={{ flex: 1, marginHorizontal: 16 }}>
 			<View
 				style={{
 					marginBottom: 8,
@@ -76,7 +83,7 @@ const CollectionListComponent = memo(() => {
 					{collections.pages[0]?.count ?? 0} 个追更
 				</Text>
 			</View>
-			<LegendList
+			<FlashList
 				data={collections.pages.flatMap((page) => page.list)}
 				renderItem={renderCollectionItem}
 				refreshControl={

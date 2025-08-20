@@ -13,10 +13,8 @@ const NotFoundScreen: React.FC = () => {
 
 	return (
 		<View style={styles.container}>
-			<Text style={styles.title}>Screen Not Found</Text>
-			<Text style={styles.message}>
-				Oops! The screen you are looking for does not exist.
-			</Text>
+			<Text style={styles.title}>404</Text>
+			<Text style={styles.message}>你正在找的页面不见了！</Text>
 			<Button
 				title='Go to Home Screen'
 				onPress={handleGoHome}

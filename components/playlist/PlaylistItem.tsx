@@ -1,46 +1,65 @@
-import type { Track } from '@/types/core/media'
-import { formatDurationToHHMMSS } from '@/utils/times'
+import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
 import {
-	Divider,
+	Checkbox,
 	IconButton,
 	Menu,
 	Surface,
 	Text,
 	TouchableRipple,
 } from 'react-native-paper'
+import FunctionalMenu from '../commonUIs/FunctionalMenu'
 
 export interface TrackMenuItem {
 	title: string
 	leadingIcon: string
-	onPress: (track: Track) => void
+	onPress: () => void
 }
 
-export const TrackMenuItemDividerToken = {
+export const TrackMenuItemDividerToken: TrackMenuItem = {
 	title: 'divider',
 	leadingIcon: '',
-	onPress: () => {},
+	onPress: () => void 0,
+}
+
+export interface TrackNecessaryData {
+	cover?: string
+	artistCover?: string
+	title: string
+	duration: number
+	id: number
+	artistName?: string
 }
 
 interface TrackListItemProps {
-	item: Track
 	index: number
-	onTrackPress: (track: Track) => void
+	onTrackPress: () => void
 	menuItems: TrackMenuItem[]
 	showCoverImage?: boolean
+	data: TrackNecessaryData
+	disabled?: boolean
+	toggleSelected: (id: number) => void
+	isSelected: boolean
+	selectMode: boolean
+	enterSelectMode: (id: number) => void
 }
 
 /**
  * 可复用的播放列表项目组件。
  */
 export const TrackListItem = memo(function TrackListItem({
-	item,
 	index,
 	onTrackPress,
 	menuItems,
 	showCoverImage = true,
+	data,
+	disabled = false,
+	toggleSelected,
+	isSelected,
+	selectMode,
+	enterSelectMode,
 }: TrackListItemProps) {
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
@@ -48,8 +67,24 @@ export const TrackListItem = memo(function TrackListItem({
 
 	return (
 		<TouchableRipple
-			style={{ paddingVertical: 4 }}
-			onPress={() => onTrackPress(item)}
+			style={{
+				paddingVertical: 4,
+			}}
+			disabled={disabled}
+			delayLongPress={500}
+			onPress={(e) => {
+				if (selectMode) {
+					toggleSelected(data.id)
+					return
+				}
+				e.stopPropagation()
+				onTrackPress()
+			}}
+			onLongPress={(e) => {
+				e.stopPropagation()
+				if (selectMode) return
+				enterSelectMode(data.id)
+			}}
 		>
 			<Surface
 				style={{
@@ -67,32 +102,45 @@ export const TrackListItem = memo(function TrackListItem({
 						paddingVertical: 6,
 					}}
 				>
-					{/* Index Number */}
-					<Text
-						variant='bodyMedium'
+					{/* Index Number & Checkbox Container */}
+					<View
 						style={{
 							width: 35,
-							textAlign: 'center',
 							marginRight: 8,
-							color: 'grey',
+							alignItems: 'center',
+							justifyContent: 'center',
 						}}
 					>
-						{index + 1}
-					</Text>
+						{/* 始终渲染，或许能降低一点性能开销？ */}
+						<View style={{ position: 'absolute', opacity: selectMode ? 1 : 0 }}>
+							<Checkbox status={isSelected ? 'checked' : 'unchecked'} />
+						</View>
+
+						{/* 序号也是 */}
+						<View style={{ opacity: selectMode ? 0 : 1 }}>
+							<Text
+								variant='bodyMedium'
+								style={{ color: 'grey' }}
+							>
+								{index + 1}
+							</Text>
+						</View>
+					</View>
 
 					{/* Cover Image */}
 					{showCoverImage ? (
 						<Image
-							source={{ uri: item.cover }}
+							source={{
+								uri: data.cover ?? data.artistCover ?? undefined,
+							}}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
-							transition={300}
-							cachePolicy={'none'}
+							cachePolicy={'memory'}
 						/>
 					) : null}
 
 					{/* Title and Details */}
 					<View style={{ marginLeft: 12, flex: 1, marginRight: 4 }}>
-						<Text variant='bodySmall'>{item.title}</Text>
+						<Text variant='bodySmall'>{data.title}</Text>
 						<View
 							style={{
 								flexDirection: 'row',
@@ -101,13 +149,13 @@ export const TrackListItem = memo(function TrackListItem({
 							}}
 						>
 							{/* Display Artist if available */}
-							{item.artist && (
+							{data.artistName && (
 								<>
 									<Text
 										variant='bodySmall'
 										numberOfLines={1}
 									>
-										{item.artist}
+										{data.artistName ?? '未知'}
 									</Text>
 									<Text
 										style={{ marginHorizontal: 4 }}
@@ -119,41 +167,39 @@ export const TrackListItem = memo(function TrackListItem({
 							)}
 							{/* Display Duration */}
 							<Text variant='bodySmall'>
-								{item.duration ? formatDurationToHHMMSS(item.duration) : ''}
+								{data.duration ? formatDurationToHHMMSS(data.duration) : ''}
 							</Text>
 						</View>
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && (
-						<Menu
+					{menuItems.length > 0 && !disabled && (
+						<FunctionalMenu
+							key={`menu-${data.id}`}
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
 							anchor={
 								<IconButton
 									icon='dots-vertical'
 									size={20}
+									disabled={selectMode} // 在选择模式下不允许打开菜单
 									onPress={openMenu}
 								/>
 							}
 							anchorPosition='bottom'
 						>
-							{menuItems.map((menuItem, index) =>
-								menuItem.title === 'divider' ? (
-									<Divider key={`divider-${index}`} />
-								) : (
-									<Menu.Item
-										key={menuItem.title}
-										leadingIcon={menuItem.leadingIcon}
-										onPress={() => {
-											menuItem.onPress(item)
-											closeMenu()
-										}}
-										title={menuItem.title}
-									/>
-								),
-							)}
-						</Menu>
+							{menuItems.map((menuItem) => (
+								<Menu.Item
+									key={menuItem.title}
+									leadingIcon={menuItem.leadingIcon}
+									onPress={() => {
+										menuItem.onPress()
+										closeMenu()
+									}}
+									title={menuItem.title}
+								/>
+							))}
+						</FunctionalMenu>
 					)}
 				</View>
 			</Surface>

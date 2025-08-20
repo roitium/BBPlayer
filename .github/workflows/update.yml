@@ -1,3 +1,4 @@
+name: Hot Update
 on: workflow_dispatch
 jobs:
   update:

@@ -1,5 +1,6 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import log from '@/utils/log'
+import { ProjectScope } from '@/types/core/scope'
+import log, { reportErrorToSentry } from '@/utils/log'
 import { convertToRNTPTrack } from '@/utils/player'
 import TrackPlayer, {
 	AppKilledPlaybackBehavior,
@@ -9,34 +10,28 @@ import TrackPlayer, {
 	State as TrackPlayerState,
 } from 'react-native-track-player'
 
-const playerLog = log.extend('PLAYER/LOGIC')
+const logger = log.extend('Player.Init')
 
 const initPlayer = async () => {
-	playerLog.debug('调用 initPlayer()')
+	logger.info('开始初始化播放器')
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
-	// 在初始化时修改一次重复模式，与水合后的 store 状态保持一致
-	const repeatMode = usePlayerStore.getState().repeatMode
-	await TrackPlayer.setRepeatMode(
-		repeatMode === RepeatMode.Track ? RepeatMode.Track : RepeatMode.Off,
-	)
+	// 初始化后强制将 RNTP 重复模式设为 Off，循环由我们内部管理
+	await TrackPlayer.setRepeatMode(RepeatMode.Off)
 	global.playerIsReady = true
-	playerLog.debug('播放器初始化完成')
+	logger.info('播放器初始化完成')
 }
 
 const PlayerLogic = {
 	// 初始化播放器
 	async preparePlayer(): Promise<void> {
-		playerLog.debug('开始初始化播放器')
 		try {
-			playerLog.debug('设置播放器配置')
 			const setup = async () => {
 				try {
 					await TrackPlayer.setupPlayer({
 						minBuffer: 15,
-						maxBuffer: 50,
-						backBuffer: 30,
-						waitForBuffer: true,
+						maxBuffer: 300,
+						backBuffer: 40,
 						autoHandleInterruptions: true,
 					})
 				} catch (e) {
@@ -47,10 +42,8 @@ const PlayerLogic = {
 			while ((await setup()) === 'android_cannot_setup_player_in_background') {
 				await new Promise<void>((resolve) => setTimeout(resolve, 1))
 			}
-			playerLog.debug('播放器配置设置完成')
 
 			// 设置播放器能力（怕自己忘了记一下：如果想修改这些能力对应的函数调用，要去 /lib/services/playbackService 里改）
-			playerLog.debug('开始设置播放器能力')
 			await TrackPlayer.updateOptions({
 				capabilities: [
 					Capability.Play,
@@ -60,56 +53,30 @@ const PlayerLogic = {
 					Capability.SkipToPrevious,
 					Capability.SeekTo,
 				],
-				compactCapabilities: [
-					Capability.Play,
-					Capability.Pause,
-					Capability.SkipToNext,
-					Capability.SkipToPrevious,
-				],
 				progressUpdateEventInterval: 1,
 				android: {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				icon: require('../../assets/images/icon-large.png'),
+				// FIXME: wtf??? rntp 5.0 没法设置 icon 了
 			})
-			playerLog.debug('播放器能力设置完成')
 			// 设置重复模式为 Off
 			await TrackPlayer.setRepeatMode(RepeatMode.Off)
 		} catch (error: unknown) {
-			playerLog.sentry('初始化播放器失败', error)
+			logger.error('初始化播放器失败', error)
+			reportErrorToSentry(error, '初始化播放器失败', ProjectScope.Player)
 		}
 	},
 
 	// 设置事件监听器
 	setupEventListeners(): void {
-		playerLog.debug('开始设置事件监听器')
-
 		// 监听播放状态变化
-		playerLog.debug('设置播放状态变化监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackState,
-			async (data: { state: TrackPlayerState }) => {
+			(data: { state: TrackPlayerState }) => {
 				const { state } = data
-				const setter = usePlayerStore.setState
-				// const store = usePlayerStore.getState()
-				// const currentTrack = store.currentTrackKey
-				// 	? (store.tracks[store.currentTrackKey] ?? null)
-				// 	: null
-
-				// 获取状态名称用于日志
-				// const stateName =
-				// 	Object.keys(TrackPlayerState).find(
-				// 		(key) =>
-				// 			TrackPlayerState[key as keyof typeof TrackPlayerState] === state,
-				// 	) || state.toString()
 
 				if (state === TrackPlayerState.Playing) {
-					// playerLog.debug('播放状态: 播放中', {
-					// 	trackId: currentTrack?.id,
-					// 	title: currentTrack?.title,
-					// })
-					setter((state) => ({
+					usePlayerStore.setState((state) => ({
 						...state,
 						isPlaying: true,
 						isBuffering: false,
@@ -118,13 +85,7 @@ const PlayerLogic = {
 					state === TrackPlayerState.Paused ||
 					state === TrackPlayerState.Stopped
 				) {
-					// playerLog.debug('播放状态: 暂停/停止', {
-					// 	state: stateName,
-					// 	trackId: currentTrack?.id,
-					// 	title: currentTrack?.title,
-					// })
-					setter((state) => ({
-						...state,
+					usePlayerStore.setState(() => ({
 						isPlaying: false,
 						isBuffering: false,
 					}))
@@ -132,83 +93,86 @@ const PlayerLogic = {
 					state === TrackPlayerState.Buffering ||
 					state === TrackPlayerState.Loading
 				) {
-					// playerLog.debug('播放状态: 缓冲中/加载中', {
-					// 	state: stateName,
-					// 	trackId: currentTrack?.id,
-					// 	title: currentTrack?.title,
-					// })
-					setter((state) => ({ ...state, isBuffering: true }))
+					usePlayerStore.setState((state) => ({ ...state, isBuffering: true }))
 				} else if (state === TrackPlayerState.Ready) {
-					// playerLog.debug('播放状态: 就绪', {
-					// 	trackId: currentTrack?.id,
-					// 	title: currentTrack?.title,
-					// })
-					setter((state) => ({ ...state, isBuffering: false }))
+					usePlayerStore.setState((state) => ({ ...state, isBuffering: false }))
 				}
 			},
 		)
-		playerLog.debug('播放状态变化监听器设置完成')
 
 		// 监听播放完成
-		playerLog.debug('设置播放完成监听器')
 		TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async () => {
 			const store = usePlayerStore.getState()
 			const { repeatMode } = store
 
-			playerLog.debug('播放队列结束（即单曲结束）', {
+			logger.debug('播放队列结束（即单曲结束）', {
 				repeatMode,
 			})
+
+			// 先记录当前曲目的播放记录（自然结束）
+			await store._finalizeAndRecordCurrentPlay('ended')
 
 			// 单曲结束后的行为
 			if (repeatMode !== RepeatMode.Track) {
 				await store.skipToNext()
+			} else {
+				await store.seekTo(0)
+				await TrackPlayer.play()
+				// 单曲循环：重置开始时间，用于下一次循环的统计
+				usePlayerStore.setState((state) => ({
+					...state,
+					currentPlayStartAt: Date.now(),
+				}))
 			}
 		})
 
 		// 监听播放错误
-		playerLog.debug('设置播放错误监听器')
 		TrackPlayer.addEventListener(
 			Event.PlaybackError,
 			async (data: { code: string; message: string }) => {
-				if (data.code === 'android-io-bad-http-status') {
-					playerLog.debug(
-						'播放错误：服务器返回了错误状态码，重新加载曲目，但不上报错误',
+				if (
+					data.code === 'android-io-bad-http-status' ||
+					data.code === 'android-io-network-connection-failed'
+				) {
+					logger.debug(
+						'播放错误：服务器返回了错误状态码或加载失败，重新加载曲目，但不上报错误',
 					)
 				} else {
-					playerLog.sentry('播放错误', data)
+					logger.error('播放错误', data)
+					reportErrorToSentry(
+						new Error(`播放错误: ${data.code} ${data.message}`),
+						'播放错误',
+						ProjectScope.Player,
+					)
 				}
 				const state = usePlayerStore.getState()
-				const nowTrack = state.currentTrackKey
-					? (state.tracks[state.currentTrackKey] ?? null)
+				const nowTrack = state.currentTrackUniqueKey
+					? (state.tracks[state.currentTrackUniqueKey] ?? null)
 					: null
 				if (nowTrack) {
-					playerLog.debug('当前播放的曲目', {
+					logger.debug('当前播放的曲目', {
 						trackId: nowTrack.id,
 						title: nowTrack.title,
 					})
-					const track = await usePlayerStore
-						.getState()
-						.patchMetadataAndAudio(nowTrack)
+					const track = await usePlayerStore.getState().patchAudio(nowTrack)
 					if (track.isErr()) {
-						playerLog.sentry('更新音频流失败', track.error)
+						logger.error('更新音频流失败', track.error)
 						return
 					}
-					playerLog.debug('更新音频流成功', {
+					logger.debug('更新音频流成功', {
 						trackId: track.value.track.id,
 						title: track.value.track.title,
 					})
 					// 使用 load 方法替换当前曲目
 					const rntpTrack = convertToRNTPTrack(track.value.track)
 					if (rntpTrack.isErr()) {
-						playerLog.sentry('更新音频流失败', rntpTrack.error)
+						logger.error('将 Track 转换为 RNTPTrack 失败', rntpTrack.error)
 						return
 					}
 					await TrackPlayer.load(rntpTrack.value)
 				}
 			},
 		)
-
-		playerLog.debug('所有事件监听器设置完成')
 	},
 }
 

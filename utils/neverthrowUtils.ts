@@ -1,18 +1,22 @@
 import { type Result, ResultAsync } from 'neverthrow'
 
 /**
- * Awaits a ResultAsync and returns the value if Ok, otherwise throws the error.
- * Adapts neverthrow's ResultAsync to React Query's Promise expectation.
+ * 运行 ResultAsync 并返回 Ok 或抛出错误（注意，当返回内容为 undefined 时也会抛出错误）
  * @param resultAsync The ResultAsync instance from the API call.
  * @returns Promise<T> which resolves with value T or rejects with error E.
  */
 export async function returnOrThrowAsync<T, E>(
-	resultAsync: ResultAsync<T, E>,
-): Promise<T> {
+	resultAsync: ResultAsync<T, E> | Promise<Result<T, E>>,
+): Promise<Exclude<T, undefined | null>> {
 	const result = await resultAsync
 	if (result.isOk()) {
-		return result.value
+		const value = result.value
+		if (value === undefined || value === null) {
+			throw new Error('Result is undefined')
+		}
+		return value as Exclude<T, undefined | null>
 	}
+	// eslint-disable-next-line @typescript-eslint/only-throw-error
 	throw result.error
 }
 

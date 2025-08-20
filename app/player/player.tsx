@@ -1,8 +1,8 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToFavModal'
+import AddToFavoriteListsModal from '@/components/modals/AddVideoToBilibiliFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
-import { useGetVideoDetails } from '@/hooks/queries/bilibili/useVideoData'
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
+import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useRef, useState } from 'react'
@@ -10,8 +10,8 @@ import { Dimensions, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../types/navigation'
-import { FunctionalMenu } from './components/FunctionalMenu'
 import { PlayerControls } from './components/PlayerControls'
+import { PlayerFunctionalMenu } from './components/PlayerFunctionalMenu'
 import { PlayerHeader } from './components/PlayerHeader'
 import { PlayerSlider } from './components/PlayerSlider'
 import { TrackInfo } from './components/TrackInfo'
@@ -25,12 +25,13 @@ export default function PlayerPage() {
 	const sheetRef = useRef<BottomSheetMethods>(null)
 
 	const currentTrack = useCurrentTrack()
-	const { data: videoDetails } = useGetVideoDetails(currentTrack?.id)
 
 	const [isFavorite, setIsFavorite] = useState(false)
 	const [viewMode, _setViewMode] = useState<'cover' | 'lyrics'>('cover')
 	const [menuVisible, setMenuVisible] = useState(false)
 	const [favModalVisible, setFavModalVisible] = useState(false)
+	const [localPlaylistModalVisible, setLocalPlaylistModalVisible] =
+		useState(false)
 
 	if (!currentTrack) {
 		return (
@@ -67,6 +68,13 @@ export default function PlayerPage() {
 					<TrackInfo
 						isFavorite={isFavorite}
 						onFavoritePress={() => setIsFavorite(!isFavorite)}
+						onArtistPress={() =>
+							currentTrack.artist?.remoteId
+								? navigation.navigate('PlaylistUploader', {
+										mid: currentTrack.artist?.remoteId,
+									})
+								: void 0
+						}
 					/>
 				</View>
 
@@ -83,20 +91,28 @@ export default function PlayerPage() {
 				</View>
 			</View>
 
-			<FunctionalMenu
+			<PlayerFunctionalMenu
 				menuVisible={menuVisible}
 				setMenuVisible={setMenuVisible}
 				screenWidth={screenWidth}
 				viewMode={viewMode}
-				uploaderMid={videoDetails?.owner.mid}
+				uploaderMid={Number(currentTrack.artist?.remoteId ?? undefined)}
 				setFavModalVisible={setFavModalVisible}
+				setLocalPlaylistModalVisible={setLocalPlaylistModalVisible}
 			/>
 
-			<AddToFavoriteListsModal
-				key={currentTrack.id}
-				visible={favModalVisible}
-				setVisible={setFavModalVisible}
-				bvid={currentTrack.id}
+			{currentTrack.source === 'bilibili' && (
+				<AddToFavoriteListsModal
+					key={currentTrack.id}
+					visible={favModalVisible}
+					setVisible={setFavModalVisible}
+					bvid={currentTrack.bilibiliMetadata.bvid}
+				/>
+			)}
+			<AddVideoToLocalPlaylistModal
+				track={currentTrack}
+				visible={localPlaylistModalVisible}
+				setVisible={setLocalPlaylistModalVisible}
 			/>
 
 			<PlayerQueueModal sheetRef={sheetRef} />

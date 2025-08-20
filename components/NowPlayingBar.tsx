@@ -1,4 +1,4 @@
-import useCurrentTrack from '@/hooks/playerHooks/useCurrentTrack'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import {
 	usePlaybackProgress,
 	usePlayerStore,
@@ -34,6 +34,8 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const navigationState = useNavigationState((state) => state)
 	const insets = useSafeAreaInsets()
 	const [displayTrack, setDisplayTrack] = useState(currentTrack)
+	// new arch issue: 直接通过 shouldShowNowPlayingBar 来控制组件显示会导致当组件显示时，动画还没开始（useEffect 还没来得及触发），有一个闪烁，体验不好，所以这里再加一个 finalDisplayBar 状态来控制最终显示状态
+	const [finalDisplayBar, setFinalDisplayBar] = useState(false)
 
 	// 延迟切换 track，避免在切换歌曲时因 currentTrack 短暂变为 null，导致重播入场动画效果
 	useEffect(() => {
@@ -80,7 +82,11 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	}, [insets.bottom, onTabView])
 
 	useEffect(() => {
-		if (!shouldShowNowPlayingBar) return
+		if (!shouldShowNowPlayingBar) {
+			setFinalDisplayBar(false)
+			return
+		}
+		setFinalDisplayBar(true)
 		translateY.set(100)
 		opacity.set(0)
 		translateY.set(withTiming(0, { duration: 500 }))
@@ -89,7 +95,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [shouldShowNowPlayingBar])
 
-	if (!shouldShowNowPlayingBar) return null
+	if (!finalDisplayBar || displayTrack === null) return null
 
 	return (
 		<AnimatedTouchableOpacity
@@ -126,7 +132,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 				}}
 			>
 				<Image
-					source={{ uri: displayTrack.cover }}
+					source={{ uri: displayTrack.coverUrl ?? undefined }}
 					style={{
 						height: 48,
 						width: 48,
@@ -156,7 +162,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						numberOfLines={1}
 						style={{ color: colors.onSurfaceVariant }}
 					>
-						{displayTrack.artist}
+						{displayTrack.artist?.name ?? '未知'}
 					</Text>
 				</View>
 
@@ -171,7 +177,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						size={16}
 						onPress={(e) => {
 							e.stopPropagation()
-							skipToPrevious()
+							void skipToPrevious()
 						}}
 						iconColor={colors.onSurface}
 					/>
@@ -180,7 +186,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						size={24}
 						onPress={(e) => {
 							e.stopPropagation()
-							togglePlay()
+							void togglePlay()
 						}}
 						iconColor={colors.primary}
 						style={{ marginHorizontal: 0 }}
@@ -190,7 +196,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 						size={16}
 						onPress={(e) => {
 							e.stopPropagation()
-							skipToNext()
+							void skipToNext()
 						}}
 						iconColor={colors.onSurface}
 					/>

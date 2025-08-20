@@ -1,14 +1,16 @@
 import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentQueue from '@/hooks/playerHooks/useCurrentQueue'
+import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { DatabaseError } from '@/lib/errors'
+import { createServiceError } from '@/lib/errors/service'
+import { ProjectScope } from '@/types/core/scope'
+import { reportErrorToSentry, toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import * as EXPOFS from 'expo-file-system'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import FileViewer from 'react-native-file-viewer'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../types/navigation'
@@ -57,32 +59,13 @@ export default function TestPage() {
 					description: '现在更新',
 				})
 				setTimeout(() => {
-					Updates.reloadAsync()
+					void Updates.reloadAsync()
 				}, 1000)
 			}
 		} catch (error) {
 			console.error('更新失败:', error)
 			toast.error('更新失败', { description: String(error) })
 		}
-	}
-
-	const openLogFile = async () => {
-		let date = new Date()
-		const offset = date.getTimezoneOffset()
-		date = new Date(date.getTime() - offset * 60 * 1000)
-		const logFilePath = `${EXPOFS.documentDirectory}logs_${date.toISOString().split('T')[0]}.log`
-
-		FileViewer.open(logFilePath)
-			.then(() => {
-				console.log('open file')
-			})
-			.catch((err) => {
-				console.log('open file error', err)
-				toast.error('打开文件失败', {
-					description: String(err),
-					duration: Number.POSITIVE_INFINITY,
-				})
-			})
 	}
 
 	// 清空队列
@@ -145,44 +128,27 @@ export default function TestPage() {
 						拉取更新并重载
 					</Button>
 					<Button
-						mode='contained'
-						loading={loading}
-						style={{ marginBottom: 8 }}
-						onPress={openLogFile}
-					>
-						打开运行日志
-					</Button>
-					<Button
 						mode='outlined'
 						onPress={() => {
-							setIsQrCodeLoginDialogVisible(true)
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						测试扫码登录
-					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							usePlayerStore.persist.rehydrate()
-						}}
-						style={{ marginBottom: 8 }}
-					>
-						重新水合播放器 store
-					</Button>
-					<Button
-						mode='outlined'
-						onPress={() => {
-							toast.info('这是一个测试 toast', {
-								duration: 3000,
-								text1: '测试 Toast',
-								text2:
-									'这是一个测试的 Toast 消息aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaasdhkisuvghaosvuohafdiubvhasfv\nasdasdasd\n\nhhhhhhhhhh',
+							const err1 = new DatabaseError('创建播放列表失败', {
+								cause: new Error('测试错误'),
 							})
+							const err2 = createServiceError(
+								'NotImplemented',
+								'不存在xxxxxx',
+								{
+									cause: err1,
+									data: {
+										fuck: 1,
+									},
+								},
+							)
+							toastAndLogError('测试错误', err2, 'Test')
+							reportErrorToSentry(err2, '测试错误', ProjectScope.UI)
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						弹出 toast
+						创建一个错误
 					</Button>
 				</View>
 
@@ -194,14 +160,12 @@ export default function TestPage() {
 				</Text>
 				{queue.map((track) => (
 					<Card
-						key={`${track.id}-${track.cid}`}
+						key={`${track.id}`}
 						style={{ marginBottom: 8 }}
 					>
 						<Card.Title
-							title={track.hasMetadata ? track.title : track.id}
-							subtitle={
-								track.hasMetadata ? track.artist : '该视频还未获取元数据'
-							}
+							title={track.title}
+							subtitle={track.artist?.name ?? '该视频还未获取元数据'}
 						/>
 					</Card>
 				))}
