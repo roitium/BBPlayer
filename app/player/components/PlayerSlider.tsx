@@ -19,7 +19,7 @@ export function PlayerSlider() {
 	return (
 		<View>
 			<Slider
-				style={{ width: '100%', height: 40 }}
+				style={{ width: '100%', height: 40, zIndex: 0 }}
 				minimumValue={0}
 				maximumValue={maxSliderValue}
 				value={currentSliderPosition}

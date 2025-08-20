@@ -112,7 +112,6 @@ const FavoriteFolderListComponent = memo(() => {
 			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
-				estimatedItemSize={72}
 				data={filteredPlaylists}
 				renderItem={renderPlaylistItem}
 				refreshControl={

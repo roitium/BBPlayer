@@ -1,3 +1,4 @@
+import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
@@ -180,7 +181,7 @@ export const TrackListItem = memo(function TrackListItem({
 
 					{/* Context Menu */}
 					{menuItems.length > 0 && !disabled && (
-						<Menu
+						<FunctionalMenu
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
 							anchor={
@@ -207,7 +208,7 @@ export const TrackListItem = memo(function TrackListItem({
 									title={menuItem.title}
 								/>
 							))}
-						</Menu>
+						</FunctionalMenu>
 					)}
 				</View>
 			</Surface>

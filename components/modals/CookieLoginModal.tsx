@@ -6,7 +6,7 @@ import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
-import { AnimatedModal } from '../AnimatedModal'
+import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 function SetCookieDialog({
 	visible,

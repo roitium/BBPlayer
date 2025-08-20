@@ -1,4 +1,4 @@
-import { AnimatedModal } from '@/components/AnimatedModal'
+import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { storage } from '@/utils/mmkv'
 import * as WebBrowser from 'expo-web-browser'
 import { View } from 'react-native'

@@ -204,7 +204,6 @@ export default function SearchResultsPage() {
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
 				data={tracks}
-				estimatedItemSize={70}
 				extraData={{ selectMode, selected }}
 				renderItem={renderSearchResultItem}
 				ItemSeparatorComponent={() => <Divider />}

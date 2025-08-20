@@ -1,4 +1,4 @@
-import { AnimatedModal } from '@/components/AnimatedModal'
+import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { useEditPlaylistMetadata } from '@/hooks/mutations/db/playlist'
 import { bilibiliFacade } from '@/lib/facades/bilibili'
 import type { Playlist } from '@/types/core/media'
@@ -94,10 +94,17 @@ export default function EditPlaylistMetadataModal({
 		setCoverUrl(COVERS_DIR + asset.name)
 	}, [])
 
+	const handleDismiss = useCallback(() => {
+		setVisible(false)
+		setTitle('')
+		setDescription('')
+		setCoverUrl('')
+	}, [setVisible])
+
 	return (
 		<AnimatedModal
 			visible={visiable}
-			onDismiss={() => setVisible(false)}
+			onDismiss={handleDismiss}
 		>
 			<Dialog.Title>编辑信息</Dialog.Title>
 			<Dialog.Content style={{ gap: 5 }}>
@@ -143,7 +150,7 @@ export default function EditPlaylistMetadataModal({
 					<View />
 				)}
 				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-					<Button onPress={() => setVisible(false)}>取消</Button>
+					<Button onPress={handleDismiss}>取消</Button>
 					<Button onPress={handleConfirm}>确定</Button>
 				</View>
 			</Dialog.Actions>

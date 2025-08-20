@@ -303,7 +303,6 @@ export default function FavoritePage() {
 				<FlashList
 					data={tracks}
 					extraData={{ selectMode, selected }}
-					estimatedItemSize={70}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					ListHeaderComponent={

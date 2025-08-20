@@ -278,7 +278,6 @@ export default function MultipagePage() {
 				<FlashList
 					data={tracksData}
 					extraData={{ selectMode, selected }}
-					estimatedItemSize={70}
 					renderItem={renderItem}
 					ItemSeparatorComponent={() => <Divider />}
 					contentContainerStyle={{

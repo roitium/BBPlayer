@@ -18,7 +18,7 @@ import generateUniqueTrackKey from '@/lib/services/genKey'
 import type { Playlist, Track } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { FlashList } from '@shopify/flash-list'
-import { AnimatedModal } from '../AnimatedModal'
+import { AnimatedModal } from '../commonUIs/AnimatedModal'
 import CreatePlaylistModal from './CreatePlaylistModal'
 
 const PlaylistListItem = memo(function PlaylistListItem({
@@ -213,7 +213,6 @@ const AddVideoToLocalPlaylistModal = memo(
 						<View style={{ flex: 1, minHeight: 300 }}>
 							<FlashList
 								data={sortedAllPlaylists ?? []}
-								estimatedItemSize={64}
 								renderItem={renderPlaylistItem}
 								keyExtractor={keyExtractor}
 								extraData={checkedPlaylistIds}

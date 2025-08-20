@@ -1,4 +1,4 @@
-import { AnimatedModal } from '@/components/AnimatedModal'
+import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'

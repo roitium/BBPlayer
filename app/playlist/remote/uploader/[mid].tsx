@@ -363,7 +363,6 @@ export default function UploaderPage() {
 				<FlashList
 					data={tracks ?? []}
 					extraData={{ selectMode, selected }}
-					estimatedItemSize={70}
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 					}}

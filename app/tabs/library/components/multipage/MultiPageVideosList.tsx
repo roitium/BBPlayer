@@ -111,7 +111,6 @@ const MultiPageVideosListComponent = memo(() => {
 			<FlashList
 				contentContainerStyle={{ paddingBottom: currentTrack ? 70 : 10 }}
 				showsVerticalScrollIndicator={false}
-				estimatedItemSize={85}
 				data={favoriteData.pages.flatMap((page) => page.medias) ?? []}
 				renderItem={renderPlaylistItem}
 				keyExtractor={keyExtractor}
