@@ -206,6 +206,9 @@ importers:
       react-native:
         specifier: 0.79.5
         version: 0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0)
+      react-native-bottom-tabs:
+        specifier: ^0.10.0
+        version: 0.10.0(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-edge-to-edge:
         specifier: ^1.6.2
         version: 1.6.2(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
