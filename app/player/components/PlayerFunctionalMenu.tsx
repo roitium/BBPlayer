@@ -1,3 +1,4 @@
+import FunctionalMenu from '@/components/FunctionalMenu'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
@@ -7,7 +8,7 @@ import { Divider, Menu } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 
-export function FunctionalMenu({
+export function PlayerFunctionalMenu({
 	menuVisible,
 	setMenuVisible,
 	screenWidth,
@@ -30,7 +31,7 @@ export function FunctionalMenu({
 	const insets = useSafeAreaInsets()
 
 	return (
-		<Menu
+		<FunctionalMenu
 			visible={menuVisible}
 			onDismiss={() => setMenuVisible(false)}
 			anchor={{ x: screenWidth - 24, y: insets.top + 24 }}
@@ -87,6 +88,6 @@ export function FunctionalMenu({
 				title={viewMode === 'cover' ? '显示歌词' : '显示封面'}
 				leadingIcon={viewMode === 'cover' ? 'text' : 'image'}
 			/>
-		</Menu>
+		</FunctionalMenu>
 	)
 }

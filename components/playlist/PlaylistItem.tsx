@@ -10,6 +10,7 @@ import {
 	Text,
 	TouchableRipple,
 } from 'react-native-paper'
+import FunctionalMenu from '../FunctionalMenu'
 
 export interface TrackMenuItem {
 	title: string
@@ -173,7 +174,7 @@ export const TrackListItem = memo(function TrackListItem({
 
 					{/* Context Menu */}
 					{menuItems.length > 0 && !disabled && (
-						<Menu
+						<FunctionalMenu
 							key={`menu-${data.id}`}
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
@@ -198,7 +199,7 @@ export const TrackListItem = memo(function TrackListItem({
 									title={menuItem.title}
 								/>
 							))}
-						</Menu>
+						</FunctionalMenu>
 					)}
 				</View>
 			</Surface>

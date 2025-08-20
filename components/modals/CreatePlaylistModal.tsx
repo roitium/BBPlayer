@@ -1,10 +1,10 @@
-import { AnimatedModal } from '@/components/AnimatedModal'
 import { useCreateNewLocalPlaylist } from '@/hooks/mutations/db/playlist'
 import * as DocumentPicker from 'expo-document-picker'
 import * as FileSystem from 'expo-file-system'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, IconButton, TextInput } from 'react-native-paper'
+import { AnimatedModal } from '../AnimatedModal'
 
 export default function CreatePlaylistModal({
 	visiable,
