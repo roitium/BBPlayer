@@ -12,6 +12,7 @@
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.27.1",
+		"@bottom-tabs/react-navigation": "^0.10.0",
 		"@expo/config-plugins": "^10.1.2",
 		"@expo/metro-runtime": "~5.0.4",
 		"@gorhom/bottom-sheet": "^5.2.3",

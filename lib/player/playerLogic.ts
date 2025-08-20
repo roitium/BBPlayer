@@ -32,7 +32,6 @@ const PlayerLogic = {
 						minBuffer: 15,
 						maxBuffer: 50,
 						backBuffer: 30,
-						waitForBuffer: true,
 						autoHandleInterruptions: true,
 					})
 				} catch (e) {
@@ -54,18 +53,10 @@ const PlayerLogic = {
 					Capability.SkipToPrevious,
 					Capability.SeekTo,
 				],
-				compactCapabilities: [
-					Capability.Play,
-					Capability.Pause,
-					Capability.SkipToNext,
-					Capability.SkipToPrevious,
-				],
 				progressUpdateEventInterval: 1,
 				android: {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
-				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
-				icon: require('../../assets/images/icon-large.png'),
 			})
 			// 设置重复模式为 Off
 			await TrackPlayer.setRepeatMode(RepeatMode.Off)
@@ -82,10 +73,9 @@ const PlayerLogic = {
 			Event.PlaybackState,
 			(data: { state: TrackPlayerState }) => {
 				const { state } = data
-				const setter = usePlayerStore.setState
 
 				if (state === TrackPlayerState.Playing) {
-					setter((state) => ({
+					usePlayerStore.setState((state) => ({
 						...state,
 						isPlaying: true,
 						isBuffering: false,
@@ -94,7 +84,7 @@ const PlayerLogic = {
 					state === TrackPlayerState.Paused ||
 					state === TrackPlayerState.Stopped
 				) {
-					setter((state) => ({
+					usePlayerStore.setState((state) => ({
 						...state,
 						isPlaying: false,
 						isBuffering: false,
@@ -103,9 +93,9 @@ const PlayerLogic = {
 					state === TrackPlayerState.Buffering ||
 					state === TrackPlayerState.Loading
 				) {
-					setter((state) => ({ ...state, isBuffering: true }))
+					usePlayerStore.setState((state) => ({ ...state, isBuffering: true }))
 				} else if (state === TrackPlayerState.Ready) {
-					setter((state) => ({ ...state, isBuffering: false }))
+					usePlayerStore.setState((state) => ({ ...state, isBuffering: false }))
 				}
 			},
 		)
