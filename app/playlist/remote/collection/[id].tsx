@@ -294,7 +294,6 @@ export default function CollectionPage() {
 					removeClippedSubviews
 					renderItem={renderItem}
 					extraData={{ selectMode, selected }}
-					estimatedItemSize={70}
 					ItemSeparatorComponent={() => <Divider />}
 					keyExtractor={keyExtractor}
 					showsVerticalScrollIndicator={false}

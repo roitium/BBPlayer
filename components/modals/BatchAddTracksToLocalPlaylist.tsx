@@ -132,7 +132,6 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 							<FlashList
 								data={sortedAllPlaylists ?? []}
 								renderItem={renderPlaylistItem}
-								estimatedItemSize={56}
 								keyExtractor={keyExtractor}
 								extraData={selectedPlaylistId}
 								ListEmptyComponent={

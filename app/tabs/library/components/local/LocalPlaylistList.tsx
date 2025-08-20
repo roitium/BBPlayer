@@ -81,7 +81,6 @@ const LocalPlaylistListComponent = memo(() => {
 				showsVerticalScrollIndicator={false}
 				data={playlists ?? []}
 				renderItem={renderPlaylistItem}
-				estimatedItemSize={81}
 				refreshControl={
 					<RefreshControl
 						refreshing={refreshing || playlistsIsRefetching}

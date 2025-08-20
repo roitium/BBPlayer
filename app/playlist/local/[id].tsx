@@ -489,7 +489,6 @@ export default function LocalPlaylistPage() {
 				renderItem={renderItem}
 				extraData={{ selectMode, selected }}
 				ItemSeparatorComponent={() => <Divider />}
-				estimatedItemSize={70}
 				ListHeaderComponent={
 					<PlaylistHeader
 						playlist={playlistMetadata}

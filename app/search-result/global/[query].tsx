@@ -189,7 +189,6 @@ export default function SearchResultsPage() {
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
-				estimatedItemSize={70}
 				extraData={{ selectMode, selected }}
 				data={uniqueSearchData ?? []}
 				renderItem={renderSearchResultItem}

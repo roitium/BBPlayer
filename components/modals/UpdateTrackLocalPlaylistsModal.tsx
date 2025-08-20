@@ -213,7 +213,6 @@ const AddVideoToLocalPlaylistModal = memo(
 						<View style={{ flex: 1, minHeight: 300 }}>
 							<FlashList
 								data={sortedAllPlaylists ?? []}
-								estimatedItemSize={64}
 								renderItem={renderPlaylistItem}
 								keyExtractor={keyExtractor}
 								extraData={checkedPlaylistIds}
