@@ -18,7 +18,6 @@ import {
 	reportPlaybackHistory,
 } from '@/utils/player'
 import toast from '@/utils/toast'
-import { produce } from 'immer'
 import { err, ok, type Result } from 'neverthrow'
 import TrackPlayer, {
 	RepeatMode,
@@ -27,6 +26,7 @@ import TrackPlayer, {
 } from 'react-native-track-player'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { immer } from 'zustand/middleware/immer'
 
 const logger = log.extend('Store.Player')
 
@@ -44,7 +44,7 @@ const checkPlayerReady = () => {
  */
 export const usePlayerStore = create<PlayerStore>()(
 	persist(
-		(set, get) => {
+		immer((set, get) => {
 			const initialState: PlayerState = {
 				tracks: {},
 				orderedList: [],
@@ -166,16 +166,14 @@ export const usePlayerStore = create<PlayerStore>()(
 					}
 
 					if (initialCurrentUniqueKey !== keyToRemove) {
-						set(
-							produce((state: PlayerState) => {
-								delete state.tracks[keyToRemove]
-								const orderedIndex = state.orderedList.indexOf(keyToRemove)
-								if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
-								const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
-								if (shuffledIndex > -1)
-									state.shuffledList.splice(shuffledIndex, 1)
-							}),
-						)
+						set((state) => {
+							delete state.tracks[keyToRemove]
+							const orderedIndex = state.orderedList.indexOf(keyToRemove)
+							if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
+							const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
+							if (shuffledIndex > -1)
+								state.shuffledList.splice(shuffledIndex, 1)
+						})
 						return
 					}
 
@@ -196,21 +194,18 @@ export const usePlayerStore = create<PlayerStore>()(
 						: currentIndex + 1
 					const nextTrackKeyToPlay = activeList[nextIndexToPlayInOldList]
 
-					set(
-						produce((state: PlayerState) => {
-							// 删除 track 数据
-							delete state.tracks[keyToRemove]
+					set((state) => {
+						// 删除 track 数据
+						delete state.tracks[keyToRemove]
 
-							// 从顺序列表中删除
-							const orderedIndex = state.orderedList.indexOf(keyToRemove)
-							if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
+						// 从顺序列表中删除
+						const orderedIndex = state.orderedList.indexOf(keyToRemove)
+						if (orderedIndex > -1) state.orderedList.splice(orderedIndex, 1)
 
-							// 从随机列表中删除
-							const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
-							if (shuffledIndex > -1)
-								state.shuffledList.splice(shuffledIndex, 1)
-						}),
-					)
+						// 从随机列表中删除
+						const shuffledIndex = state.shuffledList.indexOf(keyToRemove)
+						if (shuffledIndex > -1) state.shuffledList.splice(shuffledIndex, 1)
+					})
 
 					const newActiveList = get()._getActiveList()
 					const finalIndexToPlay = newActiveList.indexOf(nextTrackKeyToPlay)
@@ -275,44 +270,42 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					// 有新歌加入
 					const newKeys = newTracks.map((track) => String(track.uniqueKey))
-					set(
-						produce((state: PlayerState) => {
-							// 1. 把新歌数据加进去
-							newTracks.forEach((track, i) => {
-								state.tracks[newKeys[i]] = track
-							})
+					set((state) => {
+						// 1. 把新歌数据加进去
+						newTracks.forEach((track, i) => {
+							state.tracks[newKeys[i]] = track
+						})
 
-							// 2. 计算插入位置
-							const currentKey = state.currentTrackUniqueKey
-							let orderedInsertIdx = state.orderedList.length
-							let shuffledInsertIdx = state.shuffledList.length
-							if (playNext && currentKey) {
-								orderedInsertIdx = state.orderedList.indexOf(currentKey) + 1
-								shuffledInsertIdx = state.shuffledList.indexOf(currentKey) + 1
+						// 2. 计算插入位置
+						const currentKey = state.currentTrackUniqueKey
+						let orderedInsertIdx = state.orderedList.length
+						let shuffledInsertIdx = state.shuffledList.length
+						if (playNext && currentKey) {
+							orderedInsertIdx = state.orderedList.indexOf(currentKey) + 1
+							shuffledInsertIdx = state.shuffledList.indexOf(currentKey) + 1
+						}
+
+						// 3. 插入 key 列表
+						state.orderedList.splice(orderedInsertIdx, 0, ...newKeys)
+						state.shuffledList.splice(shuffledInsertIdx, 0, ...newKeys)
+
+						// 4. 决定当前播放的 key
+						if (playNow) {
+							// 默认播放新列表的第一首
+							let keyToPlay = newKeys[0]
+
+							// 如果提供了 startFromKey，并且这个 key 属于本次新添加的歌曲，则使用它
+							if (startFromId && newKeys.includes(startFromId)) {
+								keyToPlay = startFromId
 							}
-
-							// 3. 插入 key 列表
-							state.orderedList.splice(orderedInsertIdx, 0, ...newKeys)
-							state.shuffledList.splice(shuffledInsertIdx, 0, ...newKeys)
-
-							// 4. 决定当前播放的 key
-							if (playNow) {
-								// 默认播放新列表的第一首
-								let keyToPlay = newKeys[0]
-
-								// 如果提供了 startFromKey，并且这个 key 属于本次新添加的歌曲，则使用它
-								if (startFromId && newKeys.includes(startFromId)) {
-									keyToPlay = startFromId
-								}
-								state.currentTrackUniqueKey = keyToPlay
-							} else if (
-								!state.currentTrackUniqueKey &&
-								state.orderedList.length > 0
-							) {
-								state.currentTrackUniqueKey = state.orderedList[0]
-							}
-						}),
-					)
+							state.currentTrackUniqueKey = keyToPlay
+						} else if (
+							!state.currentTrackUniqueKey &&
+							state.orderedList.length > 0
+						) {
+							state.currentTrackUniqueKey = state.orderedList[0]
+						}
+					})
 
 					if (playNow) {
 						const keyToPlay = get().currentTrackUniqueKey
@@ -513,11 +506,9 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					const { track: finalTrack, needsUpdate } = result.value
 					if (needsUpdate) {
-						set(
-							produce((state: PlayerState) => {
-								state.tracks[track.uniqueKey] = finalTrack
-							}),
-						)
+						set((state) => {
+							state.tracks[track.uniqueKey] = finalTrack
+						})
 					}
 
 					return ok({ track: finalTrack, needsUpdate })
@@ -600,7 +591,7 @@ export const usePlayerStore = create<PlayerStore>()(
 			}
 
 			return store
-		},
+		}),
 		{
 			name: 'player-storage-full',
 			storage: createJSONStorage(() => zustandStorage),
