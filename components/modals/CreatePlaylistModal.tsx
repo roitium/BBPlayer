@@ -4,7 +4,7 @@ import * as FileSystem from 'expo-file-system'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, IconButton, TextInput } from 'react-native-paper'
-import { AnimatedModal } from '../AnimatedModal'
+import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 export default function CreatePlaylistModal({
 	visiable,

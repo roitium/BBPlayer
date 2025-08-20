@@ -13,7 +13,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 	const onClose = useCallback(() => {
 		setShowContent(false)
 		props.onDismiss?.()
-	}, [props])
+	}, [props.onDismiss])
 
 	return (
 		<Menu
@@ -24,6 +24,7 @@ const FunctionalMenu = memo(function FunctionalMenu({
 			}}
 		>
 			<View
+				// new arch issue: 第一次打开 Menu 时会有闪烁，采用这种方法躲闪...
 				onLayout={() => {
 					setTimeout(() => setShowContent(true), 100)
 				}}

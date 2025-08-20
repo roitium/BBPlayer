@@ -15,7 +15,7 @@ import type { Playlist } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { FlashList } from '@shopify/flash-list'
-import { AnimatedModal } from '../AnimatedModal'
+import { AnimatedModal } from '../commonUIs/AnimatedModal'
 import CreatePlaylistModal from './CreatePlaylistModal'
 
 const BatchAddTracksToLocalPlaylistModal = memo(

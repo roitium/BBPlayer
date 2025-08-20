@@ -10,7 +10,7 @@ import {
 	Text,
 	TouchableRipple,
 } from 'react-native-paper'
-import FunctionalMenu from '../FunctionalMenu'
+import FunctionalMenu from '../commonUIs/FunctionalMenu'
 
 export interface TrackMenuItem {
 	title: string

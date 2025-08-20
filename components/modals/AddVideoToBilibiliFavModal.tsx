@@ -17,7 +17,7 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
-import { AnimatedModal } from '../AnimatedModal'
+import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 const FavoriteListItem = memo(function FavoriteListItem({
 	name,

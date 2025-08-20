@@ -1,7 +1,7 @@
 import appStore from '@/hooks/stores/appStore'
 import { storage } from '@/utils/mmkv'
 import { Button, Dialog, Text } from 'react-native-paper'
-import { AnimatedModal } from '../AnimatedModal'
+import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 export default function WelcomeModal({
 	visible,

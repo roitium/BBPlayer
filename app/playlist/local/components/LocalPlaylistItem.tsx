@@ -1,4 +1,4 @@
-import FunctionalMenu from '@/components/FunctionalMenu'
+import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'

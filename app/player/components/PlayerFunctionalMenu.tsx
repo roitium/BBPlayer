@@ -1,4 +1,4 @@
-import FunctionalMenu from '@/components/FunctionalMenu'
+import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'

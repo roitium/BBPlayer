@@ -1,9 +1,9 @@
-import { AnimatedModal } from '@/components/AnimatedModal'
-import FunctionalMenu from '@/components/FunctionalMenu'
+import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
+import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
 import EditTrackMetadataModal from '@/components/modals/edit-metadata/editTrackMetadataModal'
+import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import {
 	useBatchDeleteTracksFromLocalPlaylist,
 	useDeletePlaylist,

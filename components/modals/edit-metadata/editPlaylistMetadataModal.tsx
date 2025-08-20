@@ -1,4 +1,4 @@
-import { AnimatedModal } from '@/components/AnimatedModal'
+import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { useEditPlaylistMetadata } from '@/hooks/mutations/db/playlist'
 import { bilibiliFacade } from '@/lib/facades/bilibili'
 import type { Playlist } from '@/types/core/media'

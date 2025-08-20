@@ -65,6 +65,7 @@ export const AnimatedModal = ({
 							contentStyle,
 						]}
 						onLayout={(e) => {
+							// new arch issue: 第一次打开 Modal 时会有 FOUC 问题，采用这种方法 hack 一下
 							setShowContent(
 								e.nativeEvent.layout.height > 0 &&
 									e.nativeEvent.layout.width > 0,
