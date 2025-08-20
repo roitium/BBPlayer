@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	icon: './assets/images/icon.png',
 	scheme: 'bbplayer',
 	userInterfaceStyle: 'automatic',
-	newArchEnabled: false,
+	newArchEnabled: true,
 	platforms: ['android'],
 	android: {
 		adaptiveIcon: {
