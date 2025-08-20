@@ -51,10 +51,17 @@ export default function CreatePlaylistModal({
 		setCoverUrl(COVERS_DIR + asset.name)
 	}, [])
 
+	const handleDismiss = useCallback(() => {
+		setVisible(false)
+		setTitle('')
+		setDescription('')
+		setCoverUrl('')
+	}, [setVisible])
+
 	return (
 		<AnimatedModal
 			visible={visiable}
-			onDismiss={() => setVisible(false)}
+			onDismiss={handleDismiss}
 		>
 			<Dialog.Title>创建播放列表</Dialog.Title>
 			<Dialog.Content style={{ gap: 5 }}>
@@ -94,7 +101,7 @@ export default function CreatePlaylistModal({
 				</View>
 			</Dialog.Content>
 			<Dialog.Actions>
-				<Button onPress={() => setVisible(false)}>取消</Button>
+				<Button onPress={handleDismiss}>取消</Button>
 				<Button onPress={handleConfirm}>确定</Button>
 			</Dialog.Actions>
 		</AnimatedModal>

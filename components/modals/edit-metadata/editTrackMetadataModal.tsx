@@ -35,10 +35,15 @@ export default function EditTrackMetadataModal({
 		setTitle(track.title)
 	}, [track.title])
 
+	const handleDismiss = () => {
+		setVisible(false)
+		setTitle('')
+	}
+
 	return (
 		<AnimatedModal
 			visible={visiable}
-			onDismiss={() => setVisible(false)}
+			onDismiss={handleDismiss}
 		>
 			<Dialog.Title>改名</Dialog.Title>
 			<Dialog.Content style={{ gap: 5 }}>
@@ -52,7 +57,7 @@ export default function EditTrackMetadataModal({
 				/>
 			</Dialog.Content>
 			<Dialog.Actions>
-				<Button onPress={() => setVisible(false)}>取消</Button>
+				<Button onPress={handleDismiss}>取消</Button>
 				<Button onPress={handleConfirm}>确定</Button>
 			</Dialog.Actions>
 		</AnimatedModal>
