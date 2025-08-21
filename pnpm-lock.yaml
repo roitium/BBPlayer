@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  react-native-track-player:
+    hash: acc372f257a64d91f8c3756c8e11e213952eebe05b8e0cff66a7628282f0baac
+    path: patches/react-native-track-player.patch
+
 importers:
 
   .:
@@ -262,7 +267,7 @@ importers:
         version: 2.3.3(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-track-player:
         specifier: ^5.0.0-alpha0
-        version: 5.0.0-alpha0(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10)
+        version: 5.0.0-alpha0(patch_hash=acc372f257a64d91f8c3756c8e11e213952eebe05b8e0cff66a7628282f0baac)(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10)
       react-native-web:
         specifier: ~0.20.0
         version: 0.20.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -12533,7 +12538,7 @@ snapshots:
       react: 19.0.0
       react-native: 0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0)
 
-  react-native-track-player@5.0.0-alpha0(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10):
+  react-native-track-player@5.0.0-alpha0(patch_hash=acc372f257a64d91f8c3756c8e11e213952eebe05b8e0cff66a7628282f0baac)(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10):
     dependencies:
       react: 19.0.0
       react-native: 0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0)
