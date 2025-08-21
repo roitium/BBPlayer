@@ -21,6 +21,20 @@ export function usePlaylistMenu(
 				onPress: () => playTrack(item, true),
 			},
 			{
+				title: '查看详细信息',
+				leadingIcon: 'file-document-outline',
+				onPress: () => {
+					const state = navigation.getState()
+					if (state.routes[state.index].name === 'PlaylistMultipage') {
+						toast.info('你已经在这里了，没法更深入了！')
+						return
+					}
+					navigation.navigate('PlaylistMultipage', {
+						bvid: item.bilibiliMetadata.bvid,
+					})
+				},
+			},
+			{
 				title: '添加到本地歌单',
 				leadingIcon: 'playlist-plus',
 				onPress: () => {

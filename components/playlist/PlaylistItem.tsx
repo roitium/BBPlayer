@@ -1,17 +1,10 @@
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
-import { memo, useState } from 'react'
+import { memo, useRef } from 'react'
 import { View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
-import {
-	Checkbox,
-	Icon,
-	Menu,
-	Surface,
-	Text,
-	useTheme,
-} from 'react-native-paper'
-import FunctionalMenu from '../commonUIs/FunctionalMenu'
+import { Checkbox, Icon, Surface, Text, useTheme } from 'react-native-paper'
 
 export interface TrackMenuItem {
 	title: string
@@ -32,12 +25,13 @@ export interface TrackNecessaryData {
 	duration: number
 	id: number
 	artistName?: string
+	uniqueKey: string
 }
 
 interface TrackListItemProps {
 	index: number
 	onTrackPress: () => void
-	menuItems: TrackMenuItem[]
+	onMenuPress: (anchor: { x: number; y: number }) => void
 	showCoverImage?: boolean
 	data: TrackNecessaryData
 	disabled?: boolean
@@ -53,7 +47,7 @@ interface TrackListItemProps {
 export const TrackListItem = memo(function TrackListItem({
 	index,
 	onTrackPress,
-	menuItems,
+	onMenuPress,
 	showCoverImage = true,
 	data,
 	disabled = false,
@@ -62,16 +56,20 @@ export const TrackListItem = memo(function TrackListItem({
 	selectMode,
 	enterSelectMode,
 }: TrackListItemProps) {
-	const [isMenuVisible, setIsMenuVisible] = useState(false)
-	const openMenu = () => setIsMenuVisible(true)
-	const closeMenu = () => setIsMenuVisible(false)
 	const colors = useTheme().colors
-	console.log(`rendered ${data.title}`)
+	const menuRef = useRef<View>(null)
+	const isCurrentTrack = usePlayerStore(
+		(state) => state.currentTrackUniqueKey === data.uniqueKey,
+	)
+
+	// 在非选择模式下，当前播放歌曲高亮；在选择模式下，歌曲被选中时高亮
+	const highlighted = (isCurrentTrack && !selectMode) || isSelected
 
 	return (
 		<RectButton
 			style={{
 				paddingVertical: 4,
+				backgroundColor: highlighted ? colors.elevation.level5 : 'transparent',
 			}}
 			delayLongPress={500}
 			enabled={!disabled}
@@ -141,7 +139,12 @@ export const TrackListItem = memo(function TrackListItem({
 
 					{/* Title and Details */}
 					<View style={{ marginLeft: 12, flex: 1, marginRight: 4 }}>
-						<Text variant='bodySmall'>{data.title}</Text>
+						<Text
+							variant='bodySmall'
+							style={{ fontWeight: highlighted ? 'bold' : 'normal' }}
+						>
+							{data.title}
+						</Text>
 						<View
 							style={{
 								flexDirection: 'row',
@@ -174,40 +177,25 @@ export const TrackListItem = memo(function TrackListItem({
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && !disabled && (
-						<FunctionalMenu
-							key={`menu-${data.id}`}
-							visible={isMenuVisible}
-							onDismiss={closeMenu}
-							anchor={
-								<RectButton
-									style={{ borderRadius: 99999, padding: 10 }}
-									onPress={openMenu}
-									enabled={!selectMode}
-								>
-									<Icon
-										source='dots-vertical'
-										size={20}
-										color={
-											selectMode ? colors.onSurfaceDisabled : colors.primary
-										}
-									/>
-								</RectButton>
+					{!disabled && (
+						<RectButton
+							ref={menuRef}
+							style={{ borderRadius: 99999, padding: 10 }}
+							onPress={() =>
+								menuRef.current?.measure(
+									(_x, _y, _width, _height, pageX, pageY) => {
+										onMenuPress({ x: pageX, y: pageY })
+									},
+								)
 							}
-							anchorPosition='bottom'
+							enabled={!selectMode}
 						>
-							{menuItems.map((menuItem) => (
-								<Menu.Item
-									key={menuItem.title}
-									leadingIcon={menuItem.leadingIcon}
-									onPress={() => {
-										menuItem.onPress()
-										closeMenu()
-									}}
-									title={menuItem.title}
-								/>
-							))}
-						</FunctionalMenu>
+							<Icon
+								source='dots-vertical'
+								size={20}
+								color={selectMode ? colors.onSurfaceDisabled : colors.primary}
+							/>
+						</RectButton>
 					)}
 				</View>
 			</Surface>

@@ -1,30 +1,31 @@
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import { useSearchResults } from '@/hooks/queries/bilibili/search'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BilibiliSearchVideo } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { RootStackParamList } from '@/types/navigation'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { formatMMSSToSeconds } from '@/utils/time'
 import {
 	type RouteProp,
 	useNavigation,
-	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
-import { FlashList } from '@shopify/flash-list'
-import { useCallback, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useEffect, useMemo, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { RootStackParamList } from '../../../types/navigation'
+import { TrackList } from '../../shared/TrackList'
+import { useTrackSelection } from '../../shared/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 const mapApiItemToTrack = (apiItem: BilibiliSearchVideo): BilibiliTrack => {
+	console.log(apiItem)
 	return {
 		id: apiItem.aid,
 		uniqueKey: `bilibili::${apiItem.bvid}`,
@@ -57,29 +58,32 @@ export default function SearchResultsPage() {
 	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
-	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
-	const [selectMode, setSelectMode] = useState<boolean>(false)
 	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
+	const [transitionDone, setTransitionDone] = useState(false)
+	const [refreshing, setRefreshing] = useState(false)
 
 	const {
 		data: searchData,
 		isPending: isPendingSearchData,
 		isError: isErrorSearchData,
 		hasNextPage,
+		refetch,
 		fetchNextPage,
 	} = useSearchResults(query)
 
 	const {
-		trackMenuItems,
-		playTrack,
 		currentModalTrack,
 		modalVisible,
 		setModalVisible,
+		trackMenuItems,
+		playTrack,
 	} = useSearchInteractions()
 
 	const uniqueSearchData = useMemo(() => {
@@ -93,55 +97,13 @@ export default function SearchResultsPage() {
 		return uniqueTracks.map(mapApiItemToTrack)
 	}, [searchData])
 
-	const toggle = useCallback((id: number) => {
-		setSelected((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
 		})
-	}, [])
+	}, [navigation])
 
-	const enterSelectMode = useCallback((id: number) => {
-		setSelectMode(true)
-		setSelected(new Set([id]))
-	}, [])
-
-	const renderSearchResultItem = useCallback(
-		({ item, index }: { item: BilibiliTrack; index: number }) => {
-			return (
-				<TrackListItem
-					index={index}
-					onTrackPress={() => playTrack(item)}
-					menuItems={trackMenuItems(item)}
-					data={{
-						cover: item.coverUrl ?? undefined,
-						title: item.title,
-						duration: item.duration,
-						id: item.id,
-						artistName: item.artist?.name,
-					}}
-					toggleSelected={toggle}
-					isSelected={selected.has(item.id)}
-					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
-				/>
-			)
-		},
-		[playTrack, trackMenuItems, toggle, selected, selectMode, enterSelectMode],
-	)
-
-	const keyExtractor = useCallback(
-		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
-		[],
-	)
-
-	usePreventRemove(selectMode, () => {
-		setSelectMode(false)
-		setSelected(new Set())
-	})
-
-	if (isPendingSearchData) {
+	if (isPendingSearchData || !transitionDone) {
 		return <PlaylistLoading />
 	}
 
@@ -185,41 +147,62 @@ export default function SearchResultsPage() {
 				)}
 			</Appbar.Header>
 
-			<FlashList
-				contentContainerStyle={{
+			<View
+				style={{
+					flex: 1,
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
-				extraData={{ selectMode, selected }}
-				data={uniqueSearchData ?? []}
-				renderItem={renderSearchResultItem}
-				keyExtractor={keyExtractor}
-				onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
-				ListFooterComponent={
-					hasNextPage ? (
-						<View
+			>
+				<TrackList
+					tracks={uniqueSearchData ?? []}
+					playTrack={playTrack}
+					trackMenuItems={trackMenuItems}
+					selectMode={selectMode}
+					selected={selected}
+					toggle={toggle}
+					onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
+					hasNextPage={hasNextPage}
+					enterSelectMode={enterSelectMode}
+					ListHeaderComponent={null}
+					ListFooterComponent={
+						hasNextPage ? (
+							<View
+								style={{
+									flexDirection: 'row',
+									alignItems: 'center',
+									justifyContent: 'center',
+									padding: 16,
+								}}
+							>
+								<ActivityIndicator size='small' />
+							</View>
+						) : null
+					}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={async () => {
+								setRefreshing(true)
+								await refetch()
+								setRefreshing(false)
+							}}
+							colors={[colors.primary]}
+							progressViewOffset={50}
+						/>
+					}
+					ListEmptyComponent={
+						<Text
 							style={{
-								flexDirection: 'row',
-								alignItems: 'center',
-								justifyContent: 'center',
-								padding: 16,
+								paddingVertical: 32,
+								textAlign: 'center',
+								color: colors.onSurfaceVariant,
 							}}
 						>
-							<ActivityIndicator size='small' />
-						</View>
-					) : null
-				}
-				ListEmptyComponent={
-					<Text
-						style={{
-							paddingVertical: 32,
-							textAlign: 'center',
-							color: colors.onSurfaceVariant,
-						}}
-					>
-						没有找到与 &quot;{query}&rdquo; 相关的内容
-					</Text>
-				}
-			/>
+							没有找到与 &quot;{query}&rdquo; 相关的内容
+						</Text>
+					}
+				/>
+			</View>
 
 			{currentModalTrack && (
 				<AddVideoToLocalPlaylistModal

@@ -1,7 +1,6 @@
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { PlaylistError } from '@/components/playlist/PlaylistError'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import {
 	useGetFavoritePlaylists,
@@ -12,31 +11,27 @@ import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
+import type { RootStackParamList } from '@/types/navigation'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import {
 	type RouteProp,
 	useNavigation,
-	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
-import { FlashList } from '@shopify/flash-list'
-import { useCallback, useMemo, useState } from 'react'
-import { View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useEffect, useMemo, useState } from 'react'
+import { RefreshControl, View } from 'react-native'
+import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { RootStackParamList } from '../../../types/navigation'
+import { TrackList } from '../../shared/TrackList'
+import { useTrackSelection } from '../../shared/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 const mapApiItemToTrack = (
 	apiItem: BilibiliFavoriteListContent,
 ): BilibiliTrack => {
+	console.log(apiItem)
 	return {
 		id: bv2av(apiItem.bvid),
 		uniqueKey: `bilibili::${apiItem.bvid}`,
@@ -70,14 +65,16 @@ export default function SearchResultsPage() {
 	const { query } = route.params
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
-	const navigation = useNavigation()
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
-	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
-	const [selectMode, setSelectMode] = useState<boolean>(false)
 	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
+	const [transitionDone, setTransitionDone] = useState(false)
+	const [refreshing, setRefreshing] = useState(false)
 
 	const { data: userData } = usePersonalInformation()
 	const { data: favoriteFolderList } = useGetFavoritePlaylists(userData?.mid)
@@ -87,6 +84,7 @@ export default function SearchResultsPage() {
 		isError: isErrorSearchData,
 		hasNextPage,
 		fetchNextPage,
+		refetch,
 	} = useInfiniteSearchFavoriteItems(
 		'all',
 		query,
@@ -107,55 +105,13 @@ export default function SearchResultsPage() {
 		setModalVisible,
 	} = useSearchInteractions()
 
-	const toggle = useCallback((id: number) => {
-		setSelected((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
 		})
-	}, [])
+	}, [navigation])
 
-	const enterSelectMode = useCallback((id: number) => {
-		setSelectMode(true)
-		setSelected(new Set([id]))
-	}, [])
-
-	const renderSearchResultItem = useCallback(
-		({ item, index }: { item: BilibiliTrack; index: number }) => {
-			return (
-				<TrackListItem
-					index={index}
-					onTrackPress={() => playTrack(item)}
-					menuItems={trackMenuItems(item)}
-					data={{
-						cover: item.coverUrl ?? undefined,
-						title: item.title,
-						duration: item.duration,
-						id: item.id,
-						artistName: item.artist?.name,
-					}}
-					toggleSelected={toggle}
-					isSelected={selected.has(item.id)}
-					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
-				/>
-			)
-		},
-		[playTrack, trackMenuItems, toggle, selected, selectMode, enterSelectMode],
-	)
-
-	const keyExtractor = useCallback(
-		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
-		[],
-	)
-
-	usePreventRemove(selectMode, () => {
-		setSelectMode(false)
-		setSelected(new Set())
-	})
-
-	if (isPendingSearchData) {
+	if (isPendingSearchData || !transitionDone) {
 		return <PlaylistLoading />
 	}
 
@@ -199,50 +155,69 @@ export default function SearchResultsPage() {
 				)}
 			</Appbar.Header>
 
-			<FlashList
-				contentContainerStyle={{
+			<View
+				style={{
+					flex: 1,
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
-				data={tracks}
-				extraData={{ selectMode, selected }}
-				renderItem={renderSearchResultItem}
-				ItemSeparatorComponent={() => <Divider />}
-				keyExtractor={keyExtractor}
-				ListFooterComponent={
-					hasNextPage ? (
-						<View
+			>
+				<TrackList
+					tracks={tracks}
+					playTrack={playTrack}
+					trackMenuItems={trackMenuItems}
+					selectMode={selectMode}
+					selected={selected}
+					toggle={toggle}
+					onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
+					hasNextPage={hasNextPage}
+					enterSelectMode={enterSelectMode}
+					ListHeaderComponent={null}
+					ListFooterComponent={
+						hasNextPage ? (
+							<View
+								style={{
+									flexDirection: 'row',
+									alignItems: 'center',
+									justifyContent: 'center',
+									padding: 16,
+								}}
+							>
+								<ActivityIndicator size='small' />
+							</View>
+						) : (
+							<Text
+								variant='titleMedium'
+								style={{ textAlign: 'center', paddingTop: 10 }}
+							>
+								•
+							</Text>
+						)
+					}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={async () => {
+								setRefreshing(true)
+								await refetch()
+								setRefreshing(false)
+							}}
+							colors={[colors.primary]}
+							progressViewOffset={50}
+						/>
+					}
+					ListEmptyComponent={
+						<Text
 							style={{
-								flexDirection: 'row',
-								alignItems: 'center',
-								justifyContent: 'center',
-								padding: 16,
+								paddingVertical: 32,
+								textAlign: 'center',
+								color: colors.onSurfaceVariant,
 							}}
 						>
-							<ActivityIndicator size='small' />
-						</View>
-					) : (
-						<Text
-							variant='titleMedium'
-							style={{ textAlign: 'center', paddingTop: 10 }}
-						>
-							•
+							没有在收藏中找到与 &quot;{query}&rdquo; 相关的内容
 						</Text>
-					)
-				}
-				onEndReached={hasNextPage ? () => fetchNextPage() : null}
-				ListEmptyComponent={
-					<Text
-						style={{
-							paddingVertical: 32,
-							textAlign: 'center',
-							color: colors.onSurfaceVariant,
-						}}
-					>
-						没有在收藏中找到与 &quot;{query}&rdquo; 相关的内容
-					</Text>
-				}
-				showsVerticalScrollIndicator={false}
-			/>
+					}
+				/>
+			</View>
 
 			{currentModalTrack && (
 				<AddVideoToLocalPlaylistModal
