@@ -1,6 +1,6 @@
 import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
-import { BilibiliApiError } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import log, { toastAndLogError } from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import toast from '@/utils/toast'

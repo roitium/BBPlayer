@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* 这些代码从 https://github.com/nooblong/NeteaseCloudMusicApiBackup/ 抄的，但做了进一步封装和解耦，凑合着用 */
-import { Result, ResultAsync, err, ok } from 'neverthrow'
+import type { Result } from 'neverthrow'
+import { ResultAsync, err, ok } from 'neverthrow'
 import * as setCookie from 'set-cookie-parser'
 import { URLSearchParams } from 'url'
 
-import * as Encrypt from './netease.crypto'
-import { NeteaseApiError } from './netease.errors'
-import { cookieObjToString, cookieToJson, toBoolean } from './netease.utils'
+import { NeteaseApiError } from '@/lib/errors/thirdparty/netease'
+import * as Encrypt from './crypto'
+import { cookieObjToString, cookieToJson, toBoolean } from './utils'
 
 interface AppConfig {
 	domain: string
@@ -53,13 +55,13 @@ const buildRequestPayload = <T extends object>(
 	const cookie =
 		typeof options.cookie === 'string'
 			? cookieToJson(options.cookie)
-			: options.cookie || {}
+			: (options.cookie ?? {})
 
 	const csrfToken = cookie.__csrf || ''
 	let url = ''
 	const headers: Record<string, string> = {
 		'User-Agent':
-			ua || chooseUserAgent(crypto === 'linuxapi' ? 'linux' : 'iphone'),
+			ua ?? chooseUserAgent(crypto === 'linuxapi' ? 'linux' : 'iphone'),
 		'Content-Type': 'application/x-www-form-urlencoded',
 		Referer: APP_CONF.domain,
 		...options.headers,
@@ -99,7 +101,7 @@ const buildRequestPayload = <T extends object>(
 			e_r = eapiData.e_r
 			body = Encrypt.eapi(uri, eapiData)
 			url = `${APP_CONF.apiDomain}/eapi/${uri.substring(5)}`
-			headers['Cookie'] = cookieObjToString(header)
+			headers.Cookie = cookieObjToString(header)
 			break
 		}
 		default:
@@ -130,6 +132,7 @@ const executeFetch = <TReturnBody>(
 				return err(
 					new NeteaseApiError({
 						message: '请求失败！http 状态码不符合预期！',
+						type: 'ResponseFailed',
 						msgCode: res.status,
 						rawData: res.statusText,
 					}),
@@ -144,7 +147,7 @@ const executeFetch = <TReturnBody>(
 					)
 				: await res.json()
 
-			const parsedCookies = setCookie.parse(res.headers.get('set-cookie') || '')
+			const parsedCookies = setCookie.parse(res.headers.get('set-cookie') ?? '')
 			const cookies = parsedCookies.map(
 				(cookie) => `${cookie.name}=${cookie.value}`,
 			)
@@ -158,8 +161,9 @@ const executeFetch = <TReturnBody>(
 			// 按理来说不应该发生
 			new NeteaseApiError({
 				message: '请求失败！',
+				type: 'RequestFailed',
 				msgCode: 500,
-				rawData: e instanceof Error ? e.message : String(e),
+				cause: e,
 			}),
 	).andThen((res) => res as Result<FetchResult<TReturnBody>, NeteaseApiError>)
 }

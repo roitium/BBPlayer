@@ -4,7 +4,7 @@ import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { ThirdPartyError } from '../errors'
-import { BilibiliApiError } from '../errors/bilibili'
+import { BilibiliApiError } from '../errors/thirdparty/bilibili'
 
 export const queryClient = new QueryClient({
 	defaultOptions: {

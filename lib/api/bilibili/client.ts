@@ -1,6 +1,6 @@
 import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
-import { BilibiliApiError } from '../../errors/bilibili'
+import { BilibiliApiError } from '../../errors/thirdparty/bilibili'
 
 interface ReqResponse<T> {
 	code: number

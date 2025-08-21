@@ -1,4 +1,4 @@
-import { BilibiliApiError } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import {
 	type BilibiliAudioStreamParams,
 	type BilibiliAudioStreamResponse,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* 这些代码从 https://github.com/nooblong/NeteaseCloudMusicApiBackup/ 抄的，能别动就别动！！！！ */
 import CryptoJS from 'crypto-js'
 import forge from 'node-forge'

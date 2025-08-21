@@ -12,7 +12,7 @@ export function cookieToJson(cookie: string): Record<string, string> {
 export function cookieObjToString(
 	cookie: Record<string, string> | string,
 ): string {
-	if (typeof cookie !== 'object') return cookie as string
+	if (typeof cookie !== 'object') return cookie
 	return Object.entries(cookie)
 		.map(([key, value]) => `${key}=${value}`)
 		.join('; ')
@@ -36,7 +36,7 @@ export function createOption(
 	crypto: 'weapi' | 'linuxapi' | 'eapi' | '' = '',
 ) {
 	return {
-		crypto: query.crypto || crypto || 'weapi',
+		crypto: (query.crypto ?? crypto) || 'weapi',
 		cookie: query.cookie,
 		ua: query.ua,
 		proxy: query.proxy,

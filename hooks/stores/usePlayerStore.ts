@@ -1,5 +1,5 @@
-import type { BilibiliApiError } from '@/lib/errors/bilibili'
 import type { PlayerError } from '@/lib/errors/player'
+import type { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import type {

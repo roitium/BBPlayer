@@ -1,16 +1,15 @@
-import * as FileSystem from 'expo-file-system'
-import { err, ok, ResultAsync } from 'neverthrow'
-
-import { DataParsingError, FileSystemError } from '@/lib/core/errors'
+import { DataParsingError, FileSystemError } from '@/lib/errors'
+import { NeteaseApiError } from '@/lib/errors/thirdparty/netease'
 import type {
 	NeteaseLyricResponse,
 	NeteaseSearchResponse,
 	NeteaseSong,
 } from '@/types/apis/netease'
-
-import { NeteaseApiError } from './netease.errors'
-import { createRequest, RequestOptions } from './netease.request'
-import { createOption } from './netease.utils'
+import * as FileSystem from 'expo-file-system'
+import { err, ok, ResultAsync } from 'neverthrow'
+import type { RequestOptions } from './request'
+import { createRequest } from './request'
+import { createOption } from './utils'
 
 interface SearchParams {
 	keywords: string
@@ -38,14 +37,14 @@ class NeteaseApi {
 	search(
 		params: SearchParams,
 	): ResultAsync<NeteaseSearchResponse, NeteaseApiError> {
-		const type = params.type || 1
+		const type = params.type ?? 1
 		const endpoint =
 			type == '2000' ? '/api/search/voice/get' : '/api/cloudsearch/pc'
 
 		const data = {
 			type: type,
-			limit: params.limit || 30,
-			offset: params.offset || 0,
+			limit: params.limit ?? 30,
+			offset: params.offset ?? 0,
 			...(type == '2000'
 				? { keyword: params.keywords }
 				: { s: params.keywords }),
@@ -59,41 +58,65 @@ class NeteaseApi {
 		).map((res) => res.body)
 	}
 
-	// TODO: 添加考虑歌曲时长维度的相关性计算
-	private findBestMatch(
+	/**
+	 * 检索最可能匹配的歌曲
+	 * @param songs 歌曲列表
+	 * @param keyword 搜索关键词
+	 * @param durationMs 期望时长 (毫秒)
+	 * @returns 最佳匹配的歌曲或null
+	 */
+	public findBestMatch(
 		songs: NeteaseSong[],
 		keyword: string,
+		durationMs?: number,
 	): NeteaseSong | null {
 		if (!songs || songs.length === 0) {
 			return null
 		}
 
+		const SIGMA_MS = 2500
+		const DURATION_BOOST_FACTOR = 0.5
+
 		const scoredSongs = songs.map((song) => {
-			let score = 0
-			if (song.name === keyword) {
-				score += 10
+			let keywordScore = 0
+			const lowerCaseKeyword = keyword.toLowerCase()
+
+			if (song.name.toLowerCase() === lowerCaseKeyword) {
+				keywordScore += 10
+			} else if (lowerCaseKeyword.includes(song.name.toLowerCase())) {
+				keywordScore += 5
 			}
-			if (keyword.includes(song.name)) {
-				score += 5
-			}
+
 			song.alia.forEach((alias) => {
-				if (keyword.includes(alias)) {
-					score += 2
+				if (lowerCaseKeyword.includes(alias.toLowerCase())) {
+					keywordScore += 2
 				}
 			})
+
 			song.ar.forEach((artist) => {
-				if (keyword.includes(artist.name)) {
-					score += 1
+				if (lowerCaseKeyword.includes(artist.name.toLowerCase())) {
+					keywordScore += 1
 				}
 			})
-			return { song, score }
+
+			let finalScore = keywordScore
+			if (durationMs && song.dt && keywordScore > 0) {
+				const diffMs = Math.abs(durationMs - song.dt)
+
+				const durationWeight = Math.exp(-(diffMs ** 2) / (2 * SIGMA_MS ** 2))
+
+				finalScore *= 1 + durationWeight * DURATION_BOOST_FACTOR
+			}
+
+			return { song, score: finalScore }
 		})
 
+		// 找到最高分的歌曲
 		const bestMatch = scoredSongs.reduce((best, current) => {
 			return current.score > best.score ? current : best
 		})
 
-		// 如果都没分数，就返回第一个
+		// 如果所有歌曲的最终得分都为0，则返回列表的第一个作为兜底
 		return bestMatch.score > 0 ? bestMatch.song : songs[0]
 	}
 
@@ -107,24 +130,32 @@ class NeteaseApi {
 		path: string
 	}): ResultAsync<
 		NeteaseLyricResponse,
-		NeteaseApiError | FileSystemError | DataParsingError
+		FileSystemError | NeteaseApiError | DataParsingError
 	> {
 		const filePath = `${path}/${internalId}.json`
 
 		return ResultAsync.fromPromise(
 			FileSystem.getInfoAsync(filePath),
-			(e) => new FileSystemError(`检查歌词缓存失败: ${e}`),
+			(e) =>
+				new FileSystemError(`检查歌词缓存失败`, {
+					cause: e,
+					data: { filePath },
+				}),
 		).andThen((fileInfo) => {
 			if (fileInfo.exists) {
 				// Cache hit
 				return ResultAsync.fromPromise(
 					FileSystem.readAsStringAsync(filePath),
-					(e) => new FileSystemError(`读取歌词缓存失败: ${e}`),
+					(e) =>
+						new FileSystemError(`读取歌词缓存失败`, {
+							cause: e,
+							data: { filePath },
+						}),
 				).andThen((content) => {
 					try {
 						return ok(JSON.parse(content) as NeteaseLyricResponse)
-					} catch {
-						return err(new DataParsingError('解析歌词缓存失败'))
+					} catch (e) {
+						return err(new DataParsingError('解析歌词缓存失败', { cause: e }))
 					}
 				})
 			}
@@ -145,14 +176,18 @@ class NeteaseApi {
 					const lyricData = JSON.stringify(lyricsResponse)
 					return ResultAsync.fromPromise(
 						FileSystem.makeDirectoryAsync(path, { intermediates: true }),
-						(e) => new FileSystemError(`创建歌词缓存目录失败: ${e}`),
+						(e) =>
+							new FileSystemError(`创建歌词缓存目录失败`, {
+								cause: e,
+								data: { path },
+							}),
 					)
 						.andThen(() => {
 							return ResultAsync.fromPromise(
 								FileSystem.writeAsStringAsync(filePath, lyricData, {
 									encoding: FileSystem.EncodingType.UTF8,
 								}),
-								(e) => new FileSystemError(`写入歌词缓存失败: ${e}`),
+								(e) => new FileSystemError(`写入歌词缓存失败`, { cause: e }),
 							)
 						})
 						.map(() => lyricsResponse)

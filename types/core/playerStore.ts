@@ -1,4 +1,4 @@
-import type { BilibiliApiError } from '@/lib/errors/bilibili'
+import type { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import type { Result } from 'neverthrow'
 import type { RepeatMode } from 'react-native-track-player'
 import type { RNTPTrack } from '../rntp'

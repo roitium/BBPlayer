@@ -1,5 +1,5 @@
 import useAppStore from '@/hooks/stores/useAppStore'
-import { BilibiliApiError } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import { err, ok } from 'neverthrow'
 
 /**

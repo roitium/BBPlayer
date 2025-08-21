@@ -34,3 +34,5 @@ export class ThirdPartyError extends CustomError {
 }
 
 export class DatabaseError extends CustomError {}
+export class DataParsingError extends CustomError {}
+export class FileSystemError extends CustomError {}

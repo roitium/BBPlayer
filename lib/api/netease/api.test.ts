@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system'
 
-import { neteaseApi } from './netease.api'
+import { neteaseApi } from './api'
 
 describe('Netease API Integration Tests', () => {
 	it('should fetch lyrics for a given song ID', async () => {
