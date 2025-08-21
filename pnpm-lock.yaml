@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   react-native-track-player:
-    hash: dbe1c9655d8e1071c9a89b1818ceefbf46a036256e81e89d9cb7abbeb4e725dc
+    hash: b4b8f4247c034aa5002c2aeb1f4c6ab40ff54319e7d80755d9847da4a3bfccbc
     path: patches/react-native-track-player.patch
 
 importers:
@@ -267,7 +267,7 @@ importers:
         version: 2.3.3(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-track-player:
         specifier: ^5.0.0-alpha0
-        version: 5.0.0-alpha0(patch_hash=dbe1c9655d8e1071c9a89b1818ceefbf46a036256e81e89d9cb7abbeb4e725dc)(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10)
+        version: 5.0.0-alpha0(patch_hash=b4b8f4247c034aa5002c2aeb1f4c6ab40ff54319e7d80755d9847da4a3bfccbc)(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10)
       react-native-web:
         specifier: ~0.20.0
         version: 0.20.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -12538,7 +12538,7 @@ snapshots:
       react: 19.0.0
       react-native: 0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0)
 
-  react-native-track-player@5.0.0-alpha0(patch_hash=dbe1c9655d8e1071c9a89b1818ceefbf46a036256e81e89d9cb7abbeb4e725dc)(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10):
+  react-native-track-player@5.0.0-alpha0(patch_hash=b4b8f4247c034aa5002c2aeb1f4c6ab40ff54319e7d80755d9847da4a3bfccbc)(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(shaka-player@4.14.10):
     dependencies:
       react: 19.0.0
       react-native: 0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0)

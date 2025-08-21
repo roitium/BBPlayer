@@ -23,11 +23,14 @@ interface NeteaseSong {
 	al: NeteaseAlbum
 	alia: string[] // 歌曲别名
 	dt: number // 歌曲时长，单位：ms
+	tns: string[] // 翻译名
 }
 
 interface NeteaseArtist {
 	id: number
 	name: string
+	alias: string[]
+	tns: string[] // 翻译名（这和 alias 有啥区别...）
 }
 
 interface NeteaseAlbum {
@@ -37,9 +40,9 @@ interface NeteaseAlbum {
 }
 
 export type {
+	NeteaseAlbum,
+	NeteaseArtist,
 	NeteaseLyricResponse,
 	NeteaseSearchResponse,
 	NeteaseSong,
-	NeteaseArtist,
-	NeteaseAlbum,
 }

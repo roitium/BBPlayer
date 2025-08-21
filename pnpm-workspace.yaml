@@ -2,6 +2,3 @@ onlyBuiltDependencies:
   - '@sentry/cli'
   - esbuild
   - lefthook
-
-patchedDependencies:
-  react-native-track-player: patches/react-native-track-player.patch
