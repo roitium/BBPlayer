@@ -82,6 +82,7 @@ export default function CollectionPage() {
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const [transitionDone, setTransitionDone] = useState(false)
 
 	const {
 		data: collectionData,
@@ -229,11 +230,17 @@ export default function CollectionPage() {
 		setSelected(new Set())
 	})
 
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
+
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isCollectionDataPending) {
+	if (isCollectionDataPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 

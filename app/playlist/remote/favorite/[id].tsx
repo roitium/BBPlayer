@@ -89,6 +89,7 @@ export default function FavoritePage() {
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const [transitionDone, setTransitionDone] = useState(false)
 
 	const {
 		data: favoriteData,
@@ -245,11 +246,17 @@ export default function FavoritePage() {
 		setSelected(new Set())
 	})
 
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
+
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isFavoriteDataPending) {
+	if (isFavoriteDataPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 

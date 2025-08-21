@@ -4,13 +4,13 @@ import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { Easing, View } from 'react-native'
+import { RectButton } from 'react-native-gesture-handler'
 import {
 	Checkbox,
-	IconButton,
+	Icon,
 	Menu,
 	Surface,
 	Text,
-	TouchableRipple,
 	useTheme,
 } from 'react-native-paper'
 import TextTicker from 'react-native-text-ticker'
@@ -58,22 +58,20 @@ export const TrackListItem = memo(function TrackListItem({
 	const theme = useTheme()
 
 	return (
-		<TouchableRipple
+		<RectButton
 			style={{
 				paddingVertical: 4,
 			}}
 			delayLongPress={500}
-			disabled={disabled}
-			onPress={(e) => {
+			enabled={!disabled}
+			onPress={() => {
 				if (selectMode) {
 					toggleSelected(data.id)
 					return
 				}
-				e.stopPropagation()
 				onTrackPress()
 			}}
-			onLongPress={(e) => {
-				e.stopPropagation()
+			onLongPress={() => {
 				if (selectMode) return
 				enterSelectMode(data.id)
 			}}
@@ -185,12 +183,21 @@ export const TrackListItem = memo(function TrackListItem({
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
 							anchor={
-								<IconButton
-									icon='dots-vertical'
-									size={20}
-									disabled={selectMode} // 在选择模式下不允许打开菜单
+								<RectButton
+									style={{ borderRadius: 99999, padding: 10 }}
 									onPress={openMenu}
-								/>
+									enabled={!selectMode}
+								>
+									<Icon
+										source='dots-vertical'
+										size={20}
+										color={
+											selectMode
+												? theme.colors.onSurfaceDisabled
+												: theme.colors.primary
+										}
+									/>
+								</RectButton>
 							}
 							anchorPosition='bottom'
 						>
@@ -212,6 +219,6 @@ export const TrackListItem = memo(function TrackListItem({
 					)}
 				</View>
 			</Surface>
-		</TouchableRipple>
+		</RectButton>
 	)
 })

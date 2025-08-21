@@ -95,6 +95,7 @@ export default function LocalPlaylistPage() {
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 	const [editTrackModalVisible, setEditTrackModalVisible] = useState(false)
+	const [transitionDone, setTransitionDone] = useState(false)
 
 	const {
 		data: playlistData,
@@ -413,11 +414,17 @@ export default function LocalPlaylistPage() {
 		height: searchbarHeight.value,
 	}))
 
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
+
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isPlaylistDataPending || isPlaylistMetadataPending) {
+	if (isPlaylistDataPending || isPlaylistMetadataPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 

@@ -114,6 +114,7 @@ export default function UploaderPage() {
 	const [startSearch, setStartSearch] = useState(false)
 	const searchbarHeight = useSharedValue(0)
 	const debouncedQuery = useDebouncedValue(searchQuery, 200)
+	const [transitionDone, setTransitionDone] = useState(false)
 
 	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
 		height: searchbarHeight.value,
@@ -261,6 +262,12 @@ export default function UploaderPage() {
 		setSelected(new Set())
 	})
 
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
+
 	if (typeof mid !== 'string') {
 		return null
 	}
@@ -298,7 +305,7 @@ export default function UploaderPage() {
 		)
 	}
 
-	if (isUserInfoPending) {
+	if (isUserInfoPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 

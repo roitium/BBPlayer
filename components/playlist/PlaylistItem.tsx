@@ -2,13 +2,14 @@ import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
 import { memo, useState } from 'react'
 import { View } from 'react-native'
+import { RectButton } from 'react-native-gesture-handler'
 import {
 	Checkbox,
-	IconButton,
+	Icon,
 	Menu,
 	Surface,
 	Text,
-	TouchableRipple,
+	useTheme,
 } from 'react-native-paper'
 import FunctionalMenu from '../commonUIs/FunctionalMenu'
 
@@ -64,24 +65,23 @@ export const TrackListItem = memo(function TrackListItem({
 	const [isMenuVisible, setIsMenuVisible] = useState(false)
 	const openMenu = () => setIsMenuVisible(true)
 	const closeMenu = () => setIsMenuVisible(false)
+	const colors = useTheme().colors
 
 	return (
-		<TouchableRipple
+		<RectButton
 			style={{
 				paddingVertical: 4,
 			}}
-			disabled={disabled}
 			delayLongPress={500}
-			onPress={(e) => {
+			enabled={!disabled}
+			onPress={() => {
 				if (selectMode) {
 					toggleSelected(data.id)
 					return
 				}
-				e.stopPropagation()
 				onTrackPress()
 			}}
-			onLongPress={(e) => {
-				e.stopPropagation()
+			onLongPress={() => {
 				if (selectMode) return
 				enterSelectMode(data.id)
 			}}
@@ -179,12 +179,19 @@ export const TrackListItem = memo(function TrackListItem({
 							visible={isMenuVisible}
 							onDismiss={closeMenu}
 							anchor={
-								<IconButton
-									icon='dots-vertical'
-									size={20}
-									disabled={selectMode} // 在选择模式下不允许打开菜单
+								<RectButton
+									style={{ borderRadius: 99999, padding: 10 }}
 									onPress={openMenu}
-								/>
+									enabled={!selectMode}
+								>
+									<Icon
+										source='dots-vertical'
+										size={20}
+										color={
+											selectMode ? colors.onSurfaceDisabled : colors.primary
+										}
+									/>
+								</RectButton>
 							}
 							anchorPosition='bottom'
 						>
@@ -203,6 +210,6 @@ export const TrackListItem = memo(function TrackListItem({
 					)}
 				</View>
 			</Surface>
-		</TouchableRipple>
+		</RectButton>
 	)
 })

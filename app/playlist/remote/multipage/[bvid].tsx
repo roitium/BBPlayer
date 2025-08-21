@@ -90,6 +90,7 @@ export default function MultipagePage() {
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const [transitionDone, setTransitionDone] = useState(false)
 
 	const {
 		data: rawMultipageData,
@@ -229,11 +230,17 @@ export default function MultipagePage() {
 		setSelected(new Set())
 	})
 
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
+
 	if (typeof bvid !== 'string') {
 		return null
 	}
 
-	if (isMultipageDataPending || isVideoDataPending) {
+	if (isMultipageDataPending || isVideoDataPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 
