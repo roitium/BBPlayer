@@ -1,5 +1,5 @@
 diff --git a/android/src/main/AndroidManifest.xml b/android/src/main/AndroidManifest.xml
-index 346e4dc034a226721aea1d3bd7043a34335cf436..7352f14cc16b5a6a05829077e00baf75e09e07df 100644
+index 346e4dc034a226721aea1d3bd7043a34335cf436..c8904ee9f7f418b784544d659f988a8962d0e7d0 100644
 --- a/android/src/main/AndroidManifest.xml
 +++ b/android/src/main/AndroidManifest.xml
 @@ -20,6 +20,9 @@
@@ -8,7 +8,7 @@ index 346e4dc034a226721aea1d3bd7043a34335cf436..7352f14cc16b5a6a05829077e00baf75
              </intent-filter>
 +            <meta-data
 +                android:name="androidx.media3.session.notification.small_icon"
-+                android:resource="@drawable/icon-large.png" />
++                android:resource="@drawable/icon_large.png" />
          </service>
  
      </application>
