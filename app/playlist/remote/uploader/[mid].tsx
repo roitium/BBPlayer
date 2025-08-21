@@ -1,14 +1,13 @@
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
+import { PlaylistError } from '@/components/playlist/PlaylistError'
 import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/user'
-import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
@@ -19,35 +18,25 @@ import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { formatMMSSToSeconds } from '@/utils/time'
-import toast from '@/utils/toast'
 import {
 	type RouteProp,
 	useNavigation,
-	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { FlashList } from '@shopify/flash-list'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Button,
-	Divider,
-	Searchbar,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Appbar, Button, Searchbar, Text, useTheme } from 'react-native-paper'
 import Animated, {
 	useAnimatedStyle,
 	useSharedValue,
 	withTiming,
 } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistError } from '../../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../../types/navigation'
+import { TrackList } from '../shared/TrackList'
+import { usePlaylistMenu } from '../shared/usePlaylistMenu'
+import { useRemotePlaylist } from '../shared/useRemotePlaylist'
+import { useTrackSelection } from '../shared/useTrackSelection'
 
 const SEARCHBAR_HEIGHT = 72
 
@@ -90,10 +79,7 @@ export default function UploaderPage() {
 		useNavigation<
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistUploader'>
 		>()
-	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	const insets = useSafeAreaInsets()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const [modalVisible, setModalVisible] = useState(false)
 	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
 		undefined,
@@ -103,8 +89,7 @@ export default function UploaderPage() {
 		(state) => state.setQrCodeLoginModalVisible,
 	)
 
-	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
-	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
 	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
@@ -148,107 +133,12 @@ export default function UploaderPage() {
 			.map((item) => mapApiItemToTrack(item, uploaderUserInfo))
 	}, [uploadedVideos, uploaderUserInfo])
 
-	const handlePlayTrack = useCallback(
-		(item: BilibiliTrack, playNext = false) => {
-			void addToQueue({
-				tracks: [item],
-				playNow: !playNext,
-				clearQueue: false,
-				playNext: playNext,
-			})
-		},
-		[addToQueue],
-	)
+	const { playTrack } = useRemotePlaylist()
 
-	const trackMenuItems = useCallback(
-		(item: BilibiliTrack) => [
-			{
-				title: '下一首播放',
-				leadingIcon: 'skip-next-circle-outline',
-				onPress: () => handlePlayTrack(item, true),
-			},
-			{
-				title: '添加到本地歌单',
-				leadingIcon: 'playlist-plus',
-				onPress: () => {
-					setCurrentModalTrack(item)
-					setModalVisible(true)
-				},
-			},
-			{
-				title: '查看详细信息',
-				leadingIcon: 'file-document-outline',
-				onPress: () => {
-					navigation.navigate('PlaylistMultipage', {
-						bvid: item.bilibiliMetadata.bvid,
-					})
-				},
-			},
-			{
-				title: '查看 up 主作品',
-				leadingIcon: 'account-music',
-				onPress: () => {
-					if (!item.artist?.remoteId) {
-						toast.error('未找到 up 主信息')
-						return
-					}
-					navigation.navigate('PlaylistUploader', {
-						mid: item.artist?.remoteId,
-					})
-				},
-			},
-		],
-		[navigation, handlePlayTrack],
-	)
-
-	const toggle = useCallback((id: number) => {
-		setSelected((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
-		})
-	}, [])
-
-	const enterSelectMode = useCallback((id: number) => {
-		setSelectMode(true)
-		setSelected(new Set([id]))
-	}, [])
-
-	const renderItem = useCallback(
-		({ item, index }: { item: BilibiliTrack; index: number }) => {
-			return (
-				<TrackListItem
-					index={index}
-					onTrackPress={() => handlePlayTrack(item)}
-					menuItems={trackMenuItems(item)}
-					data={{
-						cover: item.coverUrl ?? undefined,
-						title: item.title,
-						duration: item.duration,
-						id: item.id,
-						artistName: item.artist?.name,
-					}}
-					toggleSelected={toggle}
-					isSelected={selected.has(item.id)}
-					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
-				/>
-			)
-		},
-		[
-			trackMenuItems,
-			handlePlayTrack,
-			toggle,
-			selected,
-			selectMode,
-			enterSelectMode,
-		],
-	)
-
-	const keyExtractor = useCallback(
-		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
-		[],
+	const trackMenuItems = usePlaylistMenu(
+		playTrack,
+		setCurrentModalTrack,
+		setModalVisible,
 	)
 
 	useEffect(() => {
@@ -256,11 +146,6 @@ export default function UploaderPage() {
 			navigation.replace('NotFound')
 		}
 	}, [mid, navigation])
-
-	usePreventRemove(selectMode, () => {
-		setSelectMode(false)
-		setSelected(new Set())
-	})
 
 	useEffect(() => {
 		navigation.addListener('transitionEnd', () => {
@@ -367,13 +252,14 @@ export default function UploaderPage() {
 					flex: 1,
 				}}
 			>
-				<FlashList
-					data={tracks ?? []}
-					extraData={{ selectMode, selected }}
-					contentContainerStyle={{
-						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
-					}}
-					renderItem={renderItem}
+				<TrackList
+					tracks={tracks ?? []}
+					playTrack={playTrack}
+					trackMenuItems={trackMenuItems}
+					selectMode={selectMode}
+					selected={selected}
+					toggle={toggle}
+					enterSelectMode={enterSelectMode}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={uploaderUserInfo.face}
@@ -396,34 +282,8 @@ export default function UploaderPage() {
 							progressViewOffset={50}
 						/>
 					}
-					keyExtractor={keyExtractor}
-					ItemSeparatorComponent={() => <Divider />}
-					showsVerticalScrollIndicator={false}
-					onEndReached={hasNextPage ? () => fetchNextPage() : null}
-					ListFooterComponent={
-						hasNextPage ? (
-							<View
-								style={{
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									padding: 16,
-								}}
-							>
-								<ActivityIndicator size='small' />
-							</View>
-						) : (
-							<Text
-								variant='titleMedium'
-								style={{
-									textAlign: 'center',
-									paddingTop: 10,
-								}}
-							>
-								•
-							</Text>
-						)
-					}
+					onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
+					hasNextPage={hasNextPage}
 				/>
 			</View>
 

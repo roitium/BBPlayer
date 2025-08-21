@@ -2,8 +2,9 @@ import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'
+import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { FlatList, View } from 'react-native'
+import { View } from 'react-native'
 import { Button, Dialog, Divider, Text, useTheme } from 'react-native-paper'
 
 interface LeaderboardItem {
@@ -69,6 +70,20 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 	const [data, setData] = useState<LeaderboardItem[] | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const mockData = useMemo(() => {
+		if (!data) return []
+		const newData = []
+		for (const item of data) {
+			newData.push({
+				track: {
+					...item.track,
+					uniqueKey: `${item.track.uniqueKey}-mock-1`,
+				},
+				playCount: item.playCount + 1,
+			})
+		}
+		return [...newData, ...data]
+	}, [data])
 
 	const fetchData = async () => {
 		setLoading(true)
@@ -130,7 +145,7 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 			onDismiss={handleDismiss}
 		>
 			<Dialog.Title>播放排行榜</Dialog.Title>
-			<Dialog.Content>
+			<Dialog.Content style={{ minHeight: 400 }}>
 				<Text
 					variant='bodySmall'
 					style={{ marginBottom: 8, opacity: 0.7 }}
@@ -147,14 +162,17 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 						<Text>{error}</Text>
 					</View>
 				) : (
-					<FlatList
-						data={data ?? []}
-						style={{ height: 300 }}
-						keyExtractor={keyExtractor}
-						renderItem={renderItem}
-						ListEmptyComponent={ListEmpty}
-						ItemSeparatorComponent={ItemSeparator}
-					/>
+					<View style={{ flex: 1, minHeight: 300 }}>
+						<FlashList
+							data={mockData ?? []}
+							style={{ height: 300 }}
+							keyExtractor={keyExtractor}
+							renderItem={renderItem}
+							ListEmptyComponent={ListEmpty}
+							ItemSeparatorComponent={ItemSeparator}
+							onTouchStart={(e) => console.log(e.nativeEvent)}
+						/>
+					</View>
 				)}
 			</Dialog.Content>
 			<Dialog.Actions>

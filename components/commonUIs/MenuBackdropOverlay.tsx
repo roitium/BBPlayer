@@ -30,7 +30,7 @@ export default function MenuBackdropOverlay({
 const styles = {
 	backdrop: {
 		backgroundColor: 'transparent',
-		zIndex: 9999,
-		elevation: 9999,
+		zIndex: 114,
+		elevation: 114,
 	},
 }

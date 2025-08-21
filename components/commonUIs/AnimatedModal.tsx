@@ -1,6 +1,6 @@
 import { useCallback, useState, type PropsWithChildren } from 'react'
 import type { ViewStyle } from 'react-native'
-import { Modal, Pressable, StyleSheet } from 'react-native' // 建议使用 Pressable 提高可访问性
+import { Modal, Pressable, StyleSheet } from 'react-native'
 import { useTheme } from 'react-native-paper'
 import Animated, {
 	useAnimatedKeyboard,
@@ -45,14 +45,12 @@ export const AnimatedModal = ({
 			statusBarTranslucent
 			navigationBarTranslucent
 		>
-			{/* 1. 使用 Pressable/View 作为根，并用 flex: 1 填充屏幕 */}
 			<Pressable
 				style={styles.wrapper}
 				onPress={onClose}
 			>
-				{/* 2. 动画容器只包裹内容，这样背景不会移动 */}
 				<Animated.View style={[animatedStyles]}>
-					<Pressable // 使用 Pressable 并阻止事件冒泡
+					<Pressable
 						style={[
 							styles.content,
 							{
@@ -71,7 +69,7 @@ export const AnimatedModal = ({
 									e.nativeEvent.layout.width > 0,
 							)
 						}}
-						onPress={(e) => e.stopPropagation()} // 阻止点击内容区域关闭 Modal
+						onPress={(e) => e.stopPropagation()}
 					>
 						{children}
 					</Pressable>
@@ -83,11 +81,10 @@ export const AnimatedModal = ({
 
 const styles = StyleSheet.create({
 	wrapper: {
-		flex: 1, // <--- 关键改动：使其填充整个屏幕，包括安全区域
-		justifyContent: 'center', // <--- 垂直居中内容
+		flex: 1,
+		justifyContent: 'center',
 		backgroundColor: 'rgba(0,0,0,0.5)',
 	},
-	// 'inner' 样式不再需要，Animated.View 现在只负责动画
 	content: {
 		minHeight: '30%',
 		paddingTop: 10,

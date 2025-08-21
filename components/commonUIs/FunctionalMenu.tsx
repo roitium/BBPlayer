@@ -2,7 +2,6 @@ import type { PropsWithChildren } from 'react'
 import { memo, useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Menu } from 'react-native-paper'
-import MenuBackdropOverlay from './MenuBackdropOverlay'
 
 type FunctionalMenuProps = PropsWithChildren<Parameters<typeof Menu>[0]>
 
@@ -33,10 +32,6 @@ const FunctionalMenu = memo(function FunctionalMenu({
 				/>
 				{children}
 			</Menu>
-			<MenuBackdropOverlay
-				visible={showContent}
-				onPressOutside={onClose}
-			/>
 		</>
 	)
 })

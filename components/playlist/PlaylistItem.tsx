@@ -66,6 +66,7 @@ export const TrackListItem = memo(function TrackListItem({
 	const openMenu = () => setIsMenuVisible(true)
 	const closeMenu = () => setIsMenuVisible(false)
 	const colors = useTheme().colors
+	console.log(`rendered ${data.title}`)
 
 	return (
 		<RectButton
