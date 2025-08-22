@@ -86,12 +86,19 @@ export const createBilibiliApi = () => ({
 			page: page.toString(),
 		})
 
-		return params.andThen((params) => {
-			return bilibiliApiClient.get<{
-				result: BilibiliSearchVideo[]
-				numPages: number
-			}>('/x/web-interface/wbi/search/type', params)
-		})
+		return params
+			.andThen((params) => {
+				return bilibiliApiClient.get<{
+					result: BilibiliSearchVideo[]
+					numPages: number
+				}>('/x/web-interface/wbi/search/type', params)
+			})
+			.andThen((res) => {
+				if (!res.result) {
+					res.result = []
+				}
+				return okAsync(res)
+			})
 	},
 
 	/**
@@ -286,21 +293,20 @@ export const createBilibiliApi = () => ({
 		pn: number,
 		keyword: string,
 	): ResultAsync<BilibiliFavoriteListContents, BilibiliApiError> {
-		return bilibiliApiClient.get<BilibiliFavoriteListContents>(
-			'/x/v3/fav/resource/list',
-			{
+		return bilibiliApiClient
+			.get<BilibiliFavoriteListContents>('/x/v3/fav/resource/list', {
 				media_id: favoriteId.toString(),
 				pn: pn.toString(),
 				ps: '40',
 				keyword,
 				type: scope === 'this' ? '0' : '1',
-			},
-		)
-		// .map((response) => ({
-		// 	tracks: transformFavoriteContentsToTracks(response.medias),
-		// 	hasMore: response.has_more,
-		// 	favoriteMeta: response.info,
-		// }))
+			})
+			.andThen((res) => {
+				if (!res.medias) {
+					res.medias = []
+				}
+				return okAsync(res)
+			})
 	},
 
 	/**

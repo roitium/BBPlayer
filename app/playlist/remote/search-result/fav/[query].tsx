@@ -31,7 +31,6 @@ import { useSearchInteractions } from '../hooks/useSearchInteractions'
 const mapApiItemToTrack = (
 	apiItem: BilibiliFavoriteListContent,
 ): BilibiliTrack => {
-	console.log(apiItem)
 	return {
 		id: bv2av(apiItem.bvid),
 		uniqueKey: `bilibili::${apiItem.bvid}`,

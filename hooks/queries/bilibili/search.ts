@@ -20,6 +20,9 @@ export const useSearchResults = (query: string) => {
 		staleTime: 5 * 60 * 1000,
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, allPages) => {
+			if (lastPage.numPages === 0) {
+				return undefined
+			}
 			if (lastPage.numPages === allPages.length) {
 				return undefined
 			}
