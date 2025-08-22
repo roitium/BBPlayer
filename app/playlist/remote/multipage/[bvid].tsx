@@ -1,8 +1,8 @@
+import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
+import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
+import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
-import { PlaylistError } from '@/components/playlist/PlaylistError'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import {
 	useGetMultiPageList,
@@ -27,11 +27,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Appbar, useTheme } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../types/navigation'
-import { TrackList } from '../shared/TrackList'
-import useCheckLinkedToPlaylist from '../shared/useCheckLinkedToLocalPlaylist'
-import { usePlaylistMenu } from '../shared/usePlaylistMenu'
-import { useRemotePlaylist } from '../shared/useRemotePlaylist'
-import { useTrackSelection } from '../shared/useTrackSelection'
+import { TrackList } from '../shared/components/TrackList'
+import useCheckLinkedToPlaylist from '../shared/hooks/useCheckLinkedToLocalPlaylist'
+import { usePlaylistMenu } from '../shared/hooks/usePlaylistMenu'
+import { useRemotePlaylist } from '../shared/hooks/useRemotePlaylist'
+import { useTrackSelection } from '../shared/hooks/useTrackSelection'
 
 const mapApiItemToTrack = (
 	mp: BilibiliMultipageVideo,

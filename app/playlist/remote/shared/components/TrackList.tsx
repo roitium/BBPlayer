@@ -1,5 +1,5 @@
+import { TrackListItem } from '@/app/playlist/remote/shared/components/PlaylistItem'
 import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
 import type { BilibiliTrack } from '@/types/core/media'
 import { FlashList } from '@shopify/flash-list'
 import { useCallback, useState } from 'react'

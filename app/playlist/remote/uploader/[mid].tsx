@@ -1,8 +1,8 @@
+import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
+import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
+import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
-import { PlaylistError } from '@/components/playlist/PlaylistError'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
@@ -33,10 +33,10 @@ import Animated, {
 	withTiming,
 } from 'react-native-reanimated'
 import type { RootStackParamList } from '../../../../types/navigation'
-import { TrackList } from '../shared/TrackList'
-import { usePlaylistMenu } from '../shared/usePlaylistMenu'
-import { useRemotePlaylist } from '../shared/useRemotePlaylist'
-import { useTrackSelection } from '../shared/useTrackSelection'
+import { TrackList } from '../shared/components/TrackList'
+import { usePlaylistMenu } from '../shared/hooks/usePlaylistMenu'
+import { useRemotePlaylist } from '../shared/hooks/useRemotePlaylist'
+import { useTrackSelection } from '../shared/hooks/useTrackSelection'
 
 const SEARCHBAR_HEIGHT = 72
 

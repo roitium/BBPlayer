@@ -1,7 +1,7 @@
+import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
+import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
 import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
 import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
-import { PlaylistError } from '@/components/playlist/PlaylistError'
-import { PlaylistLoading } from '@/components/playlist/PlaylistLoading'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteSearchFavoriteItems,
@@ -24,8 +24,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { TrackList } from '../../shared/TrackList'
-import { useTrackSelection } from '../../shared/useTrackSelection'
+import { TrackList } from '../../shared/components/TrackList'
+import { useTrackSelection } from '../../shared/hooks/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 const mapApiItemToTrack = (
