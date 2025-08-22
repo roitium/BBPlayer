@@ -70,7 +70,7 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 	const [data, setData] = useState<LeaderboardItem[] | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const mockData = useMemo(() => {
+	const _mockData = useMemo(() => {
 		if (!data) return []
 		const newData = []
 		for (const item of data) {
@@ -164,7 +164,7 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 				) : (
 					<View style={{ flex: 1, minHeight: 300 }}>
 						<FlashList
-							data={mockData ?? []}
+							data={data ?? []}
 							style={{ height: 300 }}
 							keyExtractor={keyExtractor}
 							renderItem={renderItem}
