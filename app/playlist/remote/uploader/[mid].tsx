@@ -33,7 +33,7 @@ import Animated, {
 	withTiming,
 } from 'react-native-reanimated'
 import type { RootStackParamList } from '../../../../types/navigation'
-import { TrackList } from '../shared/components/TrackList'
+import { TrackList } from '../shared/components/RemoteTrackList'
 import { usePlaylistMenu } from '../shared/hooks/usePlaylistMenu'
 import { useRemotePlaylist } from '../shared/hooks/useRemotePlaylist'
 import { useTrackSelection } from '../shared/hooks/useTrackSelection'

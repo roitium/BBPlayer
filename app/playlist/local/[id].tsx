@@ -16,9 +16,8 @@ import {
 	useSearchTracksInPlaylist,
 } from '@/hooks/queries/db/playlist'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
-import type { Playlist, Track } from '@/types/core/media'
+import type { Track } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { toastAndLogError } from '@/utils/log'
@@ -30,19 +29,15 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { FlashList } from '@shopify/flash-list'
-import * as Clipboard from 'expo-clipboard'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert, useWindowDimensions, View } from 'react-native'
 import {
 	Appbar,
 	Button,
 	Dialog,
-	Divider,
 	Menu,
 	Portal,
 	Searchbar,
-	Text,
 	TextInput,
 	useTheme,
 } from 'react-native-paper'
@@ -52,12 +47,14 @@ import Animated, {
 	withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistError } from '../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../components/playlist/PlaylistLoading'
 import type { RootStackParamList } from '../../../types/navigation'
 import { PlaylistHeader } from './components/LocalPlaylistHeader'
-import type { TrackMenuItem } from './components/LocalPlaylistItem'
-import { TrackListItem } from './components/LocalPlaylistItem'
+import { LocalTrackList } from './components/LocalTrackList'
+import { PlaylistError } from './components/PlaylistError'
+import { PlaylistLoading } from './components/PlaylistLoading'
+import { useLocalPlaylistMenu } from './hooks/useLocalPlaylistMenu'
+import { useLocalPlaylistPlayer } from './hooks/useLocalPlaylistPlayer'
+import { useTrackSelection } from './hooks/useTrackSelection'
 
 const SEARCHBAR_HEIGHT = 72
 const SCOPE = 'UI.Playlist.Local'
@@ -70,7 +67,6 @@ export default function LocalPlaylistPage() {
 		useNavigation<
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistLocal'>
 		>()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
 	const [addTrackModalVisible, setAddTrackModalVisible] = useState(false)
@@ -88,8 +84,8 @@ export default function LocalPlaylistPage() {
 	const [startSearch, setStartSearch] = useState(false)
 	const searchbarHeight = useSharedValue(0)
 	const debouncedQuery = useDebouncedValue(searchQuery, 200)
-	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
-	const [selectMode, setSelectMode] = useState<boolean>(false)
+	const { selected, selectMode, toggle, enterSelectMode, exitSelectMode } =
+		useTrackSelection()
 	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
 		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
@@ -190,144 +186,35 @@ export default function LocalPlaylistPage() {
 		})
 	}, [playlistMetadata, syncPlaylist])
 
-	const playNext = useCallback(
-		async (track: Track) => {
-			try {
-				await addToQueue({
-					tracks: [track],
-					playNow: false,
-					clearQueue: false,
-					playNext: true,
-				})
-				toast.success('添加到下一首播放成功')
-			} catch (error) {
-				toastAndLogError('添加到队列失败', error, SCOPE)
-			}
+	const { playAll, handleTrackPress } =
+		useLocalPlaylistPlayer(filteredPlaylistData)
+
+	const deleteTrack = useCallback(
+		(trackId: number) => {
+			deleteTrackFromLocalPlaylist({
+				trackIds: [trackId],
+				playlistId: Number(id),
+			})
 		},
-		[addToQueue],
+		[deleteTrackFromLocalPlaylist, id],
 	)
 
-	const playAll = useCallback(
-		async (startFromId?: string) => {
-			try {
-				if (!filteredPlaylistData) return
-				await addToQueue({
-					tracks: filteredPlaylistData,
-					playNow: true,
-					clearQueue: true,
-					startFromId: startFromId,
-					playNext: false,
-				})
-			} catch (error) {
-				toastAndLogError('播放全部失败', error, SCOPE)
-			}
-		},
-		[addToQueue, filteredPlaylistData],
-	)
-
-	const trackMenuItems = useCallback(
-		(item: Track) => {
-			const menuItems: TrackMenuItem[] = [
-				{
-					title: '下一首播放',
-					leadingIcon: 'skip-next-circle-outline',
-					onPress: () => playNext(item),
-				},
-				{
-					title: '添加到本地歌单',
-					leadingIcon: 'playlist-plus',
-					onPress: () => {
-						setCurrentModalTrack(item)
-						setAddTrackModalVisible(true)
-					},
-				},
-			]
-			if (item.source === 'bilibili') {
-				menuItems.push(
-					{
-						title: '查看详细信息',
-						leadingIcon: 'file-document-outline',
-						onPress: () =>
-							navigation.navigate('PlaylistMultipage', {
-								bvid: item.bilibiliMetadata.bvid,
-							}),
-					},
-					{
-						title: '查看 up 主作品',
-						leadingIcon: 'account-music',
-						onPress: () => {
-							if (!item.artist?.remoteId) {
-								return
-							}
-							navigation.navigate('PlaylistUploader', {
-								mid: item.artist?.remoteId,
-							})
-						},
-					},
-				)
-			}
-			menuItems.push(
-				{
-					title: '复制封面链接',
-					leadingIcon: 'link',
-					onPress: () => {
-						void Clipboard.setStringAsync(item.coverUrl ?? '')
-						toast.success('已复制到剪贴板')
-					},
-				},
-				{
-					title: '改名',
-					leadingIcon: 'pencil',
-					onPress: () => {
-						setCurrentModalTrack(item)
-						setEditTrackModalVisible(true)
-					},
-				},
-			)
-			if (playlistMetadata?.type === 'local') {
-				menuItems.push({
-					title: '删除歌曲',
-					leadingIcon: 'delete',
-					onPress: () => {
-						deleteTrackFromLocalPlaylist({
-							trackIds: [item.id],
-							playlistId: Number(id),
-						})
-					},
-					danger: true,
-				})
-			}
-			return menuItems
-		},
-		[
-			deleteTrackFromLocalPlaylist,
-			id,
-			navigation,
-			playNext,
-			playlistMetadata?.type,
-		],
-	)
-
-	const handleTrackPress = useCallback(
-		(track: Track) => {
-			void playAll(track.uniqueKey)
-		},
-		[playAll],
-	)
-
-	const toggle = useCallback((id: number) => {
-		setSelected((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
-		})
+	const openAddToPlaylistModal = useCallback((track: Track) => {
+		setCurrentModalTrack(track)
+		setAddTrackModalVisible(true)
 	}, [])
 
-	const enterSelectMode = useCallback((id: number) => {
-		setSelectMode(true)
-		setSelected(new Set([id]))
+	const openEditTrackModal = useCallback((track: Track) => {
+		setCurrentModalTrack(track)
+		setEditTrackModalVisible(true)
 	}, [])
+
+	const trackMenuItems = useLocalPlaylistMenu({
+		deleteTrack,
+		openAddToPlaylistModal,
+		openEditTrackModal,
+		playlist: playlistMetadata!,
+	})
 
 	const deleteSelectedTracks = useCallback(() => {
 		if (selected.size === 0) return
@@ -335,41 +222,8 @@ export default function LocalPlaylistPage() {
 			trackIds: Array.from(selected),
 			playlistId: Number(id),
 		})
-		setSelectMode(false)
-		setSelected(new Set())
-	}, [selected, id, deleteTrackFromLocalPlaylist])
-
-	const renderItem = useCallback(
-		({ item, index }: { item: Track; index: number }) => {
-			return (
-				<TrackListItem
-					index={index}
-					onTrackPress={() => handleTrackPress(item)}
-					menuItems={trackMenuItems(item)}
-					disabled={
-						item.source === 'bilibili' && !item.bilibiliMetadata.videoIsValid
-					}
-					data={item}
-					playlist={playlistMetadata as Playlist}
-					toggleSelected={toggle}
-					isSelected={selected.has(item.id)}
-					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
-				/>
-			)
-		},
-		[
-			enterSelectMode,
-			handleTrackPress,
-			playlistMetadata,
-			selectMode,
-			selected,
-			toggle,
-			trackMenuItems,
-		],
-	)
-
-	const keyExtractor = useCallback((item: Track) => String(item.id), [])
+		exitSelectMode()
+	}, [selected, id, deleteTrackFromLocalPlaylist, exitSelectMode])
 
 	useEffect(() => {
 		if (typeof id !== 'string') {
@@ -378,9 +232,8 @@ export default function LocalPlaylistPage() {
 	}, [id, navigation])
 
 	usePreventRemove(startSearch || selectMode, () => {
-		setStartSearch(false)
-		setSelectMode(false)
-		setSelected(new Set())
+		if (startSearch) setStartSearch(false)
+		if (selectMode) exitSelectMode()
 	})
 
 	useEffect(() => {
@@ -392,10 +245,10 @@ export default function LocalPlaylistPage() {
 	useEffect(() => {
 		if (batchAddTracksModalVisible) {
 			const payloads = []
-			for (const id of selected) {
-				const track = playlistData?.find((t) => t.id === id)
+			for (const trackId of selected) {
+				const track = playlistData?.find((t) => t.id === trackId)
 				if (!track) {
-					toast.error(`批量添加歌曲失败：未找到 track: ${id}`)
+					toast.error(`批量添加歌曲失败：未找到 track: ${trackId}`)
 					return
 				}
 				payloads.push({
@@ -492,11 +345,15 @@ export default function LocalPlaylistPage() {
 				/>
 			</Animated.View>
 
-			<FlashList
-				data={finalPlaylistData ?? []}
-				renderItem={renderItem}
-				extraData={{ selectMode, selected }}
-				ItemSeparatorComponent={() => <Divider />}
+			<LocalTrackList
+				tracks={finalPlaylistData ?? []}
+				playlist={playlistMetadata}
+				handleTrackPress={handleTrackPress}
+				trackMenuItems={trackMenuItems}
+				selectMode={selectMode}
+				selected={selected}
+				toggle={toggle}
+				enterSelectMode={enterSelectMode}
 				ListHeaderComponent={
 					<PlaylistHeader
 						playlist={playlistMetadata}
@@ -512,22 +369,7 @@ export default function LocalPlaylistPage() {
 						}
 					/>
 				}
-				keyExtractor={keyExtractor}
-				contentContainerStyle={{
-					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
-				}}
-				showsVerticalScrollIndicator={false}
-				ListFooterComponent={
-					<Text
-						variant='titleMedium'
-						style={{
-							textAlign: 'center',
-							paddingTop: 10,
-						}}
-					>
-						•
-					</Text>
-				}
+				bottomPadding={currentTrack ? 70 + insets.bottom : insets.bottom}
 			/>
 
 			{currentModalTrack && (

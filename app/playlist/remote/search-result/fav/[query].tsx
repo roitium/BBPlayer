@@ -24,7 +24,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { TrackList } from '../../shared/components/TrackList'
+import { TrackList } from '../../shared/components/RemoteTrackList'
 import { useTrackSelection } from '../../shared/hooks/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
