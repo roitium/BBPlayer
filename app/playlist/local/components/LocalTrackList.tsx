@@ -1,7 +1,9 @@
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { Playlist, Track } from '@/types/core/media'
 import { FlashList } from '@shopify/flash-list'
 import { useCallback } from 'react'
 import { Divider, Text } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { TrackMenuItem } from './LocalPlaylistItem'
 import { TrackListItem } from './LocalPlaylistItem'
 
@@ -15,7 +17,6 @@ interface LocalTrackListProps {
 	toggle: (id: number) => void
 	enterSelectMode: (id: number) => void
 	ListHeaderComponent: Parameters<typeof FlashList>[0]['ListHeaderComponent']
-	bottomPadding: number
 }
 
 export function LocalTrackList({
@@ -28,8 +29,10 @@ export function LocalTrackList({
 	toggle,
 	enterSelectMode,
 	ListHeaderComponent,
-	bottomPadding,
 }: LocalTrackListProps) {
+	const currentTrack = useCurrentTrack()
+	const insets = useSafeAreaInsets()
+
 	const renderItem = useCallback(
 		({ item, index }: { item: Track; index: number }) => {
 			return (
@@ -71,7 +74,7 @@ export function LocalTrackList({
 			ListHeaderComponent={ListHeaderComponent}
 			keyExtractor={keyExtractor}
 			contentContainerStyle={{
-				paddingBottom: bottomPadding,
+				paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 			}}
 			showsVerticalScrollIndicator={false}
 			ListFooterComponent={

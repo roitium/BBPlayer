@@ -1,9 +1,3 @@
-import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
-import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import EditPlaylistMetadataModal from '@/components/modals/edit-metadata/editPlaylistMetadataModal'
-import EditTrackMetadataModal from '@/components/modals/edit-metadata/editTrackMetadataModal'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import {
 	useBatchDeleteTracksFromLocalPlaylist,
 	useDeletePlaylist,
@@ -15,9 +9,7 @@ import {
 	usePlaylistMetadata,
 	useSearchTracksInPlaylist,
 } from '@/hooks/queries/db/playlist'
-import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
-import type { Track } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { toastAndLogError } from '@/utils/log'
@@ -29,18 +21,9 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, useWindowDimensions, View } from 'react-native'
-import {
-	Appbar,
-	Button,
-	Dialog,
-	Menu,
-	Portal,
-	Searchbar,
-	TextInput,
-	useTheme,
-} from 'react-native-paper'
+import { Appbar, Searchbar, useTheme } from 'react-native-paper'
 import Animated, {
 	useAnimatedStyle,
 	useSharedValue,
@@ -49,6 +32,9 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { PlaylistHeader } from './components/LocalPlaylistHeader'
+import LocalPlaylistOverlays, {
+	type LocalPlaylistOverlaysRef,
+} from './components/LocalPlaylistOverlays'
 import { LocalTrackList } from './components/LocalTrackList'
 import { PlaylistError } from './components/PlaylistError'
 import { PlaylistLoading } from './components/PlaylistLoading'
@@ -67,18 +53,7 @@ export default function LocalPlaylistPage() {
 		useNavigation<
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistLocal'>
 		>()
-	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
-	const [addTrackModalVisible, setAddTrackModalVisible] = useState(false)
-	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
-		undefined,
-	)
-	const [editPlaylistModalVisible, setEditPlaylistModalVisible] =
-		useState(false)
-	const [duplicatePlaylistModalVisible, setDuplicatePlaylistModalVisible] =
-		useState(false)
-	const [duplicatePlaylistName, setDuplicatePlaylistName] = useState('')
-	const [functionalMenuVisible, setFunctionalMenuVisible] = useState(false)
 	const dimensions = useWindowDimensions()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [startSearch, setStartSearch] = useState(false)
@@ -86,12 +61,10 @@ export default function LocalPlaylistPage() {
 	const debouncedQuery = useDebouncedValue(searchQuery, 200)
 	const { selected, selectMode, toggle, enterSelectMode, exitSelectMode } =
 		useTrackSelection()
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
-	const [editTrackModalVisible, setEditTrackModalVisible] = useState(false)
 	const [transitionDone, setTransitionDone] = useState(false)
+	const overlaysRef = useRef<LocalPlaylistOverlaysRef>(null)
 
 	const {
 		data: playlistData,
@@ -137,30 +110,27 @@ export default function LocalPlaylistPage() {
 		isError: isPlaylistMetadataError,
 	} = usePlaylistMetadata(Number(id))
 
-	useEffect(() => {
-		if (playlistMetadata)
-			setDuplicatePlaylistName(playlistMetadata.title + '-副本')
-	}, [playlistMetadata])
-
 	const { mutate: syncPlaylist } = usePlaylistSync()
 	const { mutate: duplicatePlaylist } = useDuplicatePlaylist()
 	const { mutate: deletePlaylist } = useDeletePlaylist()
 	const { mutate: deleteTrackFromLocalPlaylist } =
 		useBatchDeleteTracksFromLocalPlaylist()
 
-	const onClickDuplicateLocalPlaylist = useCallback(() => {
-		duplicatePlaylist(
-			{
-				playlistId: Number(id),
-				name: duplicatePlaylistName,
-			},
-			{
-				onSuccess: (id) =>
-					navigation.navigate('PlaylistLocal', { id: String(id) }),
-			},
-		)
-		setDuplicatePlaylistModalVisible(false)
-	}, [duplicatePlaylist, duplicatePlaylistName, id, navigation])
+	const onDuplicatePlaylist = useCallback(
+		(name: string) => {
+			duplicatePlaylist(
+				{
+					playlistId: Number(id),
+					name: name,
+				},
+				{
+					onSuccess: (id) =>
+						navigation.navigate('PlaylistLocal', { id: String(id) }),
+				},
+			)
+		},
+		[duplicatePlaylist, id, navigation],
+	)
 
 	const onClickDeletePlaylist = useCallback(() => {
 		deletePlaylist(
@@ -199,20 +169,12 @@ export default function LocalPlaylistPage() {
 		[deleteTrackFromLocalPlaylist, id],
 	)
 
-	const openAddToPlaylistModal = useCallback((track: Track) => {
-		setCurrentModalTrack(track)
-		setAddTrackModalVisible(true)
-	}, [])
-
-	const openEditTrackModal = useCallback((track: Track) => {
-		setCurrentModalTrack(track)
-		setEditTrackModalVisible(true)
-	}, [])
-
 	const trackMenuItems = useLocalPlaylistMenu({
 		deleteTrack,
-		openAddToPlaylistModal,
-		openEditTrackModal,
+		openAddToPlaylistModal: (track) =>
+			overlaysRef.current?.showAddTrackToPlaylistModal(track),
+		openEditTrackModal: (track) =>
+			overlaysRef.current?.showEditTrackModal(track),
 		playlist: playlistMetadata!,
 	})
 
@@ -243,25 +205,23 @@ export default function LocalPlaylistPage() {
 	}, [searchbarHeight, startSearch])
 
 	useEffect(() => {
-		if (batchAddTracksModalVisible) {
-			const payloads = []
-			for (const trackId of selected) {
-				const track = playlistData?.find((t) => t.id === trackId)
-				if (!track) {
-					toast.error(`批量添加歌曲失败：未找到 track: ${trackId}`)
-					return
-				}
-				payloads.push({
-					track: {
-						...track,
-						artistId: track.artist?.id,
-					},
-					artist: track.artist!,
-				})
+		const payloads = []
+		for (const trackId of selected) {
+			const track = playlistData?.find((t) => t.id === trackId)
+			if (!track) {
+				toast.error(`批量添加歌曲失败：未找到 track: ${trackId}`)
+				return
 			}
-			setBatchAddTracksModalPayloads(payloads)
+			payloads.push({
+				track: {
+					...track,
+					artistId: track.artist?.id,
+				},
+				artist: track.artist!,
+			})
 		}
-	}, [batchAddTracksModalVisible, playlistData, selected])
+		setBatchAddTracksModalPayloads(payloads)
+	}, [playlistData, selected])
 
 	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
 		height: searchbarHeight.value,
@@ -318,7 +278,7 @@ export default function LocalPlaylistPage() {
 						)}
 						<Appbar.Action
 							icon='playlist-plus'
-							onPress={() => setBatchAddTracksModalVisible(true)}
+							onPress={() => overlaysRef.current?.showBatchAddTracksModal()}
 						/>
 					</>
 				) : (
@@ -329,7 +289,12 @@ export default function LocalPlaylistPage() {
 						/>
 						<Appbar.Action
 							icon='dots-vertical'
-							onPress={() => setFunctionalMenuVisible(true)}
+							onPress={() =>
+								overlaysRef.current?.showFunctionalMenu({
+									x: dimensions.width - 10,
+									y: 60 + insets.top,
+								})
+							}
 						/>
 					</>
 				)}
@@ -361,7 +326,7 @@ export default function LocalPlaylistPage() {
 						onClickSync={handleSync}
 						validTrackCount={filteredPlaylistData.length}
 						onClickCopyToLocalPlaylist={() =>
-							setDuplicatePlaylistModalVisible(true)
+							overlaysRef.current?.showDuplicatePlaylistModal()
 						}
 						onPressAuthor={(author) =>
 							author.remoteId &&
@@ -369,106 +334,15 @@ export default function LocalPlaylistPage() {
 						}
 					/>
 				}
-				bottomPadding={currentTrack ? 70 + insets.bottom : insets.bottom}
 			/>
 
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={addTrackModalVisible}
-					setVisible={setAddTrackModalVisible}
-				/>
-			)}
-
-			<EditPlaylistMetadataModal
+			<LocalPlaylistOverlays
+				ref={overlaysRef}
 				playlist={playlistMetadata}
-				visiable={editPlaylistModalVisible}
-				setVisible={setEditPlaylistModalVisible}
+				onDuplicatePlaylist={onDuplicatePlaylist}
+				onClickDeletePlaylist={onClickDeletePlaylist}
+				batchAddTracksModalPayloads={batchAddTracksModalPayloads}
 			/>
-			<AnimatedModal
-				visible={duplicatePlaylistModalVisible}
-				onDismiss={() => setDuplicatePlaylistModalVisible(false)}
-			>
-				<Dialog.Title>复制播放列表</Dialog.Title>
-				<Dialog.Content>
-					<TextInput
-						label='新播放列表名称'
-						value={duplicatePlaylistName}
-						onChangeText={setDuplicatePlaylistName}
-						mode='outlined'
-						numberOfLines={1}
-						style={{ maxHeight: 200 }}
-						textAlignVertical='top'
-					/>
-				</Dialog.Content>
-				<Dialog.Actions>
-					<Button onPress={() => setDuplicatePlaylistModalVisible(false)}>
-						取消
-					</Button>
-					<Button onPress={onClickDuplicateLocalPlaylist}>确定</Button>
-				</Dialog.Actions>
-			</AnimatedModal>
-
-			<Portal>
-				<FunctionalMenu
-					visible={functionalMenuVisible}
-					onDismiss={() => setFunctionalMenuVisible(false)}
-					anchor={{
-						x: dimensions.width - 10,
-						y: 60 + insets.top,
-					}}
-				>
-					<Menu.Item
-						onPress={() => {
-							setFunctionalMenuVisible(false)
-							setEditPlaylistModalVisible(true)
-						}}
-						title='编辑播放列表信息'
-						leadingIcon='pencil'
-					/>
-					<Menu.Item
-						onPress={() => {
-							Alert.alert(
-								'删除播放列表',
-								'确定要删除此播放列表吗？',
-								[
-									{
-										text: '取消',
-										style: 'cancel',
-									},
-									{
-										text: '确定',
-										onPress: () => {
-											setFunctionalMenuVisible(false)
-											onClickDeletePlaylist()
-										},
-									},
-								],
-								{ cancelable: true },
-							)
-						}}
-						title='删除播放列表'
-						leadingIcon='delete'
-						titleStyle={{ color: colors.error }}
-					/>
-				</FunctionalMenu>
-			</Portal>
-
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
-
-			{currentModalTrack && (
-				<EditTrackMetadataModal
-					track={currentModalTrack}
-					visiable={editTrackModalVisible}
-					setVisible={setEditTrackModalVisible}
-				/>
-			)}
 		</View>
 	)
 }

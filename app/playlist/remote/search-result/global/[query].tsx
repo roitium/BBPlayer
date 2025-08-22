@@ -18,14 +18,13 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
+import { Appbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TrackList } from '../../shared/components/RemoteTrackList'
 import { useTrackSelection } from '../../shared/hooks/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
 
 const mapApiItemToTrack = (apiItem: BilibiliSearchVideo): BilibiliTrack => {
-	console.log(apiItem)
 	return {
 		id: apiItem.aid,
 		uniqueKey: `bilibili::${apiItem.bvid}`,
@@ -164,20 +163,6 @@ export default function SearchResultsPage() {
 					hasNextPage={hasNextPage}
 					enterSelectMode={enterSelectMode}
 					ListHeaderComponent={null}
-					ListFooterComponent={
-						hasNextPage ? (
-							<View
-								style={{
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									padding: 16,
-								}}
-							>
-								<ActivityIndicator size='small' />
-							</View>
-						) : null
-					}
 					refreshControl={
 						<RefreshControl
 							refreshing={refreshing}

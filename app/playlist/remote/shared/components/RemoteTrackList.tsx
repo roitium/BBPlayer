@@ -1,8 +1,10 @@
 import { TrackListItem } from '@/app/playlist/remote/shared/components/PlaylistItem'
 import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BilibiliTrack } from '@/types/core/media'
 import { FlashList } from '@shopify/flash-list'
 import { useCallback, useState } from 'react'
+import { View } from 'react-native'
 import {
 	ActivityIndicator,
 	Divider,
@@ -10,6 +12,7 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface TrackListProps {
 	tracks: BilibiliTrack[]
@@ -47,6 +50,8 @@ export function TrackList({
 	showItemCover,
 }: TrackListProps) {
 	const colors = useTheme().colors
+	const currentTrack = useCurrentTrack()
+	const insets = useSafeAreaInsets()
 
 	const [menuState, setMenuState] = useState<{
 		visible: boolean
@@ -121,11 +126,33 @@ export function TrackList({
 				contentContainerStyle={{
 					// 实现一个在 menu 弹出时，列表不可触摸的效果
 					pointerEvents: menuState.visible ? 'none' : 'auto',
+					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
 				onEndReached={onEndReached}
 				ListFooterComponent={
 					ListFooterComponent ??
-					(hasNextPage ? <ActivityIndicator size='small' /> : null)
+					(hasNextPage ? (
+						<View
+							style={{
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'center',
+								padding: 16,
+							}}
+						>
+							<ActivityIndicator size='small' />
+						</View>
+					) : (
+						<Text
+							variant='titleMedium'
+							style={{
+								textAlign: 'center',
+								paddingTop: 10,
+							}}
+						>
+							•
+						</Text>
+					))
 				}
 				ListEmptyComponent={
 					ListEmptyComponent ?? (
