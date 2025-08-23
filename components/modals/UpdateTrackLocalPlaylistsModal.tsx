@@ -1,13 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
-import {
-	Button,
-	Checkbox,
-	Dialog,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Button, Checkbox, Dialog, Text, useTheme } from 'react-native-paper'
 
 import { useUpdateTrackLocalPlaylists } from '@/hooks/mutations/db/playlist'
 import {
@@ -203,34 +196,27 @@ const UpdateTrackLocalPlaylistsModal = memo(
 
 			return (
 				<>
-					<Dialog.Content style={{ minHeight: 400 }}>
-						<Divider bold />
-						<View style={{ flex: 1, minHeight: 300 }}>
-							<FlashList
-								data={sortedAllPlaylists ?? []}
-								renderItem={renderPlaylistItem}
-								keyExtractor={keyExtractor}
-								extraData={checkedPlaylistIds}
-								ListEmptyComponent={
-									<View
-										style={{
-											flex: 1,
-											justifyContent: 'center',
-											alignItems: 'center',
-										}}
-									>
-										<Text style={{ padding: 16 }}>你还没有创建任何歌单</Text>
-									</View>
-								}
-							/>
-						</View>
-						<Divider bold />
-						<Text
-							variant='bodySmall'
-							style={{ padding: 16 }}
-						>
-							* 与远程同步的播放列表无法选择
-						</Text>
+					<Dialog.ScrollArea style={{ minHeight: 300 }}>
+						<FlashList
+							data={sortedAllPlaylists ?? []}
+							renderItem={renderPlaylistItem}
+							keyExtractor={keyExtractor}
+							extraData={checkedPlaylistIds}
+							ListEmptyComponent={
+								<View
+									style={{
+										flex: 1,
+										justifyContent: 'center',
+										alignItems: 'center',
+									}}
+								>
+									<Text>你还没有创建任何歌单</Text>
+								</View>
+							}
+						/>
+					</Dialog.ScrollArea>
+					<Dialog.Content>
+						<Text variant='bodySmall'>* 与远程同步的播放列表无法选择</Text>
 					</Dialog.Content>
 					<Dialog.Actions style={{ justifyContent: 'space-between' }}>
 						<Button

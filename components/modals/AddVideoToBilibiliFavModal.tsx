@@ -10,14 +10,7 @@ import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
-import {
-	Button,
-	Checkbox,
-	Dialog,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Button, Checkbox, Dialog, Text, useTheme } from 'react-native-paper'
 
 const FavoriteListItem = memo(function FavoriteListItem({
 	name,
@@ -222,8 +215,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 
 		return (
 			<>
-				<Dialog.Content>
-					<Divider bold />
+				<Dialog.ScrollArea>
 					<FlatList
 						data={playlists || []}
 						extraData={checkedList} // 必须添加
@@ -244,8 +236,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 							</View>
 						}
 					/>
-					<Divider bold />
-				</Dialog.Content>
+				</Dialog.ScrollArea>
 				<Dialog.Actions style={{ marginTop: 16 }}>
 					<Button
 						onPress={close}

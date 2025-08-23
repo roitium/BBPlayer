@@ -6,7 +6,6 @@ import CreatePlaylistModal from './modals/CreatePlaylistModal'
 import DuplicateLocalPlaylistModal from './modals/DuplicateLocalPlaylistModal'
 import EditPlaylistMetadataModal from './modals/edit-metadata/editPlaylistMetadataModal'
 import EditTrackMetadataModal from './modals/edit-metadata/editTrackMetadataModal'
-import PlayCountLeaderboardModal from './modals/PlayCountLeaderboardModal'
 import QrCodeLoginModal from './modals/QRCodeLoginModal'
 import UpdateAppModal from './modals/UpdateAppModal'
 import UpdateTrackLocalPlaylistsModal from './modals/UpdateTrackLocalPlaylistsModal'
@@ -24,7 +23,6 @@ export const modalRegistry: { [K in ModalKey]: ModalComponent<K> } = {
 	CookieLogin: CookieLoginModal,
 	QRCodeLogin: QrCodeLoginModal,
 	CreatePlaylist: CreatePlaylistModal,
-	PlayCountLeaderboard: PlayCountLeaderboardModal,
 	UpdateApp: UpdateAppModal,
 	Welcome: WelcomeModal,
 	UpdateTrackLocalPlaylists: UpdateTrackLocalPlaylistsModal,

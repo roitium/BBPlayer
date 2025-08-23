@@ -100,7 +100,7 @@ export const TrackListItem = memo(function TrackListItem({
 						<View style={{ opacity: selectMode ? 0 : 1 }}>
 							<Text
 								variant='bodyMedium'
-								style={{ color: 'grey' }}
+								style={{ color: theme.colors.onSurfaceVariant }}
 							>
 								{index + 1}
 							</Text>

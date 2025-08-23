@@ -24,6 +24,7 @@ export type RootStackParamList = {
 	PlaylistUploader: { mid: string }
 	PlaylistLocal: { id: string }
 	SearchResultFav: { query: string }
+	Leaderboard: undefined
 	TestPager: undefined
 	ModalHost: undefined
 }
@@ -34,7 +35,6 @@ export type ModalPropsMap = {
 	EditTrackMetadata: { track: Track }
 	QRCodeLogin: undefined
 	CookieLogin: undefined
-	PlayCountLeaderboard: undefined
 	CreatePlaylist: { redirectToNewPlaylist?: boolean }
 	UpdateApp: { version: string; notes: string; url: string; forced?: boolean }
 	UpdateTrackLocalPlaylists: { track: Track }

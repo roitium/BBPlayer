@@ -1,9 +1,12 @@
-import { useModalStore } from '@/hooks/stores/useModalStore'
 import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import type { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
 import type { RouteProp } from '@react-navigation/native'
-import { useFocusEffect, useRoute } from '@react-navigation/native'
+import {
+	useFocusEffect,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import { useState } from 'react'
 import { Dimensions, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
@@ -41,7 +44,7 @@ export default function Library() {
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
 	const tab = router.params?.tab
-	const openModal = useModalStore((state) => state.open)
+	const navigation = useNavigation()
 
 	useFocusEffect(() => {
 		if (tab === undefined) return
@@ -79,7 +82,7 @@ export default function Library() {
 					</Text>
 					<IconButton
 						icon='trophy'
-						onPress={() => openModal('PlayCountLeaderboard', undefined)}
+						onPress={() => navigation.navigate('Leaderboard')}
 					/>
 				</View>
 				<TabView

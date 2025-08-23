@@ -3,6 +3,7 @@ import NowPlayingBar from '@/components/NowPlayingBar'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { View } from 'react-native'
 import type { RootStackParamList } from '../types/navigation'
+import LeaderboardPage from './leaderboard'
 import NotFoundScreen from './not-found'
 import PlayerPage from './player/player'
 import LocalPlaylistPage from './playlist/local/[id]'
@@ -66,6 +67,10 @@ export function RootLayoutNav() {
 				<RootStack.Screen
 					name='PlaylistLocal'
 					component={LocalPlaylistPage}
+				/>
+				<RootStack.Screen
+					name='Leaderboard'
+					component={LeaderboardPage}
 				/>
 				<RootStack.Screen
 					name='NotFound'
