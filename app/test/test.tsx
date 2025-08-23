@@ -1,31 +1,22 @@
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { DatabaseError } from '@/lib/errors'
-import { createServiceError } from '@/lib/errors/service'
-import { ProjectScope } from '@/types/core/scope'
-import { reportErrorToSentry, toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { Button, Card, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { RootStackParamList } from '../../types/navigation'
 
 export default function TestPage() {
 	const clearQueue = usePlayerStore((state) => state.resetStore)
 	const queue = useCurrentQueue()
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
-	const navigation =
-		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Test'>>()
+	const navigation = useNavigation()
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
-	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
-		useState(false)
 
 	const testCheckUpdate = async () => {
 		try {
@@ -130,25 +121,20 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							const err1 = new DatabaseError('创建播放列表失败', {
-								cause: new Error('测试错误'),
-							})
-							const err2 = createServiceError(
-								'NotImplemented',
-								'不存在xxxxxx',
-								{
-									cause: err1,
-									data: {
-										fuck: 1,
-									},
-								},
-							)
-							toastAndLogError('测试错误', err2, 'Test')
-							reportErrorToSentry(err2, '测试错误', ProjectScope.UI)
+							useModalStore
+								.getState()
+								.open(
+									'AddVideoToBilibiliFavorite',
+									{ bvid: 'BV1D288ztENa' },
+									{ dismissible: true },
+								)
+							useModalStore
+								.getState()
+								.open('CookieLogin', undefined, { dismissible: false })
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						创建一个错误
+						试试
 					</Button>
 				</View>
 
@@ -170,11 +156,6 @@ export default function TestPage() {
 					</Card>
 				))}
 			</ScrollView>
-
-			<QrCodeLoginModal
-				visible={isQrCodeLoginDialogVisible}
-				setVisible={setIsQrCodeLoginDialogVisible}
-			/>
 		</View>
 	)
 }

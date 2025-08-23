@@ -1,9 +1,9 @@
-import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { FlashList } from '@shopify/flash-list'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, Divider, Text, useTheme } from 'react-native-paper'
 
@@ -60,16 +60,13 @@ function RankItem({ item, index }: { item: LeaderboardItem; index: number }) {
 	)
 }
 
-const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
-	visible,
-	setVisible,
-}: {
-	visible: boolean
-	setVisible: (v: boolean) => void
-}) {
+const PlayCountLeaderboardModal = () => {
 	const [data, setData] = useState<LeaderboardItem[] | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('PlayCountLeaderboard'), [_close])
+
 	const _mockData = useMemo(() => {
 		if (!data) return []
 		const newData = []
@@ -101,11 +98,7 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 		setLoading(false)
 	}
 
-	useEffect(() => {
-		if (visible) void fetchData()
-	}, [visible])
-
-	const handleDismiss = () => setVisible(false)
+	useEffect(() => void fetchData(), [])
 
 	const keyExtractor = useCallback(
 		(item: LeaderboardItem) => `${item.track.uniqueKey}`,
@@ -140,10 +133,7 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 	const ItemSeparator = useCallback(() => <Divider />, [])
 
 	return (
-		<AnimatedModal
-			visible={visible}
-			onDismiss={handleDismiss}
-		>
+		<>
 			<Dialog.Title>播放排行榜</Dialog.Title>
 			<Dialog.Content style={{ minHeight: 400 }}>
 				<Text
@@ -162,26 +152,22 @@ const PlayCountLeaderboardModal = memo(function PlayCountLeaderboardModal({
 						<Text>{error}</Text>
 					</View>
 				) : (
-					<View style={{ flex: 1, minHeight: 300 }}>
+					<View style={{ height: 300 }}>
 						<FlashList
-							data={data ?? []}
-							style={{ height: 300 }}
+							data={_mockData ?? []}
 							keyExtractor={keyExtractor}
 							renderItem={renderItem}
 							ListEmptyComponent={ListEmpty}
 							ItemSeparatorComponent={ItemSeparator}
-							onTouchStart={(e) => console.log(e.nativeEvent)}
 						/>
 					</View>
 				)}
 			</Dialog.Content>
 			<Dialog.Actions>
-				<Button onPress={handleDismiss}>关闭</Button>
+				<Button onPress={close}>关闭</Button>
 			</Dialog.Actions>
-		</AnimatedModal>
+		</>
 	)
-})
-
-PlayCountLeaderboardModal.displayName = 'PlayCountLeaderboardModal'
+}
 
 export default PlayCountLeaderboardModal

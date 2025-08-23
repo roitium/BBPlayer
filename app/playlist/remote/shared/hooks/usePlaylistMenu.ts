@@ -1,3 +1,4 @@
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { BilibiliTrack } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
 import toast from '@/utils/toast'
@@ -7,11 +8,10 @@ import { useCallback } from 'react'
 
 export function usePlaylistMenu(
 	playTrack: (track: BilibiliTrack, playNext: boolean) => void,
-	setCurrentModalTrack: (track: BilibiliTrack) => void,
-	setModalVisible: (visible: boolean) => void,
 ) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+	const openModal = useModalStore((state) => state.open)
 
 	return useCallback(
 		(item: BilibiliTrack) => [
@@ -38,8 +38,7 @@ export function usePlaylistMenu(
 				title: '添加到本地歌单',
 				leadingIcon: 'playlist-plus',
 				onPress: () => {
-					setCurrentModalTrack(item)
-					setModalVisible(true)
+					openModal('UpdateTrackLocalPlaylists', { track: item })
 				},
 			},
 			{
@@ -56,6 +55,6 @@ export function usePlaylistMenu(
 				},
 			},
 		],
-		[navigation, playTrack, setCurrentModalTrack, setModalVisible],
+		[navigation, openModal, playTrack],
 	)
 }

@@ -1,19 +1,16 @@
 import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import {
 	useGetFavoritePlaylists,
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
-import type { CreateArtistPayload } from '@/types/services/artist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import {
 	type RouteProp,
 	useNavigation,
@@ -67,13 +64,10 @@ export default function SearchResultsPage() {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
-	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
-		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
 	const [transitionDone, setTransitionDone] = useState(false)
 	const [refreshing, setRefreshing] = useState(false)
+	const openModal = useModalStore((state) => state.open)
 
 	const { data: userData } = usePersonalInformation()
 	const { data: favoriteFolderList } = useGetFavoritePlaylists(userData?.mid)
@@ -96,13 +90,7 @@ export default function SearchResultsPage() {
 		[searchData],
 	)
 
-	const {
-		trackMenuItems,
-		playTrack,
-		currentModalTrack,
-		modalVisible,
-		setModalVisible,
-	} = useSearchInteractions()
+	const { trackMenuItems, playTrack } = useSearchInteractions()
 
 	useEffect(() => {
 		navigation.addListener('transitionEnd', () => {
@@ -145,8 +133,9 @@ export default function SearchResultsPage() {
 									})
 								}
 							}
-							setBatchAddTracksModalPayloads(payloads)
-							setBatchAddTracksModalVisible(true)
+							openModal('BatchAddTracksToLocalPlaylist', {
+								payloads,
+							})
 						}}
 					/>
 				) : (
@@ -217,21 +206,6 @@ export default function SearchResultsPage() {
 					}
 				/>
 			</View>
-
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
-				/>
-			)}
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
 		</View>
 	)
 }

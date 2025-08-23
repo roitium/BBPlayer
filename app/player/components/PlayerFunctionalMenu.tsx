@@ -1,5 +1,6 @@
 import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -14,21 +15,18 @@ export function PlayerFunctionalMenu({
 	screenWidth,
 	viewMode,
 	uploaderMid,
-	setFavModalVisible,
-	setLocalPlaylistModalVisible,
 }: {
 	menuVisible: boolean
 	setMenuVisible: (visible: boolean) => void
 	screenWidth: number
 	viewMode: string
 	uploaderMid: number | undefined
-	setFavModalVisible: (visible: boolean) => void
-	setLocalPlaylistModalVisible: (visible: boolean) => void
 }) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
+	const openModal = useModalStore((state) => state.open)
 
 	return (
 		<FunctionalMenu
@@ -40,7 +38,9 @@ export function PlayerFunctionalMenu({
 				<Menu.Item
 					onPress={() => {
 						setMenuVisible(false)
-						setFavModalVisible(true)
+						openModal('AddVideoToBilibiliFavorite', {
+							bvid: currentTrack.bilibiliMetadata.bvid,
+						})
 					}}
 					title='添加到 bilibili 收藏夹'
 					leadingIcon='playlist-plus'
@@ -49,7 +49,8 @@ export function PlayerFunctionalMenu({
 			<Menu.Item
 				onPress={() => {
 					setMenuVisible(false)
-					setLocalPlaylistModalVisible(true)
+					if (!currentTrack) return
+					openModal('UpdateTrackLocalPlaylists', { track: currentTrack })
 				}}
 				title='添加到本地歌单'
 				leadingIcon='playlist-plus'

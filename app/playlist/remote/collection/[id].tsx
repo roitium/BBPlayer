@@ -1,15 +1,12 @@
 import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
 import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import { useCollectionAllContents } from '@/hooks/queries/bilibili/favorite'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliMediaItemInCollection } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
-import type { CreateArtistPayload } from '@/types/services/artist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import toast from '@/utils/toast'
 import {
 	type RouteProp,
@@ -66,16 +63,8 @@ export default function CollectionPage() {
 	const { colors } = useTheme()
 	const [refreshing, setRefreshing] = useState(false)
 	const linkedPlaylistId = useCheckLinkedToPlaylist(Number(id), 'collection')
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
-		undefined,
-	)
 
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
-	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
-		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 	const [transitionDone, setTransitionDone] = useState(false)
 
 	const {
@@ -90,12 +79,9 @@ export default function CollectionPage() {
 	)
 
 	const { playTrack } = useRemotePlaylist()
+	const openModal = useModalStore((state) => state.open)
 
-	const trackMenuItems = usePlaylistMenu(
-		playTrack,
-		setCurrentModalTrack,
-		setModalVisible,
-	)
+	const trackMenuItems = usePlaylistMenu(playTrack)
 
 	const { mutate: syncCollection } = usePlaylistSync()
 
@@ -175,8 +161,9 @@ export default function CollectionPage() {
 									})
 								}
 							}
-							setBatchAddTracksModalPayloads(payloads)
-							setBatchAddTracksModalVisible(true)
+							openModal('BatchAddTracksToLocalPlaylist', {
+								payloads,
+							})
 						}}
 					/>
 				) : (
@@ -221,21 +208,6 @@ export default function CollectionPage() {
 					}
 				/>
 			</View>
-
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
-				/>
-			)}
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
 		</View>
 	)
 }

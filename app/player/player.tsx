@@ -1,6 +1,4 @@
-import AddToFavoriteListsModal from '@/components/modals/AddVideoToBilibiliFavModal'
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
@@ -29,9 +27,6 @@ export default function PlayerPage() {
 	const [isFavorite, setIsFavorite] = useState(false)
 	const [viewMode, _setViewMode] = useState<'cover' | 'lyrics'>('cover')
 	const [menuVisible, setMenuVisible] = useState(false)
-	const [favModalVisible, setFavModalVisible] = useState(false)
-	const [localPlaylistModalVisible, setLocalPlaylistModalVisible] =
-		useState(false)
 
 	if (!currentTrack) {
 		return (
@@ -97,22 +92,6 @@ export default function PlayerPage() {
 				screenWidth={screenWidth}
 				viewMode={viewMode}
 				uploaderMid={Number(currentTrack.artist?.remoteId ?? undefined)}
-				setFavModalVisible={setFavModalVisible}
-				setLocalPlaylistModalVisible={setLocalPlaylistModalVisible}
-			/>
-
-			{currentTrack.source === 'bilibili' && (
-				<AddToFavoriteListsModal
-					key={currentTrack.id}
-					visible={favModalVisible}
-					setVisible={setFavModalVisible}
-					bvid={currentTrack.bilibiliMetadata.bvid}
-				/>
-			)}
-			<AddVideoToLocalPlaylistModal
-				track={currentTrack}
-				visible={localPlaylistModalVisible}
-				setVisible={setLocalPlaylistModalVisible}
 			/>
 
 			<PlayerQueueModal sheetRef={sheetRef} />

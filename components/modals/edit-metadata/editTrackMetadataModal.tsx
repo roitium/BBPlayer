@@ -1,20 +1,14 @@
-import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { useRenameTrack } from '@/hooks/mutations/db/track'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button, Dialog, TextInput } from 'react-native-paper'
 
-export default function EditTrackMetadataModal({
-	track,
-	visiable,
-	setVisible,
-}: {
-	track: Track
-	visiable: boolean
-	setVisible: (visible: boolean) => void
-}) {
+export default function EditTrackMetadataModal({ track }: { track: Track }) {
 	const [title, setTitle] = useState<string>()
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('EditTrackMetadata'), [_close])
 
 	const { mutate: editTrackMetadata } = useRenameTrack()
 
@@ -28,7 +22,7 @@ export default function EditTrackMetadataModal({
 			newTitle: title,
 			source: track.source,
 		})
-		setVisible(false)
+		close()
 	}
 
 	useEffect(() => {
@@ -36,15 +30,12 @@ export default function EditTrackMetadataModal({
 	}, [track.title])
 
 	const handleDismiss = () => {
-		setVisible(false)
+		close()
 		setTitle('')
 	}
 
 	return (
-		<AnimatedModal
-			visible={visiable}
-			onDismiss={handleDismiss}
-		>
+		<>
 			<Dialog.Title>改名</Dialog.Title>
 			<Dialog.Content style={{ gap: 5 }}>
 				<TextInput
@@ -60,6 +51,6 @@ export default function EditTrackMetadataModal({
 				<Button onPress={handleDismiss}>取消</Button>
 				<Button onPress={handleConfirm}>确定</Button>
 			</Dialog.Actions>
-		</AnimatedModal>
+		</>
 	)
 }

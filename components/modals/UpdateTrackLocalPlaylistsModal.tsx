@@ -14,12 +14,11 @@ import {
 	usePlaylistLists,
 	usePlaylistsContainingTrack,
 } from '@/hooks/queries/db/playlist'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import generateUniqueTrackKey from '@/lib/services/genKey'
 import type { Playlist, Track } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { FlashList } from '@shopify/flash-list'
-import { AnimatedModal } from '../commonUIs/AnimatedModal'
-import CreatePlaylistModal from './CreatePlaylistModal'
 
 const PlaylistListItem = memo(function PlaylistListItem({
 	id,
@@ -49,19 +48,15 @@ const PlaylistListItem = memo(function PlaylistListItem({
 })
 PlaylistListItem.displayName = 'PlaylistListItem'
 
-const AddVideoToLocalPlaylistModal = memo(
-	function AddVideoToLocalPlaylistModal({
-		track,
-		visible,
-		setVisible,
-	}: {
-		track: Track
-		visible: boolean
-		setVisible: (visible: boolean) => void
-	}) {
+const UpdateTrackLocalPlaylistsModal = memo(
+	function UpdateTrackLocalPlaylistsModal({ track }: { track: Track }) {
 		const { colors } = useTheme()
-		const [createPlaylistModalVisible, setCreatePlaylistModalVisible] =
-			useState(false)
+		const _close = useModalStore((state) => state.close)
+		const close = useCallback(
+			() => _close('UpdateTrackLocalPlaylists'),
+			[_close],
+		)
+		const open = useModalStore((state) => state.open)
 
 		const {
 			data: allPlaylists,
@@ -130,7 +125,7 @@ const AddVideoToLocalPlaylistModal = memo(
 			)
 
 			if (toAddPlaylistIds.length === 0 && toRemovePlaylistIds.length === 0) {
-				setVisible(false)
+				close()
 				return
 			}
 
@@ -141,19 +136,19 @@ const AddVideoToLocalPlaylistModal = memo(
 				artistPayload: track.artist,
 			})
 
-			setVisible(false)
+			close()
 		}, [
 			isMutating,
 			checkedPlaylistIds,
 			initialCheckedPlaylistIdSet,
 			updateTracks,
 			track,
-			setVisible,
+			close,
 		])
 
 		const handleDismiss = () => {
 			if (isMutating) return
-			setVisible(false)
+			close()
 		}
 
 		const handleRetry = () => {
@@ -238,7 +233,11 @@ const AddVideoToLocalPlaylistModal = memo(
 						</Text>
 					</Dialog.Content>
 					<Dialog.Actions style={{ justifyContent: 'space-between' }}>
-						<Button onPress={() => setCreatePlaylistModalVisible(true)}>
+						<Button
+							onPress={() =>
+								open('CreatePlaylist', { redirectToNewPlaylist: false })
+							}
+						>
 							创建歌单
 						</Button>
 						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -263,22 +262,13 @@ const AddVideoToLocalPlaylistModal = memo(
 
 		return (
 			<>
-				<AnimatedModal
-					visible={visible}
-					onDismiss={handleDismiss}
-				>
-					<Dialog.Title>添加到歌单</Dialog.Title>
-					{renderContent()}
-				</AnimatedModal>
-				<CreatePlaylistModal
-					visiable={createPlaylistModalVisible}
-					setVisible={setCreatePlaylistModalVisible}
-				/>
+				<Dialog.Title>添加到歌单</Dialog.Title>
+				{renderContent()}
 			</>
 		)
 	},
 )
 
-AddVideoToLocalPlaylistModal.displayName = 'AddVideoToLocalPlaylistModal'
+UpdateTrackLocalPlaylistsModal.displayName = 'UpdateTrackLocalPlaylistsModal'
 
-export default AddVideoToLocalPlaylistModal
+export default UpdateTrackLocalPlaylistsModal

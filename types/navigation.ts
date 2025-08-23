@@ -1,14 +1,17 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* react-navigation 指明了 RootStackParamList 必须使用 type alias */
 import type { Tabs } from '@/app/tabs/library/[tab]'
 import type { NavigatorScreenParams } from '@react-navigation/native'
+import type { Playlist, Track } from './core/media'
+import type { CreateArtistPayload } from './services/artist'
+import type { CreateTrackPayload } from './services/track'
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- react navigation 指明了 RootStackParamList 必须使用 type alias
 export type BottomTabParamList = {
 	Home: undefined
 	Library: { tab: Tabs } | undefined
 	Settings: undefined
 }
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- react navigation 指明了 RootStackParamList 必须使用 type alias
 export type RootStackParamList = {
 	MainTabs: NavigatorScreenParams<BottomTabParamList>
 	Player: undefined
@@ -22,4 +25,29 @@ export type RootStackParamList = {
 	PlaylistLocal: { id: string }
 	SearchResultFav: { query: string }
 	TestPager: undefined
+	ModalHost: undefined
+}
+
+export type ModalPropsMap = {
+	AddVideoToBilibiliFavorite: { bvid: string }
+	EditPlaylistMetadata: { playlist: Playlist }
+	EditTrackMetadata: { track: Track }
+	QRCodeLogin: undefined
+	CookieLogin: undefined
+	PlayCountLeaderboard: undefined
+	CreatePlaylist: { redirectToNewPlaylist?: boolean }
+	UpdateApp: { version: string; notes: string; url: string; forced?: boolean }
+	UpdateTrackLocalPlaylists: { track: Track }
+	Welcome: undefined
+	BatchAddTracksToLocalPlaylist: {
+		payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[]
+	}
+	DuplicateLocalPlaylist: { sourcePlaylistId: number; rawName: string }
+}
+
+export type ModalKey = keyof ModalPropsMap
+export type ModalInstance<K extends ModalKey = ModalKey> = {
+	key: K
+	props: ModalPropsMap[K]
+	options?: { dismissible?: boolean } // default: true
 }

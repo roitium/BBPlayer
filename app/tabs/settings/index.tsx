@@ -1,7 +1,6 @@
-import CookieLoginModal from '@/components/modals/CookieLoginModal'
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -138,9 +137,6 @@ const SettingsSection = memo(function SettingsSection() {
 		(state) => state.setEnableSendPlayHistory,
 	)
 	const sendPlayHistory = useAppStore((state) => state.settings.sendPlayHistory)
-	const [cookieDialogVisible, setCookieDialogVisible] = useState(false)
-	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
-		useState(false)
 	const setEnableSentryReport = useAppStore(
 		(state) => state.setEnableSentryReport,
 	)
@@ -149,6 +145,7 @@ const SettingsSection = memo(function SettingsSection() {
 	)
 	const setEnableDebugLog = useAppStore((state) => state.setEnableDebugLog)
 	const enableDebugLog = useAppStore((state) => state.settings.enableDebugLog)
+	const openModal = useModalStore((state) => state.open)
 
 	const shareLogFile = async () => {
 		const d = new Date()
@@ -218,7 +215,7 @@ const SettingsSection = memo(function SettingsSection() {
 				<IconButton
 					icon='open-in-new'
 					size={20}
-					onPress={() => setCookieDialogVisible(true)}
+					onPress={() => openModal('CookieLogin', undefined)}
 				/>
 			</View>
 			<View
@@ -233,7 +230,7 @@ const SettingsSection = memo(function SettingsSection() {
 				<IconButton
 					icon='open-in-new'
 					size={20}
-					onPress={() => setIsQrCodeLoginDialogVisible(true)}
+					onPress={() => openModal('QRCodeLogin', undefined)}
 				/>
 			</View>
 			<View
@@ -251,15 +248,6 @@ const SettingsSection = memo(function SettingsSection() {
 					onPress={shareLogFile}
 				/>
 			</View>
-
-			<CookieLoginModal
-				visible={cookieDialogVisible}
-				setVisible={setCookieDialogVisible}
-			/>
-			<QrCodeLoginModal
-				visible={isQrCodeLoginDialogVisible}
-				setVisible={setIsQrCodeLoginDialogVisible}
-			/>
 		</View>
 	)
 })

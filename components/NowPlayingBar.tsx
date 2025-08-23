@@ -1,4 +1,5 @@
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import {
 	usePlaybackProgress,
 	usePlayerStore,
@@ -39,6 +40,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const [displayTrack, setDisplayTrack] = useState(currentTrack)
 	// new arch issue: 直接通过 shouldShowNowPlayingBar 来控制组件显示会导致当组件显示时，动画还没开始（useEffect 还没来得及触发），有一个闪烁，体验不好，所以这里再加一个 finalDisplayBar 状态来控制最终显示状态
 	const [finalDisplayBar, setFinalDisplayBar] = useState(false)
+	const hasModalOpened = useModalStore((state) => state.modals.length > 0)
 
 	// 延迟切换 track，避免在切换歌曲时因 currentTrack 短暂变为 null，导致重播入场动画效果
 	useEffect(() => {
@@ -76,6 +78,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 		if (success) runOnJS(skipToNext)()
 	})
 	const outerTap = Gesture.Tap()
+		.enabled(!hasModalOpened)
 		.requireExternalGestureToFail(prevTap, playTap, nextTap)
 		.onBegin(() => {
 			opacity.value = withTiming(0.7, { duration: 100 })

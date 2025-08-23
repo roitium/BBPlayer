@@ -1,31 +1,25 @@
-import appStore from '@/hooks/stores/appStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { storage } from '@/utils/mmkv'
+import { useCallback } from 'react'
 import { Button, Dialog, Text } from 'react-native-paper'
-import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
-export default function WelcomeModal({
-	visible,
-	setVisible,
-}: {
-	visible: boolean
-	setVisible: (visible: boolean) => void
-}) {
+export default function WelcomeModal() {
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('Welcome'), [_close])
+	const open = useModalStore((state) => state.open)
+
 	const confirmGuestMode = () => {
 		storage.set('first_open', false)
-		setVisible(false)
+		close()
 	}
 	const confirmLogin = () => {
 		storage.set('first_open', false)
-		console.log(storage.getBoolean('first_open'))
-		appStore.getState().setQrCodeLoginModalVisible(true)
-		setVisible(false)
+		open('QRCodeLogin', undefined)
+		close()
 	}
 
 	return (
-		<AnimatedModal
-			visible={visible}
-			onDismiss={() => void 0}
-		>
+		<>
 			<Dialog.Title>欢迎使用 BBPlayer</Dialog.Title>
 			<Dialog.Content>
 				<Text>
@@ -43,6 +37,6 @@ export default function WelcomeModal({
 				<Button onPress={confirmGuestMode}>游客模式</Button>
 				<Button onPress={confirmLogin}>登录</Button>
 			</Dialog.Actions>
-		</AnimatedModal>
+		</>
 	)
 }

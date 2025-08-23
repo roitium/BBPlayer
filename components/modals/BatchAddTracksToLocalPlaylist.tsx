@@ -11,26 +11,25 @@ import {
 
 import { useBatchAddTracksToLocalPlaylist } from '@/hooks/mutations/db/playlist'
 import { usePlaylistLists } from '@/hooks/queries/db/playlist'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { Playlist } from '@/types/core/media'
 import type { CreateArtistPayload } from '@/types/services/artist'
 import type { CreateTrackPayload } from '@/types/services/track'
 import { FlashList } from '@shopify/flash-list'
-import { AnimatedModal } from '../commonUIs/AnimatedModal'
-import CreatePlaylistModal from './CreatePlaylistModal'
 
 const BatchAddTracksToLocalPlaylistModal = memo(
 	function AddTracksToLocalPlaylistModal({
 		payloads,
-		visible,
-		setVisible,
 	}: {
 		payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[]
-		visible: boolean
-		setVisible: (visible: boolean) => void
 	}) {
 		const { colors } = useTheme()
-		const [CreatePlaylistModalVisible, setCreatePlaylistModalVisible] =
-			useState(false)
+		const _close = useModalStore((state) => state.close)
+		const close = useCallback(
+			() => _close('BatchAddTracksToLocalPlaylist'),
+			[_close],
+		)
+		const openModal = useModalStore((state) => state.open)
 
 		const {
 			data: allPlaylists,
@@ -58,8 +57,8 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 
 		const handleDismiss = useCallback(() => {
 			if (isMutating) return
-			setVisible(false)
-		}, [isMutating, setVisible])
+			close()
+		}, [close, isMutating])
 
 		const handleRetry = useCallback(() => {
 			if (isPlaylistsError) void refetchPlaylists()
@@ -74,10 +73,10 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 					payloads,
 				},
 				{
-					onSettled: () => setVisible(false),
+					onSettled: () => close(),
 				},
 			)
-		}, [batchAdd, isMutating, payloads, selectedPlaylistId, setVisible])
+		}, [batchAdd, close, isMutating, payloads, selectedPlaylistId])
 
 		const renderPlaylistItem = useCallback(
 			({ item }: { item: Playlist }) => {
@@ -156,7 +155,11 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 						</Text>
 					</Dialog.Content>
 					<Dialog.Actions style={{ justifyContent: 'space-between' }}>
-						<Button onPress={() => setCreatePlaylistModalVisible(true)}>
+						<Button
+							onPress={() =>
+								openModal('CreatePlaylist', { redirectToNewPlaylist: false })
+							}
+						>
 							创建歌单
 						</Button>
 						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -181,17 +184,8 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 
 		return (
 			<>
-				<AnimatedModal
-					visible={visible}
-					onDismiss={handleDismiss}
-				>
-					<Dialog.Title>添加到歌单</Dialog.Title>
-					{renderContent()}
-				</AnimatedModal>
-				<CreatePlaylistModal
-					visiable={CreatePlaylistModalVisible}
-					setVisible={setCreatePlaylistModalVisible}
-				/>
+				<Dialog.Title>添加到歌单</Dialog.Title>
+				{renderContent()}
 			</>
 		)
 	},

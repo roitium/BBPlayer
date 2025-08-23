@@ -1,12 +1,11 @@
-import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { storage } from '@/utils/mmkv'
 import * as WebBrowser from 'expo-web-browser'
+import { useCallback } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, Text } from 'react-native-paper'
 
 export interface UpdateModalProps {
-	visible: boolean
-	setVisible: (v: boolean) => void
 	version: string
 	notes: string
 	url: string
@@ -14,32 +13,30 @@ export interface UpdateModalProps {
 }
 
 export default function UpdateAppModal({
-	visible,
-	setVisible,
 	version,
 	notes,
 	url,
 	forced = false,
 }: UpdateModalProps) {
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('UpdateApp'), [_close])
+
 	const onUpdate = async () => {
 		if (url) await WebBrowser.openBrowserAsync(url)
-		setVisible(false)
+		close()
 	}
 
 	const onSkip = () => {
 		storage.set('skip_version', version)
-		setVisible(false)
+		close()
 	}
 
 	const onCancel = () => {
-		setVisible(false)
+		close()
 	}
 
 	return (
-		<AnimatedModal
-			visible={visible}
-			onDismiss={() => void 0}
-		>
+		<>
 			<Dialog.Title>发现新版本 {version}</Dialog.Title>
 			<Dialog.Content>
 				{forced ? (
@@ -59,6 +56,6 @@ export default function UpdateAppModal({
 					<Button onPress={onUpdate}>去更新</Button>
 				</View>
 			</Dialog.Actions>
-		</AnimatedModal>
+		</>
 	)
 }

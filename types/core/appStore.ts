@@ -15,25 +15,15 @@ interface Settings {
 	enableDebugLog: boolean
 }
 
-interface Modals {
-	qrCodeLoginModalVisible: boolean
-	welcomeModalVisible: boolean
-}
-
 interface AppState {
 	bilibiliCookie: Record<string, string> | null
 	settings: Settings
-	modals: Modals
 
 	// Cookies
 	hasBilibiliCookie: () => boolean
 	setBilibiliCookie: (cookieString: string) => Result<void, Error>
 	updateBilibiliCookie: (updates: Record<string, string>) => Result<void, Error>
 	clearBilibiliCookie: () => void
-
-	// Modals
-	setQrCodeLoginModalVisible: (visible: boolean) => void
-	setWelcomeModalVisible: (visible: boolean) => void
 
 	// Settings
 	setEnableSendPlayHistory: (value: boolean) => void

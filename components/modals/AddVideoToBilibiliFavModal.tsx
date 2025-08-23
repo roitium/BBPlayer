@@ -5,6 +5,7 @@ import {
 } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { BilibiliPlaylist } from '@/types/apis/bilibili'
 import { useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useState } from 'react'
@@ -17,7 +18,6 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
-import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 const FavoriteListItem = memo(function FavoriteListItem({
 	name,
@@ -49,21 +49,20 @@ const FavoriteListItem = memo(function FavoriteListItem({
 FavoriteListItem.displayName = 'FavoriteListItem'
 
 const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
-	visible,
-	setVisible,
 	bvid,
 }: {
-	visible: boolean
-	setVisible: (visible: boolean) => void
 	bvid: string
 }) {
 	const { colors } = useTheme()
 	const queryClient = useQueryClient()
 	const { data: personalInfo } = usePersonalInformation()
 	const enable = useAppStore((state) => state.hasBilibiliCookie())
-	const setIsQrCodeLoginDialogVisible = useAppStore(
-		(state) => state.setQrCodeLoginModalVisible,
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(
+		() => _close('AddVideoToBilibiliFavorite'),
+		[_close],
 	)
+	const open = useModalStore((state) => state.open)
 
 	const {
 		data: playlists,
@@ -114,7 +113,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 		}
 
 		if (addToFavoriteIds.length === 0 && delInFavoriteIds.length === 0) {
-			setVisible(false)
+			close()
 			return
 		}
 
@@ -125,7 +124,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 				delInFavoriteIds,
 			})
 		} finally {
-			setVisible(false)
+			close()
 			queryClient.removeQueries({
 				queryKey: favoriteListQueryKeys.favoriteForOneVideo(
 					bvid,
@@ -134,17 +133,15 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 			})
 		}
 	}, [
-		bvid,
 		playlists,
-		checkedList,
-		dealFavorite,
 		isMutating,
-		setVisible,
+		checkedList,
+		close,
+		dealFavorite,
+		bvid,
 		queryClient,
 		personalInfo?.mid,
 	])
-
-	const handleDismiss = () => setVisible(false)
 
 	const renderFavoriteListItem = useCallback(
 		({ item }: { item: BilibiliPlaylist }) => (
@@ -183,8 +180,8 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 					<Button
 						mode='contained'
 						onPress={() => {
-							setVisible(false)
-							setIsQrCodeLoginDialogVisible(true)
+							close()
+							open('QRCodeLogin', undefined)
 						}}
 					>
 						登录
@@ -212,7 +209,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 					</Dialog.Content>
 					<Dialog.Actions>
 						<Button
-							onPress={handleDismiss}
+							onPress={close}
 							disabled={isMutating}
 						>
 							关闭
@@ -251,7 +248,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 				</Dialog.Content>
 				<Dialog.Actions style={{ marginTop: 16 }}>
 					<Button
-						onPress={handleDismiss}
+						onPress={close}
 						disabled={isMutating}
 					>
 						取消
@@ -269,13 +266,10 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 	}
 
 	return (
-		<AnimatedModal
-			visible={visible}
-			onDismiss={handleDismiss}
-		>
+		<>
 			<Dialog.Title>添加到收藏夹</Dialog.Title>
 			{renderContent()}
-		</AnimatedModal>
+		</>
 	)
 })
 

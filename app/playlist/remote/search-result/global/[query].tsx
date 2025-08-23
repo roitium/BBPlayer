@@ -1,14 +1,11 @@
 import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import { useSearchResults } from '@/hooks/queries/bilibili/search'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { BilibiliSearchVideo } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
-import type { CreateArtistPayload } from '@/types/services/artist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import { formatMMSSToSeconds } from '@/utils/time'
 import {
 	type RouteProp,
@@ -60,13 +57,10 @@ export default function SearchResultsPage() {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
-	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
-		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
 	const [transitionDone, setTransitionDone] = useState(false)
 	const [refreshing, setRefreshing] = useState(false)
+	const openModal = useModalStore((state) => state.open)
 
 	const {
 		data: searchData,
@@ -77,13 +71,7 @@ export default function SearchResultsPage() {
 		fetchNextPage,
 	} = useSearchResults(query)
 
-	const {
-		currentModalTrack,
-		modalVisible,
-		setModalVisible,
-		trackMenuItems,
-		playTrack,
-	} = useSearchInteractions()
+	const { trackMenuItems, playTrack } = useSearchInteractions()
 
 	const uniqueSearchData = useMemo(() => {
 		if (!searchData?.pages) {
@@ -137,8 +125,9 @@ export default function SearchResultsPage() {
 									})
 								}
 							}
-							setBatchAddTracksModalPayloads(payloads)
-							setBatchAddTracksModalVisible(true)
+							openModal('BatchAddTracksToLocalPlaylist', {
+								payloads,
+							})
 						}}
 					/>
 				) : (
@@ -188,21 +177,6 @@ export default function SearchResultsPage() {
 					}
 				/>
 			</View>
-
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
-				/>
-			)}
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
 		</View>
 	)
 }

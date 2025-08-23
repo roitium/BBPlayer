@@ -1,4 +1,4 @@
-import appStore from '@/hooks/stores/appStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
@@ -22,7 +22,7 @@ export const queryClient = new QueryClient({
 
 			if (error instanceof BilibiliApiError && error.data.msgCode === -101) {
 				toast.error('登录状态失效，请重新登录')
-				appStore.getState().setQrCodeLoginModalVisible(true)
+				useModalStore.getState().open('QRCodeLogin', undefined)
 			}
 
 			// 这个错误属于三方依赖的错误，不应该报告到 Sentry

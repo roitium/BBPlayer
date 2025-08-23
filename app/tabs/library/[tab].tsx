@@ -1,4 +1,4 @@
-import PlayCountLeaderboardModal from '@/components/modals/PlayCountLeaderboardModal'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import type { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
@@ -37,11 +37,11 @@ export enum Tabs {
 
 export default function Library() {
 	const [index, setIndex] = useState(Tabs.Local)
-	const [leaderboardVisible, setLeaderboardVisible] = useState(false)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
 	const tab = router.params?.tab
+	const openModal = useModalStore((state) => state.open)
 
 	useFocusEffect(() => {
 		if (tab === undefined) return
@@ -79,7 +79,7 @@ export default function Library() {
 					</Text>
 					<IconButton
 						icon='trophy'
-						onPress={() => setLeaderboardVisible(true)}
+						onPress={() => openModal('PlayCountLeaderboard', undefined)}
 					/>
 				</View>
 				<TabView
@@ -156,10 +156,6 @@ export default function Library() {
 					}}
 				/>
 			</View>
-			<PlayCountLeaderboardModal
-				visible={leaderboardVisible}
-				setVisible={setLeaderboardVisible}
-			/>
 		</View>
 	)
 }

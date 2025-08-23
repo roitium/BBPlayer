@@ -1,31 +1,52 @@
 import { useCreateNewLocalPlaylist } from '@/hooks/mutations/db/playlist'
+import { useModalStore } from '@/hooks/stores/useModalStore'
+import { useNavigation } from '@react-navigation/native'
 import * as DocumentPicker from 'expo-document-picker'
 import * as FileSystem from 'expo-file-system'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, IconButton, TextInput } from 'react-native-paper'
-import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 export default function CreatePlaylistModal({
-	visiable,
-	setVisible,
+	redirectToNewPlaylist,
 }: {
-	visiable: boolean
-	setVisible: (visible: boolean) => void
+	redirectToNewPlaylist?: boolean
 }) {
 	const { mutate: createNewPlaylist } = useCreateNewLocalPlaylist()
 	const [title, setTitle] = useState('')
 	const [description, setDescription] = useState('')
 	const [coverUrl, setCoverUrl] = useState('')
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('CreatePlaylist'), [_close])
+	const navigation = useNavigation()
 
 	const handleConfirm = useCallback(() => {
-		createNewPlaylist({
-			title,
-			description,
-			coverUrl,
-		})
-		setVisible(false)
-	}, [coverUrl, createNewPlaylist, description, setVisible, title])
+		createNewPlaylist(
+			{
+				title,
+				description,
+				coverUrl,
+			},
+			{
+				onSuccess: (playlist) => {
+					if (redirectToNewPlaylist) {
+						close()
+						navigation.navigate('PlaylistLocal', { id: String(playlist.id) })
+					} else {
+						close()
+					}
+				},
+			},
+		)
+	}, [
+		close,
+		coverUrl,
+		createNewPlaylist,
+		description,
+		navigation,
+		redirectToNewPlaylist,
+		title,
+	])
 
 	const handleImagePicker = useCallback(async () => {
 		const result = await DocumentPicker.getDocumentAsync({
@@ -52,17 +73,14 @@ export default function CreatePlaylistModal({
 	}, [])
 
 	const handleDismiss = useCallback(() => {
-		setVisible(false)
+		close()
 		setTitle('')
 		setDescription('')
 		setCoverUrl('')
-	}, [setVisible])
+	}, [close])
 
 	return (
-		<AnimatedModal
-			visible={visiable}
-			onDismiss={handleDismiss}
-		>
+		<>
 			<Dialog.Title>创建播放列表</Dialog.Title>
 			<Dialog.Content style={{ gap: 5 }}>
 				<TextInput
@@ -104,6 +122,6 @@ export default function CreatePlaylistModal({
 				<Button onPress={handleDismiss}>取消</Button>
 				<Button onPress={handleConfirm}>确定</Button>
 			</Dialog.Actions>
-		</AnimatedModal>
+		</>
 	)
 }

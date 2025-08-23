@@ -1,6 +1,12 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-namespace */
+import type { RootStackParamList } from './navigation'
+
 export {}
 
 declare global {
-	// eslint-disable-next-line no-var
 	var playerIsReady: boolean
+	namespace ReactNavigation {
+		interface RootParamList extends RootStackParamList {}
+	}
 }

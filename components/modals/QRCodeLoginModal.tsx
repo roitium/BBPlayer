@@ -1,18 +1,18 @@
 import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
 import { userQueryKeys } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
-import { memo, useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import { Pressable } from 'react-native'
 import { Button, Dialog, Text } from 'react-native-paper'
 import QRCode from 'react-native-qrcode-svg'
 import * as setCookieParser from 'set-cookie-parser'
-import { AnimatedModal } from '../commonUIs/AnimatedModal'
 
 type Status =
 	| 'prompting'
@@ -91,15 +91,11 @@ function reducer(state: State, action: Action): State {
 	}
 }
 
-const QrCodeLoginModal = memo(function QrCodeLoginModal({
-	visible,
-	setVisible,
-}: {
-	visible: boolean
-	setVisible: (visible: boolean) => void
-}) {
+const QrCodeLoginModal = () => {
 	const queryClient = useQueryClient()
 	const setCookie = useAppStore((state) => state.updateBilibiliCookie)
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('QRCodeLogin'), [_close])
 
 	const [state, dispatch] = useReducer(reducer, initialState)
 	const { status, statusText, qrcodeKey, qrcodeUrl } = state
@@ -115,13 +111,13 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 					payload: String(response.error.message),
 				})
 				toast.error('获取二维码失败', { id: 'bilibili-qrcode-login-error' })
-				setTimeout(() => setVisible(false), 2000)
+				setTimeout(() => close(), 2000)
 			} else {
 				dispatch({ type: 'GENERATE_SUCCESS', payload: response.value })
 			}
 		}
 		void generateQrCode()
-	}, [status, setVisible])
+	}, [status, close])
 
 	useEffect(() => {
 		if (status !== 'polling' || !qrcodeKey) return
@@ -164,20 +160,14 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 					queryKey: favoriteListQueryKeys.all,
 				})
 				await queryClient.invalidateQueries({ queryKey: userQueryKeys.all })
-				setTimeout(() => setVisible(false), 1000)
+				setTimeout(() => close(), 1000)
 			} else {
 				dispatch({ type: 'POLL_UPDATE', payload: { code: pollData.status } })
 			}
 		}, 2000)
 
 		return () => clearInterval(interval)
-	}, [status, qrcodeKey, setCookie, queryClient, setVisible])
-
-	useEffect(() => {
-		if (!visible) {
-			dispatch({ type: 'RESET' })
-		}
-	}, [visible])
+	}, [status, qrcodeKey, setCookie, queryClient, close])
 
 	const renderDialogContent = () => {
 		if (status === 'prompting') {
@@ -204,7 +194,7 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 			<>
 				<Text style={{ textAlign: 'center', padding: 16 }}>
 					{statusText}
-					{'\n'}（点击二维码可直接跳转登录）
+					{'（点击二维码可直接跳转登录）'}
 				</Text>
 				<Pressable onPress={() => WebBrowser.openBrowserAsync(qrcodeUrl)}>
 					<QRCode
@@ -217,20 +207,15 @@ const QrCodeLoginModal = memo(function QrCodeLoginModal({
 	}
 
 	return (
-		<AnimatedModal
-			visible={visible}
-			onDismiss={() => setVisible(false)}
-		>
+		<>
 			<Dialog.Title>扫码登录</Dialog.Title>
 			<Dialog.Content
 				style={{ justifyContent: 'center', alignItems: 'center' }}
 			>
 				{renderDialogContent()}
 			</Dialog.Content>
-		</AnimatedModal>
+		</>
 	)
-})
-
-QrCodeLoginModal.displayName = 'QrCodeLoginModal'
+}
 
 export default QrCodeLoginModal

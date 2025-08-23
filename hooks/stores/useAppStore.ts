@@ -70,7 +70,6 @@ export const useAppStore = create<AppState>()(
 		return {
 			bilibiliCookie: initialCookie,
 			settings: { sendPlayHistory, enableSentryReport, enableDebugLog },
-			modals: { qrCodeLoginModalVisible: false, welcomeModalVisible: false },
 
 			hasBilibiliCookie: () => {
 				const { bilibiliCookie } = get()
@@ -108,18 +107,6 @@ export const useAppStore = create<AppState>()(
 			clearBilibiliCookie: () => {
 				set({ bilibiliCookie: null })
 				storage.delete('bilibili_cookie')
-			},
-
-			setQrCodeLoginModalVisible: (visible) => {
-				set((state) => {
-					state.modals.qrCodeLoginModalVisible = visible
-				})
-			},
-
-			setWelcomeModalVisible: (visible) => {
-				set((state) => {
-					state.modals.welcomeModalVisible = visible
-				})
 			},
 
 			setEnableSentryReport: (value) => {

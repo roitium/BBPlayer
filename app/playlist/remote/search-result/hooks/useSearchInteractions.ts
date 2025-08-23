@@ -1,19 +1,17 @@
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { BilibiliTrack } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { MULTIPAGE_VIDEO_KEYWORDS } from '../constants'
 
 export function useSearchInteractions() {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalTrack, setCurrentModalTrack] = useState<
-		BilibiliTrack | undefined
-	>(undefined)
+	const openModal = useModalStore((state) => state.open)
 
 	const playTrack = useCallback(
 		async (track: BilibiliTrack, playNext = false) => {
@@ -57,8 +55,7 @@ export function useSearchInteractions() {
 				title: '添加到本地歌单',
 				leadingIcon: 'playlist-plus',
 				onPress: () => {
-					setCurrentModalTrack(item)
-					setModalVisible(true)
+					openModal('UpdateTrackLocalPlaylists', { track: item })
 				},
 			},
 			{
@@ -74,13 +71,10 @@ export function useSearchInteractions() {
 				},
 			},
 		],
-		[navigation, playTrack],
+		[navigation, openModal, playTrack],
 	)
 
 	return {
-		modalVisible,
-		setModalVisible,
-		currentModalTrack,
 		playTrack,
 		trackMenuItems,
 	}

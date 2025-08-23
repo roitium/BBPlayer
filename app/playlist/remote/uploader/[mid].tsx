@@ -1,13 +1,12 @@
 import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
 import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
 import {
 	useInfiniteGetUserUploadedVideos,
 	useOtherUserInfo,
 } from '@/hooks/queries/bilibili/user'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { useDebouncedValue } from '@/hooks/utils/useDebouncedValue'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
@@ -15,8 +14,6 @@ import type {
 	BilibiliUserUploadedVideosResponse,
 } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
-import type { CreateArtistPayload } from '@/types/services/artist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import { formatMMSSToSeconds } from '@/utils/time'
 import {
 	type RouteProp,
@@ -80,26 +77,16 @@ export default function UploaderPage() {
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistUploader'>
 		>()
 	const [refreshing, setRefreshing] = useState(false)
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
-		undefined,
-	)
 	const enable = useAppStore((state) => state.hasBilibiliCookie())
-	const setIsQrCodeLoginDialogVisible = useAppStore(
-		(state) => state.setQrCodeLoginModalVisible,
-	)
 
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
-	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
-		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
 
 	const [searchQuery, setSearchQuery] = useState('')
 	const [startSearch, setStartSearch] = useState(false)
 	const searchbarHeight = useSharedValue(0)
 	const debouncedQuery = useDebouncedValue(searchQuery, 200)
 	const [transitionDone, setTransitionDone] = useState(false)
+	const openModal = useModalStore((state) => state.open)
 
 	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
 		height: searchbarHeight.value,
@@ -135,11 +122,7 @@ export default function UploaderPage() {
 
 	const { playTrack } = useRemotePlaylist()
 
-	const trackMenuItems = usePlaylistMenu(
-		playTrack,
-		setCurrentModalTrack,
-		setModalVisible,
-	)
+	const trackMenuItems = usePlaylistMenu(playTrack)
 
 	useEffect(() => {
 		if (typeof mid !== 'string') {
@@ -181,7 +164,7 @@ export default function UploaderPage() {
 				<Button
 					mode='contained'
 					onPress={() => {
-						setIsQrCodeLoginDialogVisible(true)
+						openModal('QRCodeLogin', undefined)
 					}}
 				>
 					登录
@@ -225,8 +208,9 @@ export default function UploaderPage() {
 									})
 								}
 							}
-							setBatchAddTracksModalPayloads(payloads)
-							setBatchAddTracksModalVisible(true)
+							openModal('BatchAddTracksToLocalPlaylist', {
+								payloads,
+							})
 						}}
 					/>
 				) : (
@@ -286,21 +270,6 @@ export default function UploaderPage() {
 					hasNextPage={hasNextPage}
 				/>
 			</View>
-
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
-				/>
-			)}
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
 		</View>
 	)
 }
