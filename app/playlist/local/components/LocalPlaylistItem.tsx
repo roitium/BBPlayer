@@ -1,18 +1,10 @@
-import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
-import { memo, useState } from 'react'
+import { memo, useRef } from 'react'
 import { Easing, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
-import {
-	Checkbox,
-	Icon,
-	Menu,
-	Surface,
-	Text,
-	useTheme,
-} from 'react-native-paper'
+import { Checkbox, Icon, Surface, Text, useTheme } from 'react-native-paper'
 import TextTicker from 'react-native-text-ticker'
 
 export interface TrackMenuItem {
@@ -25,7 +17,7 @@ export interface TrackMenuItem {
 interface TrackListItemProps {
 	index: number
 	onTrackPress: () => void
-	menuItems: TrackMenuItem[]
+	onMenuPress: (anchor: { x: number; y: number }) => void
 	showCoverImage?: boolean
 	data: Track
 	disabled?: boolean
@@ -42,7 +34,7 @@ interface TrackListItemProps {
 export const TrackListItem = memo(function TrackListItem({
 	index,
 	onTrackPress,
-	menuItems,
+	onMenuPress,
 	showCoverImage = true,
 	data,
 	disabled = false,
@@ -52,10 +44,8 @@ export const TrackListItem = memo(function TrackListItem({
 	selectMode,
 	enterSelectMode,
 }: TrackListItemProps) {
-	const [isMenuVisible, setIsMenuVisible] = useState(false)
-	const openMenu = () => setIsMenuVisible(true)
-	const closeMenu = () => setIsMenuVisible(false)
 	const theme = useTheme()
+	const menuAnchorRef = useRef<View>(null)
 
 	return (
 		<RectButton
@@ -178,44 +168,30 @@ export const TrackListItem = memo(function TrackListItem({
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && !disabled && (
-						<FunctionalMenu
-							visible={isMenuVisible}
-							onDismiss={closeMenu}
-							anchor={
-								<RectButton
-									style={{ borderRadius: 99999, padding: 10 }}
-									onPress={openMenu}
-									enabled={!selectMode}
-								>
-									<Icon
-										source='dots-vertical'
-										size={20}
-										color={
-											selectMode
-												? theme.colors.onSurfaceDisabled
-												: theme.colors.primary
-										}
-									/>
-								</RectButton>
-							}
-							anchorPosition='bottom'
-						>
-							{menuItems.map((menuItem) => (
-								<Menu.Item
-									key={menuItem.title}
-									titleStyle={
-										menuItem.danger ? { color: theme.colors.error } : {}
+					{!disabled && (
+						<View ref={menuAnchorRef}>
+							<RectButton
+								style={{ borderRadius: 99999, padding: 10 }}
+								onPress={() => {
+									menuAnchorRef.current?.measure(
+										(_x, _y, _width, _height, pageX, pageY) => {
+											onMenuPress({ x: pageX, y: pageY })
+										},
+									)
+								}}
+								enabled={!selectMode}
+							>
+								<Icon
+									source='dots-vertical'
+									size={20}
+									color={
+										selectMode
+											? theme.colors.onSurfaceDisabled
+											: theme.colors.primary
 									}
-									leadingIcon={menuItem.leadingIcon}
-									onPress={() => {
-										menuItem.onPress()
-										closeMenu()
-									}}
-									title={menuItem.title}
 								/>
-							))}
-						</FunctionalMenu>
+							</RectButton>
+						</View>
 					)}
 				</View>
 			</Surface>
