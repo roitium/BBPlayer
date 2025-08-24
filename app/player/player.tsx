@@ -1,4 +1,5 @@
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
+import { useSmartFetchLyrics } from '@/hooks/queries/netease/lyrics'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
@@ -8,6 +9,7 @@ import { Dimensions, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../types/navigation'
+import Lyrics from './components/Lyrics'
 import { PlayerControls } from './components/PlayerControls'
 import { PlayerFunctionalMenu } from './components/PlayerFunctionalMenu'
 import { PlayerHeader } from './components/PlayerHeader'
@@ -25,8 +27,13 @@ export default function PlayerPage() {
 	const currentTrack = useCurrentTrack()
 
 	const [isFavorite, setIsFavorite] = useState(false)
-	const [viewMode, _setViewMode] = useState<'cover' | 'lyrics'>('cover')
+	const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover')
 	const [menuVisible, setMenuVisible] = useState(false)
+
+	const { data: lyrics, isLoading: isFetchingLyrics } = useSmartFetchLyrics(
+		currentTrack?.uniqueKey,
+		currentTrack?.title,
+	)
 
 	if (!currentTrack) {
 		return (
@@ -58,19 +65,34 @@ export default function PlayerPage() {
 			}}
 		>
 			<View style={{ flex: 1, justifyContent: 'space-between' }}>
-				<View>
+				<View
+					style={{
+						flex: 1,
+						marginBottom: 16,
+						pointerEvents: menuVisible ? 'none' : 'auto',
+					}}
+				>
 					<PlayerHeader onMorePress={() => setMenuVisible(true)} />
-					<TrackInfo
-						isFavorite={isFavorite}
-						onFavoritePress={() => setIsFavorite(!isFavorite)}
-						onArtistPress={() =>
-							currentTrack.artist?.remoteId
-								? navigation.navigate('PlaylistUploader', {
-										mid: currentTrack.artist?.remoteId,
-									})
-								: void 0
-						}
-					/>
+					{viewMode === 'cover' ? (
+						<TrackInfo
+							isFavorite={isFavorite}
+							onFavoritePress={() => setIsFavorite(!isFavorite)}
+							onArtistPress={() =>
+								currentTrack.artist?.remoteId
+									? navigation.navigate('PlaylistUploader', {
+											mid: currentTrack.artist?.remoteId,
+										})
+									: void 0
+							}
+							onPressCover={() => setViewMode('lyrics')}
+						/>
+					) : (
+						<Lyrics
+							lyrics={lyrics}
+							isLoading={isFetchingLyrics}
+							onBackPress={() => setViewMode('cover')}
+						/>
+					)}
 				</View>
 
 				<View

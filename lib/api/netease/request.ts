@@ -3,7 +3,6 @@
 import type { Result } from 'neverthrow'
 import { ResultAsync, err, ok } from 'neverthrow'
 import * as setCookie from 'set-cookie-parser'
-import { URLSearchParams } from 'url'
 
 import { NeteaseApiError } from '@/lib/errors/thirdparty/netease'
 import * as Encrypt from './crypto'

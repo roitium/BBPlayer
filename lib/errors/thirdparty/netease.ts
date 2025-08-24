@@ -1,6 +1,9 @@
 import { ThirdPartyError } from '@/lib/errors'
 
-export type NeteaseApiErrorType = 'RequestFailed' | 'ResponseFailed'
+export type NeteaseApiErrorType =
+	| 'RequestFailed'
+	| 'ResponseFailed'
+	| 'SearchResultNoMatch'
 
 interface NeteaseApiErrorDetails {
 	message: string

@@ -49,12 +49,6 @@ export function av2bv(avid: number | bigint): string {
 	return resultArray.join('')
 }
 
-export function convertToFormDataString(data: Record<string, string>): string {
-	return Object.keys(data)
-		.map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)
-		.join('&')
-}
-
 export function getCsrfToken() {
 	const cookieList = useAppStore.getState().bilibiliCookie
 	if (!cookieList)

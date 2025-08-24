@@ -53,7 +53,7 @@ const PlayerLogic = {
 					Capability.SkipToPrevious,
 					Capability.SeekTo,
 				],
-				progressUpdateEventInterval: 1,
+				progressUpdateEventInterval: 0.1,
 				android: {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},

@@ -1,66 +1,72 @@
-import { LrcParseError } from '@/lib/errors'
 import type { ParsedLrc } from '@/types/player/lyrics'
-import type { Result } from 'neverthrow'
-import { Err, Ok } from 'neverthrow'
+import log from './log'
+
+const logger = log.extend('Utils.Lyrics')
 
 /**
  * 解析 LRC 格式的歌词字符串
  * @param lrcString 包含 LRC 歌词的字符串
- * @returns 一个 Result 对象，成功时包含 ParsedLrc，失败时包含 LrcParseError
+ * @returns 失败时为 null
  */
-export function parseLrc(lrcString: string): Result<ParsedLrc, LrcParseError> {
+export function parseLrc(lrcString: string): ParsedLrc | null {
 	if (!lrcString?.trim()) {
-		return new Err(new LrcParseError('文件是空的'))
+		logger.warning('歌词字符串为空，跳过解析')
+		return null
 	}
 
-	const lines = lrcString.split('\n')
-	const parsedResult: ParsedLrc = {
-		tags: {},
-		lyrics: [],
-	}
-
-	const tagRegex = /^\[([a-zA-Z0-9]+):(.+)\]$/
-	const timestampRegex = /\[(\d{2,}):(\d{2,})(?:[.:](\d{2,3}))?\]/g
-
-	for (const line of lines) {
-		const trimmedLine = line.trim()
-		if (!trimmedLine) continue
-
-		const metadataMatch = tagRegex.exec(trimmedLine)
-		if (metadataMatch) {
-			const [, key, value] = metadataMatch
-			parsedResult.tags[key] = value.trim()
-			continue
+	try {
+		const lines = lrcString.split('\n')
+		const parsedResult: ParsedLrc = {
+			tags: {},
+			lyrics: [],
 		}
 
-		const timestampMatches = [...trimmedLine.matchAll(timestampRegex)]
-		if (timestampMatches.length > 0) {
-			const lastTimestamp = timestampMatches[timestampMatches.length - 1]
-			const textContent = trimmedLine
-				.substring(lastTimestamp.index + lastTimestamp[0].length)
-				.trim()
+		const tagRegex = /^\[([a-zA-Z0-9]+):(.+)\]$/
+		const timestampRegex = /\[(\d{2,}):(\d{2,})(?:[.:](\d{2,3}))?\]/g
 
-			// 如果时间戳后面没有内容，就跳过这一行
-			if (!textContent) continue
+		for (const line of lines) {
+			const trimmedLine = line.trim()
+			if (!trimmedLine) continue
 
-			for (const match of timestampMatches) {
-				const minutes = parseInt(match[1], 10)
-				const seconds = parseInt(match[2], 10)
-				const milliseconds = parseInt(match[3] || '0', 10)
+			const metadataMatch = tagRegex.exec(trimmedLine)
+			if (metadataMatch) {
+				const [, key, value] = metadataMatch
+				parsedResult.tags[key] = value.trim()
+				continue
+			}
 
-				const timestamp = minutes * 60 + seconds + milliseconds / 1000
+			const timestampMatches = [...trimmedLine.matchAll(timestampRegex)]
+			if (timestampMatches.length > 0) {
+				const lastTimestamp = timestampMatches[timestampMatches.length - 1]
+				const textContent = trimmedLine
+					.substring(lastTimestamp.index + lastTimestamp[0].length)
+					.trim()
 
-				parsedResult.lyrics.push({
-					timestamp,
-					text: textContent,
-				})
+				// 如果时间戳后面没有内容，就跳过这一行
+				if (!textContent) continue
+
+				for (const match of timestampMatches) {
+					const minutes = parseInt(match[1], 10)
+					const seconds = parseInt(match[2], 10)
+					const milliseconds = parseInt(match[3] || '0', 10)
+
+					const timestamp = minutes * 60 + seconds + milliseconds / 1000
+
+					parsedResult.lyrics.push({
+						timestamp,
+						text: textContent,
+					})
+				}
 			}
 		}
+
+		parsedResult.lyrics.sort((a, b) => a.timestamp - b.timestamp)
+
+		return parsedResult
+	} catch (e) {
+		logger.error('解析歌词失败', e)
+		return null
 	}
-
-	parsedResult.lyrics.sort((a, b) => a.timestamp - b.timestamp)
-
-	return new Ok(parsedResult)
 }
 
 /**

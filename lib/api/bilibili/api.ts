@@ -21,7 +21,7 @@ import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './client'
-import { bv2av, convertToFormDataString, getCsrfToken } from './utils'
+import { bv2av, getCsrfToken } from './utils'
 import getWbiEncodedParams from './wbi'
 
 const logger = log.extend('3Party.Bilibili.Api')
@@ -360,7 +360,7 @@ export const createBilibiliApi = () => ({
 
 		return bilibiliApiClient.post<0>(
 			'/x/v3/fav/resource/batch-del',
-			convertToFormDataString(data),
+			new URLSearchParams(data).toString(),
 		)
 	},
 
@@ -442,7 +442,7 @@ export const createBilibiliApi = () => ({
 		}
 		return bilibiliApiClient.post<BilibiliDealFavoriteForOneVideoResponse>(
 			'/x/v3/fav/resource/deal',
-			convertToFormDataString(data),
+			new URLSearchParams(data).toString(),
 		)
 	},
 
@@ -490,7 +490,7 @@ export const createBilibiliApi = () => ({
 		}
 		return bilibiliApiClient.post<0>(
 			'/x/v2/history/report',
-			convertToFormDataString(data),
+			new URLSearchParams(data).toString(),
 		)
 	},
 

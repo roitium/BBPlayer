@@ -2,7 +2,7 @@ interface NeteaseLyricResponse {
 	lrc: {
 		lyric: string
 	}
-	tlyric: {
+	tlyric?: {
 		lyric: string
 	}
 	code: number
@@ -10,7 +10,7 @@ interface NeteaseLyricResponse {
 
 interface NeteaseSearchResponse {
 	result: {
-		songs: NeteaseSong[]
+		songs?: NeteaseSong[]
 		songCount: number
 	}
 	code: number

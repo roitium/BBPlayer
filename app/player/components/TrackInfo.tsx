@@ -7,10 +7,12 @@ export function TrackInfo({
 	isFavorite,
 	onFavoritePress,
 	onArtistPress,
+	onPressCover,
 }: {
 	isFavorite: boolean
 	onFavoritePress: () => void
 	onArtistPress: () => void
+	onPressCover: () => void
 }) {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
@@ -27,7 +29,10 @@ export function TrackInfo({
 					paddingVertical: 24,
 				}}
 			>
-				<TouchableOpacity activeOpacity={0.8}>
+				<TouchableOpacity
+					activeOpacity={0.8}
+					onPress={onPressCover}
+				>
 					<Image
 						source={{ uri: currentTrack.coverUrl ?? undefined }}
 						style={{
