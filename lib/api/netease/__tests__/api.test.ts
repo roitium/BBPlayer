@@ -1,12 +1,14 @@
 import { neteaseApi } from '../api'
 
 describe('Netease API 集成测试', () => {
-	it('应该能够正确根据 songId 获取歌词', async () => {
+	it.only('应该能够正确根据 songId 获取歌词', async () => {
 		const songId = 2003496380 // A known song ID
 		const result = await neteaseApi.getLyrics(songId)
 
 		if (result.isOk()) {
 			const data = result.value
+			console.debug(data.lrc)
+			console.debug(data.tlyric)
 			expect(data).toBeDefined()
 			expect(data.lrc).toBeDefined()
 			expect(data.lrc.lyric).toContain('[00:')
@@ -31,7 +33,7 @@ describe('Netease API 集成测试', () => {
 		}
 	}, 15000)
 
-	it.only('应该能够正确根据关键词找到最佳匹配的歌曲', async () => {
+	it('应该能够正确根据关键词找到最佳匹配的歌曲', async () => {
 		const keyword = '【洛天依】世末积雨云'
 		const searchResult = await neteaseApi.search({
 			keywords: keyword,

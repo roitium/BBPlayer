@@ -36,3 +36,8 @@ export class ThirdPartyError extends CustomError {
 export class DatabaseError extends CustomError {}
 export class DataParsingError extends CustomError {}
 export class FileSystemError extends CustomError {}
+export class LrcParseError extends CustomError {
+	constructor(message: string) {
+		super(message, { type: 'LrcParseError' })
+	}
+}
