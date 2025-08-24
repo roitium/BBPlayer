@@ -117,8 +117,16 @@ export const usePlayerStore = create<PlayerStore>()(
 							completed,
 						})
 
+						const trackResult = await trackService.findOrCreateTrack(track)
+						if (trackResult.isErr()) {
+							logger.error('添加播放记录失败：未找到或创建 track 失败', {
+								trackKey: track.uniqueKey,
+								message: flatErrorMessage(trackResult.error),
+							})
+							return
+						}
 						const res = await trackService.addPlayRecordFromUniqueKey(
-							track.uniqueKey,
+							trackResult.value.uniqueKey,
 							{
 								startTime: currentPlayStartAt,
 								durationPlayed: effectivePlayed,
@@ -127,18 +135,18 @@ export const usePlayerStore = create<PlayerStore>()(
 						)
 
 						if (res.isErr()) {
-							logger.debug('增加播放记录失败（忽略）', {
+							logger.debug('增加播放记录失败', {
 								reason,
-								trackKey: track.uniqueKey,
+								trackKey: trackResult.value.uniqueKey,
 								message: flatErrorMessage(res.error),
 							})
 						}
 						logger.debug('增加播放记录成功', {
-							trackKey: track.uniqueKey,
+							trackKey: trackResult.value.uniqueKey,
 							title: track.title,
 						})
 					} catch (error) {
-						logger.debug('增加播放记录异常（忽略）', error)
+						logger.debug('增加播放记录异常', error)
 					} finally {
 						set({ currentPlayStartAt: null })
 					}
@@ -389,7 +397,7 @@ export const usePlayerStore = create<PlayerStore>()(
 
 				skipToNext: async () => {
 					const activeList = get()._getActiveList()
-					const { repeatMode } = get()
+					const { repeatMode, shuffleMode } = get()
 					const currentIndex = get()._getCurrentIndex()
 
 					if (currentIndex === -1) {
@@ -402,6 +410,9 @@ export const usePlayerStore = create<PlayerStore>()(
 					if (nextIndex >= activeList.length) {
 						if (repeatMode === RepeatMode.Queue) {
 							nextIndex = 0
+							await get().skipToTrack(nextIndex)
+							if (shuffleMode) get().reShuffleQueue()
+							return
 						} else {
 							await TrackPlayer.pause()
 							set({ isPlaying: false })
@@ -446,41 +457,47 @@ export const usePlayerStore = create<PlayerStore>()(
 					logger.debug('重复模式已更改', { newMode })
 				},
 
+				reShuffleQueue: () => {
+					const { orderedList, currentTrackUniqueKey: currentTrackKey } = get()
+
+					const newShuffledList = [...orderedList]
+					// Fisher-Yates shuffle
+					for (let i = newShuffledList.length - 1; i > 0; i--) {
+						const j = Math.floor(Math.random() * (i + 1))
+						;[newShuffledList[i], newShuffledList[j]] = [
+							newShuffledList[j],
+							newShuffledList[i],
+						]
+					}
+
+					// 将当前歌曲放到随机列表的第一位
+					if (currentTrackKey) {
+						const idx = newShuffledList.indexOf(currentTrackKey)
+						if (idx !== -1) {
+							;[newShuffledList[0], newShuffledList[idx]] = [
+								newShuffledList[idx],
+								newShuffledList[0],
+							]
+						}
+					}
+
+					set({ shuffledList: newShuffledList })
+					logger.debug('已重新打乱播放队列')
+				},
+
 				toggleShuffleMode: () => {
-					const {
-						shuffleMode,
-						orderedList,
-						currentTrackUniqueKey: currentTrackKey,
-					} = get()
+					const { shuffleMode } = get()
 					if (!checkPlayerReady()) return
 
 					const newShuffleMode = !shuffleMode
+					set({ shuffleMode: newShuffleMode })
+
 					if (newShuffleMode) {
-						// 进入随机模式
 						logger.debug('开启随机模式')
-						const newShuffledList = [...orderedList]
-						// Fisher-Yates shuffle
-						for (let i = newShuffledList.length - 1; i > 0; i--) {
-							const j = Math.floor(Math.random() * (i + 1))
-							;[newShuffledList[i], newShuffledList[j]] = [
-								newShuffledList[j],
-								newShuffledList[i],
-							]
-						}
-						// 将当前歌曲放到随机列表的第一位
-						if (currentTrackKey) {
-							const idx = newShuffledList.indexOf(currentTrackKey)
-							if (idx !== -1) {
-								;[newShuffledList[0], newShuffledList[idx]] = [
-									newShuffledList[idx],
-									newShuffledList[0],
-								]
-							}
-						}
-						set({ shuffleMode: true, shuffledList: newShuffledList })
+						get().reShuffleQueue()
 					} else {
 						logger.debug('关闭随机模式')
-						set({ shuffleMode: false, shuffledList: [] })
+						set({ shuffledList: [] })
 					}
 				},
 
