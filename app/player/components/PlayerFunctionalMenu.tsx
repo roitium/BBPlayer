@@ -15,12 +15,14 @@ export function PlayerFunctionalMenu({
 	screenWidth,
 	viewMode,
 	uploaderMid,
+	setViewMode,
 }: {
 	menuVisible: boolean
 	setMenuVisible: (visible: boolean) => void
 	screenWidth: number
 	viewMode: string
 	uploaderMid: number | undefined
+	setViewMode: (mode: 'cover' | 'lyrics') => void
 }) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
@@ -83,7 +85,7 @@ export function PlayerFunctionalMenu({
 			/>
 			<Menu.Item
 				onPress={() => {
-					toast.show('暂未实现')
+					setViewMode(viewMode === 'cover' ? 'lyrics' : 'cover')
 					setMenuVisible(false)
 				}}
 				title={viewMode === 'cover' ? '显示歌词' : '显示封面'}

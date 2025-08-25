@@ -1,8 +1,8 @@
+import { usePlaybackProgress } from '@/hooks/stores/usePlayerStore'
 import type { LyricLine } from '@/types/player/lyrics'
 import type { FlashListRef } from '@shopify/flash-list'
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import TrackPlayer, { Event } from 'react-native-track-player'
 
 export default function useLyricSync(
 	lyrics: LyricLine[],
@@ -12,6 +12,7 @@ export default function useLyricSync(
 	const [currentLyricIndex, setCurrentLyricIndex] = useState(0)
 	const isManualScrollingRef = useRef(false)
 	const manualScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	const { position } = usePlaybackProgress(100)
 
 	const findIndexForTime = useCallback(
 		(timestamp: number) => {
@@ -63,22 +64,12 @@ export default function useLyricSync(
 	)
 
 	useEffect(() => {
-		const handler = TrackPlayer.addEventListener(
-			Event.PlaybackProgressUpdated,
-			(e) => {
-				if (isManualScrollingRef.current || lyrics.length === 0) return
-				const { position } = e
-				if (position <= 0) return
-				const index = findIndexForTime(position)
-				if (index === currentLyricIndex) return
-				setCurrentLyricIndex(index)
-			},
-		)
-
-		return () => {
-			handler.remove()
-		}
-	}, [currentLyricIndex, findIndexForTime, lyrics.length])
+		if (isManualScrollingRef.current || lyrics.length === 0) return
+		if (position <= 0) return
+		const index = findIndexForTime(position)
+		if (index === currentLyricIndex) return
+		setCurrentLyricIndex(index)
+	}, [currentLyricIndex, findIndexForTime, lyrics.length, position])
 
 	useEffect(() => {
 		void flashListRef.current?.scrollToIndex({

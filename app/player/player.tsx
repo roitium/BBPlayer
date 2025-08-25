@@ -14,7 +14,7 @@ import { PlayerFunctionalMenu } from './components/PlayerFunctionalMenu'
 import { PlayerHeader } from './components/PlayerHeader'
 import Lyrics from './components/PlayerLyrics'
 import { PlayerSlider } from './components/PlayerSlider'
-import { TrackInfo } from './components/TrackInfo'
+import { TrackInfo } from './components/PlayerTrackInfo'
 
 export default function PlayerPage() {
 	const navigation =
@@ -114,6 +114,7 @@ export default function PlayerPage() {
 				screenWidth={screenWidth}
 				viewMode={viewMode}
 				uploaderMid={Number(currentTrack.artist?.remoteId ?? undefined)}
+				setViewMode={setViewMode}
 			/>
 
 			<PlayerQueueModal sheetRef={sheetRef} />
