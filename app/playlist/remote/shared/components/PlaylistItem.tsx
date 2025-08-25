@@ -61,6 +61,12 @@ export const TrackListItem = memo(function TrackListItem({
 	const isCurrentTrack = usePlayerStore(
 		(state) => state.currentTrackUniqueKey === data.uniqueKey,
 	)
+	const currentTrackUniqueKey = usePlayerStore(
+		(state) => state.currentTrackUniqueKey,
+	)
+	console.log(
+		`data: ${data.uniqueKey} state: ${currentTrackUniqueKey} isCurrentTrack: ${isCurrentTrack}`,
+	)
 
 	// 在非选择模式下，当前播放歌曲高亮；在选择模式下，歌曲被选中时高亮
 	const highlighted = (isCurrentTrack && !selectMode) || isSelected
@@ -132,6 +138,7 @@ export const TrackListItem = memo(function TrackListItem({
 							source={{
 								uri: data.cover ?? data.artistCover ?? undefined,
 							}}
+							recyclingKey={data.uniqueKey}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
 							cachePolicy={'memory'}
 						/>

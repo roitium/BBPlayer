@@ -266,11 +266,13 @@ export const usePlayerStore = create<PlayerStore>()(
 
 					// 没有新歌加入，但需要跳转播放
 					if (newTracks.length === 0) {
+						console.log('没有新歌加入，但需要跳转播放')
 						if (playNow && startFromId) {
 							// 直接在当前播放列表中找到 key 对应的索引
 							const targetIndex = get()._getActiveList().indexOf(startFromId)
 							if (targetIndex !== -1) {
 								await get().skipToTrack(targetIndex)
+								console.log('直接在当前播放列表中找到 key 对应的索引')
 							} else {
 								logger.warning('指定的 startFromId 在当前队列中不存在', {
 									key: startFromId,

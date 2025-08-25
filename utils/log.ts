@@ -178,6 +178,15 @@ export function toastAndLogError(
 	}
 }
 
+EXPOFS.makeDirectoryAsync(EXPOFS.documentDirectory + 'logs/', {
+	intermediates: true,
+})
+	.then(() => {
+		console.log('成功创建日志目录')
+	})
+	.catch((e) => {
+		console.log('创建日志目录失败', e)
+	})
 // @ts-expect-error 忽略 TS 报错
 const log = logger.createLogger(config)
 

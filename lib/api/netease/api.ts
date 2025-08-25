@@ -1,11 +1,12 @@
-import { DataParsingError, FileSystemError } from '@/lib/errors'
-import type { NeteaseApiError } from '@/lib/errors/thirdparty/netease'
+import { NeteaseApiError } from '@/lib/errors/thirdparty/netease'
 import type {
 	NeteaseLyricResponse,
 	NeteaseSearchResponse,
+	NeteaseSong,
 } from '@/types/apis/netease'
-import * as FileSystem from 'expo-file-system'
-import { err, ok, okAsync, ResultAsync } from 'neverthrow'
+import type { ParsedLrc } from '@/types/player/lyrics'
+import { mergeLrc, parseLrc } from '@/utils/lyrics'
+import { errAsync, okAsync, type ResultAsync } from 'neverthrow'
 import type { RequestOptions } from './request'
 import { createRequest } from './request'
 import { createOption } from './utils'
@@ -17,7 +18,7 @@ interface SearchParams {
 	offset?: number
 }
 
-class NeteaseApi {
+export class NeteaseApi {
 	getLyrics(id: number): ResultAsync<NeteaseLyricResponse, NeteaseApiError> {
 		const data = {
 			id: id,
@@ -57,83 +58,105 @@ class NeteaseApi {
 		).map((res) => res.body)
 	}
 
-	smartFetchLyrics({
-		keyword,
-		uniqueKey,
-		basePath,
-	}: {
-		keyword: string
-		uniqueKey: string
-		basePath: string
-	}): ResultAsync<
-		NeteaseLyricResponse | null,
-		FileSystemError | NeteaseApiError | DataParsingError
-	> {
-		const filePath = `${basePath}${uniqueKey.replaceAll('::', '--')}.json`
+	/**
+	 * 从多个角度计算出最可能匹配的歌曲
+	 * @param songs
+	 * @param keyword 一般来说，就是 track.title
+	 * @param targetDurationMs
+	 * @returns
+	 */
+	private findBestMatch(
+		songs: NeteaseSong[],
+		keyword: string,
+		targetDurationMs: number,
+	): NeteaseSong {
+		const DURATION_WEIGHT = 10
+		const SIGMA_MS = 1500
 
-		return ResultAsync.fromPromise(
-			FileSystem.getInfoAsync(filePath),
-			(e) =>
-				new FileSystemError(`检查歌词缓存失败`, {
-					cause: e,
-					data: { filePath },
-				}),
-		).andThen((fileInfo) => {
-			if (fileInfo.exists) {
-				console.log('cache hit')
-				return ResultAsync.fromPromise(
-					FileSystem.readAsStringAsync(filePath),
-					(e) =>
-						new FileSystemError(`读取歌词缓存失败`, {
-							cause: e,
-							data: { filePath },
-						}),
-				).andThen((content) => {
-					console.log(1)
-					try {
-						return ok(JSON.parse(content) as NeteaseLyricResponse)
-					} catch (e) {
-						return err(new DataParsingError('解析歌词缓存失败', { cause: e }))
-					}
-				})
+		const scoredSongs = songs.map((song) => {
+			let score = 0
+			if (song.name === keyword) {
+				score += 10
 			}
+			if (keyword.includes(song.name)) {
+				score += 5
+			}
+			song.alia.forEach((alias) => {
+				if (keyword.includes(alias)) {
+					score += 2
+				}
+			})
+			song.ar.forEach((artist) => {
+				if (keyword.includes(artist.name)) {
+					score += 1
+				}
+			})
 
-			return this.search({ keywords: keyword }).andThen((searchResult) => {
-				if (!searchResult.result.songs) {
-					return ok(null)
+			const durationDiff = song.dt - targetDurationMs
+			const durationScore =
+				DURATION_WEIGHT *
+				Math.exp(-(durationDiff * durationDiff) / (2 * SIGMA_MS * SIGMA_MS))
+
+			score += durationScore
+
+			return { song, score }
+		})
+
+		const bestMatch = scoredSongs.reduce((best, current) => {
+			return current.score > best.score ? current : best
+		})
+
+		return bestMatch.score > 0 ? bestMatch.song : songs[0]
+	}
+
+	private parseLyrics(
+		lyricsResponse: NeteaseLyricResponse,
+	): ParsedLrc | string {
+		const parsedRawLyrics = parseLrc(lyricsResponse.lrc.lyric)
+		if (parsedRawLyrics === null) {
+			return lyricsResponse.lrc.lyric
+		}
+		if (
+			!lyricsResponse.tlyric ||
+			lyricsResponse.tlyric.lyric.trim().length === 0
+		) {
+			return parsedRawLyrics
+		}
+		const parsedTranslatedLyrics = parseLrc(lyricsResponse.tlyric.lyric)
+		if (parsedTranslatedLyrics === null) {
+			return parsedRawLyrics
+		}
+		const mergedLyrics = mergeLrc(parsedRawLyrics, parsedTranslatedLyrics)
+		return mergedLyrics
+	}
+
+	public searchBestMatchedLyrics(
+		keyword: string,
+		targetDurationMs: number,
+	): ResultAsync<ParsedLrc | string, NeteaseApiError> {
+		return this.search({ keywords: keyword, limit: 10 }).andThen(
+			(searchResult) => {
+				if (
+					!searchResult.result.songs ||
+					searchResult.result.songs.length === 0
+				) {
+					return errAsync(
+						new NeteaseApiError({
+							message: '未搜索到相关歌曲\n\n搜索关键词：' + keyword,
+							type: 'SearchResultNoMatch',
+						}),
+					)
 				}
 
 				const songs = searchResult.result.songs
-				// TODO: 实现匹配策略
-				const bestMatch = songs[0]
-
-				if (!bestMatch) {
-					return okAsync(null)
-				}
-				console.log(bestMatch)
+				const bestMatch = this.findBestMatch(songs, keyword, targetDurationMs)
 
 				return this.getLyrics(bestMatch.id).andThen((lyricsResponse) => {
-					const lyricData = JSON.stringify(lyricsResponse)
-					return ResultAsync.fromPromise(
-						FileSystem.makeDirectoryAsync(basePath, { intermediates: true }),
-						(e) =>
-							new FileSystemError(`创建歌词缓存目录失败`, {
-								cause: e,
-								data: { path: basePath },
-							}),
-					)
-						.andThen(() => {
-							return ResultAsync.fromPromise(
-								FileSystem.writeAsStringAsync(filePath, lyricData, {
-									encoding: FileSystem.EncodingType.UTF8,
-								}),
-								(e) => new FileSystemError(`写入歌词缓存失败`, { cause: e }),
-							)
-						})
-						.map(() => lyricsResponse)
+					const lyricData = this.parseLyrics(lyricsResponse)
+					return okAsync(lyricData)
 				})
-			})
-		})
+			},
+		)
 	}
 }
 

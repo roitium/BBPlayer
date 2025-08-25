@@ -33,22 +33,31 @@ export default function useLyricSync(
 		[lyrics],
 	)
 
-	const handleManualScrolling = useCallback(() => {
-		if (lyrics.length === 0) return
+	const onUserScrollStart = useCallback(() => {
+		if (!lyrics.length) return
 		if (manualScrollTimeoutRef.current) {
 			clearTimeout(manualScrollTimeoutRef.current)
+			manualScrollTimeoutRef.current = null
 		}
+		isManualScrollingRef.current = true
+	}, [lyrics.length])
+
+	const onUserScrollEnd = useCallback(() => {
+		if (!lyrics.length) return
+		if (manualScrollTimeoutRef.current)
+			clearTimeout(manualScrollTimeoutRef.current)
+
 		manualScrollTimeoutRef.current = setTimeout(() => {
 			manualScrollTimeoutRef.current = null
 			isManualScrollingRef.current = false
+
 			void flashListRef.current?.scrollToIndex({
 				animated: true,
 				index: currentLyricIndex,
 				viewPosition: 0.5,
 			})
 		}, 1500)
-		isManualScrollingRef.current = true
-	}, [currentLyricIndex, flashListRef, lyrics.length])
+	}, [lyrics.length, flashListRef, currentLyricIndex])
 
 	const handleJumpToLyric = useCallback(
 		(index: number) => {
@@ -89,7 +98,8 @@ export default function useLyricSync(
 
 	return {
 		currentLyricIndex,
-		handleManualScrolling,
 		handleJumpToLyric,
+		onUserScrollStart,
+		onUserScrollEnd,
 	}
 }

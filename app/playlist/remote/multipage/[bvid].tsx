@@ -36,7 +36,7 @@ const mapApiItemToTrack = (
 ): BilibiliTrack => {
 	return {
 		id: mp.cid,
-		uniqueKey: `bilibili::${video.bvid}::${video.cid}`,
+		uniqueKey: `bilibili::${video.bvid}::${mp.cid}`,
 		source: 'bilibili',
 		title: mp.part,
 		artist: {

@@ -1,4 +1,4 @@
-import { useSmartFetchLyrics } from '@/hooks/queries/netease/lyrics'
+import { useSmartFetchLyrics } from '@/hooks/queries/lyrics'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Track } from '@/types/core/media'
 import type { LyricLine } from '@/types/player/lyrics'
@@ -68,18 +68,17 @@ export default function Lyrics({
 	const flashListRef = useRef<FlashListRef<LyricLine>>(null)
 	const seekTo = usePlayerStore((state) => state.seekTo)
 
+	const { data: lyrics, isPending, isError, error } = useSmartFetchLyrics(track)
 	const {
-		data: lyrics,
-		isPending,
-		isError,
-		error,
-	} = useSmartFetchLyrics(track.uniqueKey, track.title)
-	const { currentLyricIndex, handleManualScrolling, handleJumpToLyric } =
-		useLyricSync(
-			typeof lyrics === 'string' ? [] : (lyrics?.lyrics ?? []),
-			flashListRef,
-			seekTo,
-		)
+		currentLyricIndex,
+		onUserScrollEnd,
+		onUserScrollStart,
+		handleJumpToLyric,
+	} = useLyricSync(
+		typeof lyrics === 'string' ? [] : (lyrics?.lyrics ?? []),
+		flashListRef,
+		seekTo,
+	)
 
 	const renderItem = useCallback(
 		({ item, index }: { item: LyricLine; index: number }) => (
@@ -141,7 +140,9 @@ export default function Lyrics({
 				keyExtractor={keyExtractor}
 				contentContainerStyle={{ justifyContent: 'center' }}
 				showsVerticalScrollIndicator={false}
-				onMomentumScrollEnd={handleManualScrolling}
+				onMomentumScrollEnd={onUserScrollEnd}
+				onScrollEndDrag={onUserScrollEnd}
+				onScrollBeginDrag={onUserScrollStart}
 				style={{ flex: 1 }}
 			/>
 

@@ -113,6 +113,7 @@ export const TrackListItem = memo(function TrackListItem({
 							source={{
 								uri: data.coverUrl ?? data.artist?.avatarUrl ?? undefined,
 							}}
+							recyclingKey={data.uniqueKey}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
 							cachePolicy={'memory'}
 						/>
