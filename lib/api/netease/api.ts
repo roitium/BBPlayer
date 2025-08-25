@@ -4,7 +4,7 @@ import type {
 	NeteaseSearchResponse,
 	NeteaseSong,
 } from '@/types/apis/netease'
-import type { ParsedLrc } from '@/types/player/lyrics'
+import type { LyricSearchResult, ParsedLrc } from '@/types/player/lyrics'
 import { mergeLrc, parseLrc } from '@/utils/lyrics'
 import { errAsync, okAsync, type ResultAsync } from 'neverthrow'
 import type { RequestOptions } from './request'
@@ -36,7 +36,7 @@ export class NeteaseApi {
 
 	search(
 		params: SearchParams,
-	): ResultAsync<NeteaseSearchResponse, NeteaseApiError> {
+	): ResultAsync<LyricSearchResult, NeteaseApiError> {
 		const type = params.type ?? 1
 		const endpoint =
 			type == '2000' ? '/api/search/voice/get' : '/api/cloudsearch/pc'
@@ -55,11 +55,20 @@ export class NeteaseApi {
 			endpoint,
 			data,
 			requestOptions,
-		).map((res) => res.body)
+		).map((res) => {
+			if (!res.body.result.songs) return []
+			return res.body.result.songs.map((song) => ({
+				source: 'netease',
+				duration: song.dt / 1000,
+				title: song.name,
+				artist: song.ar[0].name,
+				remoteId: song.id,
+			}))
+		})
 	}
 
 	/**
-	 * 从多个角度计算出最可能匹配的歌曲
+	 * 从多个角度计算出最可能匹配的歌曲（屎）
 	 * @param songs
 	 * @param keyword 一般来说，就是 track.title
 	 * @param targetDurationMs
@@ -109,13 +118,8 @@ export class NeteaseApi {
 		return bestMatch.score > 0 ? bestMatch.song : songs[0]
 	}
 
-	private parseLyrics(
-		lyricsResponse: NeteaseLyricResponse,
-	): ParsedLrc | string {
+	public parseLyrics(lyricsResponse: NeteaseLyricResponse): ParsedLrc {
 		const parsedRawLyrics = parseLrc(lyricsResponse.lrc.lyric)
-		if (parsedRawLyrics === null) {
-			return lyricsResponse.lrc.lyric
-		}
 		if (
 			!lyricsResponse.tlyric ||
 			lyricsResponse.tlyric.lyric.trim().length === 0
@@ -132,14 +136,11 @@ export class NeteaseApi {
 
 	public searchBestMatchedLyrics(
 		keyword: string,
-		targetDurationMs: number,
-	): ResultAsync<ParsedLrc | string, NeteaseApiError> {
+		_targetDurationMs: number,
+	): ResultAsync<ParsedLrc, NeteaseApiError> {
 		return this.search({ keywords: keyword, limit: 10 }).andThen(
 			(searchResult) => {
-				if (
-					!searchResult.result.songs ||
-					searchResult.result.songs.length === 0
-				) {
+				if (searchResult.length === 0) {
 					return errAsync(
 						new NeteaseApiError({
 							message: '未搜索到相关歌曲\n\n搜索关键词：' + keyword,
@@ -148,10 +149,11 @@ export class NeteaseApi {
 					)
 				}
 
-				const songs = searchResult.result.songs
-				const bestMatch = this.findBestMatch(songs, keyword, targetDurationMs)
+				// const bestMatch = this.findBestMatch(songs, keyword, targetDurationMs)
+				// 相信网易云... 哥们儿写的规则太屎了
+				const bestMatch = searchResult[0]
 
-				return this.getLyrics(bestMatch.id).andThen((lyricsResponse) => {
+				return this.getLyrics(bestMatch.remoteId).andThen((lyricsResponse) => {
 					const lyricData = this.parseLyrics(lyricsResponse)
 					return okAsync(lyricData)
 				})

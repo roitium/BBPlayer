@@ -1,23 +1,30 @@
+import { neteaseApi } from '@/lib/api/netease/api'
 import lyricService from '@/lib/services/lyricService'
 import type { Track } from '@/types/core/media'
 import { useQuery } from '@tanstack/react-query'
 
 export const lyricsQueryKeys = {
 	all: ['lyrics'] as const,
-	smartFetchLyrics: (uniqueKey?: string, keyword?: string) =>
-		[...lyricsQueryKeys.all, 'smartFetchLyrics', uniqueKey, keyword] as const,
+	smartFetchLyrics: (uniqueKey?: string) =>
+		[...lyricsQueryKeys.all, 'smartFetchLyrics', uniqueKey] as const,
+	manualSearch: (uniqueKey?: string, query?: string) =>
+		[...lyricsQueryKeys.all, 'manualSearch', uniqueKey, query] as const,
 }
 
 export const useSmartFetchLyrics = (track?: Track) => {
 	const enabled = !!track
 	return useQuery({
 		// eslint-disable-next-line @tanstack/query/exhaustive-deps
-		queryKey: lyricsQueryKeys.smartFetchLyrics(track?.uniqueKey, track?.title),
+		queryKey: lyricsQueryKeys.smartFetchLyrics(track?.uniqueKey),
 		queryFn: async () => {
 			const result = await lyricService.smartFetchLyrics(track!)
 			if (result.isErr()) {
 				if (result.error.type === 'SearchResultNoMatch') {
-					return '未匹配到歌词，请手动搜索'
+					return {
+						lyrics: null,
+						raw: result.error.message, // 就这样 hack 一下
+						tags: {},
+					}
 				}
 				throw result.error
 			}
@@ -25,5 +32,21 @@ export const useSmartFetchLyrics = (track?: Track) => {
 		},
 		enabled,
 		staleTime: 24 * 60 * 1000,
+	})
+}
+
+export const useManualSearchLyrics = (query?: string, uniqueKey?: string) => {
+	return useQuery({
+		queryKey: lyricsQueryKeys.manualSearch(uniqueKey, query),
+		queryFn: async () => {
+			console.log('manualSearch:', query)
+			const result = await neteaseApi.search({ keywords: query!, limit: 10 })
+			if (result.isErr()) {
+				throw result.error
+			}
+			return result.value
+		},
+		enabled: false,
+		staleTime: 0,
 	})
 }

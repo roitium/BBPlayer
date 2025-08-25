@@ -1,6 +1,6 @@
 import { neteaseApi, type NeteaseApi } from '@/lib/api/netease/api'
 import type { Track } from '@/types/core/media'
-import type { ParsedLrc } from '@/types/player/lyrics'
+import type { LyricSearchResult, ParsedLrc } from '@/types/player/lyrics'
 import log from '@/utils/log'
 import * as FileSystem from 'expo-file-system'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
@@ -25,7 +25,8 @@ class LyricService {
 			return priorityMatch[1] || priorityMatch[2]
 		}
 
-		const result = keyword.replace(/【.*?】|“.*?”/g, '').trim()
+		const replacedKeyword = keyword.replace(/【.*?】|“.*?”/g, '').trim()
+		const result = replacedKeyword.length > 0 ? replacedKeyword : keyword
 		logger.debug('最终 keyword 清洗后：', result)
 
 		return result
@@ -50,9 +51,7 @@ class LyricService {
 	 * @param track
 	 * @returns
 	 */
-	public smartFetchLyrics(
-		track: Track,
-	): ResultAsync<ParsedLrc | string, CustomError> {
+	public smartFetchLyrics(track: Track): ResultAsync<ParsedLrc, CustomError> {
 		const basePath = `${FileSystem.documentDirectory}lyrics/`
 		const filePath = `${basePath}${track.uniqueKey.replaceAll('::', '--')}.json`
 		return ResultAsync.fromPromise(
@@ -91,10 +90,7 @@ class LyricService {
 				}
 
 				return this.getBestMatchedLyrics(track).andThen((lyrics) => {
-					if (typeof lyrics === 'string') {
-						logger.debug('歌词为字符串格式，直接返回，不缓存')
-						return okAsync(lyrics)
-					}
+					logger.info('自动搜索最佳匹配的歌词完成')
 					return ResultAsync.fromPromise(
 						FileSystem.writeAsStringAsync(filePath, JSON.stringify(lyrics), {
 							encoding: FileSystem.EncodingType.UTF8,
@@ -104,6 +100,45 @@ class LyricService {
 				})
 			})
 		})
+	}
+
+	private saveLyricsToCache(lyrics: ParsedLrc, uniqueKey: string) {
+		const basePath = `${FileSystem.documentDirectory}lyrics/`
+		const filePath = `${basePath}${uniqueKey.replaceAll('::', '--')}.json`
+		return ResultAsync.fromPromise(
+			FileSystem.makeDirectoryAsync(basePath, { intermediates: true }),
+			(e) =>
+				new FileSystemError(`创建歌词缓存目录失败`, {
+					cause: e,
+					data: { path: basePath },
+				}),
+		)
+			.andThen(() => {
+				return ResultAsync.fromPromise(
+					FileSystem.writeAsStringAsync(filePath, JSON.stringify(lyrics), {
+						encoding: FileSystem.EncodingType.UTF8,
+					}),
+					(e) => new FileSystemError(`写入歌词缓存失败`, { cause: e }),
+				)
+			})
+			.andThen(() => okAsync(lyrics))
+	}
+
+	public fetchLyrics(
+		item: LyricSearchResult[0],
+		uniqueKey: string,
+	): ResultAsync<ParsedLrc | string, Error> {
+		switch (item.source) {
+			case 'netease':
+				return this.neteaseApi
+					.getLyrics(item.remoteId)
+					.andThen((lyrics) => okAsync(this.neteaseApi.parseLyrics(lyrics)))
+					.andThen((lyrics) => {
+						return this.saveLyricsToCache(lyrics, uniqueKey)
+					})
+			default:
+				return errAsync(new Error('未知歌曲源'))
+		}
 	}
 }
 

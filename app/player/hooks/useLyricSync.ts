@@ -56,7 +56,7 @@ export default function useLyricSync(
 				index: currentLyricIndex,
 				viewPosition: 0.5,
 			})
-		}, 1500)
+		}, 2000)
 	}, [lyrics.length, flashListRef, currentLyricIndex])
 
 	const handleJumpToLyric = useCallback(
@@ -66,21 +66,24 @@ export default function useLyricSync(
 			seekTo(lyrics[index].timestamp)
 			if (manualScrollTimeoutRef.current) {
 				clearTimeout(manualScrollTimeoutRef.current)
+				manualScrollTimeoutRef.current = null
 			}
 			isManualScrollingRef.current = false
 		},
 		[lyrics, seekTo],
 	)
 
+	// 计算并更新当前歌词的索引
 	useEffect(() => {
-		if (isManualScrollingRef.current || lyrics.length === 0) return
-		if (position <= 0) return
+		if (position <= 0 || lyrics.length === 0) return
 		const index = findIndexForTime(position)
 		if (index === currentLyricIndex) return
 		setCurrentLyricIndex(index)
 	}, [currentLyricIndex, findIndexForTime, lyrics.length, position])
 
+	// 当歌词发生变化且用户没自己滚时，滚动到当前歌词
 	useEffect(() => {
+		if (isManualScrollingRef.current || manualScrollTimeoutRef.current) return
 		void flashListRef.current?.scrollToIndex({
 			animated: true,
 			index: currentLyricIndex,

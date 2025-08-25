@@ -6,6 +6,7 @@ import CreatePlaylistModal from './modals/CreatePlaylistModal'
 import DuplicateLocalPlaylistModal from './modals/DuplicateLocalPlaylistModal'
 import EditPlaylistMetadataModal from './modals/edit-metadata/editPlaylistMetadataModal'
 import EditTrackMetadataModal from './modals/edit-metadata/editTrackMetadataModal'
+import ManualSearchLyricsModal from './modals/ManualSearchLyrics'
 import QrCodeLoginModal from './modals/QRCodeLoginModal'
 import UpdateAppModal from './modals/UpdateAppModal'
 import UpdateTrackLocalPlaylistsModal from './modals/UpdateTrackLocalPlaylistsModal'
@@ -27,4 +28,5 @@ export const modalRegistry: { [K in ModalKey]: ModalComponent<K> } = {
 	Welcome: WelcomeModal,
 	UpdateTrackLocalPlaylists: UpdateTrackLocalPlaylistsModal,
 	DuplicateLocalPlaylist: DuplicateLocalPlaylistModal,
+	ManualSearchLyrics: ManualSearchLyricsModal,
 }

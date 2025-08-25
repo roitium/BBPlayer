@@ -17,5 +17,14 @@ export interface LyricLine {
 
 export interface ParsedLrc {
 	tags: Tags
-	lyrics: LyricLine[]
+	lyrics: LyricLine[] | null
+	raw: string // 当无法解析时，会 fallback 到这里
 }
+
+export type LyricSearchResult = {
+	source: 'netease'
+	duration: number // 秒
+	title: string
+	artist: string
+	remoteId: number
+}[]

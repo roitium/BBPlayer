@@ -91,6 +91,18 @@ export function PlayerFunctionalMenu({
 				title={viewMode === 'cover' ? '显示歌词' : '显示封面'}
 				leadingIcon={viewMode === 'cover' ? 'text' : 'image'}
 			/>
+			<Menu.Item
+				onPress={() => {
+					setMenuVisible(false)
+					if (!currentTrack) return
+					openModal('ManualSearchLyrics', {
+						uniqueKey: currentTrack.uniqueKey,
+						initialQuery: currentTrack.title,
+					})
+				}}
+				title='手动搜索歌词'
+				leadingIcon='search'
+			/>
 		</FunctionalMenu>
 	)
 }

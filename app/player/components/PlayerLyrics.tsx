@@ -5,7 +5,7 @@ import type { LyricLine } from '@/types/player/lyrics'
 import type { FlashListRef } from '@shopify/flash-list'
 import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useRef } from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
 import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper'
 import useLyricSync from '../hooks/useLyricSync'
@@ -74,10 +74,11 @@ export default function Lyrics({
 		onUserScrollEnd,
 		onUserScrollStart,
 		handleJumpToLyric,
-	} = useLyricSync(
-		typeof lyrics === 'string' ? [] : (lyrics?.lyrics ?? []),
-		flashListRef,
-		seekTo,
+	} = useLyricSync(lyrics?.lyrics ?? [], flashListRef, seekTo)
+
+	const keyExtractor = useCallback(
+		(item: LyricLine, index: number) => `${index}_${item.timestamp * 1000}`,
+		[],
 	)
 
 	const renderItem = useCallback(
@@ -92,11 +93,6 @@ export default function Lyrics({
 		[currentLyricIndex, handleJumpToLyric],
 	)
 
-	const keyExtractor = useCallback(
-		(item: LyricLine) => item.timestamp.toString(),
-		[],
-	)
-
 	if (isPending) {
 		return (
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -107,25 +103,32 @@ export default function Lyrics({
 
 	if (isError) {
 		return (
-			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+			<ScrollView
+				style={{
+					flex: 1,
+					justifyContent: 'center',
+					alignItems: 'center',
+					marginHorizontal: 30,
+				}}
+			>
 				<Text
 					variant='bodyMedium'
 					style={{ textAlign: 'center' }}
 				>
 					歌词加载失败：{error.message}
 				</Text>
-			</View>
+			</ScrollView>
 		)
 	}
 
-	if (typeof lyrics === 'string') {
+	if (!lyrics.lyrics) {
 		return (
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
 				<Text
 					variant='bodyMedium'
 					style={{ textAlign: 'center' }}
 				>
-					{lyrics}
+					{lyrics.raw}
 				</Text>
 			</View>
 		)

@@ -197,6 +197,7 @@ function PlayerQueueModal({
 				contentContainerStyle={{
 					backgroundColor: theme.colors.elevation.level1,
 				}}
+				showsVerticalScrollIndicator={false}
 				style={{ marginBottom: insets.bottom }}
 			/>
 		</BottomSheet>

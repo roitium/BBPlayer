@@ -43,6 +43,7 @@ export type ModalPropsMap = {
 		payloads: { track: CreateTrackPayload; artist: CreateArtistPayload }[]
 	}
 	DuplicateLocalPlaylist: { sourcePlaylistId: number; rawName: string }
+	ManualSearchLyrics: { uniqueKey: string; initialQuery: string }
 }
 
 export type ModalKey = keyof ModalPropsMap

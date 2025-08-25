@@ -6,12 +6,16 @@ const logger = log.extend('Utils.Lyrics')
 /**
  * 解析 LRC 格式的歌词字符串
  * @param lrcString 包含 LRC 歌词的字符串
- * @returns 失败时为 null
+ * @returns 解析后的歌词(如果解析失败，lyrics 字段为 null)
  */
-export function parseLrc(lrcString: string): ParsedLrc | null {
+export function parseLrc(lrcString: string): ParsedLrc {
 	if (!lrcString?.trim()) {
 		logger.warning('歌词字符串为空，跳过解析')
-		return null
+		return {
+			tags: {},
+			lyrics: null,
+			raw: lrcString,
+		}
 	}
 
 	try {
@@ -19,6 +23,7 @@ export function parseLrc(lrcString: string): ParsedLrc | null {
 		const parsedResult: ParsedLrc = {
 			tags: {},
 			lyrics: [],
+			raw: lrcString,
 		}
 
 		const tagRegex = /^\[([a-zA-Z0-9]+):(.+)\]$/
@@ -52,7 +57,7 @@ export function parseLrc(lrcString: string): ParsedLrc | null {
 
 					const timestamp = minutes * 60 + seconds + milliseconds / 1000
 
-					parsedResult.lyrics.push({
+					parsedResult.lyrics!.push({
 						timestamp,
 						text: textContent,
 					})
@@ -60,12 +65,25 @@ export function parseLrc(lrcString: string): ParsedLrc | null {
 			}
 		}
 
-		parsedResult.lyrics.sort((a, b) => a.timestamp - b.timestamp)
+		parsedResult.lyrics!.sort((a, b) => a.timestamp - b.timestamp)
+
+		if (parsedResult.lyrics!.length === 0) {
+			logger.warning('没解析到歌词，设置 lyrics 为 null')
+			return {
+				tags: {},
+				lyrics: null,
+				raw: lrcString,
+			}
+		}
 
 		return parsedResult
 	} catch (e) {
 		logger.error('解析歌词失败', e)
-		return null
+		return {
+			tags: {},
+			lyrics: null,
+			raw: lrcString,
+		}
 	}
 }
 
@@ -81,6 +99,7 @@ export function mergeLrc(
 	translatedLrc: ParsedLrc,
 ): ParsedLrc {
 	const translationMap = new Map<number, string>()
+	if (!translatedLrc.lyrics || !originalLrc.lyrics) return originalLrc
 	for (const line of translatedLrc.lyrics) {
 		translationMap.set(line.timestamp, line.text)
 	}
@@ -107,5 +126,6 @@ export function mergeLrc(
 	return {
 		tags: mergedTags,
 		lyrics: mergedLyrics,
+		raw: `${originalLrc.raw}\n\n${translatedLrc.raw}`,
 	}
 }

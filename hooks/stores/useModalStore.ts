@@ -44,6 +44,7 @@ export const useModalStore = create<ModalState>()(
 		closeAll: () => {
 			set({ modals: [] })
 		},
+
 		closeTop: () => {
 			const topOne = get().modals[get().modals.length - 1]
 			if (topOne) {

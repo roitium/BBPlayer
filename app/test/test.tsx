@@ -123,14 +123,7 @@ export default function TestPage() {
 						onPress={() => {
 							useModalStore
 								.getState()
-								.open(
-									'AddVideoToBilibiliFavorite',
-									{ bvid: 'BV1D288ztENa' },
-									{ dismissible: true },
-								)
-							useModalStore
-								.getState()
-								.open('CookieLogin', undefined, { dismissible: false })
+								.open('ManualSearchLyrics', { uniqueKey: '123' })
 						}}
 						style={{ marginBottom: 8 }}
 					>
