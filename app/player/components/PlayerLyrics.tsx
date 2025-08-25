@@ -1,5 +1,7 @@
+import { useSmartFetchLyrics } from '@/hooks/queries/netease/lyrics'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import type { LyricLine, ParsedLrc } from '@/types/player/lyrics'
+import type { Track } from '@/types/core/media'
+import type { LyricLine } from '@/types/player/lyrics'
 import type { FlashListRef } from '@shopify/flash-list'
 import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useRef } from 'react'
@@ -58,15 +60,20 @@ const LyricLineItem = memo(function LyricLineItem({
 
 export default function Lyrics({
 	onBackPress,
-	lyrics,
-	isLoading,
+	track,
 }: {
 	onBackPress: () => void
-	lyrics?: ParsedLrc | string
-	isLoading: boolean
+	track: Track
 }) {
 	const flashListRef = useRef<FlashListRef<LyricLine>>(null)
 	const seekTo = usePlayerStore((state) => state.seekTo)
+
+	const {
+		data: lyrics,
+		isPending,
+		isError,
+		error,
+	} = useSmartFetchLyrics(track.uniqueKey, track.title)
 	const { currentLyricIndex, handleManualScrolling, handleJumpToLyric } =
 		useLyricSync(
 			typeof lyrics === 'string' ? [] : (lyrics?.lyrics ?? []),
@@ -91,8 +98,25 @@ export default function Lyrics({
 		[],
 	)
 
-	if (isLoading || lyrics === undefined) {
-		return <ActivityIndicator size='large' />
+	if (isPending) {
+		return (
+			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+				<ActivityIndicator size={'large'} />
+			</View>
+		)
+	}
+
+	if (isError) {
+		return (
+			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+				<Text
+					variant='bodyMedium'
+					style={{ textAlign: 'center' }}
+				>
+					歌词加载失败：{error.message}
+				</Text>
+			</View>
+		)
 	}
 
 	if (typeof lyrics === 'string') {

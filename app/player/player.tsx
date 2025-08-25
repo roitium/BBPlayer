@@ -1,5 +1,4 @@
 import PlayerQueueModal from '@/components/modals/PlayerQueueModal'
-import { useSmartFetchLyrics } from '@/hooks/queries/netease/lyrics'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
@@ -29,11 +28,6 @@ export default function PlayerPage() {
 	const [isFavorite, setIsFavorite] = useState(false)
 	const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover')
 	const [menuVisible, setMenuVisible] = useState(false)
-
-	const { data: lyrics, isLoading: isFetchingLyrics } = useSmartFetchLyrics(
-		currentTrack?.uniqueKey,
-		currentTrack?.title,
-	)
 
 	if (!currentTrack) {
 		return (
@@ -88,9 +82,8 @@ export default function PlayerPage() {
 						/>
 					) : (
 						<Lyrics
-							lyrics={lyrics}
-							isLoading={isFetchingLyrics}
 							onBackPress={() => setViewMode('cover')}
+							track={currentTrack}
 						/>
 					)}
 				</View>
