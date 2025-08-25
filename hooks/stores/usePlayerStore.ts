@@ -9,7 +9,11 @@ import type {
 } from '@/types/core/playerStore'
 import { ProjectScope } from '@/types/core/scope'
 import type { RNTPTrack } from '@/types/rntp'
-import log, { flatErrorMessage, reportErrorToSentry } from '@/utils/log'
+import log, {
+	flatErrorMessage,
+	reportErrorToSentry,
+	toastAndLogError,
+} from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
 import {
 	checkAndUpdateAudioStream,
@@ -565,16 +569,28 @@ export const usePlayerStore = create<PlayerStore>()(
 					// 1. 获取最新的音频流
 					const updatedTrackResult = await get().patchAudio(initialTrack)
 					if (updatedTrackResult.isErr()) {
-						logger.error('更新音频流失败', updatedTrackResult.error)
+						if (
+							updatedTrackResult.error.message.includes(
+								'Network request failed',
+							)
+						) {
+							// 网络请求失败就不用报错了
+							toast.error('播放失败: 网络请求失败', {
+								description: flatErrorMessage(updatedTrackResult.error),
+							})
+							return
+						}
+						toastAndLogError(
+							'更新音频流失败',
+							updatedTrackResult.error,
+							'Player',
+						)
 						reportErrorToSentry(
 							updatedTrackResult.error,
 							'更新音频流失败',
 							ProjectScope.Player,
 						)
 						await TrackPlayer.pause()
-						toast.error('播放失败: 更新音频流失败', {
-							description: flatErrorMessage(updatedTrackResult.error),
-						})
 						return
 					}
 
