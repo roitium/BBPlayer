@@ -45,7 +45,7 @@ export default function useLyricSync(
 				index: currentLyricIndex,
 				viewPosition: 0.5,
 			})
-		}, 3500)
+		}, 1500)
 		isManualScrollingRef.current = true
 	}, [currentLyricIndex, flashListRef, lyrics.length])
 

@@ -117,7 +117,7 @@ export default function Lyrics({
 				keyExtractor={keyExtractor}
 				contentContainerStyle={{ justifyContent: 'center' }}
 				showsVerticalScrollIndicator={false}
-				onScrollBeginDrag={handleManualScrolling}
+				onMomentumScrollEnd={handleManualScrolling}
 				style={{ flex: 1 }}
 			/>
 
