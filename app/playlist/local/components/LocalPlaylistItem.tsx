@@ -1,3 +1,4 @@
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
@@ -44,13 +45,22 @@ export const TrackListItem = memo(function TrackListItem({
 	selectMode,
 	enterSelectMode,
 }: TrackListItemProps) {
+	console.log(`render ${data.uniqueKey}`)
 	const theme = useTheme()
 	const menuAnchorRef = useRef<View>(null)
+	const isCurrentTrack = usePlayerStore(
+		(state) => state.currentTrackUniqueKey === data.uniqueKey,
+	)
+
+	const highlighted = (isCurrentTrack && !selectMode) || isSelected
 
 	return (
 		<RectButton
 			style={{
 				paddingVertical: 4,
+				backgroundColor: highlighted
+					? theme.colors.elevation.level5
+					: 'transparent',
 			}}
 			delayLongPress={500}
 			enabled={!disabled}
