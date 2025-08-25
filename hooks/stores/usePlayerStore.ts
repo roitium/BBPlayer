@@ -1,5 +1,6 @@
 import type { PlayerError } from '@/lib/errors/player'
 import type { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
+import { artistService } from '@/lib/services/artistService'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
 import type {
@@ -121,7 +122,27 @@ export const usePlayerStore = create<PlayerStore>()(
 							completed,
 						})
 
-						const trackResult = await trackService.findOrCreateTrack(track)
+						if (!track.artist) {
+							logger.error(
+								'添加播放记录失败：track 中不包含 artist？？？',
+								track,
+							)
+							return
+						}
+						const artistResult = await artistService.findOrCreateArtist(
+							track.artist,
+						)
+						if (artistResult.isErr()) {
+							logger.error('添加播放记录失败：未找到或创建 artist 失败', {
+								remoteId: track.artist.remoteId,
+								message: flatErrorMessage(artistResult.error),
+							})
+							return
+						}
+						const trackResult = await trackService.findOrCreateTrack({
+							...track,
+							artistId: artistResult.value.id,
+						})
 						if (trackResult.isErr()) {
 							logger.error('添加播放记录失败：未找到或创建 track 失败', {
 								trackKey: track.uniqueKey,
