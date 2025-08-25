@@ -150,7 +150,7 @@ const SettingsSection = memo(function SettingsSection() {
 	const shareLogFile = async () => {
 		const d = new Date()
 		const dateString = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-		const logFilePath = `${FileSystem.documentDirectory}logs_${dateString}.log`
+		const logFilePath = `${FileSystem.documentDirectory}logs/${dateString}.log`
 		const exists = await FileSystem.getInfoAsync(logFilePath)
 		if (exists.exists) {
 			await Sharing.shareAsync(logFilePath)

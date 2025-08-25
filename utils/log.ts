@@ -36,8 +36,9 @@ const config = {
 	},
 	transportOptions: {
 		FS: EXPOFS,
-		fileName: 'logs_{date-today}.log',
+		fileName: '{date-today}.log',
 		fileNameDateType: 'iso' as const,
+		filePath: `${EXPOFS.documentDirectory}logs`,
 		mapLevels: {
 			debug: 'log',
 			info: 'info',
