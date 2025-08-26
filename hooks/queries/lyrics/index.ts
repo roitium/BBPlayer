@@ -40,7 +40,7 @@ export const useManualSearchLyrics = (query?: string, uniqueKey?: string) => {
 		queryKey: lyricsQueryKeys.manualSearch(uniqueKey, query),
 		queryFn: async () => {
 			console.log('manualSearch:', query)
-			const result = await neteaseApi.search({ keywords: query!, limit: 10 })
+			const result = await neteaseApi.search({ keywords: query!, limit: 20 })
 			if (result.isErr()) {
 				throw result.error
 			}

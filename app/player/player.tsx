@@ -105,9 +105,7 @@ export default function PlayerPage() {
 				menuVisible={menuVisible}
 				setMenuVisible={setMenuVisible}
 				screenWidth={screenWidth}
-				viewMode={viewMode}
 				uploaderMid={Number(currentTrack.artist?.remoteId ?? undefined)}
-				setViewMode={setViewMode}
 			/>
 
 			<PlayerQueueModal sheetRef={sheetRef} />

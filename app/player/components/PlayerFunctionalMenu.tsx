@@ -13,16 +13,12 @@ export function PlayerFunctionalMenu({
 	menuVisible,
 	setMenuVisible,
 	screenWidth,
-	viewMode,
 	uploaderMid,
-	setViewMode,
 }: {
 	menuVisible: boolean
 	setMenuVisible: (visible: boolean) => void
 	screenWidth: number
-	viewMode: string
 	uploaderMid: number | undefined
-	setViewMode: (mode: 'cover' | 'lyrics') => void
 }) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
@@ -85,14 +81,6 @@ export function PlayerFunctionalMenu({
 			/>
 			<Menu.Item
 				onPress={() => {
-					setViewMode(viewMode === 'cover' ? 'lyrics' : 'cover')
-					setMenuVisible(false)
-				}}
-				title={viewMode === 'cover' ? '显示歌词' : '显示封面'}
-				leadingIcon={viewMode === 'cover' ? 'text' : 'image'}
-			/>
-			<Menu.Item
-				onPress={() => {
 					setMenuVisible(false)
 					if (!currentTrack) return
 					openModal('ManualSearchLyrics', {
@@ -100,8 +88,8 @@ export function PlayerFunctionalMenu({
 						initialQuery: currentTrack.title,
 					})
 				}}
-				title='手动搜索歌词'
-				leadingIcon='search'
+				title='搜索歌词'
+				leadingIcon='magnify'
 			/>
 		</FunctionalMenu>
 	)
