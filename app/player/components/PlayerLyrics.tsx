@@ -7,6 +7,7 @@ import type { LyricLine } from '@/types/player/lyrics'
 import { toastAndLogError } from '@/utils/log'
 import type { FlashListRef } from '@shopify/flash-list'
 import { FlashList } from '@shopify/flash-list'
+import { LinearGradient } from 'expo-linear-gradient'
 import { memo, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Dimensions, ScrollView, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
@@ -17,7 +18,19 @@ import {
 	Text,
 	useTheme,
 } from 'react-native-paper'
+import Animated, {
+	Extrapolation,
+	interpolate,
+	useAnimatedScrollHandler,
+	useAnimatedStyle,
+	useSharedValue,
+} from 'react-native-reanimated'
 import useLyricSync from '../hooks/useLyricSync'
+
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient)
+const AnimatedFlashList = Animated.createAnimatedComponent(
+	FlashList,
+) as typeof FlashList<LyricLine>
 
 const LyricLineItem = memo(function LyricLineItem({
 	item,
@@ -87,6 +100,9 @@ export default function Lyrics({
 	const offsetMenuAnchorRef = useRef<View>(null)
 	const containerRef = useRef<View>(null)
 	const { height: windowHeight } = Dimensions.get('window')
+	const scrollY = useSharedValue(0)
+	const contentHeight = useSharedValue(0)
+	const viewportHeight = useSharedValue(0)
 
 	const { data: lyrics, isPending, isError, error } = useSmartFetchLyrics(track)
 	const {
@@ -101,6 +117,15 @@ export default function Lyrics({
 		lyrics?.offset ?? 0,
 	)
 
+	const scrollHandler = useAnimatedScrollHandler({
+		onScroll: (e) => {
+			scrollY.value = e.contentOffset.y
+			contentHeight.value = e.contentSize.height
+			viewportHeight.value = e.layoutMeasurement.height
+		},
+	})
+
+	// 我们不在本地创建 offset state，而是直接调用 queryClient 来更新 smartFetchLyrics 的缓存。当用户点击确认时，再保存到本地
 	const handleChangeOffset = useCallback(
 		(delta: number) => {
 			if (!lyrics) return
@@ -164,6 +189,29 @@ export default function Lyrics({
 		}
 	}, [offsetMenuVisible])
 
+	const topFadeAnimatedStyle = useAnimatedStyle(() => {
+		return {
+			opacity: interpolate(scrollY.value, [0, 60], [0, 1], Extrapolation.CLAMP),
+		}
+	})
+
+	const bottomFadeAnimatedStyle = useAnimatedStyle(() => {
+		const distanceFromEnd =
+			contentHeight.value - (scrollY.value + viewportHeight.value)
+		if (distanceFromEnd <= 0) {
+			return { opacity: 0 }
+		}
+
+		return {
+			opacity: interpolate(
+				distanceFromEnd,
+				[0, 60],
+				[0, 1],
+				Extrapolation.CLAMP,
+			),
+		}
+	})
+
 	if (isPending) {
 		return (
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -210,20 +258,55 @@ export default function Lyrics({
 			style={{ flex: 1 }}
 			ref={containerRef}
 		>
-			<FlashList
-				ref={flashListRef}
-				data={lyrics.lyrics}
-				renderItem={renderItem}
-				keyExtractor={keyExtractor}
-				contentContainerStyle={{
-					justifyContent: 'center',
-					pointerEvents: offsetMenuVisible ? 'none' : 'auto',
-				}}
-				showsVerticalScrollIndicator={false}
-				onMomentumScrollEnd={onUserScrollEnd}
-				onScrollEndDrag={onUserScrollEnd}
-				onScrollBeginDrag={onUserScrollStart}
-			/>
+			<View style={{ flex: 1, flexDirection: 'column' }}>
+				<AnimatedFlashList
+					ref={flashListRef}
+					data={lyrics.lyrics}
+					renderItem={renderItem}
+					keyExtractor={keyExtractor}
+					contentContainerStyle={{
+						justifyContent: 'center',
+						pointerEvents: offsetMenuVisible ? 'none' : 'auto',
+					}}
+					showsVerticalScrollIndicator={false}
+					onMomentumScrollEnd={onUserScrollEnd}
+					onScrollEndDrag={onUserScrollEnd}
+					onScrollBeginDrag={onUserScrollStart}
+					scrollEventThrottle={16}
+					onScroll={scrollHandler}
+				/>
+				{/* 顶部渐变遮罩 */}
+				<AnimatedLinearGradient
+					colors={[colors.background, 'transparent']}
+					style={[
+						{
+							position: 'absolute',
+							top: 0,
+							left: 0,
+							right: 0,
+							height: 60,
+						},
+						topFadeAnimatedStyle,
+					]}
+					pointerEvents='none'
+				/>
+
+				{/* 底部渐变遮罩 */}
+				<AnimatedLinearGradient
+					colors={['transparent', colors.background]}
+					style={[
+						{
+							position: 'absolute',
+							bottom: 0,
+							left: 0,
+							right: 0,
+							height: 60,
+						},
+						bottomFadeAnimatedStyle,
+					]}
+					pointerEvents='none'
+				/>
+			</View>
 
 			<View
 				style={{
@@ -253,6 +336,7 @@ export default function Lyrics({
 					</Text>
 				</RectButton>
 
+				{/* 歌词偏移量调整显示按钮 */}
 				<View style={{ flex: 1, alignItems: 'flex-end' }}>
 					<RectButton
 						style={{ borderRadius: 99999, padding: 10 }}
@@ -271,6 +355,7 @@ export default function Lyrics({
 				</View>
 			</View>
 
+			{/* 歌词偏移量调整面板 */}
 			<View
 				style={{
 					position: 'absolute',
