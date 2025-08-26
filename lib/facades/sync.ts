@@ -12,12 +12,12 @@ import { av2bv, bv2av } from '../api/bilibili/utils'
 import db from '../db/db'
 import type * as schema from '../db/schema'
 import type { DatabaseError, ServiceError } from '../errors'
-import type { BilibiliApiError } from '../errors/bilibili'
 import type { FacadeError } from '../errors/facade'
 import {
 	createFacadeError,
 	createSyncTaskAlreadyRunningError,
 } from '../errors/facade'
+import type { BilibiliApiError } from '../errors/thirdparty/bilibili'
 import type { ArtistService } from '../services/artistService'
 import { artistService } from '../services/artistService'
 import generateUniqueTrackKey from '../services/genKey'

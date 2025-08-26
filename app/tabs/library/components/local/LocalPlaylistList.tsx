@@ -1,11 +1,11 @@
 import { usePlaylistLists } from '@/hooks/queries/db/playlist'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { Playlist } from '@/types/core/media'
 import { FlashList } from '@shopify/flash-list'
 import { memo, useCallback, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
-import CreatePlaylistModal from '../../../../../components/modals/CreatePlaylistModal'
 import { DataFetchingError } from '../shared/DataFetchingError'
 import { DataFetchingPending } from '../shared/DataFetchingPending'
 import LocalPlaylistItem from './LocalPlaylistItem'
@@ -14,7 +14,7 @@ const LocalPlaylistListComponent = memo(() => {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	const [modalVisible, setModalVisible] = useState(false)
+	const openModal = useModalStore((state) => state.open)
 
 	const {
 		data: playlists,
@@ -71,7 +71,7 @@ const LocalPlaylistListComponent = memo(() => {
 						icon='plus'
 						size={20}
 						onPress={() => {
-							setModalVisible(true)
+							openModal('CreatePlaylist', { redirectToNewPlaylist: true })
 						}}
 					/>
 				</View>
@@ -101,11 +101,6 @@ const LocalPlaylistListComponent = memo(() => {
 				ListEmptyComponent={
 					<Text style={{ textAlign: 'center' }}>没有播放列表</Text>
 				}
-			/>
-
-			<CreatePlaylistModal
-				visiable={modalVisible}
-				setVisible={setModalVisible}
 			/>
 		</View>
 	)

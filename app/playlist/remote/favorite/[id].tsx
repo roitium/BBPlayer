@@ -1,39 +1,29 @@
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
+import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
+import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/favorite'
-import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
-import type { CreateArtistPayload } from '@/types/services/artist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import toast from '@/utils/toast'
 import {
 	type RouteProp,
 	useNavigation,
-	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { FlashList } from '@shopify/flash-list'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import {
-	ActivityIndicator,
-	Appbar,
-	Divider,
-	Text,
-	useTheme,
-} from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistError } from '../../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
+import { Appbar, useTheme } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../types/navigation'
-import useCheckLinkedToPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
+import { TrackList } from '../shared/components/RemoteTrackList'
+import useCheckLinkedToPlaylist from '../shared/hooks/useCheckLinkedToLocalPlaylist'
+import { usePlaylistMenu } from '../shared/hooks/usePlaylistMenu'
+import { useRemotePlaylist } from '../shared/hooks/useRemotePlaylist'
+import { useTrackSelection } from '../shared/hooks/useTrackSelection'
 
 const mapApiItemToTrack = (
 	apiItem: BilibiliFavoriteListContent,
@@ -73,22 +63,12 @@ export default function FavoritePage() {
 		useNavigation<
 			NativeStackNavigationProp<RootStackParamList, 'PlaylistFavorite'>
 		>()
-	const currentTrack = useCurrentTrack()
 	const [refreshing, setRefreshing] = useState(false)
-	const insets = useSafeAreaInsets()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const linkedPlaylistId = useCheckLinkedToPlaylist(Number(id), 'favorite')
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalTrack, setCurrentModalTrack] = useState<Track | undefined>(
-		undefined,
-	)
 
-	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
-	const [selectMode, setSelectMode] = useState<boolean>(false)
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
-	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
-		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
+	const [transitionDone, setTransitionDone] = useState(false)
+	const openModal = useModalStore((state) => state.open)
 
 	const {
 		data: favoriteData,
@@ -108,59 +88,9 @@ export default function FavoritePage() {
 
 	const { mutate: syncFavorite } = usePlaylistSync()
 
-	const handlePlayTrack = useCallback(
-		(item: BilibiliTrack, playNext = false) => {
-			toast.success('添加到下一首播放成功')
-			void addToQueue({
-				tracks: [item],
-				playNow: !playNext,
-				clearQueue: false,
-				playNext: playNext,
-			})
-		},
-		[addToQueue],
-	)
+	const { playTrack } = useRemotePlaylist()
 
-	const trackMenuItems = useCallback(
-		(item: BilibiliTrack) => [
-			{
-				title: '下一首播放',
-				leadingIcon: 'skip-next-circle-outline',
-				onPress: () => handlePlayTrack(item, true),
-			},
-			{
-				title: '查看详细信息',
-				leadingIcon: 'file-document-outline',
-				onPress: () => {
-					navigation.navigate('PlaylistMultipage', {
-						bvid: item.bilibiliMetadata.bvid,
-					})
-				},
-			},
-			{
-				title: '添加到本地歌单',
-				leadingIcon: 'playlist-plus',
-				onPress: () => {
-					setCurrentModalTrack(item)
-					setModalVisible(true)
-				},
-			},
-			{
-				title: '查看 up 主作品',
-				leadingIcon: 'account-music',
-				onPress: () => {
-					if (!item.artist?.remoteId) {
-						toast.error('未找到 up 主信息')
-						return
-					}
-					navigation.navigate('PlaylistUploader', {
-						mid: item.artist?.remoteId,
-					})
-				},
-			},
-		],
-		[navigation, handlePlayTrack],
-	)
+	const trackMenuItems = usePlaylistMenu(playTrack)
 
 	const handleSync = useCallback(() => {
 		if (favoriteData?.pages.flatMap((page) => page.medias).length === 0) {
@@ -184,72 +114,23 @@ export default function FavoritePage() {
 		setRefreshing(false)
 	}, [favoriteData?.pages, id, navigation, syncFavorite])
 
-	const toggle = useCallback((id: number) => {
-		setSelected((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
-		})
-	}, [])
-
-	const enterSelectMode = useCallback((id: number) => {
-		setSelectMode(true)
-		setSelected(new Set([id]))
-	}, [])
-
-	const renderItem = useCallback(
-		({ item, index }: { item: BilibiliTrack; index: number }) => {
-			return (
-				<TrackListItem
-					index={index}
-					onTrackPress={() => handlePlayTrack(item)}
-					menuItems={trackMenuItems(item)}
-					data={{
-						cover: item.coverUrl ?? undefined,
-						title: item.title,
-						duration: item.duration,
-						id: item.id,
-						artistName: item.artist?.name,
-					}}
-					toggleSelected={toggle}
-					isSelected={selected.has(item.id)}
-					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
-				/>
-			)
-		},
-		[
-			handlePlayTrack,
-			trackMenuItems,
-			toggle,
-			selected,
-			selectMode,
-			enterSelectMode,
-		],
-	)
-
-	const keyExtractor = useCallback(
-		(item: BilibiliTrack) => item.bilibiliMetadata.bvid,
-		[],
-	)
-
 	useEffect(() => {
 		if (typeof id !== 'string') {
 			navigation.replace('NotFound')
 		}
 	}, [id, navigation])
 
-	usePreventRemove(selectMode, () => {
-		setSelectMode(false)
-		setSelected(new Set())
-	})
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
 
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isFavoriteDataPending) {
+	if (isFavoriteDataPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 
@@ -281,13 +162,14 @@ export default function FavoritePage() {
 								const track = tracks.find((t) => t.id === id)
 								if (track) {
 									payloads.push({
-										track: track,
+										track: track as Track,
 										artist: track.artist!,
 									})
 								}
 							}
-							setBatchAddTracksModalPayloads(payloads)
-							setBatchAddTracksModalVisible(true)
+							openModal('BatchAddTracksToLocalPlaylist', {
+								payloads,
+							})
 						}}
 					/>
 				) : (
@@ -300,11 +182,14 @@ export default function FavoritePage() {
 					flex: 1,
 				}}
 			>
-				<FlashList
-					data={tracks}
-					extraData={{ selectMode, selected }}
-					renderItem={renderItem}
-					ItemSeparatorComponent={() => <Divider />}
+				<TrackList
+					tracks={tracks}
+					playTrack={playTrack}
+					trackMenuItems={trackMenuItems}
+					selectMode={selectMode}
+					selected={selected}
+					toggle={toggle}
+					enterSelectMode={enterSelectMode}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={favoriteData.pages[0].info.cover}
@@ -328,64 +213,20 @@ export default function FavoritePage() {
 							progressViewOffset={50}
 						/>
 					}
-					keyExtractor={keyExtractor}
-					contentContainerStyle={{
-						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
-					}}
-					showsVerticalScrollIndicator={false}
-					onEndReached={hasNextPage ? () => fetchNextPage() : null}
-					ListEmptyComponent={
-						<Text
-							style={{
-								paddingVertical: 32,
-								textAlign: 'center',
-							}}
-							variant='titleMedium'
-						>
-							收藏夹为空
-						</Text>
-					}
-					ListFooterComponent={
-						hasNextPage ? (
-							<View
-								style={{
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									padding: 16,
-								}}
-							>
-								<ActivityIndicator size='small' />
-							</View>
-						) : (
-							<Text
-								variant='titleMedium'
-								style={{
-									textAlign: 'center',
-									paddingTop: 10,
-								}}
-							>
-								•
-							</Text>
-						)
-					}
+					onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
+					hasNextPage={hasNextPage}
 				/>
 			</View>
-
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
-				/>
-			)}
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

@@ -7,30 +7,33 @@ type FunctionalMenuProps = PropsWithChildren<Parameters<typeof Menu>[0]>
 
 const FunctionalMenu = memo(function FunctionalMenu({
 	children,
+	onDismiss,
 	...props
 }: FunctionalMenuProps) {
 	const [showContent, setShowContent] = useState(false)
 	const onClose = useCallback(() => {
 		setShowContent(false)
-		props.onDismiss?.()
-	}, [props.onDismiss])
+		onDismiss?.()
+	}, [onDismiss])
 
 	return (
-		<Menu
-			{...props}
-			onDismiss={onClose}
-			style={{
-				opacity: showContent ? 1 : 0,
-			}}
-		>
-			<View
-				// new arch issue: 第一次打开 Menu 时会有闪烁，采用这种方法躲闪...
-				onLayout={() => {
-					setTimeout(() => setShowContent(true), 100)
+		<>
+			<Menu
+				{...props}
+				onDismiss={onClose}
+				style={{
+					opacity: showContent ? 1 : 0,
 				}}
-			/>
-			{children}
-		</Menu>
+			>
+				<View
+					// new arch issue: 第一次打开 Menu 时会有闪烁，采用这种方法躲闪...
+					onLayout={() => {
+						setTimeout(() => setShowContent(true), 100)
+					}}
+				/>
+				{children}
+			</Menu>
+		</>
 	)
 })
 export default FunctionalMenu

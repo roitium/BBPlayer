@@ -25,6 +25,7 @@ const LocalPlaylistItem = memo(({ item }: { item: Playlist }) => {
 					>
 						<Image
 							source={{ uri: item.coverUrl ?? undefined }}
+							recyclingKey={item.id.toString()}
 							style={{ width: 48, height: 48, borderRadius: 4 }}
 							transition={300}
 						/>

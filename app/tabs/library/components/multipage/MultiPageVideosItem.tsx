@@ -27,6 +27,7 @@ const MultiPageVideosItem = memo(
 						>
 							<Image
 								source={{ uri: item.cover ?? undefined }}
+								recyclingKey={item.bvid}
 								style={{ width: 48, height: 48, borderRadius: 4 }}
 								transition={300}
 							/>

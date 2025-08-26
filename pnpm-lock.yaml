@@ -41,6 +41,9 @@ importers:
       '@react-navigation/bottom-tabs':
         specifier: ^7.3.10
         version: 7.3.10(@react-navigation/native@7.1.6(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-screens@4.11.1(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      '@react-navigation/devtools':
+        specifier: ^7.0.38
+        version: 7.0.38(react@19.0.0)
       '@react-navigation/native':
         specifier: ^7.1.6
         version: 7.1.6(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -80,6 +83,9 @@ importers:
       cookie:
         specifier: ^1.0.2
         version: 1.0.2
+      crypto-js:
+        specifier: ^4.2.0
+        version: 4.2.0
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
@@ -294,12 +300,18 @@ importers:
       '@tanstack/eslint-plugin-query':
         specifier: ^5.83.1
         version: 5.83.1(eslint@9.33.0)(typescript@5.9.2)
+      '@types/crypto-js':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@types/jest':
         specifier: ^29.5.14
         version: 29.5.14
       '@types/md5':
         specifier: ^2.3.5
         version: 2.3.5
+      '@types/node-forge':
+        specifier: ^1.3.13
+        version: 1.3.13
       '@types/react':
         specifier: ~19.0.14
         version: 19.0.14
@@ -342,6 +354,9 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@24.0.1)(typescript@5.9.2)
+      tsconfig-paths:
+        specifier: ^4.2.0
+        version: 4.2.0
       typescript:
         specifier: ^5.9.0
         version: 5.9.2
@@ -1762,6 +1777,11 @@ packages:
     peerDependencies:
       react: '>= 18.2.0'
 
+  '@react-navigation/devtools@7.0.38':
+    resolution: {integrity: sha512-cnRGu7ZUa/J6leOIiDXKyWCg1s547xIqDmZMqh5IXIAsWNqE72QOK/4//rAk2VcHLsq30K0/O+sRD1crFyJZSw==}
+    peerDependencies:
+      react: '>= 18.2.0'
+
   '@react-navigation/elements@2.3.8':
     resolution: {integrity: sha512-2ZVBtPfrkmOxzvIyDu3fPZ6aS4HcXL+TvzPDGa1znY2OP1Llo6wH14AmJHQFDquiInp2656hRMM1BkfJ3yPwew==}
     peerDependencies:
@@ -2044,6 +2064,9 @@ packages:
   '@types/babel__traverse@7.20.7':
     resolution: {integrity: sha512-dkO5fhS7+/oos4ciWxyEyjWe48zmG6wbCheo/G2ZnHx4fs3EU6YC6UM8rk56gAjNJ9P3MTH2jo5jb92/K6wbng==}
 
+  '@types/crypto-js@4.2.2':
+    resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
+
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
 
@@ -2082,6 +2105,9 @@ packages:
 
   '@types/md5@2.3.5':
     resolution: {integrity: sha512-/i42wjYNgE6wf0j2bcTX6kuowmdL/6PE4IVitMpm2eYKBUuYCprdcWVK+xEF0gcV6ufMCRhtxmReGfc6hIK7Jw==}
+
+  '@types/node-forge@1.3.13':
+    resolution: {integrity: sha512-zePQJSW5QkwSHKRApqWCVKeKoSOt4xvEnLENZPjyvm9Ezdf/EyDeJM7jqLzOwjVICQQzvLZ63T55MKdJB5H6ww==}
 
   '@types/node@22.15.3':
     resolution: {integrity: sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw==}
@@ -2799,6 +2825,9 @@ packages:
 
   crypt@0.0.2:
     resolution: {integrity: sha512-mCxBlsHFYh9C+HVpiEacem8FEBnMXgU9gy4zmNC+SXAZNB/1idgp/aulFJ4FgCi7GPEVbfyng092GqL2k2rmow==}
+
+  crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
 
   crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
@@ -5715,6 +5744,10 @@ packages:
     resolution: {integrity: sha512-iq6eVVI64nQQTRYq2KtEg2d2uU7LElhTJwsH4YzIHZshxlgZms/wIc4VoDQTlG/IvVIrBKG06CrZnp0qv7hkcQ==}
     engines: {node: '>=12'}
 
+  strip-bom@3.0.0:
+    resolution: {integrity: sha512-vavAMRXOgBVNF6nyEEmL3DBK19iRpDcoIwW+swQ+CbGiu7lju6t+JklA1MHweoWtadgt4ISVUsXLyDq34ddcwA==}
+    engines: {node: '>=4'}
+
   strip-bom@4.0.0:
     resolution: {integrity: sha512-3xurFv5tEgii33Zi8Jtp55wEIILR9eh34FAW00PZf+JnSsTmV/ioewSgQl97JHvgjoRGwPShsWm+IdrxB35d0w==}
     engines: {node: '>=8'}
@@ -5903,6 +5936,10 @@ packages:
 
   ts-pattern@5.8.0:
     resolution: {integrity: sha512-kIjN2qmWiHnhgr5DAkAafF9fwb0T5OhMVSWrm8XEdTFnX6+wfXwYOFjeF86UZ54vduqiR7BfqScFmXSzSaH8oA==}
+
+  tsconfig-paths@4.2.0:
+    resolution: {integrity: sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg==}
+    engines: {node: '>=6'}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -8370,6 +8407,13 @@ snapshots:
       use-latest-callback: 0.2.3(react@19.0.0)
       use-sync-external-store: 1.5.0(react@19.0.0)
 
+  '@react-navigation/devtools@7.0.38(react@19.0.0)':
+    dependencies:
+      fast-deep-equal: 3.1.3
+      nanoid: 3.3.11
+      react: 19.0.0
+      stacktrace-parser: 0.1.11
+
   '@react-navigation/elements@2.3.8(@react-navigation/native@7.1.6(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@react-navigation/native': 7.1.6(react-native@0.79.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.9.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -8648,6 +8692,8 @@ snapshots:
     dependencies:
       '@babel/types': 7.27.6
 
+  '@types/crypto-js@4.2.2': {}
+
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.1
@@ -8692,6 +8738,10 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/md5@2.3.5': {}
+
+  '@types/node-forge@1.3.13':
+    dependencies:
+      '@types/node': 24.0.1
 
   '@types/node@22.15.3':
     dependencies:
@@ -9639,6 +9689,8 @@ snapshots:
       which: 2.0.2
 
   crypt@0.0.2: {}
+
+  crypto-js@4.2.0: {}
 
   crypto-random-string@2.0.0: {}
 
@@ -13060,6 +13112,8 @@ snapshots:
     dependencies:
       ansi-regex: 6.1.0
 
+  strip-bom@3.0.0: {}
+
   strip-bom@4.0.0: {}
 
   strip-final-newline@2.0.0: {}
@@ -13237,6 +13291,12 @@ snapshots:
       yn: 3.1.1
 
   ts-pattern@5.8.0: {}
+
+  tsconfig-paths@4.2.0:
+    dependencies:
+      json5: 2.2.3
+      minimist: 1.2.8
+      strip-bom: 3.0.0
 
   tslib@2.8.1: {}
 

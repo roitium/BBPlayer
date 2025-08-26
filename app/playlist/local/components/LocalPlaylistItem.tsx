@@ -1,18 +1,11 @@
-import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
-import { memo, useState } from 'react'
+import { memo, useRef } from 'react'
 import { Easing, View } from 'react-native'
-import {
-	Checkbox,
-	IconButton,
-	Menu,
-	Surface,
-	Text,
-	TouchableRipple,
-	useTheme,
-} from 'react-native-paper'
+import { RectButton } from 'react-native-gesture-handler'
+import { Checkbox, Icon, Surface, Text, useTheme } from 'react-native-paper'
 import TextTicker from 'react-native-text-ticker'
 
 export interface TrackMenuItem {
@@ -25,7 +18,7 @@ export interface TrackMenuItem {
 interface TrackListItemProps {
 	index: number
 	onTrackPress: () => void
-	menuItems: TrackMenuItem[]
+	onMenuPress: (anchor: { x: number; y: number }) => void
 	showCoverImage?: boolean
 	data: Track
 	disabled?: boolean
@@ -42,7 +35,7 @@ interface TrackListItemProps {
 export const TrackListItem = memo(function TrackListItem({
 	index,
 	onTrackPress,
-	menuItems,
+	onMenuPress,
 	showCoverImage = true,
 	data,
 	disabled = false,
@@ -52,28 +45,32 @@ export const TrackListItem = memo(function TrackListItem({
 	selectMode,
 	enterSelectMode,
 }: TrackListItemProps) {
-	const [isMenuVisible, setIsMenuVisible] = useState(false)
-	const openMenu = () => setIsMenuVisible(true)
-	const closeMenu = () => setIsMenuVisible(false)
 	const theme = useTheme()
+	const menuAnchorRef = useRef<View>(null)
+	const isCurrentTrack = usePlayerStore(
+		(state) => state.currentTrackUniqueKey === data.uniqueKey,
+	)
+
+	const highlighted = (isCurrentTrack && !selectMode) || isSelected
 
 	return (
-		<TouchableRipple
+		<RectButton
 			style={{
 				paddingVertical: 4,
+				backgroundColor: highlighted
+					? theme.colors.elevation.level5
+					: 'transparent',
 			}}
 			delayLongPress={500}
-			disabled={disabled}
-			onPress={(e) => {
+			enabled={!(disabled || isCurrentTrack)}
+			onPress={() => {
 				if (selectMode) {
 					toggleSelected(data.id)
 					return
 				}
-				e.stopPropagation()
 				onTrackPress()
 			}}
-			onLongPress={(e) => {
-				e.stopPropagation()
+			onLongPress={() => {
 				if (selectMode) return
 				enterSelectMode(data.id)
 			}}
@@ -112,7 +109,7 @@ export const TrackListItem = memo(function TrackListItem({
 						<View style={{ opacity: selectMode ? 0 : 1 }}>
 							<Text
 								variant='bodyMedium'
-								style={{ color: 'grey' }}
+								style={{ color: theme.colors.onSurfaceVariant }}
 							>
 								{index + 1}
 							</Text>
@@ -125,6 +122,7 @@ export const TrackListItem = memo(function TrackListItem({
 							source={{
 								uri: data.coverUrl ?? data.artist?.avatarUrl ?? undefined,
 							}}
+							recyclingKey={data.uniqueKey}
 							style={{ width: 45, height: 45, borderRadius: 4 }}
 							cachePolicy={'memory'}
 						/>
@@ -180,38 +178,33 @@ export const TrackListItem = memo(function TrackListItem({
 					</View>
 
 					{/* Context Menu */}
-					{menuItems.length > 0 && !disabled && (
-						<FunctionalMenu
-							visible={isMenuVisible}
-							onDismiss={closeMenu}
-							anchor={
-								<IconButton
-									icon='dots-vertical'
+					{!disabled && (
+						<View ref={menuAnchorRef}>
+							<RectButton
+								style={{ borderRadius: 99999, padding: 10 }}
+								onPress={() => {
+									menuAnchorRef.current?.measure(
+										(_x, _y, _width, _height, pageX, pageY) => {
+											onMenuPress({ x: pageX, y: pageY })
+										},
+									)
+								}}
+								enabled={!selectMode}
+							>
+								<Icon
+									source='dots-vertical'
 									size={20}
-									disabled={selectMode} // 在选择模式下不允许打开菜单
-									onPress={openMenu}
-								/>
-							}
-							anchorPosition='bottom'
-						>
-							{menuItems.map((menuItem) => (
-								<Menu.Item
-									key={menuItem.title}
-									titleStyle={
-										menuItem.danger ? { color: theme.colors.error } : {}
+									color={
+										selectMode
+											? theme.colors.onSurfaceDisabled
+											: theme.colors.primary
 									}
-									leadingIcon={menuItem.leadingIcon}
-									onPress={() => {
-										menuItem.onPress()
-										closeMenu()
-									}}
-									title={menuItem.title}
 								/>
-							))}
-						</FunctionalMenu>
+							</RectButton>
+						</View>
 					)}
 				</View>
 			</Surface>
-		</TouchableRipple>
+		</RectButton>
 	)
 })

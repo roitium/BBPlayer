@@ -23,7 +23,7 @@ interface BaseTrack {
 	coverUrl: string | null
 	source: 'bilibili' | 'local'
 	createdAt: Date
-	duration: number
+	duration: number // 歌曲时长，单位：秒
 	updatedAt: Date
 }
 

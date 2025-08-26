@@ -2,7 +2,15 @@ import { useNavigation } from '@react-navigation/native'
 import { View } from 'react-native'
 import { IconButton, Text } from 'react-native-paper'
 
-export function PlayerHeader({ onMorePress }: { onMorePress: () => void }) {
+export function PlayerHeader({
+	onMorePress,
+	viewMode,
+	trackTitle,
+}: {
+	onMorePress: () => void
+	viewMode: 'lyrics' | 'cover'
+	trackTitle?: string
+}) {
 	const navigation = useNavigation()
 
 	return (
@@ -26,8 +34,9 @@ export function PlayerHeader({ onMorePress }: { onMorePress: () => void }) {
 					flex: 1,
 					textAlign: 'center',
 				}}
+				numberOfLines={1}
 			>
-				正在播放
+				{viewMode === 'lyrics' ? (trackTitle ?? '正在播放') : `正在播放`}
 			</Text>
 			<IconButton
 				icon='dots-vertical'

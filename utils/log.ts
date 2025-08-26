@@ -36,8 +36,9 @@ const config = {
 	},
 	transportOptions: {
 		FS: EXPOFS,
-		fileName: 'logs_{date-today}.log',
+		fileName: '{date-today}.log',
 		fileNameDateType: 'iso' as const,
+		filePath: `${EXPOFS.documentDirectory}logs`,
 		mapLevels: {
 			debug: 'log',
 			info: 'info',
@@ -168,15 +169,28 @@ export function toastAndLogError(
 			duration: Number.POSITIVE_INFINITY,
 		})
 		log.extend(scope).error(`${message}: ${flatErrorMessage(error)}`)
+	} else if (error === undefined) {
+		toast.error(message, {
+			duration: Number.POSITIVE_INFINITY,
+		})
 	} else {
 		toast.error(message, {
-			description: String(error),
+			description: String(error as unknown),
 			duration: Number.POSITIVE_INFINITY,
 		})
 		log.extend(scope).error(`${message}`, error)
 	}
 }
 
+EXPOFS.makeDirectoryAsync(EXPOFS.documentDirectory + 'logs/', {
+	intermediates: true,
+})
+	.then(() => {
+		console.log('成功创建日志目录')
+	})
+	.catch((e) => {
+		console.log('创建日志目录失败', e)
+	})
 // @ts-expect-error 忽略 TS 报错
 const log = logger.createLogger(config)
 

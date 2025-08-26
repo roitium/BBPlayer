@@ -1,5 +1,5 @@
 <div align="center">
-<img src="./assets/images/icon-large.png" alt="logo" width="50" />
+<img src="./assets/images/icon_large.png" alt="logo" width="50" />
 <h1>BBPlayer</h1>
 
 ![GitHub Release](https://img.shields.io/github/v/release/yanyao2333/bbplayer)

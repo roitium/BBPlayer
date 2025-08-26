@@ -1,9 +1,13 @@
-import PlayCountLeaderboardModal from '@/components/modals/PlayCountLeaderboardModal'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import type { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
 import type { RouteProp } from '@react-navigation/native'
-import { useFocusEffect, useRoute } from '@react-navigation/native'
+import {
+	useFocusEffect,
+	useNavigation,
+	useRoute,
+} from '@react-navigation/native'
 import { useState } from 'react'
 import { Dimensions, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
@@ -37,11 +41,11 @@ export enum Tabs {
 
 export default function Library() {
 	const [index, setIndex] = useState(Tabs.Local)
-	const [leaderboardVisible, setLeaderboardVisible] = useState(false)
 	const insets = useSafeAreaInsets()
 	const colors = useTheme().colors
 	const router = useRoute<RouteProp<BottomTabParamList, 'Library'>>()
 	const tab = router.params?.tab
+	const navigation = useNavigation()
 
 	useFocusEffect(() => {
 		if (tab === undefined) return
@@ -54,13 +58,13 @@ export default function Library() {
 			style={{
 				flex: 1,
 				backgroundColor: colors.background,
-				paddingTop: insets.top + 8,
 			}}
 		>
 			<View
 				style={{
 					paddingBottom: 8,
 					flex: 1,
+					paddingTop: insets.top + 8,
 				}}
 			>
 				<View
@@ -79,7 +83,7 @@ export default function Library() {
 					</Text>
 					<IconButton
 						icon='trophy'
-						onPress={() => setLeaderboardVisible(true)}
+						onPress={() => navigation.navigate('Leaderboard')}
 					/>
 				</View>
 				<TabView
@@ -156,10 +160,16 @@ export default function Library() {
 					}}
 				/>
 			</View>
-			<PlayCountLeaderboardModal
-				visible={leaderboardVisible}
-				setVisible={setLeaderboardVisible}
-			/>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

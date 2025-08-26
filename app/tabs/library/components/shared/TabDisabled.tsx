@@ -1,9 +1,11 @@
-import appStore from '@/hooks/stores/appStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { View } from 'react-native'
 import { Button, Text, useTheme } from 'react-native-paper'
 
 export default function TabDisable() {
 	const { colors } = useTheme()
+	const openModal = useModalStore((state) => state.open)
+
 	return (
 		<View
 			style={{
@@ -22,11 +24,7 @@ export default function TabDisable() {
 			</Text>
 			<Button
 				mode='contained'
-				onPress={() =>
-					appStore.setState((store) => ({
-						modals: { ...store.modals, qrCodeLoginModalVisible: true },
-					}))
-				}
+				onPress={() => openModal('QRCodeLogin', undefined)}
 			>
 				登录
 			</Button>

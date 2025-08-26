@@ -1,39 +1,35 @@
-import BatchAddTracksToLocalPlaylistModal from '@/components/modals/BatchAddTracksToLocalPlaylist'
-import AddVideoToLocalPlaylistModal from '@/components/modals/UpdateTrackLocalPlaylistsModal'
-import { PlaylistHeader } from '@/components/playlist/PlaylistHeader'
-import { TrackListItem } from '@/components/playlist/PlaylistItem'
+import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
+import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
+import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import {
 	useGetMultiPageList,
 	useGetVideoDetails,
 } from '@/hooks/queries/bilibili/video'
-import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
-import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type {
 	BilibiliMultipageVideo,
 	BilibiliVideoDetails,
 } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
-import type { CreateArtistPayload } from '@/types/services/artist'
-import type { CreateTrackPayload } from '@/types/services/track'
 import toast from '@/utils/toast'
 import {
 	type RouteProp,
 	useNavigation,
-	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { FlashList } from '@shopify/flash-list'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
-import { Appbar, Divider, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { PlaylistError } from '../../../../components/playlist/PlaylistError'
-import { PlaylistLoading } from '../../../../components/playlist/PlaylistLoading'
+import { Appbar, useTheme } from 'react-native-paper'
 import type { RootStackParamList } from '../../../../types/navigation'
-import useCheckLinkedToPlaylist from '../hooks/useCheckLinkedToLocalPlaylist'
+import { TrackList } from '../shared/components/RemoteTrackList'
+import useCheckLinkedToPlaylist from '../shared/hooks/useCheckLinkedToLocalPlaylist'
+import { usePlaylistMenu } from '../shared/hooks/usePlaylistMenu'
+import { useRemotePlaylist } from '../shared/hooks/useRemotePlaylist'
+import { useTrackSelection } from '../shared/hooks/useTrackSelection'
 
 const mapApiItemToTrack = (
 	mp: BilibiliMultipageVideo,
@@ -41,7 +37,7 @@ const mapApiItemToTrack = (
 ): BilibiliTrack => {
 	return {
 		id: mp.cid,
-		uniqueKey: `bilibili::${video.bvid}::${video.cid}`,
+		uniqueKey: `bilibili::${video.bvid}::${mp.cid}`,
 		source: 'bilibili',
 		title: mp.part,
 		artist: {
@@ -75,21 +71,11 @@ export default function MultipagePage() {
 	const { bvid } = route.params
 	const [refreshing, setRefreshing] = useState(false)
 	const { colors } = useTheme()
-	const currentTrack = useCurrentTrack()
-	const addToQueue = usePlayerStore((state) => state.addToQueue)
-	const insets = useSafeAreaInsets()
 	const linkedPlaylistId = useCheckLinkedToPlaylist(bv2av(bvid), 'multi_page')
-	const [modalVisible, setModalVisible] = useState(false)
-	const [currentModalTrack, setCurrentModalTrack] = useState<
-		BilibiliTrack | undefined
-	>(undefined)
 
-	const [selected, setSelected] = useState<Set<number>>(() => new Set()) // 使用 track id 作为索引
-	const [selectMode, setSelectMode] = useState<boolean>(false)
-	const [batchAddTracksModalVisible, setBatchAddTracksModalVisible] =
-		useState(false)
-	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
-		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
+	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
+	const [transitionDone, setTransitionDone] = useState(false)
+	const openModal = useModalStore((state) => state.open)
 
 	const {
 		data: rawMultipageData,
@@ -113,88 +99,9 @@ export default function MultipagePage() {
 
 	const { mutate: syncMultipage } = usePlaylistSync()
 
-	const playTrack = useCallback(
-		(track: BilibiliTrack, playNext = false) => {
-			void addToQueue({
-				tracks: [track],
-				playNow: !playNext,
-				clearQueue: false,
-				playNext: playNext,
-			})
-		},
-		[addToQueue],
-	)
+	const { playTrack } = useRemotePlaylist()
 
-	const trackMenuItems = useCallback(
-		(item: BilibiliTrack) => [
-			{
-				title: '下一首播放',
-				leadingIcon: 'skip-next-circle-outline',
-				onPress: () => playTrack(item, true),
-			},
-			{
-				title: '添加到本地歌单',
-				leadingIcon: 'playlist-plus',
-				onPress: () => {
-					setCurrentModalTrack(item)
-					setModalVisible(true)
-				},
-			},
-			{
-				title: '查看 up 主作品',
-				leadingIcon: 'account-music',
-				onPress: () => {
-					if (!item.artist?.remoteId) {
-						toast.error('未找到 up 主信息')
-						return
-					}
-					navigation.navigate('PlaylistUploader', {
-						mid: item.artist?.remoteId,
-					})
-				},
-			},
-		],
-		[navigation, playTrack],
-	)
-
-	const toggle = useCallback((id: number) => {
-		setSelected((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
-		})
-	}, [])
-
-	const enterSelectMode = useCallback((id: number) => {
-		setSelectMode(true)
-		setSelected(new Set([id]))
-	}, [])
-
-	const renderItem = useCallback(
-		({ item, index }: { item: BilibiliTrack; index: number }) => {
-			return (
-				<TrackListItem
-					index={index}
-					onTrackPress={() => playTrack(item)}
-					menuItems={trackMenuItems(item)}
-					showCoverImage={false}
-					data={{
-						cover: item.coverUrl ?? undefined,
-						title: item.title,
-						duration: item.duration,
-						id: item.id,
-						artistName: item.artist?.name,
-					}}
-					toggleSelected={toggle}
-					isSelected={selected.has(item.id)}
-					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
-				/>
-			)
-		},
-		[playTrack, trackMenuItems, toggle, selected, selectMode, enterSelectMode],
-	)
+	const trackMenuItems = usePlaylistMenu(playTrack)
 
 	const handleSync = useCallback(() => {
 		toast.show('同步中...')
@@ -214,26 +121,23 @@ export default function MultipagePage() {
 		setRefreshing(false)
 	}, [bvid, navigation, syncMultipage])
 
-	const keyExtractor = useCallback((item: BilibiliTrack) => {
-		return String(item.id)
-	}, [])
-
 	useEffect(() => {
 		if (typeof bvid !== 'string') {
 			navigation.replace('NotFound')
 		}
 	}, [bvid, navigation])
 
-	usePreventRemove(selectMode, () => {
-		setSelectMode(false)
-		setSelected(new Set())
-	})
+	useEffect(() => {
+		navigation.addListener('transitionEnd', () => {
+			setTransitionDone(true)
+		})
+	}, [navigation])
 
 	if (typeof bvid !== 'string') {
 		return null
 	}
 
-	if (isMultipageDataPending || isVideoDataPending) {
+	if (isMultipageDataPending || isVideoDataPending || !transitionDone) {
 		return <PlaylistLoading />
 	}
 
@@ -261,8 +165,9 @@ export default function MultipagePage() {
 									})
 								}
 							}
-							setBatchAddTracksModalPayloads(payloads)
-							setBatchAddTracksModalVisible(true)
+							openModal('BatchAddTracksToLocalPlaylist', {
+								payloads,
+							})
 						}}
 					/>
 				) : (
@@ -275,14 +180,15 @@ export default function MultipagePage() {
 					flex: 1,
 				}}
 			>
-				<FlashList
-					data={tracksData}
-					extraData={{ selectMode, selected }}
-					renderItem={renderItem}
-					ItemSeparatorComponent={() => <Divider />}
-					contentContainerStyle={{
-						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
-					}}
+				<TrackList
+					tracks={tracksData}
+					playTrack={playTrack}
+					trackMenuItems={trackMenuItems}
+					selectMode={selectMode}
+					selected={selected}
+					toggle={toggle}
+					enterSelectMode={enterSelectMode}
+					showItemCover={false}
 					ListHeaderComponent={
 						<PlaylistHeader
 							coverUri={videoData.pic}
@@ -306,35 +212,18 @@ export default function MultipagePage() {
 							progressViewOffset={50}
 						/>
 					}
-					keyExtractor={keyExtractor}
-					showsVerticalScrollIndicator={false}
-					ListFooterComponent={
-						<Text
-							variant='titleMedium'
-							style={{
-								textAlign: 'center',
-								paddingTop: 10,
-							}}
-						>
-							•
-						</Text>
-					}
 				/>
 			</View>
-			{currentModalTrack && (
-				<AddVideoToLocalPlaylistModal
-					track={currentModalTrack}
-					visible={modalVisible}
-					setVisible={setModalVisible}
-				/>
-			)}
-			{selectMode && (
-				<BatchAddTracksToLocalPlaylistModal
-					visible={batchAddTracksModalVisible}
-					setVisible={setBatchAddTracksModalVisible}
-					payloads={batchAddTracksModalPayloads}
-				/>
-			)}
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

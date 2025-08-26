@@ -1,7 +1,7 @@
-import CookieLoginModal from '@/components/modals/CookieLoginModal'
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -31,39 +31,55 @@ export default function SettingsPage() {
 			style={{
 				flex: 1,
 				backgroundColor: colors.background,
-				paddingTop: insets.top + 8,
-				paddingBottom: currentTrack ? 70 : insets.bottom,
 			}}
 		>
 			<View
 				style={{
-					paddingHorizontal: 25,
-					paddingBottom: 20,
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-				}}
-			>
-				<Text
-					variant='headlineSmall'
-					style={{ fontWeight: 'bold' }}
-				>
-					设置
-				</Text>
-			</View>
-			<ScrollView
-				style={{
 					flex: 1,
+					paddingTop: insets.top + 8,
+					paddingBottom: currentTrack ? 70 : insets.bottom,
 				}}
-				contentContainerStyle={{
-					paddingHorizontal: 25,
-				}}
-				contentInsetAdjustmentBehavior='automatic'
 			>
-				<SettingsSection />
-			</ScrollView>
-			<Divider style={{ marginTop: 16, marginBottom: 16 }} />
-			<AboutSection />
+				<View
+					style={{
+						paddingHorizontal: 25,
+						paddingBottom: 20,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+					}}
+				>
+					<Text
+						variant='headlineSmall'
+						style={{ fontWeight: 'bold' }}
+					>
+						设置
+					</Text>
+				</View>
+				<ScrollView
+					style={{
+						flex: 1,
+					}}
+					contentContainerStyle={{
+						paddingHorizontal: 25,
+					}}
+					contentInsetAdjustmentBehavior='automatic'
+				>
+					<SettingsSection />
+				</ScrollView>
+				<Divider style={{ marginTop: 16, marginBottom: 16 }} />
+				<AboutSection />
+			</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }
@@ -138,9 +154,6 @@ const SettingsSection = memo(function SettingsSection() {
 		(state) => state.setEnableSendPlayHistory,
 	)
 	const sendPlayHistory = useAppStore((state) => state.settings.sendPlayHistory)
-	const [cookieDialogVisible, setCookieDialogVisible] = useState(false)
-	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
-		useState(false)
 	const setEnableSentryReport = useAppStore(
 		(state) => state.setEnableSentryReport,
 	)
@@ -149,11 +162,12 @@ const SettingsSection = memo(function SettingsSection() {
 	)
 	const setEnableDebugLog = useAppStore((state) => state.setEnableDebugLog)
 	const enableDebugLog = useAppStore((state) => state.settings.enableDebugLog)
+	const openModal = useModalStore((state) => state.open)
 
 	const shareLogFile = async () => {
 		const d = new Date()
 		const dateString = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-		const logFilePath = `${FileSystem.documentDirectory}logs_${dateString}.log`
+		const logFilePath = `${FileSystem.documentDirectory}logs/${dateString}.log`
 		const exists = await FileSystem.getInfoAsync(logFilePath)
 		if (exists.exists) {
 			await Sharing.shareAsync(logFilePath)
@@ -218,7 +232,7 @@ const SettingsSection = memo(function SettingsSection() {
 				<IconButton
 					icon='open-in-new'
 					size={20}
-					onPress={() => setCookieDialogVisible(true)}
+					onPress={() => openModal('CookieLogin', undefined)}
 				/>
 			</View>
 			<View
@@ -233,7 +247,7 @@ const SettingsSection = memo(function SettingsSection() {
 				<IconButton
 					icon='open-in-new'
 					size={20}
-					onPress={() => setIsQrCodeLoginDialogVisible(true)}
+					onPress={() => openModal('QRCodeLogin', undefined)}
 				/>
 			</View>
 			<View
@@ -251,15 +265,6 @@ const SettingsSection = memo(function SettingsSection() {
 					onPress={shareLogFile}
 				/>
 			</View>
-
-			<CookieLoginModal
-				visible={cookieDialogVisible}
-				setVisible={setCookieDialogVisible}
-			/>
-			<QrCodeLoginModal
-				visible={isQrCodeLoginDialogVisible}
-				setVisible={setIsQrCodeLoginDialogVisible}
-			/>
 		</View>
 	)
 })

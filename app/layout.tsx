@@ -1,9 +1,10 @@
 import { toastConfig } from '@/components/toast/ToastConfig'
-import appStore from '@/hooks/stores/appStore'
 import useAppStore from '@/hooks/stores/useAppStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
 import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
+import lyricService from '@/lib/services/lyricService'
 import { ProjectScope } from '@/types/core/scope'
 import log, {
 	cleanOldLogFiles,
@@ -12,7 +13,7 @@ import log, {
 } from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import toast from '@/utils/toast'
-import { useNavigationContainerRef } from '@react-navigation/native'
+import { useLogger } from '@react-navigation/devtools'
 import * as Sentry from '@sentry/react-native'
 import { focusManager, onlineManager } from '@tanstack/react-query'
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator'
@@ -31,6 +32,7 @@ import {
 import { Text } from 'react-native-paper'
 import Toast from 'react-native-toast-message'
 import migrations from '../drizzle/migrations'
+import navigationRef from './navigationRef'
 import { AppProviders } from './providers'
 
 const logger = log.extend('UI.RootLayout')
@@ -55,15 +57,16 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default Sentry.wrap(function RootLayout() {
-	const ref = useNavigationContainerRef()
 	const [appIsReady, setAppIsReady] = useState(false)
 	const { success: migrationsSuccess, error: migrationsError } = useMigrations(
 		drizzleDb,
 		migrations,
 	)
+	const open = useModalStore((state) => state.open)
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	useSQLiteDevTools(expoDb)
+	useLogger(navigationRef)
 
 	onlineManager.setEventListener((setOnline) => {
 		const eventSubscription = Network.addNetworkStateListener((state) => {
@@ -73,10 +76,10 @@ export default Sentry.wrap(function RootLayout() {
 	})
 
 	useEffect(() => {
-		if (ref?.current) {
-			navigationIntegration.registerNavigationContainer(ref)
+		if (navigationRef?.current) {
+			navigationIntegration.registerNavigationContainer(navigationRef)
 		}
-	}, [ref])
+	}, [])
 
 	useEffect(() => {
 		const subscription = AppState.addEventListener('change', onAppStateChange)
@@ -128,6 +131,14 @@ export default Sentry.wrap(function RootLayout() {
 		})
 	}, [appIsReady])
 
+	// 迁移旧版歌词格式
+	useEffect(() => {
+		if (!appIsReady) return
+		InteractionManager.runAfterInteractions(() => {
+			void lyricService.migrateFromOldFormat()
+		})
+	}, [appIsReady])
+
 	useEffect(() => {
 		if (appIsReady) {
 			const initializePlayer = async () => {
@@ -153,12 +164,10 @@ export default Sentry.wrap(function RootLayout() {
 			// 如果是第一次打开，则显示欢迎对话框
 			const firstOpen = storage.getBoolean('first_open') ?? true
 			if (firstOpen) {
-				appStore.setState((store) => ({
-					modals: { ...store.modals, welcomeModalVisible: true },
-				}))
+				open('Welcome', undefined, { dismissible: false })
 			}
 		}
-	}, [appIsReady, migrationsError, migrationsSuccess])
+	}, [appIsReady, migrationsError, migrationsSuccess, open])
 
 	if (migrationsError) {
 		logger.error('数据库迁移失败:', migrationsError)
@@ -179,7 +188,7 @@ export default Sentry.wrap(function RootLayout() {
 			<AppProviders
 				appIsReady={appIsReady}
 				onLayoutRootView={onLayoutRootView}
-				navRef={ref}
+				navRef={navigationRef}
 			/>
 			<Toast config={toastConfig} />
 		</>

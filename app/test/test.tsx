@@ -1,31 +1,23 @@
-import QrCodeLoginModal from '@/components/modals/QRCodeLoginModal'
-import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
+import NowPlayingBar from '@/components/NowPlayingBar'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
-import { DatabaseError } from '@/lib/errors'
-import { createServiceError } from '@/lib/errors/service'
-import { ProjectScope } from '@/types/core/scope'
-import { reportErrorToSentry, toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import { Button, Card, Text, useTheme } from 'react-native-paper'
+import { Button, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { RootStackParamList } from '../../types/navigation'
 
 export default function TestPage() {
 	const clearQueue = usePlayerStore((state) => state.resetStore)
-	const queue = useCurrentQueue()
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
-	const navigation =
-		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Test'>>()
+	const navigation = useNavigation()
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
-	const [isQrCodeLoginDialogVisible, setIsQrCodeLoginDialogVisible] =
-		useState(false)
+	const currentTrack = useCurrentTrack()
 
 	const testCheckUpdate = async () => {
 		try {
@@ -86,13 +78,12 @@ export default function TestPage() {
 		<View
 			style={{
 				flex: 1,
-				paddingBottom: 20,
-				paddingTop: insets.top + 30,
 				backgroundColor: colors.background,
 			}}
 		>
 			<ScrollView
-				style={{ flex: 1, padding: 16 }}
+				style={{ flex: 1, padding: 16, paddingTop: insets.top + 30 }}
+				contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 20 }}
 				contentInsetAdjustmentBehavior='automatic'
 			>
 				<View style={{ marginBottom: 16 }}>
@@ -130,51 +121,24 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							const err1 = new DatabaseError('创建播放列表失败', {
-								cause: new Error('测试错误'),
-							})
-							const err2 = createServiceError(
-								'NotImplemented',
-								'不存在xxxxxx',
-								{
-									cause: err1,
-									data: {
-										fuck: 1,
-									},
-								},
-							)
-							toastAndLogError('测试错误', err2, 'Test')
-							reportErrorToSentry(err2, '测试错误', ProjectScope.UI)
+							useModalStore.getState().open('Welcome', undefined)
 						}}
 						style={{ marginBottom: 8 }}
 					>
-						创建一个错误
+						试试
 					</Button>
 				</View>
-
-				<Text
-					variant='titleMedium'
-					style={{ marginTop: 16, marginBottom: 8 }}
-				>
-					当前队列 ({queue.length}):
-				</Text>
-				{queue.map((track) => (
-					<Card
-						key={`${track.id}`}
-						style={{ marginBottom: 8 }}
-					>
-						<Card.Title
-							title={track.title}
-							subtitle={track.artist?.name ?? '该视频还未获取元数据'}
-						/>
-					</Card>
-				))}
 			</ScrollView>
-
-			<QrCodeLoginModal
-				visible={isQrCodeLoginDialogVisible}
-				setVisible={setIsQrCodeLoginDialogVisible}
-			/>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

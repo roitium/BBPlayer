@@ -1,4 +1,4 @@
-import { BilibiliApiError } from '@/lib/errors/bilibili'
+import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import {
 	type BilibiliAudioStreamParams,
 	type BilibiliAudioStreamResponse,
@@ -21,7 +21,7 @@ import type { BilibiliTrack } from '@/types/core/media'
 import log from '@/utils/log'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { bilibiliApiClient } from './client'
-import { bv2av, convertToFormDataString, getCsrfToken } from './utils'
+import { bv2av, getCsrfToken } from './utils'
 import getWbiEncodedParams from './wbi'
 
 const logger = log.extend('3Party.Bilibili.Api')
@@ -38,7 +38,6 @@ export const createBilibiliApi = () => ({
 			'/x/v2/history',
 			undefined,
 		)
-		// .map(transformHistoryVideosToTracks)
 	},
 
 	/**
@@ -52,7 +51,6 @@ export const createBilibiliApi = () => ({
 				list: BilibiliVideoDetails[]
 			}>(`/x/web-interface/ranking/v2?rid=${partition}`, undefined)
 			.map((response) => response.list)
-		// .map((response) => transformVideoDetailsToTracks(response.list))
 	},
 
 	/**
@@ -67,7 +65,6 @@ export const createBilibiliApi = () => ({
 			}>(`/x/v3/fav/folder/created/list-all?up_mid=${userMid}`, undefined)
 			.map((response) => response.list)
 			.map((list) => list ?? [])
-		// .map((response) => transformFavoriteListsToPlaylists(response.list))
 	},
 
 	/**
@@ -86,12 +83,19 @@ export const createBilibiliApi = () => ({
 			page: page.toString(),
 		})
 
-		return params.andThen((params) => {
-			return bilibiliApiClient.get<{
-				result: BilibiliSearchVideo[]
-				numPages: number
-			}>('/x/web-interface/wbi/search/type', params)
-		})
+		return params
+			.andThen((params) => {
+				return bilibiliApiClient.get<{
+					result: BilibiliSearchVideo[]
+					numPages: number
+				}>('/x/web-interface/wbi/search/type', params)
+			})
+			.andThen((res) => {
+				if (!res.result) {
+					res.result = []
+				}
+				return okAsync(res)
+			})
 	},
 
 	/**
@@ -269,11 +273,6 @@ export const createBilibiliApi = () => ({
 				ps: '40',
 			},
 		)
-		// .map((response) => ({
-		// 	tracks: transformFavoriteContentsToTracks(response.medias),
-		// 	hasMore: response.has_more,
-		// 	favoriteMeta: response.info,
-		// }))
 	},
 
 	/**
@@ -286,21 +285,20 @@ export const createBilibiliApi = () => ({
 		pn: number,
 		keyword: string,
 	): ResultAsync<BilibiliFavoriteListContents, BilibiliApiError> {
-		return bilibiliApiClient.get<BilibiliFavoriteListContents>(
-			'/x/v3/fav/resource/list',
-			{
+		return bilibiliApiClient
+			.get<BilibiliFavoriteListContents>('/x/v3/fav/resource/list', {
 				media_id: favoriteId.toString(),
 				pn: pn.toString(),
 				ps: '40',
 				keyword,
 				type: scope === 'this' ? '0' : '1',
-			},
-		)
-		// .map((response) => ({
-		// 	tracks: transformFavoriteContentsToTracks(response.medias),
-		// 	hasMore: response.has_more,
-		// 	favoriteMeta: response.info,
-		// }))
+			})
+			.andThen((res) => {
+				if (!res.medias) {
+					res.medias = []
+				}
+				return okAsync(res)
+			})
 	},
 
 	/**
@@ -354,7 +352,7 @@ export const createBilibiliApi = () => ({
 
 		return bilibiliApiClient.post<0>(
 			'/x/v3/fav/resource/batch-del',
-			convertToFormDataString(data),
+			new URLSearchParams(data).toString(),
 		)
 	},
 
@@ -384,11 +382,6 @@ export const createBilibiliApi = () => ({
 				count: response.count,
 				hasMore: response.has_more,
 			}))
-		// .map((response) => ({
-		// 	list: response.list ?? [],
-		// 	count: response.count,
-		// 	hasMore: response.has_more,
-		// }))
 	},
 
 	/**
@@ -405,12 +398,6 @@ export const createBilibiliApi = () => ({
 				pn: '1', // Start from page 1
 			},
 		)
-		// .map((response) => {
-		// 	return {
-		// 		info: response.info,
-		// 		medias: transformCollectionAllContentsToTracks(response.medias),
-		// 	}
-		// })
 	},
 
 	/**
@@ -436,7 +423,7 @@ export const createBilibiliApi = () => ({
 		}
 		return bilibiliApiClient.post<BilibiliDealFavoriteForOneVideoResponse>(
 			'/x/v3/fav/resource/deal',
-			convertToFormDataString(data),
+			new URLSearchParams(data).toString(),
 		)
 	},
 
@@ -484,7 +471,7 @@ export const createBilibiliApi = () => ({
 		}
 		return bilibiliApiClient.post<0>(
 			'/x/v2/history/report',
-			convertToFormDataString(data),
+			new URLSearchParams(data).toString(),
 		)
 	},
 
@@ -640,6 +627,54 @@ export const createBilibiliApi = () => ({
 			}
 			return okAsync(redirectUrl)
 		})
+	},
+
+	/**
+	 * 检查视频是否已经点赞
+	 * （文档中说该接口实际查询的是 **近期** 是否被点赞）
+	 */
+	checkVideoIsThumbUp: (bvid: string) => {
+		return bilibiliApiClient.get<0 | 1>('/x/web-interface/archive/has/like', {
+			bvid,
+		})
+	},
+
+	/**
+	 * 给视频点赞或取消点赞
+	 * @param bvid
+	 * @param like true 表示点赞，false 表示取消点赞
+	 * @returns 对于重复点赞的错误一律当作成功返回。
+	 */
+	thumbUpVideo: (
+		bvid: string,
+		like: boolean,
+	): ResultAsync<0, BilibiliApiError> => {
+		const csrfToken = getCsrfToken()
+		if (csrfToken.isErr()) return errAsync(csrfToken.error)
+
+		const data = {
+			bvid,
+			like: like ? '1' : '2',
+			csrf: csrfToken.value,
+		}
+
+		return bilibiliApiClient
+			.post<undefined>(
+				'/x/web-interface/archive/like',
+				new URLSearchParams(data).toString(),
+			)
+			.andThen(() => {
+				return okAsync(0 as const)
+			})
+			.orElse((err) => {
+				switch (err.data.msgCode) {
+					case 65006:
+						// 重复点赞
+						return okAsync(0 as const)
+					default:
+						return errAsync(err)
+				}
+			})
 	},
 })
 

@@ -1,5 +1,5 @@
-import { AnimatedModal } from '@/components/commonUIs/AnimatedModal'
 import { useEditPlaylistMetadata } from '@/hooks/mutations/db/playlist'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bilibiliFacade } from '@/lib/facades/bilibili'
 import type { Playlist } from '@/types/core/media'
 import log, { toastAndLogError } from '@/utils/log'
@@ -14,17 +14,15 @@ const logger = log.extend('Components.EditPlaylistMetadataModal')
 
 export default function EditPlaylistMetadataModal({
 	playlist,
-	visiable,
-	setVisible,
 }: {
 	playlist: Playlist
-	visiable: boolean
-	setVisible: (visible: boolean) => void
 }) {
 	const { mutate: editPlaylistMetadata } = useEditPlaylistMetadata()
 	const [title, setTitle] = useState(playlist.title)
 	const [description, setDescription] = useState(playlist.description)
 	const [coverUrl, setCoverUrl] = useState(playlist.coverUrl)
+	const _close = useModalStore((state) => state.close)
+	const close = useCallback(() => _close('EditPlaylistMetadata'), [_close])
 
 	const fetchRemoteMetadata = useCallback(async () => {
 		if (!playlist.remoteSyncId) {
@@ -60,15 +58,8 @@ export default function EditPlaylistMetadataModal({
 				coverUrl: coverUrl ?? undefined,
 			},
 		})
-		setVisible(false)
-	}, [
-		coverUrl,
-		description,
-		editPlaylistMetadata,
-		playlist.id,
-		setVisible,
-		title,
-	])
+		close()
+	}, [close, coverUrl, description, editPlaylistMetadata, playlist.id, title])
 
 	const handleImagePicker = useCallback(async () => {
 		const result = await DocumentPicker.getDocumentAsync({
@@ -95,17 +86,14 @@ export default function EditPlaylistMetadataModal({
 	}, [])
 
 	const handleDismiss = useCallback(() => {
-		setVisible(false)
+		close()
 		setTitle('')
 		setDescription('')
 		setCoverUrl('')
-	}, [setVisible])
+	}, [close])
 
 	return (
-		<AnimatedModal
-			visible={visiable}
-			onDismiss={handleDismiss}
-		>
+		<>
 			<Dialog.Title>编辑信息</Dialog.Title>
 			<Dialog.Content style={{ gap: 5 }}>
 				<TextInput
@@ -154,6 +142,6 @@ export default function EditPlaylistMetadataModal({
 					<Button onPress={handleConfirm}>确定</Button>
 				</View>
 			</Dialog.Actions>
-		</AnimatedModal>
+		</>
 	)
 }

@@ -30,8 +30,8 @@ const PlayerLogic = {
 				try {
 					await TrackPlayer.setupPlayer({
 						minBuffer: 15,
-						maxBuffer: 50,
-						backBuffer: 30,
+						maxBuffer: 300,
+						backBuffer: 40,
 						autoHandleInterruptions: true,
 					})
 				} catch (e) {
@@ -53,10 +53,11 @@ const PlayerLogic = {
 					Capability.SkipToPrevious,
 					Capability.SeekTo,
 				],
-				progressUpdateEventInterval: 1,
+				progressUpdateEventInterval: 0.1,
 				android: {
 					appKilledPlaybackBehavior: AppKilledPlaybackBehavior.PausePlayback,
 				},
+				// FIXME: wtf??? rntp 5.0 没法设置 icon 了
 			})
 			// 设置重复模式为 Off
 			await TrackPlayer.setRepeatMode(RepeatMode.Off)
@@ -84,8 +85,7 @@ const PlayerLogic = {
 					state === TrackPlayerState.Paused ||
 					state === TrackPlayerState.Stopped
 				) {
-					usePlayerStore.setState((state) => ({
-						...state,
+					usePlayerStore.setState(() => ({
 						isPlaying: false,
 						isBuffering: false,
 					}))

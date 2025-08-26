@@ -32,6 +32,7 @@ const CollectionListItem = memo(({ item }: { item: BilibiliCollection }) => {
 					>
 						<Image
 							source={{ uri: item.cover }}
+							recyclingKey={item.id.toString()}
 							style={{ width: 48, height: 48, borderRadius: 4 }}
 							transition={300}
 						/>
