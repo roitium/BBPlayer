@@ -196,6 +196,14 @@ export default function Lyrics({
 	})
 
 	const bottomFadeAnimatedStyle = useAnimatedStyle(() => {
+		// 初始化时默认显示
+		if (
+			scrollY.value === 0 &&
+			viewportHeight.value === 0 &&
+			contentHeight.value === 0
+		) {
+			return { opacity: 1 }
+		}
 		const distanceFromEnd =
 			contentHeight.value - (scrollY.value + viewportHeight.value)
 		if (distanceFromEnd <= 0) {
