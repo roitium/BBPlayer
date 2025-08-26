@@ -16,7 +16,7 @@ export function useLocalPlaylistPlayer(tracks: Track[]) {
 					tracks: tracks,
 					playNow: true,
 					clearQueue: true,
-					startFromId: startFromId,
+					startFromKey: startFromId,
 					playNext: false,
 				})
 			} catch (error) {

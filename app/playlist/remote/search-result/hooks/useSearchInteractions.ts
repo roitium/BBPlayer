@@ -30,6 +30,7 @@ export function useSearchInteractions() {
 				playNow: !playNext,
 				clearQueue: false,
 				playNext: playNext,
+				startFromKey: track.uniqueKey,
 			})
 		},
 		[addToQueue, navigation],

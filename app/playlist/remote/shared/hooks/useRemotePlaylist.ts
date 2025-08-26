@@ -12,7 +12,7 @@ export function useRemotePlaylist() {
 				playNow: !playNext,
 				clearQueue: false,
 				playNext: playNext,
-				startFromId: track.uniqueKey,
+				startFromKey: track.uniqueKey,
 			})
 		},
 		[addToQueue],

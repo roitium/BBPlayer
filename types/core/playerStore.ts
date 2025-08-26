@@ -27,7 +27,7 @@ interface addToQueueParams {
 	tracks: Track[]
 	playNow: boolean
 	clearQueue: boolean
-	startFromId?: string
+	startFromKey?: string
 	playNext: boolean
 }
 
@@ -46,7 +46,7 @@ interface PlayerActions {
 		tracks,
 		playNow,
 		clearQueue,
-		startFromId,
+		startFromKey,
 		playNext,
 	}: addToQueueParams) => Promise<void>
 	resetStore: () => Promise<void>

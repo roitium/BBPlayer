@@ -253,7 +253,7 @@ export const usePlayerStore = create<PlayerStore>()(
 				/**
 				 * 添加多条曲目到队列
 				 * 当 playNow 为 false 时，startFromId 不生效
-				 * 提供
+				 * 内部会对 tracks 进行去重，queue 内已有的不再添加
 				 * @param tracks
 				 * @param playNow 是否立即播放（在 startFromId 为空时是播放新增队列的第一首歌曲）
 				 * @param clearQueue
@@ -265,7 +265,7 @@ export const usePlayerStore = create<PlayerStore>()(
 					tracks,
 					playNow,
 					clearQueue,
-					startFromId,
+					startFromKey,
 					playNext,
 				}: addToQueueParams) => {
 					if (!checkPlayerReady() || tracks.length === 0) return
@@ -276,7 +276,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						playNow,
 						clearQueue,
 						playNext,
-						startFromId: startFromId ?? null,
+						startFromId: startFromKey ?? null,
 					})
 
 					const existingTracks = get().tracks
@@ -288,15 +288,15 @@ export const usePlayerStore = create<PlayerStore>()(
 					// 没有新歌加入，但需要跳转播放
 					if (newTracks.length === 0) {
 						console.log('没有新歌加入，但需要跳转播放')
-						if (playNow && startFromId) {
+						if (playNow && startFromKey) {
 							// 直接在当前播放列表中找到 key 对应的索引
-							const targetIndex = get()._getActiveList().indexOf(startFromId)
+							const targetIndex = get()._getActiveList().indexOf(startFromKey)
 							if (targetIndex !== -1) {
 								await get().skipToTrack(targetIndex)
 								console.log('直接在当前播放列表中找到 key 对应的索引')
 							} else {
 								logger.warning('指定的 startFromId 在当前队列中不存在', {
-									key: startFromId,
+									key: startFromKey,
 								})
 							}
 						}
@@ -330,8 +330,8 @@ export const usePlayerStore = create<PlayerStore>()(
 							let keyToPlay = newKeys[0]
 
 							// 如果提供了 startFromKey，并且这个 key 属于本次新添加的歌曲，则使用它
-							if (startFromId && newKeys.includes(startFromId)) {
-								keyToPlay = startFromId
+							if (startFromKey && newKeys.includes(startFromKey)) {
+								keyToPlay = startFromKey
 							}
 							state.currentTrackUniqueKey = keyToPlay
 						} else if (
