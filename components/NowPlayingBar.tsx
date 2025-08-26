@@ -15,8 +15,6 @@ import {
 } from 'react-native-gesture-handler'
 import { Icon, ProgressBar, Text, useTheme } from 'react-native-paper'
 import Animated, {
-	FadeInDown,
-	FadeOutDown,
 	runOnJS,
 	useAnimatedStyle,
 	useSharedValue,
@@ -76,8 +74,6 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 			{isVisible && (
 				<GestureDetector gesture={outerTap}>
 					<Animated.View
-						exiting={FadeOutDown.duration(200)}
-						entering={FadeInDown.duration(200)}
 						style={[
 							{
 								flex: 1,
