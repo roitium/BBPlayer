@@ -162,7 +162,7 @@ export default function Lyrics({
 				},
 			)
 		}
-	}, [])
+	}, [offsetMenuVisible])
 
 	if (isPending) {
 		return (
