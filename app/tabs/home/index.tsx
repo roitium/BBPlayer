@@ -1,3 +1,4 @@
+import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
@@ -294,6 +295,16 @@ function HomePage() {
 						</Text>
 					)}
 				</View>
+			</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
 			</View>
 		</View>
 	)

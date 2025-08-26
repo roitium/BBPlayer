@@ -1,3 +1,4 @@
+import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { useModalStore } from '@/hooks/stores/useModalStore'
@@ -30,39 +31,55 @@ export default function SettingsPage() {
 			style={{
 				flex: 1,
 				backgroundColor: colors.background,
-				paddingTop: insets.top + 8,
-				paddingBottom: currentTrack ? 70 : insets.bottom,
 			}}
 		>
 			<View
 				style={{
-					paddingHorizontal: 25,
-					paddingBottom: 20,
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-				}}
-			>
-				<Text
-					variant='headlineSmall'
-					style={{ fontWeight: 'bold' }}
-				>
-					设置
-				</Text>
-			</View>
-			<ScrollView
-				style={{
 					flex: 1,
+					paddingTop: insets.top + 8,
+					paddingBottom: currentTrack ? 70 : insets.bottom,
 				}}
-				contentContainerStyle={{
-					paddingHorizontal: 25,
-				}}
-				contentInsetAdjustmentBehavior='automatic'
 			>
-				<SettingsSection />
-			</ScrollView>
-			<Divider style={{ marginTop: 16, marginBottom: 16 }} />
-			<AboutSection />
+				<View
+					style={{
+						paddingHorizontal: 25,
+						paddingBottom: 20,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+					}}
+				>
+					<Text
+						variant='headlineSmall'
+						style={{ fontWeight: 'bold' }}
+					>
+						设置
+					</Text>
+				</View>
+				<ScrollView
+					style={{
+						flex: 1,
+					}}
+					contentContainerStyle={{
+						paddingHorizontal: 25,
+					}}
+					contentInsetAdjustmentBehavior='automatic'
+				>
+					<SettingsSection />
+				</ScrollView>
+				<Divider style={{ marginTop: 16, marginBottom: 16 }} />
+				<AboutSection />
+			</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

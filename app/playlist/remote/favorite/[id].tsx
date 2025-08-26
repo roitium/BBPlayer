@@ -1,6 +1,7 @@
 import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
 import { PlaylistHeader } from '@/app/playlist/remote/shared/components/PlaylistHeader'
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePlaylistSync } from '@/hooks/mutations/db/playlist'
 import { useInfiniteFavoriteList } from '@/hooks/queries/bilibili/favorite'
 import { useModalStore } from '@/hooks/stores/useModalStore'
@@ -215,6 +216,16 @@ export default function FavoritePage() {
 					onEndReached={hasNextPage ? () => fetchNextPage() : undefined}
 					hasNextPage={hasNextPage}
 				/>
+			</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
 			</View>
 		</View>
 	)

@@ -1,5 +1,4 @@
 import ModalHost from '@/components/ModalHost'
-import NowPlayingBar from '@/components/NowPlayingBar'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { View } from 'react-native'
 import type { RootStackParamList } from '../types/navigation'
@@ -86,16 +85,6 @@ export function RootLayoutNav() {
 					}}
 				/>
 			</RootStack.Navigator>
-			<View
-				style={{
-					position: 'absolute',
-					bottom: 0,
-					left: 0,
-					right: 0,
-				}}
-			>
-				<NowPlayingBar />
-			</View>
 		</View>
 	)
 }

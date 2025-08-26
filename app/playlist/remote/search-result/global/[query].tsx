@@ -1,5 +1,6 @@
 import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistError'
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import { useSearchResults } from '@/hooks/queries/bilibili/search'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useModalStore } from '@/hooks/stores/useModalStore'
@@ -176,6 +177,16 @@ export default function SearchResultsPage() {
 						</Text>
 					}
 				/>
+			</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
 			</View>
 		</View>
 	)

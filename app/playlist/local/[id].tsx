@@ -1,4 +1,5 @@
 import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
+import NowPlayingBar from '@/components/NowPlayingBar'
 import {
 	useBatchDeleteTracksFromLocalPlaylist,
 	useDeletePlaylist,
@@ -364,6 +365,16 @@ export default function LocalPlaylistPage() {
 					/>
 				</FunctionalMenu>
 			</Portal>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

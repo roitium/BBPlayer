@@ -1,3 +1,4 @@
+import NowPlayingBar from '@/components/NowPlayingBar'
 import useResetScreenOnBlur from '@/hooks/utils/useResetScreenOnBlur'
 import type { BottomTabParamList } from '@/types/navigation'
 import Icon from '@react-native-vector-icons/material-design-icons'
@@ -57,13 +58,13 @@ export default function Library() {
 			style={{
 				flex: 1,
 				backgroundColor: colors.background,
-				paddingTop: insets.top + 8,
 			}}
 		>
 			<View
 				style={{
 					paddingBottom: 8,
 					flex: 1,
+					paddingTop: insets.top + 8,
 				}}
 			>
 				<View
@@ -158,6 +159,16 @@ export default function Library() {
 						},
 					}}
 				/>
+			</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
 			</View>
 		</View>
 	)

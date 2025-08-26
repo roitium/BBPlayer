@@ -1,3 +1,4 @@
+import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
@@ -163,6 +164,16 @@ export default function LeaderboardPage() {
 				</Surface>
 			)}
 			<View style={{ flex: 1 }}>{renderContent()}</View>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

@@ -1,4 +1,6 @@
+import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import toast from '@/utils/toast'
@@ -17,6 +19,7 @@ export default function TestPage() {
 	const navigation = useNavigation()
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
+	const currentTrack = useCurrentTrack()
 
 	const testCheckUpdate = async () => {
 		try {
@@ -77,13 +80,12 @@ export default function TestPage() {
 		<View
 			style={{
 				flex: 1,
-				paddingBottom: 20,
-				paddingTop: insets.top + 30,
 				backgroundColor: colors.background,
 			}}
 		>
 			<ScrollView
-				style={{ flex: 1, padding: 16 }}
+				style={{ flex: 1, padding: 16, paddingTop: insets.top + 30 }}
+				contentContainerStyle={{ paddingBottom: currentTrack ? 80 : 20 }}
 				contentInsetAdjustmentBehavior='automatic'
 			>
 				<View style={{ marginBottom: 16 }}>
@@ -149,6 +151,16 @@ export default function TestPage() {
 					</Card>
 				))}
 			</ScrollView>
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<NowPlayingBar />
+			</View>
 		</View>
 	)
 }

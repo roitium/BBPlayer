@@ -45,7 +45,6 @@ export const TrackListItem = memo(function TrackListItem({
 	selectMode,
 	enterSelectMode,
 }: TrackListItemProps) {
-	console.log(`render ${data.uniqueKey}`)
 	const theme = useTheme()
 	const menuAnchorRef = useRef<View>(null)
 	const isCurrentTrack = usePlayerStore(
