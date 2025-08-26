@@ -1,4 +1,4 @@
-import UpdateAppModal from '@/components/modals/UpdateAppModal'
+import UpdateAppModal from '@/components/modals/app/UpdateAppModal'
 import {
 	checkForAppUpdate,
 	type ReleaseInfo,
