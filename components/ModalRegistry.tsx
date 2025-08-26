@@ -1,5 +1,6 @@
 import type { ModalKey, ModalPropsMap } from '@/types/navigation'
 import AddToFavoriteListsModal from './modals/AddVideoToBilibiliFavModal'
+import AlertModal from './modals/AlertModal'
 import BatchAddTracksToLocalPlaylistModal from './modals/BatchAddTracksToLocalPlaylist'
 import CookieLoginModal from './modals/CookieLoginModal'
 import CreatePlaylistModal from './modals/CreatePlaylistModal'
@@ -29,4 +30,5 @@ export const modalRegistry: { [K in ModalKey]: ModalComponent<K> } = {
 	UpdateTrackLocalPlaylists: UpdateTrackLocalPlaylistsModal,
 	DuplicateLocalPlaylist: DuplicateLocalPlaylistModal,
 	ManualSearchLyrics: ManualSearchLyricsModal,
+	Alert: AlertModal,
 }

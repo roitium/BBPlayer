@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 /* react-navigation 指明了 RootStackParamList 必须使用 type alias */
 import type { Tabs } from '@/app/tabs/library/[tab]'
+import type { AlertModalProps } from '@/components/modals/AlertModal'
 import type { NavigatorScreenParams } from '@react-navigation/native'
 import type { Playlist, Track } from './core/media'
 import type { CreateArtistPayload } from './services/artist'
@@ -44,6 +45,7 @@ export type ModalPropsMap = {
 	}
 	DuplicateLocalPlaylist: { sourcePlaylistId: number; rawName: string }
 	ManualSearchLyrics: { uniqueKey: string; initialQuery: string }
+	Alert: AlertModalProps
 }
 
 export type ModalKey = keyof ModalPropsMap

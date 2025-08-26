@@ -1,3 +1,4 @@
+import { alert } from '@/components/modals/AlertModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
 import { toastAndLogError } from '@/utils/log'
@@ -6,7 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useCallback, useEffect, useState } from 'react'
-import { Alert, View } from 'react-native'
+import { View } from 'react-native'
 import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -224,14 +225,13 @@ function HomePage() {
 								icon='trash-can-outline'
 								size={20}
 								onPress={() =>
-									Alert.alert(
+									alert(
 										'清空搜索历史？',
 										'确定要清空吗？',
 										[
-											{ text: '取消', style: 'cancel' },
+											{ text: '取消' },
 											{
 												text: '确定',
-												style: 'destructive',
 												onPress: () => {
 													setSearchHistory([])
 												},
@@ -256,14 +256,13 @@ function HomePage() {
 									key={item.id}
 									onPress={() => handleSearchItemClick(item.text)}
 									onLongPress={() =>
-										Alert.alert(
+										alert(
 											'删除搜索历史？',
 											`确定要删除「${item.text}」吗？`,
 											[
-												{ text: '取消', style: 'cancel' },
+												{ text: '取消' },
 												{
 													text: '确定',
-													style: 'destructive',
 													onPress: () => {
 														// 优化：使用 filter 创建新数组，避免直接修改 state
 														const newHistory = searchHistory.filter(

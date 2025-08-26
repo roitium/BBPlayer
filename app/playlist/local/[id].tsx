@@ -1,4 +1,5 @@
 import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
+import { alert } from '@/components/modals/AlertModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import {
 	useBatchDeleteTracksFromLocalPlaylist,
@@ -24,7 +25,7 @@ import {
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Alert, useWindowDimensions, View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import { Appbar, Menu, Portal, Searchbar, useTheme } from 'react-native-paper'
 import Animated, {
 	useAnimatedStyle,
@@ -247,11 +248,11 @@ export default function LocalPlaylistPage() {
 							<Appbar.Action
 								icon='trash-can'
 								onPress={() =>
-									Alert.alert(
+									alert(
 										'移除歌曲',
 										'确定从播放列表移除这些歌曲？',
 										[
-											{ text: '取消', style: 'cancel' },
+											{ text: '取消' },
 											{ text: '确定', onPress: deleteSelectedTracks },
 										],
 										{ cancelable: true },
@@ -340,18 +341,17 @@ export default function LocalPlaylistPage() {
 					/>
 					<Menu.Item
 						onPress={() => {
-							Alert.alert(
+							setFunctionalMenuVisible(false)
+							alert(
 								'删除播放列表',
 								'确定要删除此播放列表吗？',
 								[
 									{
 										text: '取消',
-										style: 'cancel',
 									},
 									{
 										text: '确定',
 										onPress: () => {
-											setFunctionalMenuVisible(false)
 											onClickDeletePlaylist()
 										},
 									},

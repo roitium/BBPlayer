@@ -1,5 +1,4 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
-import useCurrentQueue from '@/hooks/stores/playerHooks/useCurrentQueue'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
@@ -8,12 +7,11 @@ import { useNavigation } from '@react-navigation/native'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import { Button, Card, Text, useTheme } from 'react-native-paper'
+import { Button, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function TestPage() {
 	const clearQueue = usePlayerStore((state) => state.resetStore)
-	const queue = useCurrentQueue()
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
 	const navigation = useNavigation()
@@ -123,33 +121,13 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							useModalStore
-								.getState()
-								.open('ManualSearchLyrics', { uniqueKey: '123' })
+							useModalStore.getState().open('Welcome', undefined)
 						}}
 						style={{ marginBottom: 8 }}
 					>
 						试试
 					</Button>
 				</View>
-
-				<Text
-					variant='titleMedium'
-					style={{ marginTop: 16, marginBottom: 8 }}
-				>
-					当前队列 ({queue.length}):
-				</Text>
-				{queue.map((track) => (
-					<Card
-						key={`${track.id}`}
-						style={{ marginBottom: 8 }}
-					>
-						<Card.Title
-							title={track.title}
-							subtitle={track.artist?.name ?? '该视频还未获取元数据'}
-						/>
-					</Card>
-				))}
 			</ScrollView>
 			<View
 				style={{

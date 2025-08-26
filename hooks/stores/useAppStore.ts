@@ -1,10 +1,10 @@
+import { alert } from '@/components/modals/AlertModal'
 import type { AppState } from '@/types/core/appStore'
 import log from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import * as parseCookie from 'cookie'
 import * as Expo from 'expo'
 import { err, ok, type Result } from 'neverthrow'
-import { Alert } from 'react-native'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
@@ -114,11 +114,11 @@ export const useAppStore = create<AppState>()(
 					settings: { ...state.settings, enableSentryReport: value },
 				}))
 				storage.set('enable_sentry_report', value)
-				Alert.alert(
+				alert(
 					'重启？',
 					'切换 Sentry 上报后，需要重启应用才能生效。',
 					[
-						{ text: '取消', style: 'cancel' },
+						{ text: '取消' },
 						{ text: '确定', onPress: () => Expo.reloadAppAsync() },
 					],
 					{ cancelable: true },

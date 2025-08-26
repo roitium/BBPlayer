@@ -74,7 +74,6 @@ const styles = StyleSheet.create({
 		zIndex: 1000,
 	},
 	content: {
-		minHeight: '30%',
 		paddingTop: 10,
 	},
 })
