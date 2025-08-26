@@ -4,6 +4,7 @@ import { useModalStore } from '@/hooks/stores/useModalStore'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
 import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
+import lyricService from '@/lib/services/lyricService'
 import { ProjectScope } from '@/types/core/scope'
 import log, {
 	cleanOldLogFiles,
@@ -127,6 +128,14 @@ export default Sentry.wrap(function RootLayout() {
 					logger.info(`已清理 ${res.value} 个过期日志文件`)
 				}
 			})
+		})
+	}, [appIsReady])
+
+	// 迁移旧版歌词格式
+	useEffect(() => {
+		if (!appIsReady) return
+		InteractionManager.runAfterInteractions(() => {
+			void lyricService.migrateFromOldFormat()
 		})
 	}, [appIsReady])
 

@@ -169,9 +169,13 @@ export function toastAndLogError(
 			duration: Number.POSITIVE_INFINITY,
 		})
 		log.extend(scope).error(`${message}: ${flatErrorMessage(error)}`)
+	} else if (error === undefined) {
+		toast.error(message, {
+			duration: Number.POSITIVE_INFINITY,
+		})
 	} else {
 		toast.error(message, {
-			description: String(error),
+			description: String(error as unknown),
 			duration: Number.POSITIVE_INFINITY,
 		})
 		log.extend(scope).error(`${message}`, error)

@@ -18,7 +18,8 @@ export interface LyricLine {
 export interface ParsedLrc {
 	tags: Tags
 	lyrics: LyricLine[] | null
-	raw: string // 当无法解析时，会 fallback 到这里
+	rawOriginalLyrics: string // 原始歌词
+	rawTranslatedLyrics?: string // 原始翻译歌词
 	offset?: number // 单位秒
 }
 

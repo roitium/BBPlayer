@@ -4,6 +4,7 @@ import type { Tabs } from '@/app/tabs/library/[tab]'
 import type { AlertModalProps } from '@/components/modals/AlertModal'
 import type { NavigatorScreenParams } from '@react-navigation/native'
 import type { Playlist, Track } from './core/media'
+import type { ParsedLrc } from './player/lyrics'
 import type { CreateArtistPayload } from './services/artist'
 import type { CreateTrackPayload } from './services/track'
 
@@ -46,6 +47,7 @@ export type ModalPropsMap = {
 	DuplicateLocalPlaylist: { sourcePlaylistId: number; rawName: string }
 	ManualSearchLyrics: { uniqueKey: string; initialQuery: string }
 	Alert: AlertModalProps
+	EditLyrics: { uniqueKey: string; lyrics: ParsedLrc }
 }
 
 export type ModalKey = keyof ModalPropsMap

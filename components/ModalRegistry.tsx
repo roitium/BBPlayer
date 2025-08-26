@@ -7,6 +7,7 @@ import EditPlaylistMetadataModal from './modals/edit-metadata/editPlaylistMetada
 import EditTrackMetadataModal from './modals/edit-metadata/editTrackMetadataModal'
 import CookieLoginModal from './modals/login/CookieLoginModal'
 import QrCodeLoginModal from './modals/login/QRCodeLoginModal'
+import EditLyricsModal from './modals/lyrics/EditLyrics'
 import ManualSearchLyricsModal from './modals/lyrics/ManualSearchLyrics'
 import BatchAddTracksToLocalPlaylistModal from './modals/playlist/BatchAddTracksToLocalPlaylist'
 import CreatePlaylistModal from './modals/playlist/CreatePlaylistModal'
@@ -31,4 +32,5 @@ export const modalRegistry: { [K in ModalKey]: ModalComponent<K> } = {
 	DuplicateLocalPlaylist: DuplicateLocalPlaylistModal,
 	ManualSearchLyrics: ManualSearchLyricsModal,
 	Alert: AlertModal,
+	EditLyrics: EditLyricsModal,
 }

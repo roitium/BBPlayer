@@ -1,4 +1,5 @@
 import { lyricsQueryKeys, useSmartFetchLyrics } from '@/hooks/queries/lyrics'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { queryClient } from '@/lib/config/queryClient'
 import lyricService from '@/lib/services/lyricService'
@@ -147,7 +148,7 @@ export default function Lyrics({
 	const handleCloseOffsetMenu = useCallback(async () => {
 		setOffsetMenuVisible(false)
 		if (!lyrics) return
-		const saveResult = await lyricService.saveLyricsToCache(
+		const saveResult = await lyricService.saveLyricsToFile(
 			{
 				...lyrics,
 				offset: lyrics.offset,
@@ -248,16 +249,47 @@ export default function Lyrics({
 		)
 	}
 
-	if (!lyrics.lyrics) {
-		return (
-			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-				<Text
-					variant='bodyMedium'
-					style={{ textAlign: 'center' }}
+	const renderLyrics = () => {
+		if (!lyrics.lyrics) {
+			return (
+				<Animated.ScrollView
+					contentContainerStyle={{
+						justifyContent: 'center',
+						alignItems: 'center',
+					}}
+					scrollEventThrottle={16}
+					onScroll={scrollHandler}
 				>
-					{lyrics.raw}
-				</Text>
-			</View>
+					<Text
+						variant='bodyMedium'
+						style={{ textAlign: 'center' }}
+					>
+						{lyrics.rawTranslatedLyrics ? '原始歌词：' : ''}
+						{lyrics.rawOriginalLyrics}
+						{lyrics.rawTranslatedLyrics
+							? `\n\n翻译歌词：${lyrics.rawTranslatedLyrics}`
+							: ''}
+					</Text>
+				</Animated.ScrollView>
+			)
+		}
+		return (
+			<AnimatedFlashList
+				ref={flashListRef}
+				data={lyrics.lyrics}
+				renderItem={renderItem}
+				keyExtractor={keyExtractor}
+				contentContainerStyle={{
+					justifyContent: 'center',
+					pointerEvents: offsetMenuVisible ? 'none' : 'auto',
+				}}
+				showsVerticalScrollIndicator={false}
+				onMomentumScrollEnd={onUserScrollEnd}
+				onScrollEndDrag={onUserScrollEnd}
+				onScrollBeginDrag={onUserScrollStart}
+				scrollEventThrottle={16}
+				onScroll={scrollHandler}
+			/>
 		)
 	}
 
@@ -267,22 +299,7 @@ export default function Lyrics({
 			ref={containerRef}
 		>
 			<View style={{ flex: 1, flexDirection: 'column' }}>
-				<AnimatedFlashList
-					ref={flashListRef}
-					data={lyrics.lyrics}
-					renderItem={renderItem}
-					keyExtractor={keyExtractor}
-					contentContainerStyle={{
-						justifyContent: 'center',
-						pointerEvents: offsetMenuVisible ? 'none' : 'auto',
-					}}
-					showsVerticalScrollIndicator={false}
-					onMomentumScrollEnd={onUserScrollEnd}
-					onScrollEndDrag={onUserScrollEnd}
-					onScrollBeginDrag={onUserScrollStart}
-					scrollEventThrottle={16}
-					onScroll={scrollHandler}
-				/>
+				{renderLyrics()}
 				{/* 顶部渐变遮罩 */}
 				<AnimatedLinearGradient
 					colors={[colors.background, 'transparent']}
@@ -346,20 +363,39 @@ export default function Lyrics({
 
 				{/* 歌词偏移量调整显示按钮 */}
 				<View style={{ flex: 1, alignItems: 'flex-end' }}>
-					<RectButton
-						style={{ borderRadius: 99999, padding: 10 }}
-						ref={offsetMenuAnchorRef}
-						enabled={!offsetMenuVisible}
-						onPress={() => setOffsetMenuVisible(true)}
-					>
-						<Icon
-							source='swap-vertical-circle-outline'
-							size={20}
-							color={
-								offsetMenuVisible ? colors.onSurfaceDisabled : colors.primary
+					<View style={{ flex: 1, flexDirection: 'row' }}>
+						<RectButton
+							style={{ borderRadius: 99999, padding: 10 }}
+							enabled={!offsetMenuVisible}
+							onPress={() =>
+								useModalStore
+									.getState()
+									.open('EditLyrics', { uniqueKey: track.uniqueKey, lyrics })
 							}
-						/>
-					</RectButton>
+						>
+							<Icon
+								source='pencil'
+								size={20}
+								color={
+									offsetMenuVisible ? colors.onSurfaceDisabled : colors.primary
+								}
+							/>
+						</RectButton>
+						<RectButton
+							style={{ borderRadius: 99999, padding: 10 }}
+							ref={offsetMenuAnchorRef}
+							enabled={!offsetMenuVisible}
+							onPress={() => setOffsetMenuVisible(true)}
+						>
+							<Icon
+								source='swap-vertical-circle-outline'
+								size={20}
+								color={
+									offsetMenuVisible ? colors.onSurfaceDisabled : colors.primary
+								}
+							/>
+						</RectButton>
+					</View>
 				</View>
 			</View>
 

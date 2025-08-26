@@ -22,7 +22,7 @@ export const useSmartFetchLyrics = (track?: Track) => {
 				if (result.error.type === 'SearchResultNoMatch') {
 					return {
 						lyrics: null,
-						raw: result.error.message, // 就这样 hack 一下
+						rawOriginalLyrics: result.error.message, // 就这样 hack 一下
 						tags: {},
 					}
 				}

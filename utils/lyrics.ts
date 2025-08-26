@@ -1,5 +1,5 @@
 import type { ParsedLrc } from '@/types/player/lyrics'
-import log from './log'
+import log, { toastAndLogError } from './log'
 
 const logger = log.extend('Utils.Lyrics')
 
@@ -14,7 +14,7 @@ export function parseLrc(lrcString: string): ParsedLrc {
 		return {
 			tags: {},
 			lyrics: null,
-			raw: lrcString,
+			rawOriginalLyrics: lrcString,
 		}
 	}
 
@@ -23,7 +23,7 @@ export function parseLrc(lrcString: string): ParsedLrc {
 		const parsedResult: ParsedLrc = {
 			tags: {},
 			lyrics: [],
-			raw: lrcString,
+			rawOriginalLyrics: lrcString,
 		}
 
 		const tagRegex = /^\[([a-zA-Z0-9]+):(.+)\]$/
@@ -62,6 +62,18 @@ export function parseLrc(lrcString: string): ParsedLrc {
 						text: textContent,
 					})
 				}
+			} else {
+				console.log(1)
+				toastAndLogError(
+					`歌词格式错误，无法解析此行: "${line}"`,
+					undefined,
+					'Utils.Lyrics',
+				)
+				return {
+					...parsedResult,
+					lyrics: null,
+					rawOriginalLyrics: lrcString,
+				}
 			}
 		}
 
@@ -70,9 +82,9 @@ export function parseLrc(lrcString: string): ParsedLrc {
 		if (parsedResult.lyrics!.length === 0) {
 			logger.warning('没解析到歌词，设置 lyrics 为 null')
 			return {
-				tags: {},
+				tags: parsedResult.tags,
 				lyrics: null,
-				raw: lrcString,
+				rawOriginalLyrics: lrcString,
 			}
 		}
 
@@ -82,13 +94,13 @@ export function parseLrc(lrcString: string): ParsedLrc {
 		return {
 			tags: {},
 			lyrics: null,
-			raw: lrcString,
+			rawOriginalLyrics: lrcString,
 		}
 	}
 }
 
 /**
- * 将翻译歌词（tlrc）合并到原始歌词（lrc）中
+ * 将翻译歌词合并到原始歌词中
  * 只有时间戳完全相同的行才会被合并
  * @param originalLrc - 解析后的原始歌词对象
  * @param translatedLrc - 解析后的翻译歌词对象
@@ -126,6 +138,7 @@ export function mergeLrc(
 	return {
 		tags: mergedTags,
 		lyrics: mergedLyrics,
-		raw: `${originalLrc.raw}\n\n${translatedLrc.raw}`,
+		rawOriginalLyrics: originalLrc.rawOriginalLyrics,
+		rawTranslatedLyrics: translatedLrc.rawOriginalLyrics,
 	}
 }

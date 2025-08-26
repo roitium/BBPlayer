@@ -1,13 +1,18 @@
 import { neteaseApi, type NeteaseApi } from '@/lib/api/netease/api'
 import type { Track } from '@/types/core/media'
 import type { LyricSearchResult, ParsedLrc } from '@/types/player/lyrics'
-import log from '@/utils/log'
+import log, { toastAndLogError } from '@/utils/log'
 import * as FileSystem from 'expo-file-system'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import type { CustomError } from '../errors'
 import { DataParsingError, FileSystemError } from '../errors'
 
 const logger = log.extend('Service.Lyric')
+type lyricFileType =
+	| ParsedLrc
+	| (Omit<ParsedLrc, 'rawOriginalLyrics' | 'rawTranslatedLyrics'> & {
+			raw: string
+	  })
 
 class LyricService {
 	constructor(readonly neteaseApi: NeteaseApi) {}
@@ -102,7 +107,7 @@ class LyricService {
 		})
 	}
 
-	public saveLyricsToCache(lyrics: ParsedLrc, uniqueKey: string) {
+	public saveLyricsToFile(lyrics: ParsedLrc, uniqueKey: string) {
 		const basePath = `${FileSystem.documentDirectory}lyrics/`
 		const filePath = `${basePath}${uniqueKey.replaceAll('::', '--')}.json`
 		return ResultAsync.fromPromise(
@@ -134,10 +139,47 @@ class LyricService {
 					.getLyrics(item.remoteId)
 					.andThen((lyrics) => okAsync(this.neteaseApi.parseLyrics(lyrics)))
 					.andThen((lyrics) => {
-						return this.saveLyricsToCache(lyrics, uniqueKey)
+						return this.saveLyricsToFile(lyrics, uniqueKey)
 					})
 			default:
 				return errAsync(new Error('未知歌曲源'))
+		}
+	}
+
+	/**
+	 * 迁移旧版歌词格式
+	 */
+	public async migrateFromOldFormat() {
+		const basePath = `${FileSystem.documentDirectory}lyrics/`
+		try {
+			const lyricFiles = await FileSystem.readDirectoryAsync(basePath)
+			for (const file of lyricFiles) {
+				const filePath = `${basePath}${file}`
+				const content = await FileSystem.readAsStringAsync(filePath)
+				const parsed = JSON.parse(content) as lyricFileType
+				const finalLyric: ParsedLrc = {
+					tags: parsed.tags,
+					offset: parsed.offset,
+					lyrics: parsed.lyrics,
+					rawOriginalLyrics: '',
+				}
+				if ('raw' in parsed) {
+					const trySplitIt = parsed.raw.split('\n\n')
+					if (trySplitIt.length === 2) {
+						finalLyric.rawOriginalLyrics = trySplitIt[0]
+						finalLyric.rawTranslatedLyrics = trySplitIt[1]
+					} else {
+						finalLyric.rawOriginalLyrics = parsed.raw
+					}
+				} else {
+					finalLyric.rawOriginalLyrics = parsed.rawOriginalLyrics
+					finalLyric.rawTranslatedLyrics = parsed.rawTranslatedLyrics
+				}
+				await this.saveLyricsToFile(finalLyric, file.replace('.json', ''))
+			}
+			logger.info('歌词格式迁移完成')
+		} catch (e) {
+			toastAndLogError('迁移歌词格式失败', e, 'Service.Lyric')
 		}
 	}
 }
