@@ -6,8 +6,9 @@ import {
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Image } from 'expo-image'
 import { memo } from 'react'
-import { Image, View } from 'react-native'
+import { View } from 'react-native'
 import {
 	Gesture,
 	GestureDetector,
@@ -112,6 +113,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 									borderWidth: 0.8,
 									borderColor: colors.primary,
 								}}
+								cachePolicy={'memory'}
 							/>
 
 							<View

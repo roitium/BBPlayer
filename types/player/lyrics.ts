@@ -19,6 +19,7 @@ export interface ParsedLrc {
 	tags: Tags
 	lyrics: LyricLine[] | null
 	raw: string // 当无法解析时，会 fallback 到这里
+	offset?: number // 单位秒
 }
 
 export type LyricSearchResult = {

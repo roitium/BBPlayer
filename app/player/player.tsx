@@ -66,7 +66,11 @@ export default function PlayerPage() {
 						pointerEvents: menuVisible ? 'none' : 'auto',
 					}}
 				>
-					<PlayerHeader onMorePress={() => setMenuVisible(true)} />
+					<PlayerHeader
+						onMorePress={() => setMenuVisible(true)}
+						viewMode={viewMode}
+						trackTitle={currentTrack?.title}
+					/>
 					{viewMode === 'cover' ? (
 						<TrackInfo
 							isFavorite={isFavorite}

@@ -8,11 +8,13 @@ export default function useLyricSync(
 	lyrics: LyricLine[],
 	flashListRef: RefObject<FlashListRef<LyricLine> | null>,
 	seekTo: (position: number) => void,
+	offset: number, // 单位秒
 ) {
 	const [currentLyricIndex, setCurrentLyricIndex] = useState(0)
 	const isManualScrollingRef = useRef(false)
 	const manualScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const { position } = usePlaybackProgress(100)
+	const offsetedPosition = position + offset
 
 	const findIndexForTime = useCallback(
 		(timestamp: number) => {
@@ -75,11 +77,16 @@ export default function useLyricSync(
 
 	// 计算并更新当前歌词的索引
 	useEffect(() => {
-		if (position <= 0 || lyrics.length === 0) return
-		const index = findIndexForTime(position)
+		if (lyrics.length === 0) return
+		if (offsetedPosition <= 0) {
+			// 如果便宜后的时间小于等于0，直接定位到第一句
+			if (currentLyricIndex !== 0) setCurrentLyricIndex(0)
+			return
+		}
+		const index = findIndexForTime(offsetedPosition)
 		if (index === currentLyricIndex) return
 		setCurrentLyricIndex(index)
-	}, [currentLyricIndex, findIndexForTime, lyrics.length, position])
+	}, [currentLyricIndex, findIndexForTime, lyrics.length, offsetedPosition])
 
 	// 当歌词发生变化且用户没自己滚时，滚动到当前歌词
 	useEffect(() => {

@@ -31,7 +31,7 @@ export const useSmartFetchLyrics = (track?: Track) => {
 			return result.value
 		},
 		enabled,
-		staleTime: 24 * 60 * 1000,
+		staleTime: 0,
 	})
 }
 

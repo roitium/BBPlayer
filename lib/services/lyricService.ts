@@ -102,7 +102,7 @@ class LyricService {
 		})
 	}
 
-	private saveLyricsToCache(lyrics: ParsedLrc, uniqueKey: string) {
+	public saveLyricsToCache(lyrics: ParsedLrc, uniqueKey: string) {
 		const basePath = `${FileSystem.documentDirectory}lyrics/`
 		const filePath = `${basePath}${uniqueKey.replaceAll('::', '--')}.json`
 		return ResultAsync.fromPromise(

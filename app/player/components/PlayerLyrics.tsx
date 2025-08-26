@@ -1,13 +1,22 @@
-import { useSmartFetchLyrics } from '@/hooks/queries/lyrics'
+import { lyricsQueryKeys, useSmartFetchLyrics } from '@/hooks/queries/lyrics'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { queryClient } from '@/lib/config/queryClient'
+import lyricService from '@/lib/services/lyricService'
 import type { Track } from '@/types/core/media'
 import type { LyricLine } from '@/types/player/lyrics'
+import { toastAndLogError } from '@/utils/log'
 import type { FlashListRef } from '@shopify/flash-list'
 import { FlashList } from '@shopify/flash-list'
-import { memo, useCallback, useRef } from 'react'
-import { ScrollView, View } from 'react-native'
+import { memo, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { Dimensions, ScrollView, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
-import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper'
+import {
+	ActivityIndicator,
+	Divider,
+	Icon,
+	Text,
+	useTheme,
+} from 'react-native-paper'
 import useLyricSync from '../hooks/useLyricSync'
 
 const LyricLineItem = memo(function LyricLineItem({
@@ -65,8 +74,19 @@ export default function Lyrics({
 	onBackPress: () => void
 	track: Track
 }) {
+	const colors = useTheme().colors
 	const flashListRef = useRef<FlashListRef<LyricLine>>(null)
 	const seekTo = usePlayerStore((state) => state.seekTo)
+	const [offsetMenuVisible, setOffsetMenuVisible] = useState(false)
+	const [offsetMenuAnchor, setOffsetMenuAnchor] = useState<{
+		x: number
+		y: number
+		width: number
+		height: number
+	} | null>(null)
+	const offsetMenuAnchorRef = useRef<View>(null)
+	const containerRef = useRef<View>(null)
+	const { height: windowHeight } = Dimensions.get('window')
 
 	const { data: lyrics, isPending, isError, error } = useSmartFetchLyrics(track)
 	const {
@@ -74,7 +94,47 @@ export default function Lyrics({
 		onUserScrollEnd,
 		onUserScrollStart,
 		handleJumpToLyric,
-	} = useLyricSync(lyrics?.lyrics ?? [], flashListRef, seekTo)
+	} = useLyricSync(
+		lyrics?.lyrics ?? [],
+		flashListRef,
+		seekTo,
+		lyrics?.offset ?? 0,
+	)
+
+	const handleChangeOffset = useCallback(
+		(delta: number) => {
+			if (!lyrics) return
+			const newOffset = (lyrics.offset ?? 0) + delta
+			queryClient.setQueryData(
+				lyricsQueryKeys.smartFetchLyrics(track.uniqueKey),
+				() => {
+					return {
+						...lyrics,
+						offset: newOffset,
+					}
+				},
+			)
+			console.log('直接更新缓存：', newOffset)
+		},
+		[lyrics, track.uniqueKey],
+	)
+
+	const handleCloseOffsetMenu = useCallback(async () => {
+		setOffsetMenuVisible(false)
+		if (!lyrics) return
+		const saveResult = await lyricService.saveLyricsToCache(
+			{
+				...lyrics,
+				offset: lyrics.offset,
+			},
+			track.uniqueKey,
+		)
+		if (saveResult.isErr()) {
+			toastAndLogError('保存歌词偏移量失败', saveResult.error, 'Lyrics')
+			return
+		}
+		console.log('保存歌词偏移量成功:', lyrics.offset)
+	}, [lyrics, track.uniqueKey])
 
 	const keyExtractor = useCallback(
 		(item: LyricLine, index: number) => `${index}_${item.timestamp * 1000}`,
@@ -92,6 +152,17 @@ export default function Lyrics({
 		),
 		[currentLyricIndex, handleJumpToLyric],
 	)
+
+	useLayoutEffect(() => {
+		if (offsetMenuAnchorRef.current && containerRef.current) {
+			offsetMenuAnchorRef.current.measureLayout(
+				containerRef.current,
+				(x, y, width, height) => {
+					setOffsetMenuAnchor({ x, y, width, height })
+				},
+			)
+		}
+	}, [])
 
 	if (isPending) {
 		return (
@@ -135,28 +206,125 @@ export default function Lyrics({
 	}
 
 	return (
-		<View style={{ flex: 1 }}>
+		<View
+			style={{ flex: 1 }}
+			ref={containerRef}
+		>
 			<FlashList
 				ref={flashListRef}
 				data={lyrics.lyrics}
 				renderItem={renderItem}
 				keyExtractor={keyExtractor}
-				contentContainerStyle={{ justifyContent: 'center' }}
+				contentContainerStyle={{
+					justifyContent: 'center',
+					pointerEvents: offsetMenuVisible ? 'none' : 'auto',
+				}}
 				showsVerticalScrollIndicator={false}
 				onMomentumScrollEnd={onUserScrollEnd}
 				onScrollEndDrag={onUserScrollEnd}
 				onScrollBeginDrag={onUserScrollStart}
-				style={{ flex: 1 }}
 			/>
 
-			<Button
-				mode='text'
-				onPress={onBackPress}
-				style={{ marginTop: 10, alignSelf: 'center', minWidth: 0 }}
-				// contentStyle={{ padding: 10 }}
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					paddingHorizontal: 16,
+				}}
 			>
-				返回
-			</Button>
+				<View style={{ flex: 1 }} />
+
+				<RectButton
+					onPress={onBackPress}
+					style={{ borderRadius: 99999, padding: 10 }}
+					enabled={!offsetMenuVisible}
+				>
+					<Text
+						variant='titleSmall'
+						style={{
+							color: offsetMenuVisible
+								? colors.onSurfaceDisabled
+								: colors.primary,
+							textAlign: 'center',
+						}}
+					>
+						返回
+					</Text>
+				</RectButton>
+
+				<View style={{ flex: 1, alignItems: 'flex-end' }}>
+					<RectButton
+						style={{ borderRadius: 99999, padding: 10 }}
+						ref={offsetMenuAnchorRef}
+						enabled={!offsetMenuVisible}
+						onPress={() => setOffsetMenuVisible(true)}
+					>
+						<Icon
+							source='swap-vertical-circle-outline'
+							size={20}
+							color={
+								offsetMenuVisible ? colors.onSurfaceDisabled : colors.primary
+							}
+						/>
+					</RectButton>
+				</View>
+			</View>
+
+			<View
+				style={{
+					position: 'absolute',
+					left: offsetMenuAnchor ? offsetMenuAnchor.x : 0,
+					top: offsetMenuAnchor ? windowHeight - offsetMenuAnchor.y - 60 : 0,
+					backgroundColor: colors.elevation.level2,
+					gap: 8,
+					borderRadius: 12,
+					elevation: 10,
+					paddingHorizontal: 2,
+					paddingVertical: 4,
+					opacity: offsetMenuVisible ? 1 : 0,
+					pointerEvents: offsetMenuVisible ? 'auto' : 'none',
+					zIndex: 99999,
+				}}
+			>
+				<RectButton
+					style={{ borderRadius: 99999, padding: 10 }}
+					onPress={() => handleChangeOffset(0.5)}
+				>
+					<Icon
+						source='arrow-up'
+						size={20}
+						color={colors.onSurface}
+					/>
+				</RectButton>
+				<Text
+					variant='titleSmall'
+					style={{ color: colors.onSurface, textAlign: 'center' }}
+				>
+					{(lyrics.offset ?? 0).toFixed(1)}s
+				</Text>
+				<RectButton
+					style={{ borderRadius: 99999, padding: 10 }}
+					onPress={() => handleChangeOffset(-0.5)}
+				>
+					<Icon
+						source='arrow-down'
+						size={20}
+						color={colors.onSurface}
+					/>
+				</RectButton>
+				<Divider />
+				<RectButton
+					style={{ borderRadius: 99999, padding: 10 }}
+					onPress={handleCloseOffsetMenu}
+				>
+					<Icon
+						source='check'
+						size={20}
+						color={colors.onSurface}
+					/>
+				</RectButton>
+			</View>
 		</View>
 	)
 }
