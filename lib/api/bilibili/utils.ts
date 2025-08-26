@@ -1,5 +1,6 @@
 import useAppStore from '@/hooks/stores/useAppStore'
 import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
+import type { Result } from 'neverthrow'
 import { err, ok } from 'neverthrow'
 
 /**
@@ -49,7 +50,7 @@ export function av2bv(avid: number | bigint): string {
 	return resultArray.join('')
 }
 
-export function getCsrfToken() {
+export function getCsrfToken(): Result<string, BilibiliApiError> {
 	const cookieList = useAppStore.getState().bilibiliCookie
 	if (!cookieList)
 		return err(

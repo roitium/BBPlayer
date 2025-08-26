@@ -1,22 +1,34 @@
+import { useThumbUpVideo } from '@/hooks/mutations/bilibili/video'
+import { useGetVideoIsThumbUp } from '@/hooks/queries/bilibili/video'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { Image } from 'expo-image'
 import { Dimensions, TouchableOpacity, View } from 'react-native'
 import { IconButton, Text, TouchableRipple, useTheme } from 'react-native-paper'
 
 export function TrackInfo({
-	isFavorite,
-	onFavoritePress,
 	onArtistPress,
 	onPressCover,
 }: {
-	isFavorite: boolean
-	onFavoritePress: () => void
 	onArtistPress: () => void
 	onPressCover: () => void
 }) {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const { width: screenWidth } = Dimensions.get('window')
+	const isBilibiliVideo = currentTrack?.source === 'bilibili'
+
+	const { data: isThumbUp, isPending: isThumbUpPending } = useGetVideoIsThumbUp(
+		isBilibiliVideo ? currentTrack?.bilibiliMetadata.bvid : undefined,
+	)
+	const { mutate: doThumbUpAction } = useThumbUpVideo()
+
+	const onThumbUpPress = () => {
+		if (isThumbUpPending || !isBilibiliVideo) return
+		doThumbUpAction({
+			bvid: currentTrack.bilibiliMetadata.bvid,
+			like: !isThumbUp,
+		})
+	}
 
 	if (!currentTrack) return null
 
@@ -72,12 +84,14 @@ export function TrackInfo({
 							</TouchableRipple>
 						)}
 					</View>
-					<IconButton
-						icon={isFavorite ? 'heart' : 'heart-outline'}
-						size={24}
-						iconColor={isFavorite ? colors.error : colors.onSurfaceVariant}
-						onPress={onFavoritePress}
-					/>
+					{isBilibiliVideo && (
+						<IconButton
+							icon={isThumbUp ? 'heart' : 'heart-outline'}
+							size={24}
+							iconColor={isThumbUp ? colors.error : colors.onSurfaceVariant}
+							onPress={onThumbUpPress}
+						/>
+					)}
 				</View>
 			</View>
 		</View>

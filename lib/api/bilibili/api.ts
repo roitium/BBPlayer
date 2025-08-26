@@ -38,7 +38,6 @@ export const createBilibiliApi = () => ({
 			'/x/v2/history',
 			undefined,
 		)
-		// .map(transformHistoryVideosToTracks)
 	},
 
 	/**
@@ -52,7 +51,6 @@ export const createBilibiliApi = () => ({
 				list: BilibiliVideoDetails[]
 			}>(`/x/web-interface/ranking/v2?rid=${partition}`, undefined)
 			.map((response) => response.list)
-		// .map((response) => transformVideoDetailsToTracks(response.list))
 	},
 
 	/**
@@ -67,7 +65,6 @@ export const createBilibiliApi = () => ({
 			}>(`/x/v3/fav/folder/created/list-all?up_mid=${userMid}`, undefined)
 			.map((response) => response.list)
 			.map((list) => list ?? [])
-		// .map((response) => transformFavoriteListsToPlaylists(response.list))
 	},
 
 	/**
@@ -276,11 +273,6 @@ export const createBilibiliApi = () => ({
 				ps: '40',
 			},
 		)
-		// .map((response) => ({
-		// 	tracks: transformFavoriteContentsToTracks(response.medias),
-		// 	hasMore: response.has_more,
-		// 	favoriteMeta: response.info,
-		// }))
 	},
 
 	/**
@@ -390,11 +382,6 @@ export const createBilibiliApi = () => ({
 				count: response.count,
 				hasMore: response.has_more,
 			}))
-		// .map((response) => ({
-		// 	list: response.list ?? [],
-		// 	count: response.count,
-		// 	hasMore: response.has_more,
-		// }))
 	},
 
 	/**
@@ -411,12 +398,6 @@ export const createBilibiliApi = () => ({
 				pn: '1', // Start from page 1
 			},
 		)
-		// .map((response) => {
-		// 	return {
-		// 		info: response.info,
-		// 		medias: transformCollectionAllContentsToTracks(response.medias),
-		// 	}
-		// })
 	},
 
 	/**
@@ -646,6 +627,54 @@ export const createBilibiliApi = () => ({
 			}
 			return okAsync(redirectUrl)
 		})
+	},
+
+	/**
+	 * 检查视频是否已经点赞
+	 * （文档中说该接口实际查询的是 **近期** 是否被点赞）
+	 */
+	checkVideoIsThumbUp: (bvid: string) => {
+		return bilibiliApiClient.get<0 | 1>('/x/web-interface/archive/has/like', {
+			bvid,
+		})
+	},
+
+	/**
+	 * 给视频点赞或取消点赞
+	 * @param bvid
+	 * @param like true 表示点赞，false 表示取消点赞
+	 * @returns 对于重复点赞的错误一律当作成功返回。
+	 */
+	thumbUpVideo: (
+		bvid: string,
+		like: boolean,
+	): ResultAsync<0, BilibiliApiError> => {
+		const csrfToken = getCsrfToken()
+		if (csrfToken.isErr()) return errAsync(csrfToken.error)
+
+		const data = {
+			bvid,
+			like: like ? '1' : '2',
+			csrf: csrfToken.value,
+		}
+
+		return bilibiliApiClient
+			.post<undefined>(
+				'/x/web-interface/archive/like',
+				new URLSearchParams(data).toString(),
+			)
+			.andThen(() => {
+				return okAsync(0 as const)
+			})
+			.orElse((err) => {
+				switch (err.data.msgCode) {
+					case 65006:
+						// 重复点赞
+						return okAsync(0 as const)
+					default:
+						return errAsync(err)
+				}
+			})
 	},
 })
 
