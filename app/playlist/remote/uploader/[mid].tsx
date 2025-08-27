@@ -19,6 +19,7 @@ import { formatMMSSToSeconds } from '@/utils/time'
 import {
 	type RouteProp,
 	useNavigation,
+	usePreventRemove,
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -80,7 +81,8 @@ export default function UploaderPage() {
 	const [refreshing, setRefreshing] = useState(false)
 	const enable = useAppStore((state) => state.hasBilibiliCookie())
 
-	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
+	const { selected, selectMode, toggle, enterSelectMode, exitSelectMode } =
+		useTrackSelection()
 
 	const [searchQuery, setSearchQuery] = useState('')
 	const [startSearch, setStartSearch] = useState(false)
@@ -136,6 +138,11 @@ export default function UploaderPage() {
 			setTransitionDone(true)
 		})
 	}, [navigation])
+
+	usePreventRemove(startSearch || selectMode, () => {
+		if (startSearch) setStartSearch(false)
+		if (selectMode) exitSelectMode()
+	})
 
 	if (typeof mid !== 'string') {
 		return null
