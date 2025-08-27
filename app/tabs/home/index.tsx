@@ -1,13 +1,17 @@
 import { alert } from '@/components/modals/AlertModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
+import useAppStore from '@/hooks/stores/useAppStore'
+import { queryClient } from '@/lib/config/queryClient'
 import { toastAndLogError } from '@/utils/log'
+import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { useShareIntentContext } from 'expo-share-intent'
 import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
+import { RectButton } from 'react-native-gesture-handler'
 import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -34,6 +38,8 @@ function HomePage() {
 	const [isLoading, setIsLoading] = useState(false)
 	const { hasShareIntent, shareIntent, resetShareIntent } =
 		useShareIntentContext()
+	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
+	const hasBilibiliCookie = useAppStore((state) => state.hasBilibiliCookie)
 
 	const {
 		data: personalInfo,
@@ -164,7 +170,29 @@ function HomePage() {
 								: personalInfo.name}
 						</Text>
 					</View>
-					<View>
+					<RectButton
+						enabled={hasBilibiliCookie()}
+						onPress={() =>
+							alert(
+								'退出登录？',
+								'是否退出登录？',
+								[
+									{ text: '取消' },
+									{
+										text: '确定',
+										onPress: async () => {
+											clearBilibiliCookie()
+											await queryClient.cancelQueries()
+											queryClient.clear()
+											toast.success('Cookie 已清除')
+										},
+									},
+								],
+								{ cancelable: true },
+							)
+						}
+						style={{ borderRadius: 20, overflow: 'hidden' }}
+					>
 						<Image
 							style={{ width: 40, height: 40, borderRadius: 20 }}
 							source={
@@ -175,7 +203,7 @@ function HomePage() {
 										require('@/assets/images/bilibili-default-avatar.jpg')
 							}
 						/>
-					</View>
+					</RectButton>
 				</View>
 			</View>
 
