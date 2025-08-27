@@ -2,9 +2,9 @@ import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { trackService } from '@/lib/services/trackService'
 import type { Track } from '@/types/core/media'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { FlashList } from '@shopify/flash-list'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import {
 	ActivityIndicator,
@@ -46,7 +46,7 @@ export default function LeaderboardPage() {
 	const insets = useSafeAreaInsets()
 	const currentTrack = useCurrentTrack()
 
-	useEffect(() => {
+	useFocusEffect(() => {
 		const fetchLeaderboard = async () => {
 			setIsLoading(true)
 			setIsError(false)
@@ -62,7 +62,7 @@ export default function LeaderboardPage() {
 		}
 
 		void fetchLeaderboard()
-	}, [])
+	})
 
 	const totalDuration = useMemo(() => {
 		if (!data) return '0秒'
