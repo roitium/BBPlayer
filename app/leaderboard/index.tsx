@@ -30,11 +30,11 @@ const formatDurationToWords = (seconds: number) => {
 	const s = Math.floor(seconds % 60)
 
 	const parts = []
-	if (h > 0) parts.push(`${h}小时`)
-	if (m > 0) parts.push(`${m}分钟`)
+	if (h > 0) parts.push(`${h}时`)
+	if (m > 0) parts.push(`${m}分`)
 	if (s > 0 || parts.length === 0) parts.push(`${s}秒`)
 
-	return parts.join('')
+	return parts.join(' ')
 }
 
 export default function LeaderboardPage() {
