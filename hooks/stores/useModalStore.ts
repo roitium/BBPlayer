@@ -43,6 +43,11 @@ export const useModalStore = create<ModalState>()(
 			const doClose = () =>
 				set((state) => ({ modals: state.modals.filter((m) => m.key !== key) }))
 
+			if (!Keyboard.isVisible()) {
+				doClose()
+				return
+			}
+
 			let handled = false
 			const onHide = () => {
 				if (handled) return

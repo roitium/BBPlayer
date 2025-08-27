@@ -40,10 +40,14 @@ export default function AlertModal({
 				)
 			}
 			case 1: {
+				const handlePress = () => {
+					button.onPress?.()
+					close('Alert')
+				}
 				return (
 					<Button
 						key={index}
-						onPress={button.onPress}
+						onPress={handlePress}
 						uppercase={false}
 						mode='text'
 					>
