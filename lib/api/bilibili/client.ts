@@ -2,7 +2,7 @@ import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import { BilibiliApiError } from '../../errors/thirdparty/bilibili'
 
-interface ReqResponse<T> {
+export interface ReqResponse<T> {
 	code: number
 	message: string
 	data: T
@@ -43,8 +43,9 @@ class ApiClient {
 			}),
 			(error) =>
 				new BilibiliApiError({
-					message: error instanceof Error ? error.message : String(error),
+					message: `请求失败: ${error instanceof Error ? error.message : String(error)}`,
 					type: 'RequestFailed',
+					cause: error,
 				}),
 		)
 			.andThen((response) => {
@@ -94,14 +95,20 @@ class ApiClient {
 	 */
 	get<T>(
 		endpoint: string,
-		params?: Record<string, string> | string,
+		params?: Record<string, string | undefined> | string,
 		fullUrl?: string,
 	): ResultAsync<T, BilibiliApiError> {
 		let url = endpoint
 		if (typeof params === 'string') {
 			url = `${endpoint}?${params}`
 		} else if (params) {
-			url = `${endpoint}?${new URLSearchParams(params).toString()}`
+			const searchParams = new URLSearchParams()
+			for (const [key, value] of Object.entries(params)) {
+				if (value !== undefined) {
+					searchParams.append(key, value)
+				}
+			}
+			url = `${endpoint}?${searchParams.toString()}`
 		}
 		return this.request<T>(url, { method: 'GET' }, fullUrl)
 	}

@@ -1,3 +1,4 @@
+import SearchSuggestions from '@/app/tabs/home/components/SearchSuggestions'
 import { alert } from '@/components/modals/AlertModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
@@ -9,8 +10,14 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { useShareIntentContext } from 'expo-share-intent'
-import { useCallback, useEffect, useState } from 'react'
-import { View } from 'react-native'
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react'
+import { Keyboard, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
 import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
@@ -40,6 +47,15 @@ function HomePage() {
 		useShareIntentContext()
 	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 	const hasBilibiliCookie = useAppStore((state) => state.hasBilibiliCookie)
+	const searchBarLayout = useRef<{
+		x: number
+		y: number
+		width: number
+		height: number
+		pageX: number
+		pageY: number
+	} | null>(null)
+	const searchBarRef = useRef<View>(null)
 
 	const {
 		data: personalInfo,
@@ -109,15 +125,21 @@ function HomePage() {
 	const handleEnter = useCallback(
 		async (query: string) => {
 			if (!query.trim()) return
+			Keyboard.dismiss()
 			setIsLoading(true)
 			const addToHistory = await matchSearchStrategies(query, navigation)
 			if (addToHistory) {
 				addSearchHistory(query)
 			}
 			setIsLoading(false)
+			setSearchQuery('')
 		},
 		[addSearchHistory, navigation],
 	)
+
+	const handleSuggestionPress = (query: string) => {
+		void handleEnter(query)
+	}
 
 	const handleSearchItemClick = (query: string) => {
 		setSearchQuery(query)
@@ -136,6 +158,14 @@ function HomePage() {
 		resetShareIntent()
 		void handleEnter(query)
 	}, [hasShareIntent, shareIntent, navigation, resetShareIntent, handleEnter])
+
+	useLayoutEffect(() => {
+		if (searchBarRef.current) {
+			searchBarRef.current.measure((x, y, width, height, pageX, pageY) => {
+				searchBarLayout.current = { x, y, width, height, pageX, pageY }
+			})
+		}
+	}, [searchBarLayout])
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -216,19 +246,27 @@ function HomePage() {
 						paddingBottom: 8,
 					}}
 				>
-					<Searchbar
-						placeholder='关键词 / b23.tv 或完整网址 / bv / av'
-						onChangeText={setSearchQuery}
-						value={searchQuery}
-						icon={isLoading ? 'loading' : 'magnify'}
-						onClearIconPress={() => setSearchQuery('')}
-						onSubmitEditing={() => handleEnter(searchQuery)}
-						elevation={0}
-						mode='bar'
-						style={{
-							borderRadius: 9999,
-							backgroundColor: colors.surfaceVariant,
-						}}
+					<View ref={searchBarRef}>
+						<Searchbar
+							placeholder='关键词 / b23.tv 或完整网址 / bv / av'
+							onChangeText={setSearchQuery}
+							value={searchQuery}
+							icon={isLoading ? 'loading' : 'magnify'}
+							onClearIconPress={() => setSearchQuery('')}
+							onSubmitEditing={() => handleEnter(searchQuery)}
+							elevation={0}
+							mode='bar'
+							style={{
+								borderRadius: 9999,
+								backgroundColor: colors.surfaceVariant,
+							}}
+						/>
+					</View>
+					<SearchSuggestions
+						query={searchQuery}
+						visible={searchQuery.length > 0}
+						onSuggestionPress={handleSuggestionPress}
+						searchBarLayout={searchBarLayout.current}
 					/>
 				</View>
 

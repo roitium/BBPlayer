@@ -7,6 +7,8 @@ export const searchQueryKeys = {
 	results: (query: string) =>
 		[...searchQueryKeys.all, 'results', query] as const,
 	hotSearches: () => [...searchQueryKeys.all, 'hotSearches'] as const,
+	suggestions: (query: string) =>
+		[...searchQueryKeys.all, 'suggestions', query] as const,
 } as const
 
 // 搜索结果查询
@@ -37,5 +39,16 @@ export const useHotSearches = () => {
 		queryKey: searchQueryKeys.hotSearches(),
 		queryFn: () => returnOrThrowAsync(bilibiliApi.getHotSearches()),
 		staleTime: 15 * 60 * 1000,
+	})
+}
+
+// 搜索建议查询
+export const useSearchSuggestions = (query: string) => {
+	const enabled = query.trim().length > 0
+	return useQuery({
+		queryKey: searchQueryKeys.suggestions(query),
+		queryFn: () => returnOrThrowAsync(bilibiliApi.getSearchSuggestions(query)),
+		enabled,
+		staleTime: 0,
 	})
 }

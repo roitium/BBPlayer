@@ -6,6 +6,7 @@ export type BilibiliApiErrorType =
 	| 'NoCookie'
 	| 'CsrfError'
 	| 'AudioStreamError'
+	| 'RequestAborted'
 
 interface BilibiliApiErrorDetails {
 	message: string

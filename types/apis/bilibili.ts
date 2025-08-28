@@ -331,6 +331,18 @@ enum BilibiliQrCodeLoginStatus {
 	QRCODE_LOGIN_STATUS_QRCODE_EXPIRED = 86038, // 二维码已过期
 }
 
+/**
+ * 搜索建议
+ */
+interface BilibiliSearchSuggestionItem {
+	term: string
+	value: string
+	ref: number
+	name: string
+	spid: number
+	type: string
+}
+
 export type {
 	BilibiliAudioStreamParams,
 	BilibiliAudioStreamResponse,
@@ -347,6 +359,7 @@ export type {
 	BilibiliMediaItemInCollection,
 	BilibiliMultipageVideo,
 	BilibiliPlaylist,
+	BilibiliSearchSuggestionItem,
 	BilibiliSearchVideo,
 	BilibiliUserInfo,
 	BilibiliUserUploadedVideosResponse,

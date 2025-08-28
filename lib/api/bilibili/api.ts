@@ -1,4 +1,6 @@
+import { useAppStore } from '@/hooks/stores/useAppStore'
 import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
+import type { BilibiliSearchSuggestionItem } from '@/types/apis/bilibili'
 import {
 	type BilibiliAudioStreamParams,
 	type BilibiliAudioStreamResponse,
@@ -109,7 +111,76 @@ export const createBilibiliApi = () => ({
 				limit: '10',
 			})
 			.map((response) => response.trending.list)
-		// .map((response) => transformHotSearches(response.trending.list))
+	},
+
+	/**
+	 * 获取搜索建议
+	 */
+	getSearchSuggestions(
+		term: string,
+		signal?: AbortSignal,
+	): ResultAsync<BilibiliSearchSuggestionItem[], BilibiliApiError> {
+		const params = new URLSearchParams()
+		params.append('main_ver', 'v1')
+		params.append('term', term)
+		const bilibiliCookie = useAppStore.getState().bilibiliCookie
+		if (bilibiliCookie?.mid) {
+			params.append('userid', bilibiliCookie.mid)
+		}
+		const url = `https://s.search.bilibili.com/main/suggest?${params.toString()}`
+
+		return ResultAsync.fromPromise(
+			fetch(url, {
+				method: 'GET',
+				signal,
+			}),
+			(e) => {
+				if (e instanceof Error && e.name === 'AbortError') {
+					return new BilibiliApiError({
+						message: '请求被取消',
+						type: 'RequestAborted',
+					})
+				}
+				return new BilibiliApiError({
+					message: e instanceof Error ? e.message : String(e),
+					type: 'RequestFailed',
+				})
+			},
+		)
+			.andThen((response) => {
+				if (!response.ok) {
+					return errAsync(
+						new BilibiliApiError({
+							message: `请求 bilibili API 失败: ${response.status} ${response.statusText}`,
+							msgCode: response.status,
+							type: 'RequestFailed',
+						}),
+					)
+				}
+				return ResultAsync.fromPromise(
+					response.json() as Promise<{
+						code: number
+						result: { tag: BilibiliSearchSuggestionItem[] }
+					}>,
+					(error) =>
+						new BilibiliApiError({
+							message: error instanceof Error ? error.message : String(error),
+							type: 'ResponseFailed',
+						}),
+				)
+			})
+			.andThen((data) => {
+				if (data.code !== 0) {
+					return errAsync(
+						new BilibiliApiError({
+							message: `获取搜索建议失败: ${data.code}`,
+							msgCode: data.code,
+							type: 'RequestFailed',
+						}),
+					)
+				}
+				return okAsync(data.result.tag)
+			})
 	},
 
 	/**
