@@ -18,7 +18,10 @@ import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
-import { matchSearchStrategies } from '../../../utils/search'
+import {
+	matchSearchStrategies,
+	navigateWithSearchStrategy,
+} from '../../../utils/search'
 
 const SEARCH_HISTORY_KEY = 'bilibili_search_history'
 const MAX_SEARCH_HISTORY = 10
@@ -114,8 +117,12 @@ function HomePage() {
 			if (!query.trim()) return
 			Keyboard.dismiss()
 			setIsLoading(true)
-			const addToHistory = await matchSearchStrategies(query, navigation)
-			if (addToHistory) {
+			const addToHistory = await matchSearchStrategies(query)
+			const needAddToHistory = navigateWithSearchStrategy(
+				addToHistory,
+				navigation,
+			)
+			if (needAddToHistory === 1) {
 				addSearchHistory(query)
 			}
 			setIsLoading(false)
@@ -129,7 +136,6 @@ function HomePage() {
 	}
 
 	const handleSearchItemClick = (query: string) => {
-		setSearchQuery(query)
 		// 直接跳转到搜索页面，我们可以确定，所有保存的搜索历史都是有效的关键词，而非 url/id 什么的
 		navigation.navigate('SearchResult', { query })
 	}

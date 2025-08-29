@@ -12,7 +12,6 @@ import Animated, {
 	interpolate,
 	measure,
 	runOnUI,
-	useAnimatedKeyboard,
 	useAnimatedStyle,
 	useDerivedValue,
 	useSharedValue,
@@ -81,7 +80,6 @@ export default function SearchSuggestions({
 	}, [items])
 	const tabBarHeight = useBottomTabBarHeight()
 
-	const { height: kbHeightShared } = useAnimatedKeyboard()
 	const visibleShared = useSharedValue(0)
 	const position = useDerivedValue(() => {
 		const layout = measure(searchBarRef)
@@ -101,7 +99,6 @@ export default function SearchSuggestions({
 	}, [tabBarHeight, tabBarHeightShared, visible, visibleShared])
 
 	const targetHeight = useDerivedValue(() => {
-		console.log(kbHeightShared.value)
 		const raw =
 			windowHeight -
 			tabBarHeightShared.value -
