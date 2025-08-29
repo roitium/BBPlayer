@@ -37,6 +37,22 @@ import { AppProviders } from './providers'
 
 const logger = log.extend('UI.RootLayout')
 
+// ---用于调查一下奇怪的回到前台时的冻结问题---
+const CURRENT_JS_RUNTIME_ID = `${Date.now()}_${Math.random().toString(36).slice(2)}`
+const PREV_JS_RUNTIME_ID = storage.getString('last_js_runtime_id') ?? null
+const JS_RUNTIME_IS_NEW =
+	PREV_JS_RUNTIME_ID === null || PREV_JS_RUNTIME_ID !== CURRENT_JS_RUNTIME_ID
+logger.debug(
+	'[DIAG] JS_RUNTIME_PREV:',
+	PREV_JS_RUNTIME_ID,
+	'CURR:',
+	CURRENT_JS_RUNTIME_ID,
+	'IS_NEW:',
+	JS_RUNTIME_IS_NEW,
+)
+storage.set('last_js_runtime_id', CURRENT_JS_RUNTIME_ID)
+// ---END---
+
 // 在获取资源时保持启动画面可见
 void SplashScreen.preventAutoHideAsync()
 
