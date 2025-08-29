@@ -10,17 +10,12 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
 import { useShareIntentContext } from 'expo-share-intent'
-import {
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useRef,
-	useState,
-} from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
 import { useMMKVObject } from 'react-native-mmkv'
 import { Chip, IconButton, Searchbar, Text, useTheme } from 'react-native-paper'
+import { useAnimatedRef } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
 import { matchSearchStrategies } from '../../../utils/search'
@@ -47,15 +42,7 @@ function HomePage() {
 		useShareIntentContext()
 	const clearBilibiliCookie = useAppStore((state) => state.clearBilibiliCookie)
 	const hasBilibiliCookie = useAppStore((state) => state.hasBilibiliCookie)
-	const searchBarLayout = useRef<{
-		x: number
-		y: number
-		width: number
-		height: number
-		pageX: number
-		pageY: number
-	} | null>(null)
-	const searchBarRef = useRef<View>(null)
+	const searchBarRef = useAnimatedRef<View>()
 
 	const {
 		data: personalInfo,
@@ -159,14 +146,6 @@ function HomePage() {
 		void handleEnter(query)
 	}, [hasShareIntent, shareIntent, navigation, resetShareIntent, handleEnter])
 
-	useLayoutEffect(() => {
-		if (searchBarRef.current) {
-			searchBarRef.current.measure((x, y, width, height, pageX, pageY) => {
-				searchBarLayout.current = { x, y, width, height, pageX, pageY }
-			})
-		}
-	}, [searchBarLayout])
-
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			{/*顶部欢迎区域*/}
@@ -266,7 +245,7 @@ function HomePage() {
 						query={searchQuery}
 						visible={searchQuery.length > 0}
 						onSuggestionPress={handleSuggestionPress}
-						searchBarLayout={searchBarLayout.current}
+						searchBarRef={searchBarRef}
 					/>
 				</View>
 
