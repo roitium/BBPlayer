@@ -27,7 +27,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const isPlaying = usePlayerStore((state) => state.isPlaying)
-	const progress = usePlaybackProgress(100)
+	const progress = usePlaybackProgress(300)
 	const position = progress.position
 	const duration = progress.duration || 1 // 保证不为 0
 	const togglePlay = usePlayerStore((state) => state.togglePlay)
