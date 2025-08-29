@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import TrackPlayer from 'react-native-track-player'
 
 export function usePlayerSlider() {
-	const { position, duration } = usePlaybackProgress(100)
+	const { position, duration } = usePlaybackProgress(300)
 	// 设计这个 state 的主要目的是避免在释放进度条时，有短暂的「闪烁回原位置」的问题
 	const [overridePosition, setOverridePosition] = useState<number | null>(null)
 	const resyncTimer = useRef<NodeJS.Timeout | null>(null)
