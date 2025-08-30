@@ -1,8 +1,6 @@
+import useTrackProgress from '@/hooks/player/useTrackProgress'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
-import {
-	usePlaybackProgress,
-	usePlayerStore,
-} from '@/hooks/stores/usePlayerStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -27,7 +25,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const isPlaying = usePlayerStore((state) => state.isPlaying)
-	const progress = usePlaybackProgress(300)
+	const progress = useTrackProgress()
 	const position = progress.position
 	const duration = progress.duration || 1 // 保证不为 0
 	const togglePlay = usePlayerStore((state) => state.togglePlay)

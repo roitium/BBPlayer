@@ -1,4 +1,4 @@
-import { usePlaybackProgress } from '@/hooks/stores/usePlayerStore'
+import useTrackProgress from '@/hooks/player/useTrackProgress'
 import type { LyricLine } from '@/types/player/lyrics'
 import type { FlashListRef } from '@shopify/flash-list'
 import type { RefObject } from 'react'
@@ -13,7 +13,7 @@ export default function useLyricSync(
 	const [currentLyricIndex, setCurrentLyricIndex] = useState(0)
 	const isManualScrollingRef = useRef(false)
 	const manualScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-	const { position } = usePlaybackProgress(100)
+	const { position } = useTrackProgress()
 	const offsetedPosition = position + offset
 
 	const findIndexForTime = useCallback(

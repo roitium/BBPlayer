@@ -24,11 +24,7 @@ import {
 } from '@/utils/player'
 import toast from '@/utils/toast'
 import { err, ok, type Result } from 'neverthrow'
-import TrackPlayer, {
-	RepeatMode,
-	usePlaybackState,
-	useProgress,
-} from 'react-native-track-player'
+import TrackPlayer, { RepeatMode } from 'react-native-track-player'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
@@ -660,6 +656,3 @@ export const usePlayerStore = create<PlayerStore>()(
 		},
 	),
 )
-
-export const usePlaybackProgress = useProgress
-export const usePlaybackStateHook = usePlaybackState
