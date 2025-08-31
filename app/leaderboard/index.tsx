@@ -131,6 +131,19 @@ export default function LeaderboardPage() {
 				contentContainerStyle={{
 					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
+				ListFooterComponent={
+					data.length === 50 ? (
+						<Text
+							variant='bodyMedium'
+							style={{
+								textAlign: 'center',
+								padding: 16,
+							}}
+						>
+							以下省略...
+						</Text>
+					) : null
+				}
 			/>
 		)
 	}
