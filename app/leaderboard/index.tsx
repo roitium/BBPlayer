@@ -43,6 +43,7 @@ export default function LeaderboardPage() {
 	const [data, setData] = useState<LeaderboardItemData[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [isError, setIsError] = useState(false)
+	const [totalDurationNumber, setTotalDurationNumber] = useState(0)
 	const insets = useSafeAreaInsets()
 	const currentTrack = useCurrentTrack()
 
@@ -58,6 +59,14 @@ export default function LeaderboardPage() {
 			} else {
 				setIsError(true)
 			}
+			const totalDurationResult = await trackService.getTotalPlaybackDuration({
+				onlyCompleted: true,
+			})
+			if (totalDurationResult.isOk()) {
+				setTotalDurationNumber(totalDurationResult.value)
+			} else {
+				setIsError(true)
+			}
 			setIsLoading(false)
 		}
 
@@ -66,12 +75,8 @@ export default function LeaderboardPage() {
 
 	const totalDuration = useMemo(() => {
 		if (!data) return '0秒'
-		const totalSeconds = data.reduce(
-			(acc, item) => acc + (item.track.duration || 0),
-			0,
-		)
-		return formatDurationToWords(totalSeconds)
-	}, [data])
+		return formatDurationToWords(totalDurationNumber)
+	}, [data, totalDurationNumber])
 
 	const renderItem = useCallback(
 		({ item, index }: { item: LeaderboardItemData; index: number }) => (

@@ -631,6 +631,41 @@ export class TrackService {
 			})
 		})
 	}
+
+	/**
+	 * 获取所有歌曲的总播放时长。
+	 * - 当 `onlyCompleted` 为 `true` (默认) 时, 计算方法为 `duration * playCount` (仅统计完整播放)。
+	 * - 当 `onlyCompleted` 为 `false` 时, 计算方法为每条播放记录中 `durationPlayed` 的总和。
+	 * @param options.onlyCompleted 是否仅统计完整播放（completed=true），默认 true
+	 * @returns ResultAsync 包含总播放时长（秒）或一个错误。
+	 */
+	public getTotalPlaybackDuration(options?: {
+		onlyCompleted?: boolean
+	}): ResultAsync<number, DatabaseError> {
+		const onlyCompleted = options?.onlyCompleted ?? true
+
+		let totalDurationSql
+
+		if (onlyCompleted) {
+			const playCountSql = sql<number>`(select count(*) from json_each(${schema.tracks.playHistory}) as je where json_extract(je.value, '$.completed') = 1)`
+			totalDurationSql = sql`sum(${schema.tracks.duration} * ${playCountSql})`
+		} else {
+			const durationPlayedSumPerTrack = sql`(select sum(cast(json_extract(value, '$.durationPlayed') as real)) from json_each(${schema.tracks.playHistory}))`
+			totalDurationSql = sql`sum(${durationPlayedSumPerTrack})`
+		}
+
+		return ResultAsync.fromPromise(
+			this.db
+				.select({
+					totalDuration: totalDurationSql.mapWith(Number),
+				})
+				.from(schema.tracks),
+			(e) => new DatabaseError('获取总播放时长失败', { cause: e }),
+		).andThen((rows) => {
+			const totalDuration = rows[0]?.totalDuration
+			return okAsync(totalDuration ?? 0)
+		})
+	}
 }
 
 export const trackService = new TrackService(db)
