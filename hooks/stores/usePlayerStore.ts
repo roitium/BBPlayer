@@ -97,7 +97,11 @@ export const usePlayerStore = create<PlayerStore>()(
 						const playedSeconds = Math.max(0, Math.floor(position))
 						// HACK: 我们直接使用 player 的真实 duration，不管数据库内的数据
 						// 但后期一定是要去给数据库内数据做修正的
-						const duration = Math.max(1, Math.floor(realDuration))
+						const effectiveDuration =
+							realDuration > 0 ? realDuration : track.duration
+						// duration 可能为 0 吗？理论上不应该，但为了保险起见，最小值设为 1
+						// 否则会导致计算完成阈值时出现问题
+						const duration = Math.max(1, Math.floor(effectiveDuration))
 						const elapsedSeconds = Math.max(
 							0,
 							Math.floor((Date.now() - currentPlayStartAt) / 1000),
