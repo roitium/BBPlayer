@@ -92,9 +92,12 @@ export const usePlayerStore = create<PlayerStore>()(
 						})
 						if (!track || !currentPlayStartAt) return
 
-						const { position } = await TrackPlayer.getProgress()
+						const { position, duration: realDuration } =
+							await TrackPlayer.getProgress()
 						const playedSeconds = Math.max(0, Math.floor(position))
-						const duration = Math.max(1, Math.floor(track.duration))
+						// HACK: 我们直接使用 player 的真实 duration，不管数据库内的数据
+						// 但后期一定是要去给数据库内数据做修正的
+						const duration = Math.max(1, Math.floor(realDuration))
 						const elapsedSeconds = Math.max(
 							0,
 							Math.floor((Date.now() - currentPlayStartAt) / 1000),
