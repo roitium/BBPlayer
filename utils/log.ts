@@ -1,7 +1,7 @@
 import { CustomError } from '@/lib/errors'
 import type { ProjectScope } from '@/types/core/scope'
 import * as Sentry from '@sentry/react-native'
-import * as EXPOFS from 'expo-file-system'
+import * as EXPOFS from 'expo-file-system/legacy'
 import { err, ok, type Result } from 'neverthrow'
 import { InteractionManager } from 'react-native'
 import type { transportFunctionType } from 'react-native-logs'
@@ -191,7 +191,6 @@ EXPOFS.makeDirectoryAsync(EXPOFS.documentDirectory + 'logs/', {
 	.catch((e) => {
 		console.log('创建日志目录失败', e)
 	})
-// @ts-expect-error 忽略 TS 报错
 const log = logger.createLogger(config)
 
 export default log

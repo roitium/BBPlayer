@@ -12,6 +12,7 @@
 		"**/*.tsx",
 		"index.js",
 		"jest.config.js",
-		"plugins/withAbiFilters.js"
+		"plugins/withAbiFilters.js",
+		"plugins/withAndroidPlugin.js"
 	]
 }

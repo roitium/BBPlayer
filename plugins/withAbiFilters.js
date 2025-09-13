@@ -1,7 +1,7 @@
 const {
 	withGradleProperties,
 	withAppBuildGradle,
-} = require('@expo/config-plugins')
+} = require('expo/config-plugins')
 
 const withAbiFilters = (config, { abiFilters = ['arm64-v8a'] } = {}) => {
 	// Set gradle.properties

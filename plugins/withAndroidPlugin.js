@@ -1,10 +1,10 @@
-import configPlugins, { type ConfigPlugin } from '@expo/config-plugins'
+const configPlugins = require('expo/config-plugins')
 
 const { withAndroidManifest, withStringsXml } = configPlugins
 
-const withAndroidPlugin: ConfigPlugin = (config) => {
+const withAndroidPlugin = (config) => {
 	const configWithStrings = withStringsXml(config, (config) => {
-		const strings = config?.modResults?.resources.string
+		const strings = config?.modResults?.resources?.string
 
 		if (strings) {
 			strings.push({
@@ -31,7 +31,7 @@ const withAndroidPlugin: ConfigPlugin = (config) => {
 	})
 
 	return withAndroidManifest(configWithStrings, (config) => {
-		const intents = config?.modResults?.manifest?.queries[0]?.intent
+		const intents = config?.modResults?.manifest?.queries?.[0]?.intent
 
 		if (intents) {
 			intents[0].data?.push({
@@ -45,4 +45,4 @@ const withAndroidPlugin: ConfigPlugin = (config) => {
 	})
 }
 
-export default withAndroidPlugin
+module.exports = withAndroidPlugin

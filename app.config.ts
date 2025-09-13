@@ -1,5 +1,4 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config'
-import 'ts-node/register'
 import { version, versionCode } from './package.json'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -26,6 +25,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 	},
 	plugins: [
 		'./plugins/withAndroidPlugin',
+		'./plugins/withAndroidGradleProperties',
 		[
 			'./plugins/withAbiFilters',
 			{
@@ -59,7 +59,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 			{
 				android: {
 					usesCleartextTraffic: true,
-					enableProguardInReleaseBuilds: true,
+					enableMinifyInReleaseBuilds: true,
 					enableShrinkResourcesInReleaseBuilds: true,
 				},
 			},
