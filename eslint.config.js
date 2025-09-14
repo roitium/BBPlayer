@@ -1,6 +1,5 @@
 import js from '@eslint/js'
 import pluginQuery from '@tanstack/eslint-plugin-query'
-import expoConfig from 'eslint-config-expo/flat'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
 import pluginReact from 'eslint-plugin-react'
 import reactCompiler from 'eslint-plugin-react-compiler'
@@ -8,6 +7,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
+const expoConfig = require('eslint-config-expo/flat')
 
 export default defineConfig([
 	expoConfig,
