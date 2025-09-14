@@ -1,4 +1,0 @@
-onlyBuiltDependencies:
-  - '@sentry/cli'
-  - esbuild
-  - lefthook

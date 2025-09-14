@@ -1,1 +1,0 @@
-ALTER TABLE `bilibili_metadata` DROP COLUMN `create_at`;

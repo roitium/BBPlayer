@@ -1,1 +1,0 @@
-ALTER TABLE `bilibili_metadata` ADD `main_track_title` text;
