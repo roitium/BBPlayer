@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint-and-format-codes:
+      glob: '*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx}'
+      run: pnpm eslint "{staged_files}" && pnpm prettier --write "{staged_files}"
+      stage_fixed: true
+    format-plain-text:
+      glob: '*.{md,,json,jsonc}'
+      run: pnpm prettier --write "{staged_files}"
+      stage_fixed: true

@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - esbuild
+  - lefthook
+  - unrs-resolver
