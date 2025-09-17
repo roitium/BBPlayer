@@ -7,10 +7,8 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
-const expoConfig = require('eslint-config-expo/flat')
 
 export default defineConfig([
-	expoConfig,
 	{
 		ignores: ['dist/*'],
 	},
@@ -68,7 +66,7 @@ export default defineConfig([
 			},
 		},
 	},
-	tseslint.config(
+	defineConfig(
 		tseslint.configs.recommended,
 		tseslint.configs.recommendedTypeChecked,
 		tseslint.configs.stylisticTypeChecked,
