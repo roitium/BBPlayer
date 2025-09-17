@@ -3,3 +3,6 @@ onlyBuiltDependencies:
   - esbuild
   - lefthook
   - unrs-resolver
+
+patchedDependencies:
+  react-native-paper: patches/react-native-paper.patch

@@ -1,0 +1,32 @@
+diff --git a/src/components/Menu/Menu.tsx b/src/components/Menu/Menu.tsx
+index 55922c1fc27003eea00c77c4dbef180f9016b938..1fc035da37c1ca85c6953b11aa1c8138788d7a8e 100644
+--- a/src/components/Menu/Menu.tsx
++++ b/src/components/Menu/Menu.tsx
+@@ -359,11 +359,9 @@ const Menu = ({
+         easing: EASING,
+         useNativeDriver: true,
+       }),
+-    ]).start(({ finished }) => {
+-      if (finished) {
++    ]).start(() => {
+         focusFirstDOMNode(menuRef.current);
+         prevRendered.current = true;
+-      }
+     });
+   }, [anchor, attachListeners, measureAnchorLayout, theme]);
+ 
+@@ -377,13 +375,11 @@ const Menu = ({
+       duration: ANIMATION_DURATION * animation.scale,
+       easing: EASING,
+       useNativeDriver: true,
+-    }).start(({ finished }) => {
+-      if (finished) {
++    }).start(() => {
+         setMenuLayout({ width: 0, height: 0 });
+         setRendered(false);
+         prevRendered.current = false;
+         focusFirstDOMNode(anchorRef.current);
+-      }
+     });
+   }, [removeListeners, theme]);
+ 
