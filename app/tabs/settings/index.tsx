@@ -6,7 +6,7 @@ import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Application from 'expo-application'
-import * as FileSystem from 'expo-file-system/legacy'
+import * as FileSystem from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
 import * as Updates from 'expo-updates'
 import * as WebBrowser from 'expo-web-browser'
@@ -168,10 +168,13 @@ const SettingsSection = memo(function SettingsSection() {
 	const shareLogFile = async () => {
 		const d = new Date()
 		const dateString = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-		const logFilePath = `${FileSystem.documentDirectory}logs/${dateString}.log`
-		const exists = await FileSystem.getInfoAsync(logFilePath)
-		if (exists.exists) {
-			await Sharing.shareAsync(logFilePath)
+		const file = new FileSystem.File(
+			FileSystem.Paths.document,
+			'logs',
+			`${dateString}.log`,
+		)
+		if (file.exists) {
+			await Sharing.shareAsync(file.uri)
 		} else {
 			toastAndLogError('', new Error('无法分享日志：未找到日志文件'), 'UI.Test')
 		}

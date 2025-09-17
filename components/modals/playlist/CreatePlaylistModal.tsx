@@ -1,8 +1,9 @@
 import { useCreateNewLocalPlaylist } from '@/hooks/mutations/db/playlist'
 import { useModalStore } from '@/hooks/stores/useModalStore'
+import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import * as DocumentPicker from 'expo-document-picker'
-import * as FileSystem from 'expo-file-system/legacy'
+import * as FileSystem from 'expo-file-system'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import { Button, Dialog, IconButton, TextInput } from 'react-native-paper'
@@ -21,6 +22,10 @@ export default function CreatePlaylistModal({
 	const navigation = useNavigation()
 
 	const handleConfirm = useCallback(() => {
+		if (title.trim().length === 0) {
+			toast.error('标题不能为空')
+			return
+		}
 		createNewPlaylist(
 			{
 				title,
@@ -55,21 +60,20 @@ export default function CreatePlaylistModal({
 			multiple: false,
 		})
 		if (result.canceled || result.assets.length === 0) return
-		const asset = result.assets[0]
-		const COVERS_DIR = FileSystem.documentDirectory + 'covers/'
-		const dirInfo = await FileSystem.getInfoAsync(COVERS_DIR)
-		if (!dirInfo.exists) {
-			await FileSystem.makeDirectoryAsync(COVERS_DIR, { intermediates: true })
+		const assetFile = new FileSystem.File(result.assets[0].uri)
+		const coverDir = new FileSystem.Directory(
+			FileSystem.Paths.document,
+			'covers',
+		)
+		if (!coverDir.exists) {
+			coverDir.create({ intermediates: true, idempotent: true })
 		}
-		const fileInfo = await FileSystem.getInfoAsync(COVERS_DIR + asset.name)
-		if (fileInfo.exists) {
-			await FileSystem.deleteAsync(COVERS_DIR + asset.name)
+		const coverFile = new FileSystem.File(coverDir, assetFile.name)
+		if (coverFile.exists) {
+			coverFile.delete()
 		}
-		await FileSystem.copyAsync({
-			from: asset.uri,
-			to: COVERS_DIR + asset.name,
-		})
-		setCoverUrl(COVERS_DIR + asset.name)
+		assetFile.copy(coverFile)
+		setCoverUrl(coverFile.uri)
 	}, [])
 
 	const handleDismiss = useCallback(() => {

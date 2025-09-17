@@ -2,7 +2,7 @@ import { neteaseApi, type NeteaseApi } from '@/lib/api/netease/api'
 import type { Track } from '@/types/core/media'
 import type { LyricSearchResult, ParsedLrc } from '@/types/player/lyrics'
 import log, { toastAndLogError } from '@/utils/log'
-import * as FileSystem from 'expo-file-system/legacy'
+import * as FileSystem from 'expo-file-system'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
 import type { CustomError } from '../errors'
 import { DataParsingError, FileSystemError } from '../errors'
@@ -57,76 +57,69 @@ class LyricService {
 	 * @returns
 	 */
 	public smartFetchLyrics(track: Track): ResultAsync<ParsedLrc, CustomError> {
-		const basePath = `${FileSystem.documentDirectory}lyrics/`
-		const filePath = `${basePath}${track.uniqueKey.replaceAll('::', '--')}.json`
-		return ResultAsync.fromPromise(
-			FileSystem.makeDirectoryAsync(basePath, { intermediates: true }),
-			(e) =>
-				new FileSystemError(`创建歌词缓存目录失败`, {
-					cause: e,
-					data: { path: basePath },
-				}),
-		).andThen(() => {
-			return ResultAsync.fromPromise(
-				FileSystem.getInfoAsync(filePath),
-				(e) =>
-					new FileSystemError(`检查歌词缓存失败`, {
-						cause: e,
-						data: { filePath },
-					}),
-			).andThen((fileInfo) => {
-				if (fileInfo.exists) {
-					return ResultAsync.fromPromise(
-						FileSystem.readAsStringAsync(filePath),
-						(e) =>
-							new FileSystemError(`读取歌词缓存失败`, {
-								cause: e,
-								data: { filePath },
-							}),
-					).andThen((content) => {
-						try {
-							return okAsync(JSON.parse(content) as ParsedLrc)
-						} catch (e) {
-							return errAsync(
-								new DataParsingError('解析歌词缓存失败', { cause: e }),
-							)
-						}
-					})
-				}
-
-				return this.getBestMatchedLyrics(track).andThen((lyrics) => {
-					logger.info('自动搜索最佳匹配的歌词完成')
-					return ResultAsync.fromPromise(
-						FileSystem.writeAsStringAsync(filePath, JSON.stringify(lyrics), {
-							encoding: FileSystem.EncodingType.UTF8,
-						}),
-						(e) => new FileSystemError(`写入歌词缓存失败`, { cause: e }),
-					).andThen(() => okAsync(lyrics))
-				})
+		try {
+			const lyricFile = new FileSystem.File(
+				FileSystem.Paths.document,
+				'lyrics',
+				`${track.uniqueKey.replaceAll('::', '--')}.json`,
+			)
+			lyricFile.parentDirectory.create({
+				intermediates: true,
+				idempotent: true,
 			})
-		})
+			if (lyricFile.exists) {
+				return ResultAsync.fromPromise(
+					lyricFile.text(),
+					(e) =>
+						new FileSystemError(`读取歌词缓存失败`, {
+							cause: e,
+							data: { filePath: lyricFile.uri },
+						}),
+				).andThen((content) => {
+					try {
+						return okAsync(JSON.parse(content) as ParsedLrc)
+					} catch (e) {
+						return errAsync(
+							new DataParsingError('解析歌词缓存失败', { cause: e }),
+						)
+					}
+				})
+			}
+
+			return this.getBestMatchedLyrics(track).andThen((lyrics) => {
+				logger.info('自动搜索最佳匹配的歌词完成')
+				lyricFile.write(JSON.stringify(lyrics))
+				return okAsync(lyrics)
+			})
+		} catch (e) {
+			return errAsync(new FileSystemError('处理歌词文件失败', { cause: e }))
+		}
 	}
 
-	public saveLyricsToFile(lyrics: ParsedLrc, uniqueKey: string) {
-		const basePath = `${FileSystem.documentDirectory}lyrics/`
-		const filePath = `${basePath}${uniqueKey.replaceAll('::', '--')}.json`
-		return ResultAsync.fromPromise(
-			FileSystem.makeDirectoryAsync(basePath, { intermediates: true }),
-			(e) =>
-				new FileSystemError(`创建歌词缓存目录失败`, {
-					cause: e,
-					data: { path: basePath },
-				}),
-		)
-			.andThen(() => {
-				return ResultAsync.fromPromise(
-					FileSystem.writeAsStringAsync(filePath, JSON.stringify(lyrics), {
-						encoding: FileSystem.EncodingType.UTF8,
-					}),
-					(e) => new FileSystemError(`写入歌词缓存失败`, { cause: e }),
-				)
+	public saveLyricsToFile(
+		lyrics: ParsedLrc,
+		uniqueKey: string,
+	): ResultAsync<ParsedLrc, FileSystemError> {
+		try {
+			const lyricFile = new FileSystem.File(
+				FileSystem.Paths.document,
+				'lyrics',
+				`${uniqueKey.replaceAll('::', '--')}.json`,
+			)
+			lyricFile.parentDirectory.create({
+				intermediates: true,
+				idempotent: true,
 			})
-			.andThen(() => okAsync(lyrics))
+			lyricFile.write(JSON.stringify(lyrics))
+			return okAsync(lyrics)
+		} catch (e) {
+			return errAsync(
+				new FileSystemError(`保存歌词文件失败`, {
+					cause: e,
+					data: { uniqueKey },
+				}),
+			)
+		}
 	}
 
 	public fetchLyrics(
@@ -150,17 +143,21 @@ class LyricService {
 	 * 迁移旧版歌词格式
 	 */
 	public async migrateFromOldFormat() {
-		const basePath = `${FileSystem.documentDirectory}lyrics/`
+		const lyricsDir = new FileSystem.Directory(
+			FileSystem.Paths.document,
+			'lyrics',
+		)
 		try {
-			const isExists = await FileSystem.getInfoAsync(basePath)
-			if (!isExists.exists) {
+			if (!lyricsDir.exists) {
 				logger.debug('歌词缓存目录不存在，无需迁移')
 				return
 			}
-			const lyricFiles = await FileSystem.readDirectoryAsync(basePath)
+
+			const lyricFiles = lyricsDir.list()
+
 			for (const file of lyricFiles) {
-				const filePath = `${basePath}${file}`
-				const content = await FileSystem.readAsStringAsync(filePath)
+				if (file instanceof FileSystem.Directory) continue
+				const content = await file.text()
 				const parsed = JSON.parse(content) as lyricFileType
 				const finalLyric: ParsedLrc = {
 					tags: parsed.tags,
@@ -180,7 +177,8 @@ class LyricService {
 					finalLyric.rawOriginalLyrics = parsed.rawOriginalLyrics
 					finalLyric.rawTranslatedLyrics = parsed.rawTranslatedLyrics
 				}
-				await this.saveLyricsToFile(finalLyric, file.replace('.json', ''))
+
+				await this.saveLyricsToFile(finalLyric, file.name.replace('.json', ''))
 			}
 			logger.info('歌词格式迁移完成')
 		} catch (e) {

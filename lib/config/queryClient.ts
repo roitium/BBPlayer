@@ -18,7 +18,7 @@ export const queryClient = new QueryClient({
 	},
 	queryCache: new QueryCache({
 		onError: (error, query) => {
-			toastAndLogError('查询失败', error, 'Query')
+			toastAndLogError('查询失败: ' + query.queryKey.toString(), error, 'Query')
 
 			if (error instanceof BilibiliApiError && error.data.msgCode === -101) {
 				toast.error('登录状态失效，请重新登录')

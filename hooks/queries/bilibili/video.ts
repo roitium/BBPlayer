@@ -1,3 +1,4 @@
+import useAppStore from '@/hooks/stores/useAppStore'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
 import { useQuery } from '@tanstack/react-query'
@@ -42,7 +43,8 @@ export const useGetVideoDetails = (bvid: string | undefined) => {
  * 检查视频是否已经点赞
  */
 export const useGetVideoIsThumbUp = (bvid: string | undefined) => {
-	const enabled = !!bvid
+	const hasCookie = useAppStore((s) => s.hasBilibiliCookie())
+	const enabled = !!bvid && hasCookie
 	return useQuery({
 		queryKey: videoDataQueryKeys.getVideoIsThumbUp(bvid),
 		queryFn: () => returnOrThrowAsync(bilibiliApi.checkVideoIsThumbUp(bvid!)),
