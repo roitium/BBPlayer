@@ -152,6 +152,11 @@ class LyricService {
 	public async migrateFromOldFormat() {
 		const basePath = `${FileSystem.documentDirectory}lyrics/`
 		try {
+			const isExists = await FileSystem.getInfoAsync(basePath)
+			if (!isExists.exists) {
+				logger.debug('歌词缓存目录不存在，无需迁移')
+				return
+			}
 			const lyricFiles = await FileSystem.readDirectoryAsync(basePath)
 			for (const file of lyricFiles) {
 				const filePath = `${basePath}${file}`

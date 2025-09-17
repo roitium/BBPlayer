@@ -3,7 +3,6 @@ import type { ProjectScope } from '@/types/core/scope'
 import * as Sentry from '@sentry/react-native'
 import * as EXPOFS from 'expo-file-system/legacy'
 import { err, ok, type Result } from 'neverthrow'
-import { InteractionManager } from 'react-native'
 import type { transportFunctionType } from 'react-native-logs'
 import {
 	fileAsyncTransport,
@@ -37,6 +36,7 @@ const config = {
 	transportOptions: {
 		FS: EXPOFS,
 		fileName: '{date-today}.log',
+		// 日期命名格式 YYYY-M-D（**无零填充**）
 		fileNameDateType: 'iso' as const,
 		filePath: `${EXPOFS.documentDirectory}logs`,
 		mapLevels: {
@@ -46,40 +46,49 @@ const config = {
 			error: 'error',
 		},
 	},
-	asyncFunc: InteractionManager.runAfterInteractions.bind(InteractionManager),
+	asyncFunc: setImmediate,
 	async: true,
 }
 
 /**
  * 清理 {keepDays} 天之前的日志文件
- * 文件命名规则：logs_YYYY-MM-DD.log，路径：EXPOFS.documentDirectory
+ * @param keepDays 保留最近几天的日志，默认为 7 天
  */
 export async function cleanOldLogFiles(
 	keepDays = 7,
 ): Promise<Result<number, Error>> {
 	try {
-		const dir = EXPOFS.documentDirectory
-		if (!dir) return err(new Error('No documentDirectory'))
-		const list = await EXPOFS.readDirectoryAsync(dir)
-		const now = Date.now()
-		const threshold = now - keepDays * 24 * 60 * 60 * 1000
-		const re = /^logs_(\d{4}-\d{2}-\d{2})\.log$/
+		const logDir = `${EXPOFS.documentDirectory}logs/`
+
+		const dirInfo = await EXPOFS.getInfoAsync(logDir)
+		if (!dirInfo.exists) {
+			log.debug('日志目录不存在，无需清理')
+			return ok(0)
+		}
+
+		const list = await EXPOFS.readDirectoryAsync(logDir)
+
+		const cutoffDate = new Date()
+		cutoffDate.setHours(0, 0, 0, 0)
+		cutoffDate.setDate(cutoffDate.getDate() - keepDays + 1)
+
+		const re = /^(\d{4}-\d{1,2}-\d{1,2})\.log$/
 
 		let deleted = 0
 		for (const name of list) {
 			const m = re.exec(name)
 			if (!m) continue
-			const dateStr = m[1]
-			const time = Date.parse(dateStr)
-			if (Number.isNaN(time)) continue
-			if (time <= threshold) {
-				const path = `${dir}${name}`
+
+			const fileDate = new Date(m[1])
+			if (Number.isNaN(fileDate.getTime())) continue
+
+			if (fileDate < cutoffDate) {
+				const path = `${logDir}${name}`
 				try {
 					await EXPOFS.deleteAsync(path, { idempotent: true })
 					deleted += 1
 				} catch (e) {
-					// 记录但不中断
-					log.warning('删除日志文件失败', { path, error: String(e) })
+					log.warning('删除旧日志文件失败', { path, error: String(e) })
 				}
 			}
 		}

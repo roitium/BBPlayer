@@ -90,8 +90,9 @@ const AboutSection = memo(function AboutSection() {
 	const [clickTimes, setClickTimes] = useState(0)
 
 	const handlePress = useCallback(() => {
-		setClickTimes(clickTimes + 1)
-		if (clickTimes >= CLICK_TIMES) {
+		const next = clickTimes + 1
+		setClickTimes(next)
+		if (next >= CLICK_TIMES) {
 			navigation.navigate('Test')
 			setTimeout(() => {
 				setClickTimes(0)
