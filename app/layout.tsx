@@ -115,13 +115,15 @@ export default Sentry.wrap(function RootLayout() {
 	useEffect(() => {
 		if (!appIsReady) return
 		setImmediate(() => {
-			void cleanOldLogFiles(7).then((res) => {
-				if (res.isErr()) {
-					logger.warning('清理旧日志失败', { error: res.error.message })
-				} else if (res.value > 0) {
-					logger.info(`已清理 ${res.value} 个过期日志文件`)
-				}
-			})
+			void cleanOldLogFiles(7)
+				.andTee((deleted) => {
+					if (deleted > 0) {
+						logger.info(`已清理 ${deleted} 个旧日志文件`)
+					}
+				})
+				.orTee((e) => {
+					logger.warning('清理旧日志失败', { error: e.message })
+				})
 		})
 	}, [appIsReady])
 

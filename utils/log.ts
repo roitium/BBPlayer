@@ -1,7 +1,7 @@
 import { CustomError } from '@/lib/errors'
 import type { ProjectScope } from '@/types/core/scope'
 import * as Sentry from '@sentry/react-native'
-import * as EXPOFS from 'expo-file-system/legacy'
+import * as EXPOFS from 'expo-file-system'
 import { err, ok, type Result } from 'neverthrow'
 import type { transportFunctionType } from 'react-native-logs'
 import {
@@ -12,6 +12,7 @@ import {
 import toast from './toast'
 
 const isDev = __DEV__
+console.log(EXPOFS.Paths.document.uri)
 
 const sentryBreadcrumbTransport: transportFunctionType<object> = (props) => {
 	Sentry.addBreadcrumb({
@@ -38,7 +39,7 @@ const config = {
 		fileName: '{date-today}.log',
 		// 日期命名格式 YYYY-M-D（**无零填充**）
 		fileNameDateType: 'iso' as const,
-		filePath: `${EXPOFS.documentDirectory}logs`,
+		filePath: `${EXPOFS.Paths.document.uri}logs`,
 		mapLevels: {
 			debug: 'log',
 			info: 'info',
@@ -54,19 +55,19 @@ const config = {
  * 清理 {keepDays} 天之前的日志文件
  * @param keepDays 保留最近几天的日志，默认为 7 天
  */
-export async function cleanOldLogFiles(
-	keepDays = 7,
-): Promise<Result<number, Error>> {
+export function cleanOldLogFiles(keepDays = 7): Result<number, Error> {
 	try {
-		const logDir = `${EXPOFS.documentDirectory}logs/`
+		const logDir = new EXPOFS.Directory(EXPOFS.Paths.document, 'logs')
 
-		const dirInfo = await EXPOFS.getInfoAsync(logDir)
-		if (!dirInfo.exists) {
+		if (!logDir.exists) {
 			log.debug('日志目录不存在，无需清理')
 			return ok(0)
 		}
 
-		const list = await EXPOFS.readDirectoryAsync(logDir)
+		const list = logDir
+			.list()
+			.filter((f) => f instanceof EXPOFS.File)
+			.map((f) => f.name)
 
 		const cutoffDate = new Date()
 		cutoffDate.setHours(0, 0, 0, 0)
@@ -83,12 +84,15 @@ export async function cleanOldLogFiles(
 			if (Number.isNaN(fileDate.getTime())) continue
 
 			if (fileDate < cutoffDate) {
-				const path = `${logDir}${name}`
+				const file = new EXPOFS.File(logDir, name)
 				try {
-					await EXPOFS.deleteAsync(path, { idempotent: true })
+					file.delete()
 					deleted += 1
 				} catch (e) {
-					log.warning('删除旧日志文件失败', { path, error: String(e) })
+					log.warning('删除旧日志文件失败', {
+						file: file.uri,
+						error: String(e),
+					})
 				}
 			}
 		}
@@ -191,15 +195,15 @@ export function toastAndLogError(
 	}
 }
 
-EXPOFS.makeDirectoryAsync(EXPOFS.documentDirectory + 'logs/', {
-	intermediates: true,
-})
-	.then(() => {
-		console.log('成功创建日志目录')
+try {
+	new EXPOFS.Directory(EXPOFS.Paths.document, 'logs').create({
+		intermediates: true,
+		idempotent: true,
 	})
-	.catch((e) => {
-		console.log('创建日志目录失败', e)
-	})
+	console.log('成功创建日志目录')
+} catch (e) {
+	console.log('创建日志目录失败', e)
+}
 const log = logger.createLogger(config)
 
 export default log
