@@ -1,3 +1,34 @@
+diff --git a/lib/module/components/Menu/Menu.js b/lib/module/components/Menu/Menu.js
+index 46a45f468db95f6a2c150d266de2d2cce0482b1d..15323c16dd891e3b6f7d184316e7989576176fd8 100644
+--- a/lib/module/components/Menu/Menu.js
++++ b/lib/module/components/Menu/Menu.js
+@@ -238,10 +238,8 @@ const Menu = ({
+     })]).start(({
+       finished
+     }) => {
+-      if (finished) {
+         focusFirstDOMNode(menuRef.current);
+         prevRendered.current = true;
+-      }
+     });
+   }, [anchor, attachListeners, measureAnchorLayout, theme]);
+   const hide = React.useCallback(() => {
+@@ -257,7 +255,6 @@ const Menu = ({
+     }).start(({
+       finished
+     }) => {
+-      if (finished) {
+         setMenuLayout({
+           width: 0,
+           height: 0
+@@ -265,7 +262,6 @@ const Menu = ({
+         setRendered(false);
+         prevRendered.current = false;
+         focusFirstDOMNode(anchorRef.current);
+-      }
+     });
+   }, [removeListeners, theme]);
+   const updateVisibility = React.useCallback(async display => {
 diff --git a/src/components/Menu/Menu.tsx b/src/components/Menu/Menu.tsx
 index 55922c1fc27003eea00c77c4dbef180f9016b938..1fc035da37c1ca85c6953b11aa1c8138788d7a8e 100644
 --- a/src/components/Menu/Menu.tsx
