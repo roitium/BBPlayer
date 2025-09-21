@@ -1,6 +1,7 @@
 import { toastConfig } from '@/components/toast/ToastConfig'
 import useAppStore from '@/hooks/stores/useAppStore'
 import { useModalStore } from '@/hooks/stores/useModalStore'
+import useCheckUpdate from '@/hooks/useCheckUpdate'
 import { initializeSentry, navigationIntegration } from '@/lib/config/sentry'
 import drizzleDb, { expoDb } from '@/lib/db/db'
 import { initPlayer } from '@/lib/player/playerLogic'
@@ -57,6 +58,7 @@ export default Sentry.wrap(function RootLayout() {
 		migrations,
 	)
 	const open = useModalStore((state) => state.open)
+	useCheckUpdate()
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	useSQLiteDevTools(expoDb)
