@@ -186,7 +186,7 @@ function PlayerQueueModal({
 				data={queue}
 				ref={flatListRef}
 				keyExtractor={keyExtractor}
-				getItemLayout={(_, index) => {
+				getItemLayout={(_: unknown, index: number) => {
 					return {
 						length: 68,
 						offset: 68 * index,

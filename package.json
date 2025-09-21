@@ -121,6 +121,7 @@
 		"@types/react": "~19.1.0",
 		"@types/react-native-vector-icons": "^6.4.18",
 		"@types/set-cookie-parser": "^2.4.10",
+		"@typescript-eslint/utils": "^8.44.0",
 		"babel-plugin-react-compiler": "19.1.0-rc.1",
 		"babel-plugin-transform-remove-console": "^6.9.4",
 		"drizzle-kit": "^0.31.4",

@@ -7,6 +7,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
+import modalPlugin from './eslint-plugin-modal/index.js'
 
 export default defineConfig([
 	{
@@ -89,6 +90,14 @@ export default defineConfig([
 				},
 			],
 			// '@typescript-eslint/no-unsafe-call': 'off',
+		},
+	},
+	{
+		plugins: {
+			modal: modalPlugin,
+		},
+		rules: {
+			'modal/no-navigate-after-modal-close': 'error',
 		},
 	},
 ])
