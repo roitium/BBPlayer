@@ -11,6 +11,7 @@ export default function ModalHost() {
 	const modals = useModalStore(useShallow((state) => state.modals))
 	const close = useModalStore((s) => s.close)
 	const closeTop = useModalStore((s) => s.closeTop)
+	const eventEmitter = useModalStore((s) => s.eventEmitter)
 
 	usePreventRemove(modals.length > 0, () => {
 		if (modals[modals.length - 1].options?.dismissible === false) {
@@ -24,9 +25,11 @@ export default function ModalHost() {
 			const cur = navigationRef.current.getCurrentRoute?.()
 			if (cur?.name === 'ModalHost' && navigationRef.current.canGoBack?.()) {
 				navigationRef.current.goBack()
+				// 确保在 ModalHost 关闭后再执行回调，避免其他导航操作与 ModalHost 关闭发生竞态
+				eventEmitter.emit('modalHostDidClose')
 			}
 		}
-	}, [modals])
+	}, [eventEmitter, modals])
 
 	if (!modals.length) return null
 

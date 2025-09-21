@@ -18,6 +18,7 @@ export default function CreatePlaylistModal({
 	const [description, setDescription] = useState('')
 	const [coverUrl, setCoverUrl] = useState('')
 	const _close = useModalStore((state) => state.close)
+	const closeAll = useModalStore((state) => state.closeAll)
 	const close = useCallback(() => _close('CreatePlaylist'), [_close])
 	const navigation = useNavigation()
 
@@ -35,16 +36,18 @@ export default function CreatePlaylistModal({
 			{
 				onSuccess: (playlist) => {
 					if (redirectToNewPlaylist) {
-						close()
-						navigation.navigate('PlaylistLocal', { id: String(playlist.id) })
+						closeAll()
+						useModalStore.getState().addModalHostDidCloseListener(() => {
+							navigation.navigate('PlaylistLocal', { id: String(playlist.id) })
+						})
 					} else {
-						close()
+						closeAll()
 					}
 				},
 			},
 		)
 	}, [
-		close,
+		closeAll,
 		coverUrl,
 		createNewPlaylist,
 		description,
