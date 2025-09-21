@@ -2,11 +2,11 @@ import { useRenameTrack } from '@/hooks/mutations/db/track'
 import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Button, Dialog, TextInput } from 'react-native-paper'
 
 export default function EditTrackMetadataModal({ track }: { track: Track }) {
-	const [title, setTitle] = useState<string>()
+	const [title, setTitle] = useState<string>(track.title)
 	const _close = useModalStore((state) => state.close)
 	const close = useCallback(() => _close('EditTrackMetadata'), [_close])
 
@@ -24,10 +24,6 @@ export default function EditTrackMetadataModal({ track }: { track: Track }) {
 		})
 		close()
 	}
-
-	useEffect(() => {
-		setTitle(track.title)
-	}, [track.title])
 
 	const handleDismiss = () => {
 		close()

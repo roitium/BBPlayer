@@ -5,6 +5,7 @@ import pluginReact from 'eslint-plugin-react'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
+import reactYouMightNotNeedAnEffect from 'eslint-plugin-react-you-might-not-need-an-effect'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import modalPlugin from './eslint-plugin-modal/index.js'
@@ -99,4 +100,5 @@ export default defineConfig([
 			'modal/no-navigate-after-modal-close': 'error',
 		},
 	},
+	reactYouMightNotNeedAnEffect.configs.recommended,
 ])

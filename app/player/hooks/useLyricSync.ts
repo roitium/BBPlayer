@@ -79,8 +79,8 @@ export default function useLyricSync(
 	useEffect(() => {
 		if (lyrics.length === 0) return
 		if (offsetedPosition <= 0) {
-			// 如果便宜后的时间小于等于0，直接定位到第一句
-			if (currentLyricIndex !== 0) setCurrentLyricIndex(0)
+			// 如果偏移后的时间小于等于0，直接定位到第一句
+			setCurrentLyricIndex(0)
 			return
 		}
 		const index = findIndexForTime(offsetedPosition)
@@ -91,6 +91,7 @@ export default function useLyricSync(
 	// 当歌词发生变化且用户没自己滚时，滚动到当前歌词
 	useEffect(() => {
 		if (isManualScrollingRef.current || manualScrollTimeoutRef.current) return
+		// eslint-disable-next-line react-you-might-not-need-an-effect/no-pass-live-state-to-parent -- 我们使用命令式的方法来同步 flashlist 组件的滚动位置，这里没有更好的办法
 		void flashListRef.current?.scrollToIndex({
 			animated: true,
 			index: currentLyricIndex,

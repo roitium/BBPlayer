@@ -81,7 +81,7 @@ export default Sentry.wrap(function RootLayout() {
 	}, [])
 
 	useEffect(() => {
-		function prepare() {
+		const initializeApp = () => {
 			try {
 				useAppStore.getState()
 			} catch (error) {
@@ -89,9 +89,41 @@ export default Sentry.wrap(function RootLayout() {
 				reportErrorToSentry(error, '初始化 Zustand store 失败', ProjectScope.UI)
 			} finally {
 				setAppIsReady(true)
+
+				setImmediate(() => {
+					void cleanOldLogFiles(7)
+						.andTee((deleted) => {
+							if (deleted > 0) {
+								logger.info(`已清理 ${deleted} 个旧日志文件`)
+							}
+						})
+						.orTee((e) => {
+							logger.warning('清理旧日志失败', { error: e.message })
+						})
+
+					void lyricService.migrateFromOldFormat()
+
+					const initializePlayer = async () => {
+						if (!global.playerIsReady) {
+							try {
+								await initPlayer()
+							} catch (error) {
+								logger.error('播放器初始化失败: ', error)
+								reportErrorToSentry(
+									error,
+									'播放器初始化失败',
+									ProjectScope.Player,
+								)
+								global.playerIsReady = false
+							}
+						}
+					}
+					void initializePlayer()
+				})
 			}
 		}
-		prepare()
+
+		void initializeApp()
 	}, [])
 
 	useEffect(() => {
@@ -110,48 +142,6 @@ export default Sentry.wrap(function RootLayout() {
 				toastAndLogError('检测更新失败', error, 'UI.RootLayout')
 			})
 	}, [])
-
-	// 启动时清理 7 天前日志
-	useEffect(() => {
-		if (!appIsReady) return
-		setImmediate(() => {
-			void cleanOldLogFiles(7)
-				.andTee((deleted) => {
-					if (deleted > 0) {
-						logger.info(`已清理 ${deleted} 个旧日志文件`)
-					}
-				})
-				.orTee((e) => {
-					logger.warning('清理旧日志失败', { error: e.message })
-				})
-		})
-	}, [appIsReady])
-
-	// 迁移旧版歌词格式
-	useEffect(() => {
-		if (!appIsReady) return
-		setImmediate(() => {
-			void lyricService.migrateFromOldFormat()
-		})
-	}, [appIsReady])
-
-	useEffect(() => {
-		if (appIsReady) {
-			const initializePlayer = async () => {
-				if (!global.playerIsReady) {
-					try {
-						await initPlayer()
-					} catch (error) {
-						logger.error('播放器初始化失败: ', error)
-						reportErrorToSentry(error, '播放器初始化失败', ProjectScope.Player)
-						global.playerIsReady = false
-					}
-				}
-			}
-
-			setImmediate(initializePlayer)
-		}
-	}, [appIsReady])
 
 	const onLayoutRootView = useCallback(() => {
 		if (appIsReady) {

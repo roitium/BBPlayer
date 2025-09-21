@@ -75,6 +75,7 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 				.filter((item) => item.fav_state === 1)
 				.map((item) => item.id.toString())
 
+			// eslint-disable-next-line react-you-might-not-need-an-effect/no-derived-state -- 暂时没想到更好的解决办法
 			setCheckedList(initialCheckedIds)
 		}
 	}, [playlists])

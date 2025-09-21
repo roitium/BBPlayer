@@ -27,7 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 		'./expo-plugins/withAndroidPlugin',
 		'./expo-plugins/withAndroidGradleProperties',
 		[
-			'./plugins/withAbiFilters',
+			'./expo-plugins/withAbiFilters',
 			{
 				abiFilters: ['arm64-v8a'],
 			},

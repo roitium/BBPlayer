@@ -5,7 +5,7 @@ import { useModalStore } from '@/hooks/stores/useModalStore'
 import { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Button, Dialog, Divider, Text, TextInput } from 'react-native-paper'
 
 export default function CookieLoginModal() {
@@ -23,9 +23,6 @@ export default function CookieLoginModal() {
 
 	const [inputCookie, setInputCookie] = useState(displayCookieString)
 	const [isLoading, setIsLoading] = useState(false)
-	useEffect(() => {
-		setInputCookie(displayCookieString)
-	}, [displayCookieString])
 
 	const handleConfirm = async () => {
 		setIsLoading(true)
@@ -74,6 +71,7 @@ export default function CookieLoginModal() {
 			<Dialog.Content>
 				<TextInput
 					label='Cookie'
+					key={displayCookieString}
 					value={inputCookie}
 					onChangeText={setInputCookie}
 					mode='outlined'
