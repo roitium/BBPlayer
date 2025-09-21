@@ -3,7 +3,6 @@ import type { ProjectScope } from '@/types/core/scope'
 import * as Sentry from '@sentry/react-native'
 import * as EXPOFS from 'expo-file-system'
 import { err, ok, type Result } from 'neverthrow'
-import { InteractionManager } from 'react-native'
 import type { transportFunctionType } from 'react-native-logs'
 import {
 	fileAsyncTransport,
@@ -37,8 +36,9 @@ const config = {
 	transportOptions: {
 		FS: EXPOFS,
 		fileName: '{date-today}.log',
+		// 日期命名格式 YYYY-M-D（**无零填充**）
 		fileNameDateType: 'iso' as const,
-		filePath: `${EXPOFS.documentDirectory}logs`,
+		filePath: `${EXPOFS.Paths.document.uri}logs`,
 		mapLevels: {
 			debug: 'log',
 			info: 'info',
@@ -46,40 +46,52 @@ const config = {
 			error: 'error',
 		},
 	},
-	asyncFunc: InteractionManager.runAfterInteractions.bind(InteractionManager),
+	asyncFunc: setImmediate,
 	async: true,
 }
 
 /**
  * 清理 {keepDays} 天之前的日志文件
- * 文件命名规则：logs_YYYY-MM-DD.log，路径：EXPOFS.documentDirectory
+ * @param keepDays 保留最近几天的日志，默认为 7 天
  */
-export async function cleanOldLogFiles(
-	keepDays = 7,
-): Promise<Result<number, Error>> {
+export function cleanOldLogFiles(keepDays = 7): Result<number, Error> {
 	try {
-		const dir = EXPOFS.documentDirectory
-		if (!dir) return err(new Error('No documentDirectory'))
-		const list = await EXPOFS.readDirectoryAsync(dir)
-		const now = Date.now()
-		const threshold = now - keepDays * 24 * 60 * 60 * 1000
-		const re = /^logs_(\d{4}-\d{2}-\d{2})\.log$/
+		const logDir = new EXPOFS.Directory(EXPOFS.Paths.document, 'logs')
+
+		if (!logDir.exists) {
+			log.debug('日志目录不存在，无需清理')
+			return ok(0)
+		}
+
+		const list = logDir
+			.list()
+			.filter((f) => f instanceof EXPOFS.File)
+			.map((f) => f.name)
+
+		const cutoffDate = new Date()
+		cutoffDate.setHours(0, 0, 0, 0)
+		cutoffDate.setDate(cutoffDate.getDate() - keepDays + 1)
+
+		const re = /^(\d{4}-\d{1,2}-\d{1,2})\.log$/
 
 		let deleted = 0
 		for (const name of list) {
 			const m = re.exec(name)
 			if (!m) continue
-			const dateStr = m[1]
-			const time = Date.parse(dateStr)
-			if (Number.isNaN(time)) continue
-			if (time <= threshold) {
-				const path = `${dir}${name}`
+
+			const fileDate = new Date(m[1])
+			if (Number.isNaN(fileDate.getTime())) continue
+
+			if (fileDate < cutoffDate) {
+				const file = new EXPOFS.File(logDir, name)
 				try {
-					await EXPOFS.deleteAsync(path, { idempotent: true })
+					file.delete()
 					deleted += 1
 				} catch (e) {
-					// 记录但不中断
-					log.warning('删除日志文件失败', { path, error: String(e) })
+					log.warning('删除旧日志文件失败', {
+						file: file.uri,
+						error: String(e),
+					})
 				}
 			}
 		}
@@ -182,16 +194,15 @@ export function toastAndLogError(
 	}
 }
 
-EXPOFS.makeDirectoryAsync(EXPOFS.documentDirectory + 'logs/', {
-	intermediates: true,
-})
-	.then(() => {
-		console.log('成功创建日志目录')
+try {
+	new EXPOFS.Directory(EXPOFS.Paths.document, 'logs').create({
+		intermediates: true,
+		idempotent: true,
 	})
-	.catch((e) => {
-		console.log('创建日志目录失败', e)
-	})
-// @ts-expect-error 忽略 TS 报错
+	console.log('成功创建日志目录')
+} catch (e) {
+	console.log('创建日志目录失败', e)
+}
 const log = logger.createLogger(config)
 
 export default log

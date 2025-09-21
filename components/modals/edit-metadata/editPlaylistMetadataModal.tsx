@@ -50,6 +50,10 @@ export default function EditPlaylistMetadataModal({
 	}, [playlist.remoteSyncId, playlist.type])
 
 	const handleConfirm = useCallback(() => {
+		if (title.trim().length === 0) {
+			toast.error('标题不能为空')
+			return
+		}
 		editPlaylistMetadata({
 			playlistId: playlist.id,
 			payload: {
@@ -68,21 +72,20 @@ export default function EditPlaylistMetadataModal({
 			multiple: false,
 		})
 		if (result.canceled || result.assets.length === 0) return
-		const asset = result.assets[0]
-		const COVERS_DIR = FileSystem.documentDirectory + 'covers/'
-		const dirInfo = await FileSystem.getInfoAsync(COVERS_DIR)
-		if (!dirInfo.exists) {
-			await FileSystem.makeDirectoryAsync(COVERS_DIR, { intermediates: true })
+		const assetFile = new FileSystem.File(result.assets[0].uri)
+		const coverDir = new FileSystem.Directory(
+			FileSystem.Paths.document,
+			'covers',
+		)
+		if (!coverDir.exists) {
+			coverDir.create({ intermediates: true })
 		}
-		const fileInfo = await FileSystem.getInfoAsync(COVERS_DIR + asset.name)
-		if (fileInfo.exists) {
-			await FileSystem.deleteAsync(COVERS_DIR + asset.name)
+		const coverFile = new FileSystem.File(coverDir, assetFile.name)
+		if (coverFile.exists) {
+			coverFile.delete()
 		}
-		await FileSystem.copyAsync({
-			from: asset.uri,
-			to: COVERS_DIR + asset.name,
-		})
-		setCoverUrl(COVERS_DIR + asset.name)
+		assetFile.copy(coverFile)
+		setCoverUrl(coverFile.uri)
 	}, [])
 
 	const handleDismiss = useCallback(() => {

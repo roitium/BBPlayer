@@ -16,6 +16,7 @@ export default function DuplicateLocalPlaylistModal({
 	)
 	const { mutate: duplicatePlaylist } = useDuplicatePlaylist()
 	const close = useModalStore((state) => state.close)
+	const closeAll = useModalStore((state) => state.closeAll)
 	const navigation = useNavigation()
 
 	const handleDuplicatePlaylist = useCallback(() => {
@@ -27,16 +28,18 @@ export default function DuplicateLocalPlaylistModal({
 			},
 			{
 				onSuccess: (id) => {
-					close('DuplicateLocalPlaylist')
-					navigation.navigate('PlaylistLocal', { id: String(id) })
+					closeAll()
+					useModalStore.getState().addModalHostDidCloseListener(() => {
+						navigation.navigate('PlaylistLocal', { id: String(id) })
+					})
 				},
 			},
 		)
 	}, [
-		close,
-		duplicatePlaylist,
 		duplicatePlaylistName,
+		duplicatePlaylist,
 		sourcePlaylistId,
+		closeAll,
 		navigation,
 	])
 

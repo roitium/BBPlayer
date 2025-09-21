@@ -7,8 +7,12 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
+import modalPlugin from './eslint-plugin-modal/index.js'
 
 export default defineConfig([
+	{
+		ignores: ['dist/*'],
+	},
 	{
 		files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
 		plugins: { js },
@@ -54,7 +58,9 @@ export default defineConfig([
 	},
 	reactCompiler.configs.recommended,
 	eslintConfigPrettier,
+	tseslint.configs.recommended,
 	tseslint.configs.recommendedTypeChecked,
+	tseslint.configs.stylisticTypeChecked,
 	{
 		languageOptions: {
 			parserOptions: {
@@ -63,31 +69,34 @@ export default defineConfig([
 			},
 		},
 	},
-	tseslint.config(
-		tseslint.configs.recommended,
-		tseslint.configs.recommendedTypeChecked,
-		tseslint.configs.stylisticTypeChecked,
-		{
-			ignores: [
-				'dist/**/*.ts',
-				'dist/**',
-				'**/*.mjs',
-				'eslint.config.mjs',
-				'**/*.js',
-				'.expo/**',
+	{
+		ignores: [
+			'dist/**/*.ts',
+			'dist/**',
+			'**/*.mjs',
+			'eslint.config.mjs',
+			'**/*.js',
+			'.expo/**',
+		],
+	},
+	{
+		rules: {
+			'@typescript-eslint/consistent-type-imports': 'error',
+			'@typescript-eslint/no-misused-promises': [
+				'error',
+				{
+					checksVoidReturn: false,
+				},
 			],
+			// '@typescript-eslint/no-unsafe-call': 'off',
 		},
-		{
-			rules: {
-				'@typescript-eslint/consistent-type-imports': 'error',
-				'@typescript-eslint/no-misused-promises': [
-					'error',
-					{
-						checksVoidReturn: false,
-					},
-				],
-				// '@typescript-eslint/no-unsafe-call': 'off',
-			},
+	},
+	{
+		plugins: {
+			modal: modalPlugin,
 		},
-	),
+		rules: {
+			'modal/no-navigate-after-modal-close': 'error',
+		},
+	},
 ])

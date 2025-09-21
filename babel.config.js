@@ -4,7 +4,7 @@ export default (api) => {
 		presets: [['babel-preset-expo']],
 		env: {
 			production: {
-				plugins: ['react-native-paper/babel'],
+				plugins: ['react-native-paper/babel', 'transform-remove-console'],
 			},
 		},
 		plugins: [
@@ -24,7 +24,6 @@ export default (api) => {
 					},
 				},
 			],
-			'react-native-reanimated/plugin',
 			['inline-import', { extensions: ['.sql'] }],
 		],
 	}

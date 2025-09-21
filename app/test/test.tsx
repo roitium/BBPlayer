@@ -1,9 +1,10 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
-import { useModalStore } from '@/hooks/stores/useModalStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
+import * as FileSystem from 'expo-file-system'
+import * as LegacyFileSystem from 'expo-file-system/legacy'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -121,7 +122,8 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							useModalStore.getState().open('Welcome', undefined)
+							console.log(FileSystem.Paths.document.uri)
+							console.log(LegacyFileSystem.documentDirectory)
 						}}
 						style={{ marginBottom: 8 }}
 					>

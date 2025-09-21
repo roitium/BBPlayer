@@ -14,7 +14,7 @@ export default function EditTrackMetadataModal({ track }: { track: Track }) {
 
 	const handleConfirm = () => {
 		if (!title) {
-			toast.error('「」不是标题！')
+			toast.error('标题不能为空')
 			return
 		}
 		editTrackMetadata({

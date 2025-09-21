@@ -22,13 +22,7 @@ import * as SplashScreen from 'expo-splash-screen'
 import { useSQLiteDevTools } from 'expo-sqlite-devtools'
 import * as Updates from 'expo-updates'
 import { useCallback, useEffect, useState } from 'react'
-import {
-	AppState,
-	type AppStateStatus,
-	InteractionManager,
-	Platform,
-	View,
-} from 'react-native'
+import { AppState, type AppStateStatus, Platform, View } from 'react-native'
 import { Text } from 'react-native-paper'
 import Toast from 'react-native-toast-message'
 import migrations from '../drizzle/migrations'
@@ -120,21 +114,23 @@ export default Sentry.wrap(function RootLayout() {
 	// 启动时清理 7 天前日志
 	useEffect(() => {
 		if (!appIsReady) return
-		InteractionManager.runAfterInteractions(() => {
-			void cleanOldLogFiles(7).then((res) => {
-				if (res.isErr()) {
-					logger.warning('清理旧日志失败', { error: res.error.message })
-				} else if (res.value > 0) {
-					logger.info(`已清理 ${res.value} 个过期日志文件`)
-				}
-			})
+		setImmediate(() => {
+			void cleanOldLogFiles(7)
+				.andTee((deleted) => {
+					if (deleted > 0) {
+						logger.info(`已清理 ${deleted} 个旧日志文件`)
+					}
+				})
+				.orTee((e) => {
+					logger.warning('清理旧日志失败', { error: e.message })
+				})
 		})
 	}, [appIsReady])
 
 	// 迁移旧版歌词格式
 	useEffect(() => {
 		if (!appIsReady) return
-		InteractionManager.runAfterInteractions(() => {
+		setImmediate(() => {
 			void lyricService.migrateFromOldFormat()
 		})
 	}, [appIsReady])
@@ -153,7 +149,7 @@ export default Sentry.wrap(function RootLayout() {
 				}
 			}
 
-			InteractionManager.runAfterInteractions(initializePlayer)
+			setImmediate(initializePlayer)
 		}
 	}, [appIsReady])
 

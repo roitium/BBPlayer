@@ -4,14 +4,7 @@
 		"strict": true,
 		"paths": {
 			"@/*": ["./*"]
-		},
-		"jsx": "react-jsx"
+		}
 	},
-	"include": [
-		"**/*.ts",
-		"**/*.tsx",
-		"index.js",
-		"jest.config.js",
-		"plugins/withAbiFilters.js"
-	]
+	"include": ["**/*.ts", "**/*.tsx"]
 }
