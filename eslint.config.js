@@ -66,31 +66,29 @@ export default defineConfig([
 			},
 		},
 	},
-	defineConfig(
-		tseslint.configs.recommended,
-		tseslint.configs.recommendedTypeChecked,
-		tseslint.configs.stylisticTypeChecked,
-		{
-			ignores: [
-				'dist/**/*.ts',
-				'dist/**',
-				'**/*.mjs',
-				'eslint.config.mjs',
-				'**/*.js',
-				'.expo/**',
+	tseslint.configs.recommended,
+	tseslint.configs.recommendedTypeChecked,
+	tseslint.configs.stylisticTypeChecked,
+	{
+		ignores: [
+			'dist/**/*.ts',
+			'dist/**',
+			'**/*.mjs',
+			'eslint.config.mjs',
+			'**/*.js',
+			'.expo/**',
+		],
+	},
+	{
+		rules: {
+			'@typescript-eslint/consistent-type-imports': 'error',
+			'@typescript-eslint/no-misused-promises': [
+				'error',
+				{
+					checksVoidReturn: false,
+				},
 			],
+			// '@typescript-eslint/no-unsafe-call': 'off',
 		},
-		{
-			rules: {
-				'@typescript-eslint/consistent-type-imports': 'error',
-				'@typescript-eslint/no-misused-promises': [
-					'error',
-					{
-						checksVoidReturn: false,
-					},
-				],
-				// '@typescript-eslint/no-unsafe-call': 'off',
-			},
-		},
-	),
+	},
 ])

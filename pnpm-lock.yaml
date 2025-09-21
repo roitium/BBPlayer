@@ -218,8 +218,8 @@ importers:
         specifier: ^0.71.19
         version: 0.71.19
       react-native-logs:
-        specifier: ^5.5.0
-        version: 5.5.0
+        specifier: github:yanyao2333/react-native-logs#v5.6.2
+        version: https://codeload.github.com/yanyao2333/react-native-logs/tar.gz/b534efdc6022ba04d7b98e4dae0a1f8864cc1fb4
       react-native-mmkv:
         specifier: ^3.3.1
         version: 3.3.1(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@20.0.2(typescript@5.9.2))(@types/react@19.1.13)(react@19.1.0))(react@19.1.0)
@@ -5642,8 +5642,9 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-logs@5.5.0:
-    resolution: {integrity: sha512-H3Jc1pNTzNhYb9yHuk1drHdyGHwRvt4IERSz3EUul8vVTey6999fzGRFLK6ugrxYnmw7P+5fo/mRzDXeByhA8g==}
+  react-native-logs@https://codeload.github.com/yanyao2333/react-native-logs/tar.gz/b534efdc6022ba04d7b98e4dae0a1f8864cc1fb4:
+    resolution: {tarball: https://codeload.github.com/yanyao2333/react-native-logs/tar.gz/b534efdc6022ba04d7b98e4dae0a1f8864cc1fb4}
+    version: 5.5.0
 
   react-native-mmkv@3.3.1:
     resolution: {integrity: sha512-LYamDWQirPTUJZ9Re+BkCD+zLRGNr+EVJDeIeblvoJXGatWy9PXnChtajDSLqwjX3EXVeUyjgrembs7wlBw9ug==}
@@ -13175,7 +13176,7 @@ snapshots:
       react: 19.1.0
       react-native: 0.81.4(@babel/core@7.28.4)(@react-native-community/cli@20.0.2(typescript@5.9.2))(@types/react@19.1.13)(react@19.1.0)
 
-  react-native-logs@5.5.0: {}
+  react-native-logs@https://codeload.github.com/yanyao2333/react-native-logs/tar.gz/b534efdc6022ba04d7b98e4dae0a1f8864cc1fb4: {}
 
   react-native-mmkv@3.3.1(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@20.0.2(typescript@5.9.2))(@types/react@19.1.13)(react@19.1.0))(react@19.1.0):
     dependencies:

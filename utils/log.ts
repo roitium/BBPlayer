@@ -12,7 +12,6 @@ import {
 import toast from './toast'
 
 const isDev = __DEV__
-console.log(EXPOFS.Paths.document.uri)
 
 const sentryBreadcrumbTransport: transportFunctionType<object> = (props) => {
 	Sentry.addBreadcrumb({

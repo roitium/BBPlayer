@@ -85,7 +85,7 @@
 		"react-native-edge-to-edge": "^1.7.0",
 		"react-native-gesture-handler": "~2.28.0",
 		"react-native-gradle-plugin": "^0.71.19",
-		"react-native-logs": "^5.5.0",
+		"react-native-logs": "github:yanyao2333/react-native-logs#v5.6.2",
 		"react-native-mmkv": "^3.3.1",
 		"react-native-pager-view": "6.9.1",
 		"react-native-paper": "^5.14.5",
