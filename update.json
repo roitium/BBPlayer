@@ -1,6 +1,6 @@
 {
-	"version": "1.1.1",
-	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.1.1/bbplayer-v1.1.1-arm64v8a-prod.apk",
-	"notes": "1. 支持滚动歌词功能\n2. 支持播放歌曲时自动搜索匹配的歌词（目前仅支持「网易云音乐」来源）\n3. 支持手动添加和编辑歌词\n4. 支持调整歌词偏移量\n5. 很多其他修改...",
+	"version": "1.2.1",
+	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.2.1/bbplayer-v1.2.1-prod-v8a.apk",
+	"notes": "1. 升级到 expo54\n2. 修复很多 bug",
 	"forced": false
 }
