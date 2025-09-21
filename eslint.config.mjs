@@ -58,7 +58,9 @@ export default defineConfig([
 	},
 	reactCompiler.configs.recommended,
 	eslintConfigPrettier,
+	tseslint.configs.recommended,
 	tseslint.configs.recommendedTypeChecked,
+	tseslint.configs.stylisticTypeChecked,
 	{
 		languageOptions: {
 			parserOptions: {
@@ -67,9 +69,6 @@ export default defineConfig([
 			},
 		},
 	},
-	tseslint.configs.recommended,
-	tseslint.configs.recommendedTypeChecked,
-	tseslint.configs.stylisticTypeChecked,
 	{
 		ignores: [
 			'dist/**/*.ts',

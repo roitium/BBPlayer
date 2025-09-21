@@ -14,6 +14,18 @@ export default {
 						items: { type: 'string' },
 						default: ['close', 'closeAll'],
 					},
+					navigateNames: {
+						type: 'array',
+						items: { type: 'string' },
+						default: [
+							'navigate',
+							'push',
+							'replace',
+							'reset',
+							'goBack',
+							'dispatch',
+						],
+					},
 				},
 				additionalProperties: false,
 			},
@@ -27,6 +39,16 @@ export default {
 	create(context) {
 		const opts = context.options[0] || {}
 		const CLOSE_NAMES = new Set(opts.closeNames || ['close', 'closeAll'])
+		const NAVIGATE_NAMES = new Set(
+			opts.navigateNames || [
+				'navigate',
+				'push',
+				'replace',
+				'reset',
+				'goBack',
+				'dispatch',
+			],
+		)
 
 		// 判断是否是 close / closeAll 调用
 		function isCloseCall(node) {
@@ -52,7 +74,7 @@ export default {
 			return (
 				callee.type === 'MemberExpression' &&
 				callee.property?.type === 'Identifier' &&
-				callee.property.name === 'navigate'
+				NAVIGATE_NAMES.has(callee.property.name)
 			)
 		}
 

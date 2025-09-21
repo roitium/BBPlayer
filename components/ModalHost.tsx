@@ -26,7 +26,9 @@ export default function ModalHost() {
 			if (cur?.name === 'ModalHost' && navigationRef.current.canGoBack?.()) {
 				navigationRef.current.goBack()
 				// 确保在 ModalHost 关闭后再执行回调，避免其他导航操作与 ModalHost 关闭发生竞态
-				eventEmitter.emit('modalHostDidClose')
+				setImmediate(() => {
+					eventEmitter.emit('modalHostDidClose')
+				})
 			}
 		}
 	}, [eventEmitter, modals])

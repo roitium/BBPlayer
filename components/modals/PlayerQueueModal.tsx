@@ -84,7 +84,10 @@ const TrackItem = memo(
 						<IconButton
 							icon='close-circle-outline'
 							size={24}
-							onPress={() => onRemoveTrack(track)}
+							onPress={(e) => {
+								e.stopPropagation()
+								onRemoveTrack(track)
+							}}
 						/>
 					</View>
 				</Surface>
@@ -168,9 +171,9 @@ function PlayerQueueModal({
 			enablePanDownToClose={true}
 			snapPoints={['75%']}
 			onChange={(index) => {
-				const isVisible = index !== -1
-				setIsVisible(isVisible)
-				if (!isVisible) {
+				const nextVisible = index !== -1
+				setIsVisible(nextVisible)
+				if (!nextVisible) {
 					setDidInitialScroll(false)
 				}
 			}}
