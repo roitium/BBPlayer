@@ -1,6 +1,6 @@
 {
-	"version": "1.2.1",
-	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.2.1/bbplayer-v1.2.1-prod-v8a.apk",
-	"notes": "1. 升级到 expo54\n2. 修复很多 bug",
+	"version": "1.2.2",
+	"url": "https://github.com/yanyao2333/BBPlayer/releases/download/v1.2.2/bbplayer-v1.2.2-prod-v8a.apk",
+	"notes": "1. 升级到 expo54\n2. 修复很多 bug\n3. 修复更新弹窗错位问题",
 	"forced": false
 }
