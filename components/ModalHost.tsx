@@ -9,6 +9,11 @@ import AnimatedModalOverlay from './commonUIs/AnimatedModalOverlay'
 import { modalRegistry } from './ModalRegistry'
 
 function closeWithKeyboardDismiss(key: ModalKey) {
+	if (!Keyboard.isVisible()) {
+		useModalStore.getState().close(key)
+		return
+	}
+
 	Keyboard.dismiss()
 
 	const sub = Keyboard.addListener('keyboardDidHide', () => {
