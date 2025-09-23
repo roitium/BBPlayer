@@ -32,7 +32,7 @@ export default {
 		],
 		messages: {
 			avoid:
-				'不要在 close/closeAll 调用后的同一执行域内直接调用 navigation.navigate，使用 useModalStore.addModalHostDidCloseListener 来延迟导航',
+				'不要在 close/closeAll 调用后的同一执行域内直接调用 navigation.navigate，使用 useModalStore.doAfterModalHostClosed 来延迟导航',
 		},
 	},
 

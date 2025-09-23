@@ -8,7 +8,12 @@ import AnimatedModalOverlay from './commonUIs/AnimatedModalOverlay'
 import { modalRegistry } from './ModalRegistry'
 
 export default function ModalHost() {
-	const modals = useModalStore(useShallow((state) => state.modals))
+	const { modals, generation } = useModalStore(
+		useShallow((state) => ({
+			modals: state.modals,
+			generation: state.generation,
+		})),
+	)
 	const close = useModalStore((s) => s.close)
 	const closeTop = useModalStore((s) => s.closeTop)
 	const eventEmitter = useModalStore((s) => s.eventEmitter)
@@ -46,7 +51,7 @@ export default function ModalHost() {
 				const zIndex = 1000 + idx * 100
 				return (
 					<AnimatedModalOverlay
-						key={m.key}
+						key={`${m.key}_${generation}`}
 						visible
 						onDismiss={() => {
 							if (

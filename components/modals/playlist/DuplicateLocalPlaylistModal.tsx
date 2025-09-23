@@ -29,7 +29,7 @@ export default function DuplicateLocalPlaylistModal({
 			{
 				onSuccess: (id) => {
 					closeAll()
-					useModalStore.getState().addModalHostDidCloseListener(() => {
+					useModalStore.getState().doAfterModalHostClosed(() => {
 						navigation.navigate('PlaylistLocal', { id: String(id) })
 					})
 				},

@@ -31,7 +31,7 @@ export default function AnimatedModalOverlay({
 	const wrapperAvoiding = useAnimatedStyle(() => {
 		const k = Math.max(0, keyboard.height.value - insets.bottom)
 		return { paddingBottom: k }
-	}, [visible, insets.bottom])
+	})
 
 	if (!visible) return null
 

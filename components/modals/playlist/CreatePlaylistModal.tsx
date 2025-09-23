@@ -37,7 +37,7 @@ export default function CreatePlaylistModal({
 				onSuccess: (playlist) => {
 					if (redirectToNewPlaylist) {
 						closeAll()
-						useModalStore.getState().addModalHostDidCloseListener(() => {
+						useModalStore.getState().doAfterModalHostClosed(() => {
 							navigation.navigate('PlaylistLocal', { id: String(playlist.id) })
 						})
 					} else {
