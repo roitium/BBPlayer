@@ -30,11 +30,8 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 			isError: isPlaylistsError,
 			refetch: refetchPlaylists,
 		} = usePlaylistLists()
-		const sortedAllPlaylists = useMemo(
-			() =>
-				allPlaylists?.sort(
-					(a, b) => Number(a.type !== 'local') - Number(b.type !== 'local'),
-				),
+		const filteredPlaylists = useMemo(
+			() => allPlaylists?.filter((p) => p.type === 'local'),
 			[allPlaylists],
 		)
 
@@ -120,7 +117,7 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 				<>
 					<Dialog.ScrollArea style={{ minHeight: 300 }}>
 						<FlashList
-							data={sortedAllPlaylists ?? []}
+							data={filteredPlaylists ?? []}
 							renderItem={renderPlaylistItem}
 							keyExtractor={keyExtractor}
 							extraData={selectedPlaylistId}
@@ -139,7 +136,7 @@ const BatchAddTracksToLocalPlaylistModal = memo(
 						/>
 					</Dialog.ScrollArea>
 					<Dialog.Content>
-						<Text variant='bodySmall'>* 与远程同步的播放列表无法选择</Text>
+						<Text variant='bodySmall'>* 与远程同步的播放列表不会显示</Text>
 					</Dialog.Content>
 					<Dialog.Actions style={{ justifyContent: 'space-between' }}>
 						<Button
