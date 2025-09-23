@@ -152,7 +152,15 @@ export default Sentry.wrap(function RootLayout() {
 			// 如果是第一次打开，则显示欢迎对话框
 			const firstOpen = storage.getBoolean('first_open') ?? true
 			if (firstOpen) {
-				open('Welcome', undefined, { dismissible: false })
+				const tryOpenWelcome = () => {
+					// 大概率打开时 navigationRef 还没准备好
+					if (navigationRef.isReady()) {
+						open('Welcome', undefined, { dismissible: false })
+						return
+					}
+					setImmediate(tryOpenWelcome)
+				}
+				tryOpenWelcome()
 			}
 		}
 	}, [appIsReady, migrationsError, migrationsSuccess, open])
