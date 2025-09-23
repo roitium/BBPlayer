@@ -9,7 +9,6 @@ import { immer } from 'zustand/middleware/immer'
 interface ModalState {
 	modals: ModalInstance[]
 	eventEmitter: Emitter<{ modalHostDidClose: undefined }>
-	generation: number // 用于在 ModalHost 重启后，重新挂载 modals，避免出现因键盘布局未恢复导致的偏移
 
 	open: <K extends ModalKey>(
 		key: K,
@@ -31,7 +30,6 @@ export const useModalStore = create<ModalState>()(
 	immer((set, get) => ({
 		modals: [],
 		eventEmitter: mitt<{ modalHostDidClose: undefined }>(),
-		generation: 0,
 
 		open: (key, props, options) => {
 			const exists = get().modals.some((m) => m.key === key)
@@ -41,16 +39,9 @@ export const useModalStore = create<ModalState>()(
 				return
 			}
 
-			set((state) => {
-				let newGeneration = state.generation
-				if (state.modals.length === 0) {
-					newGeneration += 1
-				}
-				return {
-					modals: [...state.modals, { key, props, options }],
-					generation: newGeneration,
-				}
-			})
+			set((state) => ({
+				modals: [...state.modals, { key, props, options }],
+			}))
 
 			if (navigationRef.current?.isReady()) {
 				navigationRef.current.navigate('ModalHost')

@@ -1,20 +1,33 @@
 import navigationRef from '@/app/navigationRef'
 import { useModalStore } from '@/hooks/stores/useModalStore'
+import type { ModalKey } from '@/types/navigation'
 import { usePreventRemove } from '@react-navigation/native'
 import { useEffect } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { Keyboard, StyleSheet, View } from 'react-native'
 import { useShallow } from 'zustand/shallow'
 import AnimatedModalOverlay from './commonUIs/AnimatedModalOverlay'
 import { modalRegistry } from './ModalRegistry'
 
+function closeWithKeyboardDismiss(key: ModalKey) {
+	Keyboard.dismiss()
+
+	const sub = Keyboard.addListener('keyboardDidHide', () => {
+		sub.remove()
+		useModalStore.getState().close(key)
+	})
+
+	setTimeout(() => {
+		sub.remove()
+		useModalStore.getState().close(key)
+	}, 350)
+}
+
 export default function ModalHost() {
-	const { modals, generation } = useModalStore(
+	const { modals } = useModalStore(
 		useShallow((state) => ({
 			modals: state.modals,
-			generation: state.generation,
 		})),
 	)
-	const close = useModalStore((s) => s.close)
 	const closeTop = useModalStore((s) => s.closeTop)
 	const eventEmitter = useModalStore((s) => s.eventEmitter)
 
@@ -51,14 +64,14 @@ export default function ModalHost() {
 				const zIndex = 1000 + idx * 100
 				return (
 					<AnimatedModalOverlay
-						key={`${m.key}_${generation}`}
+						key={m.key}
 						visible
 						onDismiss={() => {
 							if (
 								m.options?.dismissible === undefined ||
 								m.options?.dismissible
 							) {
-								close(m.key)
+								closeWithKeyboardDismiss(m.key)
 							}
 						}}
 						contentStyle={{ zIndex }}
