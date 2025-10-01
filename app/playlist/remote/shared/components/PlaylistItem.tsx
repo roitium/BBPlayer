@@ -72,12 +72,13 @@ export const TrackListItem = memo(function TrackListItem({
 				backgroundColor: highlighted ? colors.elevation.level5 : 'transparent',
 			}}
 			delayLongPress={500}
-			enabled={!(disabled || isCurrentTrack)}
+			enabled={!disabled}
 			onPress={() => {
 				if (selectMode) {
 					toggleSelected(data.id)
 					return
 				}
+				if (isCurrentTrack) return
 				onTrackPress()
 			}}
 			onLongPress={() => {
@@ -175,6 +176,7 @@ export const TrackListItem = memo(function TrackListItem({
 					{/* Context Menu */}
 					{!disabled && (
 						<RectButton
+							// @ts-expect-error -- 不理解
 							ref={menuRef}
 							style={{ borderRadius: 99999, padding: 10 }}
 							onPress={() =>

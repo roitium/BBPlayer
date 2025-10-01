@@ -279,7 +279,7 @@ export const usePlayerStore = create<PlayerStore>()(
 						playNow,
 						clearQueue,
 						playNext,
-						startFromId: startFromKey ?? null,
+						startFromKey: startFromKey ?? null,
 					})
 
 					const existingTracks = get().tracks
@@ -301,6 +301,28 @@ export const usePlayerStore = create<PlayerStore>()(
 								logger.warning('指定的 startFromId 在当前队列中不存在', {
 									key: startFromKey,
 								})
+							}
+						} else if (playNext) {
+							console.log('没有新歌加入，但需要跳转播放 - playNext')
+							const filteredQueue = get()
+								._getActiveList()
+								.filter((key) => !tracks.find((t) => t.uniqueKey === key))
+							const currentKey = get().currentTrackUniqueKey
+							console.log('播放列表中没有找到 key 对应的索引', {
+								currentKey: currentKey ?? '无',
+								filteredQueue: filteredQueue ?? [],
+							})
+							if (filteredQueue.length > 0 && currentKey) {
+								filteredQueue.splice(
+									filteredQueue.indexOf(currentKey) + 1,
+									0,
+									...tracks.map((t) => t.uniqueKey),
+								)
+								if (get().shuffleMode) {
+									set({ shuffledList: filteredQueue })
+								} else {
+									set({ orderedList: filteredQueue })
+								}
 							}
 						}
 						return

@@ -62,12 +62,13 @@ export const TrackListItem = memo(function TrackListItem({
 					: 'transparent',
 			}}
 			delayLongPress={500}
-			enabled={!(disabled || isCurrentTrack)}
+			enabled={!disabled}
 			onPress={() => {
 				if (selectMode) {
 					toggleSelected(data.id)
 					return
 				}
+				if (isCurrentTrack) return
 				onTrackPress()
 			}}
 			onLongPress={() => {
