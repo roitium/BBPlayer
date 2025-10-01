@@ -1,33 +1,94 @@
-import useTrackProgress from '@/hooks/player/useTrackProgress'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import { View } from 'react-native'
 import {
 	Gesture,
 	GestureDetector,
 	RectButton,
 } from 'react-native-gesture-handler'
-import { Icon, ProgressBar, Text, useTheme } from 'react-native-paper'
+import { Icon, Text, useTheme } from 'react-native-paper'
 import Animated, {
+	Easing,
 	useAnimatedStyle,
 	useSharedValue,
 	withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import TrackPlayer, { Event } from 'react-native-track-player'
 import { scheduleOnRN } from 'react-native-worklets'
+
+const ProgressBar = memo(function ProgressBar() {
+	const sharedProgress = useSharedValue(0)
+	const sharedDuration = useSharedValue(1)
+	const { colors } = useTheme()
+
+	useEffect(() => {
+		// 这里使用事件监听而非 hook，因为 hook 内部实现使用了 useState，但咱们的目的是直接绕过 React rerender，直接触发 UI thread 的更新。
+		const handler = TrackPlayer.addEventListener(
+			Event.PlaybackProgressUpdated,
+			(data) => {
+				sharedProgress.set(
+					withTiming(data.position, { duration: 200, easing: Easing.linear }),
+				)
+				sharedDuration.set(data.duration)
+			},
+		)
+		return () => handler.remove()
+	}, [sharedDuration, sharedProgress])
+
+	const animatedStyle = useAnimatedStyle(() => {
+		const progressRatio = Math.min(
+			sharedProgress.value / Math.max(sharedDuration.value, 1),
+			1,
+		)
+		// 靠 transform 实现滑动效果，避免掉 reflow
+		return {
+			transform: [
+				{
+					translateX: `${(progressRatio - 1) * 100}%`,
+				},
+			],
+		}
+	})
+
+	return (
+		<View style={{ width: '100%' }}>
+			<View
+				style={{
+					height: 0.8,
+					backgroundColor: colors.elevation.level2,
+					overflow: 'hidden',
+					position: 'relative',
+				}}
+			>
+				<Animated.View
+					style={[
+						animatedStyle,
+						{
+							height: 0.8,
+							backgroundColor: colors.primary,
+							position: 'absolute',
+							left: 0,
+							top: 0,
+							bottom: 0,
+							right: 0,
+						},
+					]}
+				/>
+			</View>
+		</View>
+	)
+})
 
 const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
 	const isPlaying = usePlayerStore((state) => state.isPlaying)
-	const progress = useTrackProgress()
-	const position = progress.position
-	const duration = progress.duration || 1 // 保证不为 0
 	const togglePlay = usePlayerStore((state) => state.togglePlay)
 	const skipToNext = usePlayerStore((state) => state.skipToNext)
 	const skipToPrevious = usePlayerStore((state) => state.skipToPrevious)
@@ -183,14 +244,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 								bottom: 0,
 							}}
 						>
-							<ProgressBar
-								animatedValue={position / duration}
-								color={colors.primary}
-								style={{
-									height: 0.8,
-									backgroundColor: colors.elevation.level2,
-								}}
-							/>
+							<ProgressBar />
 						</View>
 					</Animated.View>
 				</GestureDetector>
