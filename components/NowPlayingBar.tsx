@@ -4,8 +4,8 @@ import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Image } from 'expo-image'
-import { memo, useEffect } from 'react'
-import { View } from 'react-native'
+import { memo, useEffect, useLayoutEffect, useRef } from 'react'
+import { AppState, View } from 'react-native'
 import {
 	Gesture,
 	GestureDetector,
@@ -13,7 +13,6 @@ import {
 } from 'react-native-gesture-handler'
 import { Icon, Text, useTheme } from 'react-native-paper'
 import Animated, {
-	Easing,
 	useAnimatedStyle,
 	useSharedValue,
 	withTiming,
@@ -25,20 +24,39 @@ import { scheduleOnRN } from 'react-native-worklets'
 const ProgressBar = memo(function ProgressBar() {
 	const sharedProgress = useSharedValue(0)
 	const sharedDuration = useSharedValue(1)
+	const isActive = useSharedValue(true)
+	const sharedTrackViewWidth = useSharedValue(0)
+	const trackViewRef = useRef<View>(null)
 	const { colors } = useTheme()
 
 	useEffect(() => {
+		const appStateSubscription = AppState.addEventListener(
+			'change',
+			(nextAppState) => {
+				isActive.value = nextAppState === 'active'
+			},
+		)
 		// 这里使用事件监听而非 hook，因为 hook 内部实现使用了 useState，但咱们的目的是直接绕过 React rerender，直接触发 UI thread 的更新。
 		const handler = TrackPlayer.addEventListener(
 			Event.PlaybackProgressUpdated,
 			(data) => {
-				sharedProgress.set(
-					withTiming(data.position, { duration: 200, easing: Easing.linear }),
-				)
+				if (!isActive.value) return
+				sharedProgress.set(data.position)
 				sharedDuration.set(data.duration)
 			},
 		)
-		return () => handler.remove()
+
+		return () => {
+			handler.remove()
+			appStateSubscription.remove()
+		}
+	}, [isActive, sharedDuration, sharedProgress])
+
+	useEffect(() => {
+		void TrackPlayer.getProgress().then((data) => {
+			sharedProgress.set(data.position)
+			sharedDuration.set(data.duration)
+		})
 	}, [sharedDuration, sharedProgress])
 
 	const animatedStyle = useAnimatedStyle(() => {
@@ -50,15 +68,22 @@ const ProgressBar = memo(function ProgressBar() {
 		return {
 			transform: [
 				{
-					translateX: `${(progressRatio - 1) * 100}%`,
+					translateX: (progressRatio - 1) * sharedTrackViewWidth.value,
 				},
 			],
 		}
 	})
 
+	useLayoutEffect(() => {
+		trackViewRef.current?.measure((_x, _y, width) => {
+			sharedTrackViewWidth.value = width
+		})
+	}, [sharedTrackViewWidth, trackViewRef])
+
 	return (
 		<View style={{ width: '100%' }}>
 			<View
+				ref={trackViewRef}
 				style={{
 					height: 0.8,
 					backgroundColor: colors.elevation.level2,
