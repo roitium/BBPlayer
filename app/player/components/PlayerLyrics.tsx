@@ -383,6 +383,7 @@ export default function Lyrics({
 						</RectButton>
 						<RectButton
 							style={{ borderRadius: 99999, padding: 10 }}
+							// @ts-expect-error -- 不想管
 							ref={offsetMenuAnchorRef}
 							enabled={!offsetMenuVisible}
 							onPress={() => setOffsetMenuVisible(true)}

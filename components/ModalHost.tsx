@@ -24,7 +24,7 @@ function closeWithKeyboardDismiss(key: ModalKey) {
 	setTimeout(() => {
 		sub.remove()
 		useModalStore.getState().close(key)
-	}, 350)
+	}, 1500)
 }
 
 export default function ModalHost() {
