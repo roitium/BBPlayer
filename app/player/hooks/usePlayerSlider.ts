@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { AppState } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 import TrackPlayer, { Event } from 'react-native-track-player'
 
@@ -8,19 +9,38 @@ export function usePlayerSlider() {
 	const resyncTimer = useRef<NodeJS.Timeout | null>(null)
 	const sharedPosition = useSharedValue(0)
 	const sharedDuration = useSharedValue(0)
+	const isActive = useSharedValue(true)
 
 	useEffect(() => {
+		const appStateSubscription = AppState.addEventListener(
+			'change',
+			(nextAppState) => {
+				if (nextAppState === 'active') {
+					isActive.value = true
+				}
+			},
+		)
 		const handler = TrackPlayer.addEventListener(
 			Event.PlaybackProgressUpdated,
 			(data) => {
-				if (overridePosition.get() === null) {
+				if (overridePosition.get() === null && isActive.value) {
 					sharedPosition.set(data.position)
 					sharedDuration.set(data.duration)
 				}
 			},
 		)
-		return () => handler.remove()
-	}, [overridePosition, sharedDuration, sharedPosition])
+		return () => {
+			handler.remove()
+			appStateSubscription.remove()
+		}
+	}, [isActive, overridePosition, sharedDuration, sharedPosition])
+
+	useEffect(() => {
+		void TrackPlayer.getProgress().then((data) => {
+			sharedPosition.set(data.position)
+			sharedDuration.set(data.duration)
+		})
+	}, [sharedDuration, sharedPosition])
 
 	const handleSlidingStart = useCallback(
 		(value: number) => {
