@@ -11,13 +11,13 @@ import Animated, {
 	Extrapolation,
 	interpolate,
 	measure,
-	runOnUI,
 	useAnimatedStyle,
 	useDerivedValue,
 	useSharedValue,
 	withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { scheduleOnUI } from 'react-native-worklets'
 
 export interface SearchSuggestionsProps {
 	query: string
@@ -92,10 +92,14 @@ export default function SearchSuggestions({
 	const tabBarHeightShared = useSharedValue(tabBarHeight)
 
 	useEffect(() => {
-		runOnUI((visible: boolean, tabBarHeight: number) => {
-			visibleShared.value = visible ? 1 : 0
-			tabBarHeightShared.value = tabBarHeight
-		})(visible, tabBarHeight)
+		scheduleOnUI(
+			(visible: boolean, tabBarHeight: number) => {
+				visibleShared.value = visible ? 1 : 0
+				tabBarHeightShared.value = tabBarHeight
+			},
+			visible,
+			tabBarHeight,
+		)
 	}, [tabBarHeight, tabBarHeightShared, visible, visibleShared])
 
 	const targetHeight = useDerivedValue(() => {

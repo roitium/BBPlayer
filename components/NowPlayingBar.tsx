@@ -14,12 +14,12 @@ import {
 } from 'react-native-gesture-handler'
 import { Icon, ProgressBar, Text, useTheme } from 'react-native-paper'
 import Animated, {
-	runOnJS,
 	useAnimatedStyle,
 	useSharedValue,
 	withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { scheduleOnRN } from 'react-native-worklets'
 
 const NowPlayingBar = memo(function NowPlayingBar() {
 	const { colors } = useTheme()
@@ -38,13 +38,13 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const isVisible = currentTrack !== null
 
 	const prevTap = Gesture.Tap().onEnd((_e, success) => {
-		if (success) runOnJS(skipToPrevious)()
+		if (success) scheduleOnRN(skipToPrevious)
 	})
 	const playTap = Gesture.Tap().onEnd((_e, success) => {
-		if (success) runOnJS(togglePlay)()
+		if (success) scheduleOnRN(togglePlay)
 	})
 	const nextTap = Gesture.Tap().onEnd((_e, success) => {
-		if (success) runOnJS(skipToNext)()
+		if (success) scheduleOnRN(skipToNext)
 	})
 	const outerTap = Gesture.Tap()
 		.requireExternalGestureToFail(prevTap, playTap, nextTap)
@@ -55,7 +55,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 			opacity.value = withTiming(1, { duration: 100 })
 
 			if (success) {
-				runOnJS(navigation.navigate)({ name: 'Player', params: undefined })
+				scheduleOnRN(navigation.navigate, { name: 'Player', params: undefined })
 			}
 		})
 
