@@ -1,50 +1,66 @@
-import useTrackProgress from '@/hooks/player/useTrackProgress'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import TrackPlayer from 'react-native-track-player'
+import { useCallback, useEffect, useRef } from 'react'
+import { useSharedValue } from 'react-native-reanimated'
+import TrackPlayer, { Event } from 'react-native-track-player'
 
 export function usePlayerSlider() {
-	const { position, duration } = useTrackProgress()
-	// 设计这个 state 的主要目的是避免在释放进度条时，有短暂的「闪烁回原位置」的问题
-	const [overridePosition, setOverridePosition] = useState<number | null>(null)
+	// 为了避免释放时闪烁
+	const overridePosition = useSharedValue<number | null>(null)
 	const resyncTimer = useRef<NodeJS.Timeout | null>(null)
+	const sharedPosition = useSharedValue(0)
+	const sharedDuration = useSharedValue(0)
 
-	const currentSliderPosition = overridePosition ?? position
+	useEffect(() => {
+		const handler = TrackPlayer.addEventListener(
+			Event.PlaybackProgressUpdated,
+			(data) => {
+				if (overridePosition.get() === null) {
+					sharedPosition.set(data.position)
+					sharedDuration.set(data.duration)
+				}
+			},
+		)
+		return () => handler.remove()
+	}, [overridePosition, sharedDuration, sharedPosition])
 
-	const handleSlidingStart = useCallback(() => {
-		if (resyncTimer.current) {
-			clearTimeout(resyncTimer.current)
-		}
-		setOverridePosition(position)
-	}, [position])
+	const handleSlidingStart = useCallback(
+		(value: number) => {
+			overridePosition.set(value)
+			if (resyncTimer.current) {
+				clearTimeout(resyncTimer.current)
+				resyncTimer.current = null
+			}
+		},
+		[overridePosition],
+	)
 
-	const handleSlidingChange = useCallback((value: number) => {
-		setOverridePosition(value)
-	}, [])
+	const handleSlidingComplete = useCallback(
+		async (value: number) => {
+			overridePosition.set(value)
+			await TrackPlayer.seekTo(value)
 
-	const handleSlidingComplete = useCallback(async (value: number) => {
-		setOverridePosition(value)
-		await TrackPlayer.seekTo(value)
+			sharedPosition.set(value)
 
-		resyncTimer.current = setTimeout(() => {
-			setOverridePosition(null)
-		}, 500)
-	}, [])
+			resyncTimer.current = setTimeout(() => {
+				overridePosition.set(null)
+				resyncTimer.current = null
+			}, 500)
+		},
+		[overridePosition, sharedPosition],
+	)
 
 	useEffect(() => {
 		return () => {
 			if (resyncTimer.current) {
 				clearTimeout(resyncTimer.current)
+				resyncTimer.current = null
 			}
 		}
 	}, [])
 
 	return {
-		isSliderEnabled: duration > 0,
-		maxSliderValue: duration > 0 ? duration : 1,
-		currentSliderPosition,
 		handleSlidingStart,
-		handleSlidingChange,
 		handleSlidingComplete,
-		duration,
+		sharedPosition,
+		sharedDuration,
 	}
 }

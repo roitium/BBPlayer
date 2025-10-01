@@ -1,35 +1,101 @@
 import { formatDurationToHHMMSS } from '@/utils/time'
 import Slider from '@react-native-community/slider'
+import { useState } from 'react'
 import { View } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
+import type { SharedValue } from 'react-native-reanimated'
+import Animated, {
+	useAnimatedProps,
+	useAnimatedReaction,
+} from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { usePlayerSlider } from '../hooks/usePlayerSlider'
+
+const AnimatedSlider = Animated.createAnimatedComponent(Slider)
+
+function TextWithAnimation({
+	sharedPosition,
+	sharedDuration,
+}: {
+	sharedPosition: SharedValue<number>
+	sharedDuration: SharedValue<number>
+}) {
+	const { colors } = useTheme()
+	const [duration, setDuration] = useState(0)
+	const [position, setPosition] = useState(0)
+
+	useAnimatedReaction(
+		() => {
+			const truncDuration = sharedDuration.value
+				? Math.trunc(sharedDuration.value)
+				: null
+
+			const truncPosition = sharedPosition.value
+				? Math.trunc(sharedPosition.value)
+				: null
+			return [truncDuration, truncPosition]
+		},
+		([duration, position], prev) => {
+			if (!prev) {
+				scheduleOnRN(setDuration, duration ?? 0)
+				scheduleOnRN(setPosition, position ?? 0)
+				return
+			}
+			if (duration !== null && duration !== prev[0]) {
+				scheduleOnRN(setDuration, duration)
+			}
+			if (position !== null && position !== prev[1]) {
+				scheduleOnRN(setPosition, position)
+			}
+		},
+	)
+
+	return (
+		<>
+			<Text
+				variant='bodySmall'
+				style={{ color: colors.onSurfaceVariant }}
+			>
+				{formatDurationToHHMMSS(Math.trunc(position))}
+			</Text>
+			<Text
+				variant='bodySmall'
+				style={{ color: colors.onSurfaceVariant }}
+			>
+				{formatDurationToHHMMSS(Math.trunc(duration ?? 0))}
+			</Text>
+		</>
+	)
+}
 
 export function PlayerSlider() {
 	const { colors } = useTheme()
 	const {
-		isSliderEnabled,
-		currentSliderPosition,
-		maxSliderValue,
 		handleSlidingStart,
-		handleSlidingChange,
 		handleSlidingComplete,
-		duration,
+		sharedDuration,
+		sharedPosition,
 	} = usePlayerSlider()
+
+	const animatedProps = useAnimatedProps(() => {
+		return {
+			value: sharedPosition.value,
+			disabled: sharedDuration.value <= 0,
+			maximumValue: Math.max(sharedDuration.value, 1),
+		}
+	})
 
 	return (
 		<View>
-			<Slider
+			<AnimatedSlider
 				style={{ width: '100%', height: 40, zIndex: 0 }}
 				minimumValue={0}
-				maximumValue={maxSliderValue}
-				value={currentSliderPosition}
 				minimumTrackTintColor={colors.primary}
 				maximumTrackTintColor={colors.surfaceVariant}
 				thumbTintColor={colors.primary}
-				disabled={!isSliderEnabled}
 				onSlidingStart={handleSlidingStart}
-				onValueChange={handleSlidingChange}
 				onSlidingComplete={handleSlidingComplete}
+				animatedProps={animatedProps}
 			/>
 			<View
 				style={{
@@ -39,18 +105,10 @@ export function PlayerSlider() {
 					paddingHorizontal: 4,
 				}}
 			>
-				<Text
-					variant='bodySmall'
-					style={{ color: colors.onSurfaceVariant }}
-				>
-					{formatDurationToHHMMSS(Math.trunc(currentSliderPosition))}
-				</Text>
-				<Text
-					variant='bodySmall'
-					style={{ color: colors.onSurfaceVariant }}
-				>
-					{formatDurationToHHMMSS(Math.trunc(isSliderEnabled ? duration : 0))}
-				</Text>
+				<TextWithAnimation
+					sharedPosition={sharedPosition}
+					sharedDuration={sharedDuration}
+				/>
 			</View>
 		</View>
 	)
