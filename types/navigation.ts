@@ -29,6 +29,7 @@ export type RootStackParamList = {
 	Leaderboard: undefined
 	TestPager: undefined
 	ModalHost: undefined
+	Download: undefined
 }
 
 export type ModalPropsMap = {

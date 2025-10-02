@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
 		<View style={{ flex: 1, backgroundColor: colors.background }}>
 			<Appbar.Header elevated>
 				<Appbar.BackAction onPress={() => navigation.goBack()} />
-				<Appbar.Content title='你听了多久？' />
+				<Appbar.Content title='统计' />
 			</Appbar.Header>
 			{data.length > 0 && (
 				<Surface

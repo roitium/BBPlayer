@@ -147,8 +147,15 @@ export default Sentry.wrap(function RootLayout() {
 
 	const onLayoutRootView = useCallback(() => {
 		if (appIsReady) {
-			if (migrationsError) SplashScreen.hide() // 当有错误时，表明迁移已经结束，需要隐藏 SplashScreen 展示错误信息
-			if (migrationsSuccess) SplashScreen.hide()
+			if (migrationsError) {
+				// 当有错误时，表明迁移已经结束，需要隐藏 SplashScreen 展示错误信息
+				SplashScreen.hide()
+				logger.error('数据库迁移失败：', migrationsError)
+			}
+			if (migrationsSuccess) {
+				SplashScreen.hide()
+				logger.info('数据库迁移完成')
+			}
 			// 如果是第一次打开，则显示欢迎对话框
 			const firstOpen = storage.getBoolean('first_open') ?? true
 			if (firstOpen) {

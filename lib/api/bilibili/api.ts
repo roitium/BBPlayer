@@ -190,7 +190,7 @@ export const createBilibiliApi = () => ({
 	getAudioStream(
 		params: BilibiliAudioStreamParams,
 	): ResultAsync<
-		BilibiliTrack['bilibiliMetadata']['bilibiliStreamUrl'],
+		Exclude<BilibiliTrack['bilibiliMetadata']['bilibiliStreamUrl'], undefined>,
 		BilibiliApiError
 	> {
 		const { bvid, cid, audioQuality, enableDolby, enableHiRes } = params

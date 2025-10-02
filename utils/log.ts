@@ -175,7 +175,15 @@ export function toastAndLogError(
 	error: unknown,
 	scope: string,
 ) {
-	if (error instanceof Error) {
+	if (error instanceof CustomError) {
+		toast.error(`${message} -- ${error.type}`, {
+			description: flatErrorMessage(error),
+			duration: Number.POSITIVE_INFINITY,
+		})
+		log
+			.extend(scope)
+			.error(`${message} -- ${error.type}: ${flatErrorMessage(error)}`)
+	} else if (error instanceof Error) {
 		toast.error(message, {
 			description: flatErrorMessage(error),
 			duration: Number.POSITIVE_INFINITY,

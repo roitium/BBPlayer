@@ -1,4 +1,4 @@
-import { ServiceError as BaseServiceError } from './index'
+import { ServiceError } from './index'
 export type ServiceErrorType =
 	| 'TrackNotFound'
 	| 'ArtistNotFound'
@@ -9,8 +9,7 @@ export type ServiceErrorType =
 	| 'ArtistAlreadyExists'
 	| 'Validation'
 	| 'NotImplemented'
-
-export class ServiceError extends BaseServiceError {}
+	| 'FetchDownloadUrlFailed'
 
 export function createServiceError(
 	type: ServiceErrorType,

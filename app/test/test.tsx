@@ -1,10 +1,9 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
-import * as FileSystem from 'expo-file-system'
-import * as LegacyFileSystem from 'expo-file-system/legacy'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -122,12 +121,27 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							console.log(FileSystem.Paths.document.uri)
-							console.log(LegacyFileSystem.documentDirectory)
+							navigation.navigate('Download')
 						}}
 						style={{ marginBottom: 8 }}
 					>
 						试试
+					</Button>
+					<Button
+						mode='outlined'
+						onPress={() => {
+							useDownloadManagerStore.getState().queueDownload({
+								uniqueKey: 'bilibili::BV15qb5zxEkf::31628069382',
+								title: '测试下载',
+								coverUrl: 'https://www.bilibili.com/video/BV1y54y1t7kE',
+							})
+							// useDownloadStore
+							// 	.getState()
+							// 	.retryDownload('bilibili::BV15qb5zxEkf::31628069382')
+						}}
+						style={{ marginBottom: 8 }}
+					>
+						创建下载任务
 					</Button>
 				</View>
 			</ScrollView>

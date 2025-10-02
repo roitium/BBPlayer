@@ -10,9 +10,9 @@ import type {
 } from '@/types/services/playlist'
 import db from '../db/db'
 import * as schema from '../db/schema'
+import { ServiceError } from '../errors'
 import {
 	DatabaseError,
-	ServiceError,
 	createPlaylistNotFound,
 	createTrackNotInPlaylist,
 	createValidationError,

@@ -3,6 +3,7 @@ import type {
 	CreateBilibiliTrackPayload,
 	CreateTrackPayload,
 	CreateTrackPayloadBase,
+	TrackDownloadRecord,
 	UpdateTrackPayload,
 	UpdateTrackPayloadBase,
 } from '@/types/services/track'
@@ -18,9 +19,9 @@ import type {
 } from '../../types/core/media'
 import db from '../db/db'
 import * as schema from '../db/schema'
+import { ServiceError } from '../errors'
 import {
 	DatabaseError,
-	ServiceError,
 	createNotImplementedError,
 	createTrackNotFound,
 	createValidationError,
@@ -665,6 +666,59 @@ export class TrackService {
 			const totalDuration = rows[0]?.totalDuration
 			return okAsync(totalDuration ?? 0)
 		})
+	}
+
+	public getTrackByUniqueKey(
+		uniqueKey: string,
+	): ResultAsync<Track, ServiceError | DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db.query.tracks.findFirst({
+				where: eq(schema.tracks.uniqueKey, uniqueKey),
+				columns: {
+					playHistory: false,
+				},
+				with: {
+					artist: true,
+					bilibiliMetadata: true,
+					localMetadata: true,
+				},
+			}),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('查找 track 失败', { cause: e }),
+		).andThen((dbTrack) => {
+			const formattedTrack = this.formatTrack(dbTrack)
+			if (!formattedTrack) {
+				return errAsync(createTrackNotFound(uniqueKey))
+			}
+			return okAsync(formattedTrack)
+		})
+	}
+
+	/**
+	 * 创建或更新 trackDownloads 表数据
+	 * 每一次调用该函数都会更新 downloadedAt 字段，因为我想不到什么情况下会在不重新下载的情况下修改这张表数据
+	 * @param data
+	 * @returns
+	 */
+	public createOrUpdateTrackDownloadRecord(
+		data: Omit<TrackDownloadRecord, 'downloadedAt'>,
+	) {
+		return ResultAsync.fromPromise(
+			this.db
+				.insert(schema.trackDownloads)
+				.values({ ...data, downloadedAt: new Date() })
+				.onConflictDoUpdate({
+					target: schema.trackDownloads.trackId,
+					set: {
+						status: data.status,
+						fileSize: data.fileSize,
+						downloadedAt: new Date(),
+					},
+				}),
+			(e) => new DatabaseError('创建或更新 trackDownloads 失败', { cause: e }),
+		)
 	}
 }
 

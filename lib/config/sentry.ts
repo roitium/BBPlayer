@@ -1,4 +1,4 @@
-import appStore from '@/hooks/stores/appStore'
+import useAppStore from '@/hooks/stores/useAppStore'
 import log from '@/utils/log'
 import * as Sentry from '@sentry/react-native'
 import { isRunningInExpoGo } from 'expo'
@@ -20,7 +20,7 @@ export const navigationIntegration = Sentry.reactNavigationIntegration({
 
 logger.info(
 	'Sentry 启用状态为：',
-	!developement && appStore.getState().settings.enableSentryReport,
+	!developement && useAppStore.getState().settings.enableSentryReport,
 )
 
 export function initializeSentry() {
@@ -31,7 +31,8 @@ export function initializeSentry() {
 		sendDefaultPii: false,
 		integrations: [navigationIntegration],
 		enableNativeFramesTracking: !isRunningInExpoGo(),
-		enabled: !developement && appStore.getState().settings.enableSentryReport,
+		enabled:
+			!developement && useAppStore.getState().settings.enableSentryReport,
 		environment: developement ? 'development' : 'production',
 	})
 

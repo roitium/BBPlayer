@@ -73,3 +73,10 @@ export type TrackSourceData =
 			source: 'local'
 			localMetadata: LocalMetadataPayload
 	  }
+
+export interface TrackDownloadRecord {
+	trackId: number
+	downloadedAt: number
+	status: 'downloaded' | 'failed'
+	fileSize: number
+}
