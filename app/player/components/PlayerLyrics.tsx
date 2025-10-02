@@ -33,6 +33,83 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 	FlashList,
 ) as typeof FlashList<LyricLine>
 
+interface LyricsOffsetControlProps {
+	visible: boolean
+	anchor: { x: number; y: number; width: number; height: number } | null
+	offset: number
+	onChangeOffset: (delta: number) => void
+	onClose: () => void
+}
+
+const { height: windowHeight } = Dimensions.get('window')
+
+export const LyricsOffsetControl = memo(function LyricsOffsetControl({
+	visible,
+	anchor,
+	offset,
+	onChangeOffset,
+	onClose,
+}: LyricsOffsetControlProps) {
+	const colors = useTheme().colors
+
+	return (
+		<View
+			style={{
+				position: 'absolute',
+				left: anchor ? anchor.x : 0,
+				top: anchor ? windowHeight - anchor.y - 60 : 0,
+				backgroundColor: colors.elevation.level2,
+				gap: 8,
+				borderRadius: 12,
+				elevation: 10,
+				paddingHorizontal: 2,
+				paddingVertical: 4,
+				opacity: visible ? 1 : 0,
+				pointerEvents: visible ? 'auto' : 'none',
+				zIndex: 99999,
+			}}
+		>
+			<RectButton
+				style={{ borderRadius: 99999, padding: 10 }}
+				onPress={() => onChangeOffset(0.5)}
+			>
+				<Icon
+					source='arrow-up'
+					size={20}
+					color={colors.onSurface}
+				/>
+			</RectButton>
+			<Text
+				variant='titleSmall'
+				style={{ color: colors.onSurface, textAlign: 'center' }}
+			>
+				{offset.toFixed(1)}s
+			</Text>
+			<RectButton
+				style={{ borderRadius: 99999, padding: 10 }}
+				onPress={() => onChangeOffset(-0.5)}
+			>
+				<Icon
+					source='arrow-down'
+					size={20}
+					color={colors.onSurface}
+				/>
+			</RectButton>
+			<Divider />
+			<RectButton
+				style={{ borderRadius: 99999, padding: 10 }}
+				onPress={onClose}
+			>
+				<Icon
+					source='check'
+					size={20}
+					color={colors.onSurface}
+				/>
+			</RectButton>
+		</View>
+	)
+})
+
 const LyricLineItem = memo(function LyricLineItem({
 	item,
 	isHighlighted,
@@ -100,7 +177,6 @@ export default function Lyrics({
 	} | null>(null)
 	const offsetMenuAnchorRef = useRef<View>(null)
 	const containerRef = useRef<View>(null)
-	const { height: windowHeight } = Dimensions.get('window')
 	const scrollY = useSharedValue(0)
 	const contentHeight = useSharedValue(0)
 	const viewportHeight = useSharedValue(0)
@@ -401,60 +477,13 @@ export default function Lyrics({
 			</View>
 
 			{/* 歌词偏移量调整面板 */}
-			<View
-				style={{
-					position: 'absolute',
-					left: offsetMenuAnchor ? offsetMenuAnchor.x : 0,
-					top: offsetMenuAnchor ? windowHeight - offsetMenuAnchor.y - 60 : 0,
-					backgroundColor: colors.elevation.level2,
-					gap: 8,
-					borderRadius: 12,
-					elevation: 10,
-					paddingHorizontal: 2,
-					paddingVertical: 4,
-					opacity: offsetMenuVisible ? 1 : 0,
-					pointerEvents: offsetMenuVisible ? 'auto' : 'none',
-					zIndex: 99999,
-				}}
-			>
-				<RectButton
-					style={{ borderRadius: 99999, padding: 10 }}
-					onPress={() => handleChangeOffset(0.5)}
-				>
-					<Icon
-						source='arrow-up'
-						size={20}
-						color={colors.onSurface}
-					/>
-				</RectButton>
-				<Text
-					variant='titleSmall'
-					style={{ color: colors.onSurface, textAlign: 'center' }}
-				>
-					{(lyrics.offset ?? 0).toFixed(1)}s
-				</Text>
-				<RectButton
-					style={{ borderRadius: 99999, padding: 10 }}
-					onPress={() => handleChangeOffset(-0.5)}
-				>
-					<Icon
-						source='arrow-down'
-						size={20}
-						color={colors.onSurface}
-					/>
-				</RectButton>
-				<Divider />
-				<RectButton
-					style={{ borderRadius: 99999, padding: 10 }}
-					onPress={handleCloseOffsetMenu}
-				>
-					<Icon
-						source='check'
-						size={20}
-						color={colors.onSurface}
-					/>
-				</RectButton>
-			</View>
+			<LyricsOffsetControl
+				visible={offsetMenuVisible}
+				anchor={offsetMenuAnchor}
+				offset={lyrics.offset ?? 0}
+				onChangeOffset={handleChangeOffset}
+				onClose={handleCloseOffsetMenu}
+			/>
 		</View>
 	)
 }

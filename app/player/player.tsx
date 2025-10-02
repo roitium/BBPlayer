@@ -25,7 +25,6 @@ export default function PlayerPage() {
 
 	const currentTrack = useCurrentTrack()
 
-	const [isFavorite, setIsFavorite] = useState(false)
 	const [viewMode, setViewMode] = useState<'cover' | 'lyrics'>('cover')
 	const [menuVisible, setMenuVisible] = useState(false)
 
@@ -73,8 +72,6 @@ export default function PlayerPage() {
 					/>
 					{viewMode === 'cover' ? (
 						<TrackInfo
-							isFavorite={isFavorite}
-							onFavoritePress={() => setIsFavorite(!isFavorite)}
 							onArtistPress={() =>
 								currentTrack.artist?.remoteId
 									? navigation.navigate('PlaylistUploader', {

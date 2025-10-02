@@ -1,8 +1,9 @@
-import useTrackProgress from '@/hooks/player/useTrackProgress'
 import type { LyricLine } from '@/types/player/lyrics'
 import type { FlashListRef } from '@shopify/flash-list'
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppState } from 'react-native'
+import TrackPlayer, { Event } from 'react-native-track-player'
 
 export default function useLyricSync(
 	lyrics: LyricLine[],
@@ -13,8 +14,7 @@ export default function useLyricSync(
 	const [currentLyricIndex, setCurrentLyricIndex] = useState(0)
 	const isManualScrollingRef = useRef(false)
 	const manualScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-	const { position } = useTrackProgress()
-	const offsetedPosition = position + offset
+	const [isActive, setIsActive] = useState(true)
 
 	const findIndexForTime = useCallback(
 		(timestamp: number) => {
@@ -75,18 +75,44 @@ export default function useLyricSync(
 		[lyrics, seekTo],
 	)
 
-	// 计算并更新当前歌词的索引
 	useEffect(() => {
-		if (lyrics.length === 0) return
-		if (offsetedPosition <= 0) {
-			// 如果偏移后的时间小于等于0，直接定位到第一句
-			setCurrentLyricIndex(0)
-			return
+		const appStateSubscription = AppState.addEventListener(
+			'change',
+			(nextAppState) => {
+				if (nextAppState === 'active') {
+					setIsActive(true)
+				}
+			},
+		)
+		const handler = TrackPlayer.addEventListener(
+			Event.PlaybackProgressUpdated,
+			(data) => {
+				const offsetedPosition = data.position + offset
+				if (!isActive || offsetedPosition <= 0) {
+					return
+				}
+				const index = findIndexForTime(offsetedPosition)
+				if (index === currentLyricIndex) return
+				setCurrentLyricIndex(index)
+			},
+		)
+		return () => {
+			handler.remove()
+			appStateSubscription.remove()
 		}
-		const index = findIndexForTime(offsetedPosition)
-		if (index === currentLyricIndex) return
-		setCurrentLyricIndex(index)
-	}, [currentLyricIndex, findIndexForTime, lyrics.length, offsetedPosition])
+	}, [currentLyricIndex, findIndexForTime, isActive, offset])
+
+	useEffect(() => {
+		void TrackPlayer.getProgress().then((data) => {
+			const offsetedPosition = data.position + offset
+			if (!isActive || offsetedPosition <= 0) {
+				return
+			}
+			const index = findIndexForTime(offsetedPosition)
+			if (index === currentLyricIndex) return
+			setCurrentLyricIndex(index)
+		})
+	}, [currentLyricIndex, findIndexForTime, isActive, offset])
 
 	// 当歌词发生变化且用户没自己滚时，滚动到当前歌词
 	useEffect(() => {
