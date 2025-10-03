@@ -41,11 +41,13 @@ type SelectTrackWithMetadata =
 			artist: typeof schema.artists.$inferSelect | null
 			bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
 			localMetadata: typeof schema.localMetadata.$inferSelect | null
+			trackDownloads: typeof schema.trackDownloads.$inferSelect | null
 	  })
 	| (SelectTrackBaseSlim & {
 			artist: typeof schema.artists.$inferSelect | null
 			bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
 			localMetadata: typeof schema.localMetadata.$inferSelect | null
+			trackDownloads: typeof schema.trackDownloads.$inferSelect | null
 	  })
 
 export class TrackService {
@@ -81,6 +83,7 @@ export class TrackService {
 			duration: dbTrack.duration,
 			createdAt: dbTrack.createdAt,
 			source: dbTrack.source,
+			trackDownloads: dbTrack.trackDownloads,
 			updatedAt: dbTrack.updatedAt,
 		}
 
@@ -223,6 +226,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>
@@ -347,6 +351,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>
@@ -396,6 +401,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>
@@ -591,6 +597,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) => new DatabaseError('获取播放次数排行榜失败', { cause: e }),
@@ -681,6 +688,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>

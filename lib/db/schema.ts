@@ -200,6 +200,10 @@ export const trackRelations = relations(tracks, ({ one, many }) => ({
 		fields: [tracks.id],
 		references: [localMetadata.trackId],
 	}),
+	trackDownloads: one(trackDownloads, {
+		fields: [tracks.id],
+		references: [trackDownloads.trackId],
+	}),
 }))
 
 export const playlistRelations = relations(playlists, ({ one, many }) => ({

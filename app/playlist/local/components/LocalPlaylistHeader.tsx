@@ -1,7 +1,10 @@
+import { alert } from '@/components/modals/AlertModal'
 import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatRelativeTime } from '@/utils/time'
 import toast from '@/utils/toast'
+import { useNavigation } from '@react-navigation/native'
 import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
 import { memo, useCallback, useMemo, useState } from 'react'
@@ -81,6 +84,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	const queueDownloads = useDownloadManagerStore(
 		(state) => state.queueDownloads,
 	)
+	const navigation = useNavigation()
 
 	const { isLocal, authorName, authorClickable, countText, syncLine } = useMemo(
 		() => buildSubtitlePieces(playlist, validTrackCount),
@@ -95,7 +99,10 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 				coverUrl: t.coverUrl ?? undefined,
 			})),
 		)
-	}, [playlistContents, queueDownloads])
+		useModalStore.getState().doAfterModalHostClosed(() => {
+			navigation.navigate('Download')
+		})
+	}, [navigation, playlistContents, queueDownloads])
 
 	if (!playlist.title) return null
 
@@ -211,7 +218,22 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 							mode='contained'
 							icon='download'
 							size={20}
-							onPress={onClickDownloadAll}
+							onPress={() =>
+								alert(
+									'下载全部？',
+									'是否要下载该播放列表内的全部歌曲？',
+									[
+										{
+											text: '取消',
+										},
+										{
+											text: '确定',
+											onPress: onClickDownloadAll,
+										},
+									],
+									{ cancelable: true },
+								)
+							}
 						/>
 					</Tooltip>
 				</View>

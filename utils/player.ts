@@ -5,6 +5,7 @@ import { createPlayerError } from '@/lib/errors/player'
 import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { RNTPTrack } from '@/types/rntp'
+import { File, Paths } from 'expo-file-system'
 import { err, ok, type Result } from 'neverthrow'
 import log from './log'
 
@@ -112,6 +113,26 @@ async function checkAndUpdateAudioStream(
 	}
 
 	if (track.source === 'bilibili') {
+		const file = new File(Paths.document, 'downloads', `${track.uniqueKey}.m4s`)
+		if (file.exists) {
+			logger.debug('已下载的音频，无需更新流', { trackId: track.id })
+			if (track.bilibiliMetadata.bilibiliStreamUrl?.url === file.uri) {
+				return ok({ track, needsUpdate: false })
+			}
+			const updatedTrack = {
+				...track,
+				bilibiliMetadata: {
+					...track.bilibiliMetadata,
+					bilibiliStreamUrl: {
+						url: file.uri,
+						quality: 114514,
+						getTime: Number.POSITIVE_INFINITY,
+						type: 'local' as const,
+					},
+				},
+			}
+			return ok({ track: updatedTrack, needsUpdate: true })
+		}
 		const needsUpdate = checkBilibiliAudioExpiry(track)
 
 		if (!needsUpdate) {

@@ -1,4 +1,5 @@
 import type { TrackMenuItem } from '@/app/playlist/local/components/LocalPlaylistItem'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
@@ -27,6 +28,9 @@ export function useLocalPlaylistMenu({
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
+	const queueDownloads = useDownloadManagerStore(
+		(state) => state.queueDownloads,
+	)
 
 	const playNext = useCallback(
 		async (track: Track) => {
@@ -81,6 +85,22 @@ export function useLocalPlaylistMenu({
 							})
 						},
 					},
+					{
+						title:
+							item.trackDownloads?.status === 'downloaded'
+								? '重新下载音频'
+								: '缓存音频',
+						leadingIcon: 'download',
+						onPress: () => {
+							queueDownloads([
+								{
+									uniqueKey: item.uniqueKey,
+									title: item.title,
+									coverUrl: item.coverUrl ?? undefined,
+								},
+							])
+						},
+					},
 				)
 			}
 			menuItems.push(
@@ -109,12 +129,13 @@ export function useLocalPlaylistMenu({
 			return menuItems
 		},
 		[
-			deleteTrack,
-			navigation,
+			playlist?.type,
 			playNext,
-			playlist,
 			openAddToPlaylistModal,
+			navigation,
+			queueDownloads,
 			openEditTrackModal,
+			deleteTrack,
 		],
 	)
 }

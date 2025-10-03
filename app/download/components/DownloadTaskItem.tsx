@@ -28,11 +28,9 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 	const progressBackgroundWidth = useSharedValue(0)
 	const containerRef = useRef<View>(null)
 
-	// FIXME: useSharedValue 在与 FlashList 配合时似乎没法正确清除状态？
 	useEffect(() => {
 		const handler = (e: ProgressEvent['progress:uniqueKey']) => {
 			sharedProgress.value = Math.max(Math.min(e.current / e.total, 1), 0)
-			console.log(sharedProgress.value)
 		}
 		eventListner.on(`progress:${task.uniqueKey}`, handler)
 
@@ -47,6 +45,11 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 			progressBackgroundWidth.value = width
 		})
 	}, [progressBackgroundWidth])
+
+	useEffect(() => {
+		// 只清除当前任务的进度，而不清除 progressBackgroundWidth
+		sharedProgress.set(0)
+	}, [sharedProgress, task.uniqueKey])
 
 	const progressBackgroundAnimatedStyle = useAnimatedStyle(() => {
 		return {

@@ -137,13 +137,16 @@ const PlayerLogic = {
 					logger.debug(
 						'播放错误：服务器返回了错误状态码或加载失败，重新加载曲目，但不上报错误',
 					)
+				} else if (data.code === 'android-parsing-container-unsupported') {
+					logger.debug('播放错误：服务器返回了无法解析的容器，不上报错误')
+					return
 				} else {
 					logger.error('播放错误', data)
-					reportErrorToSentry(
-						new Error(`播放错误: ${data.code} ${data.message}`),
-						'播放错误',
-						ProjectScope.Player,
-					)
+					// reportErrorToSentry(
+					// 	new Error(`播放错误: ${data.code} ${data.message}`),
+					// 	'播放错误',
+					// 	ProjectScope.Player,
+					// )
 				}
 				const state = usePlayerStore.getState()
 				const nowTrack = state.currentTrackUniqueKey
