@@ -1,9 +1,10 @@
-import type { Playlist } from '@/types/core/media'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
+import type { Playlist, Track } from '@/types/core/media'
 import { formatRelativeTime } from '@/utils/time'
 import toast from '@/utils/toast'
 import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import {
 	Button,
@@ -16,6 +17,7 @@ import {
 
 interface PlaylistHeaderProps {
 	playlist: Playlist
+	playlistContents: Track[]
 	onClickPlayAll: () => void
 	onClickSync: () => void
 	validTrackCount: number
@@ -69,17 +71,31 @@ function buildSubtitlePieces(
 export const PlaylistHeader = memo(function PlaylistHeader({
 	playlist,
 	validTrackCount,
+	playlistContents,
 	onClickPlayAll,
 	onClickSync,
 	onClickCopyToLocalPlaylist,
 	onPressAuthor,
 }: PlaylistHeaderProps) {
 	const [showFullTitle, setShowFullTitle] = useState(false)
+	const queueDownloads = useDownloadManagerStore(
+		(state) => state.queueDownloads,
+	)
 
 	const { isLocal, authorName, authorClickable, countText, syncLine } = useMemo(
 		() => buildSubtitlePieces(playlist, validTrackCount),
 		[playlist, validTrackCount],
 	)
+	const onClickDownloadAll = useCallback(() => {
+		if (!playlistContents) return
+		queueDownloads(
+			playlistContents.map((t) => ({
+				uniqueKey: t.uniqueKey,
+				title: t.title,
+				coverUrl: t.coverUrl ?? undefined,
+			})),
+		)
+	}, [playlistContents, queueDownloads])
 
 	if (!playlist.title) return null
 
@@ -188,6 +204,14 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 							icon='content-copy'
 							size={20}
 							onPress={onClickCopyToLocalPlaylist}
+						/>
+					</Tooltip>
+					<Tooltip title='下载全部'>
+						<IconButton
+							mode='contained'
+							icon='download'
+							size={20}
+							onPress={onClickDownloadAll}
 						/>
 					</Tooltip>
 				</View>

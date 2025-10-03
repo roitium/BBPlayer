@@ -1,7 +1,7 @@
 import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
-import type { DownloadTaskMeta } from '@/types/core/downloadManagerStore'
+import type { DownloadTask } from '@/types/core/downloadManagerStore'
 import { useNavigation } from '@react-navigation/native'
 import { FlashList } from '@shopify/flash-list'
 import { useCallback } from 'react'
@@ -15,18 +15,15 @@ export default function DownloadPage() {
 	const { colors } = useTheme()
 	const navigation = useNavigation()
 	const tasks = useDownloadManagerStore(
-		useShallow((state) => Object.values(state.downloadsMeta)),
+		useShallow((state) => Object.values(state.downloads)),
 	)
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
 
-	const renderItem = useCallback(({ item }: { item: DownloadTaskMeta }) => {
+	const renderItem = useCallback(({ item }: { item: DownloadTask }) => {
 		return <DownloadTaskItem task={item} />
 	}, [])
-	const keyExtractor = useCallback(
-		(item: DownloadTaskMeta) => item.uniqueKey,
-		[],
-	)
+	const keyExtractor = useCallback((item: DownloadTask) => item.uniqueKey, [])
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.background }}>

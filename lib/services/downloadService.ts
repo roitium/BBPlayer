@@ -1,4 +1,7 @@
-import type { DownloadTaskMeta } from '@/types/core/downloadManagerStore'
+import type {
+	DownloadActions,
+	DownloadTask,
+} from '@/types/core/downloadManagerStore'
 import type { Track } from '@/types/core/media'
 import log, { flatErrorMessage } from '@/utils/log'
 import { Directory, File, Paths } from 'expo-file-system'
@@ -19,14 +22,10 @@ const logger = log.extend('Service.Download')
 // 上报进度的间隔，单位毫秒
 const PROGRESS_REPORT_THROTTLE_DELAY = 300
 
-interface ServiceCallbacks {
-	_setDownloadProgress: (uniqueKey: string, progress: number) => void
-	_setDownloadStatus: (
-		uniqueKey: string,
-		status: 'completed' | 'failed',
-		error?: string,
-	) => void
-}
+type ServiceCallbacks = Pick<
+	DownloadActions,
+	'_setDownloadProgress' | '_setDownloadStatus'
+>
 
 class DownloadService {
 	private activeTasks = new Map<string, AbortController>()
@@ -94,7 +93,7 @@ class DownloadService {
 	 * 这个方法是整个服务的核心。
 	 * @param item - 从 Zustand store 获取的下载任务对象
 	 */
-	public async start(item: DownloadTaskMeta): Promise<void> {
+	public async start(item: DownloadTask): Promise<void> {
 		if (!this.callbacks) {
 			throw new Error('DownloadService尚未初始化，请先调用 initialize()')
 		}
@@ -171,8 +170,7 @@ class DownloadService {
 						totalBytes > 0 &&
 						now - lastProgressUpdateTime > PROGRESS_REPORT_THROTTLE_DELAY
 					) {
-						const progress = Math.round((transferredBytes / totalBytes) * 100)
-						_setDownloadProgress(uniqueKey, progress)
+						_setDownloadProgress(uniqueKey, transferredBytes, totalBytes)
 						lastProgressUpdateTime = now
 					}
 
@@ -199,7 +197,11 @@ class DownloadService {
 				fileSize: finalFile.size,
 			})
 
-			_setDownloadProgress(uniqueKey, 100)
+			_setDownloadProgress(uniqueKey, totalBytes, totalBytes)
+			logger.debug('call _setDownloadStatus', {
+				uniqueKey,
+				status: 'completed',
+			})
 			_setDownloadStatus(uniqueKey, 'completed')
 			logger.debug('下载完成', { uniqueKey })
 		} catch (error) {

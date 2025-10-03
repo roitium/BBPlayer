@@ -1,23 +1,23 @@
-import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
-import type {
-	DownloadTaskMeta,
-	DownloadTaskRuntime,
-} from '@/types/core/downloadManagerStore'
-import { memo, useEffect, useMemo } from 'react'
+import type { ProgressEvent } from '@/hooks/stores/useDownloadManagerStore'
+import useDownloadManagerStore, {
+	eventListner,
+} from '@/hooks/stores/useDownloadManagerStore'
+import type { DownloadTask } from '@/types/core/downloadManagerStore'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { View } from 'react-native'
 import { Icon, IconButton, Surface, Text, useTheme } from 'react-native-paper'
-import { useSharedValue } from 'react-native-reanimated'
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+} from 'react-native-reanimated'
 import { useShallow } from 'zustand/shallow'
 
 const DownloadTaskItem = memo(function DownloadTaskItem({
 	task,
 }: {
-	task: DownloadTaskMeta
+	task: DownloadTask
 }) {
 	const { colors } = useTheme()
-	const trackRuntime: DownloadTaskRuntime | undefined = useDownloadManagerStore(
-		(state) => state.downloadsRuntime[task.uniqueKey],
-	)
 	const { retry, cancel } = useDownloadManagerStore(
 		useShallow((state) => ({
 			retry: state.retryDownload,
@@ -25,30 +25,58 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 		})),
 	)
 	const sharedProgress = useSharedValue(0)
+	const progressBackgroundWidth = useSharedValue(0)
+	const containerRef = useRef<View>(null)
 
+	// FIXME: useSharedValue 在与 FlashList 配合时似乎没法正确清除状态？
 	useEffect(() => {
-		if (!trackRuntime) return
-		sharedProgress.value = trackRuntime.progress
-	}, [sharedProgress, trackRuntime])
+		const handler = (e: ProgressEvent['progress:uniqueKey']) => {
+			sharedProgress.value = Math.max(Math.min(e.current / e.total, 1), 0)
+			console.log(sharedProgress.value)
+		}
+		eventListner.on(`progress:${task.uniqueKey}`, handler)
+
+		return () => {
+			eventListner.off(`progress:${task.uniqueKey}`, handler)
+		}
+	})
+
+	useLayoutEffect(() => {
+		if (!containerRef.current) return
+		containerRef.current.measure((_x, _y, width) => {
+			progressBackgroundWidth.value = width
+		})
+	}, [progressBackgroundWidth])
+
+	const progressBackgroundAnimatedStyle = useAnimatedStyle(() => {
+		return {
+			transform: [
+				{
+					translateX:
+						(sharedProgress.value - 1) * progressBackgroundWidth.value,
+				},
+			],
+		}
+	})
 
 	const getStatusText = () => {
-		if (!trackRuntime) return '未知状态'
-		switch (trackRuntime.status) {
+		switch (task.status) {
 			case 'queued':
 				return '等待下载...'
 			case 'downloading':
 				return '正在下载...'
 			case 'failed':
 				return '下载失败'
+			case 'completed':
+				return '下载完成'
 			default:
 				return '未知状态'
 		}
 	}
 
 	const icons = useMemo(() => {
-		if (!trackRuntime) return null
 		let icon = null
-		switch (trackRuntime.status) {
+		switch (task.status) {
 			case 'queued':
 				icon = (
 					<Icon
@@ -74,6 +102,14 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 					/>
 				)
 				break
+			case 'completed':
+				icon = (
+					<Icon
+						source='check-circle-outline'
+						size={24}
+					/>
+				)
+				break
 			default:
 				icon = (
 					<Icon
@@ -85,83 +121,110 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 		}
 
 		return (
-			<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-				<View style={{ marginRight: trackRuntime.status === 'failed' ? 8 : 0 }}>
-					{icon}
-				</View>
-				{trackRuntime.status === 'failed' && (
-					<IconButton
-						icon='reload'
-						onPress={() => retry(task.uniqueKey)}
-					/>
-				)}
-				<IconButton
-					icon='close'
-					onPress={() => cancel(task.uniqueKey)}
-				/>
-			</View>
-		)
-	}, [cancel, colors.error, retry, task.uniqueKey, trackRuntime.status])
-
-	return (
-		<Surface
-			style={{
-				borderRadius: 8,
-				backgroundColor: 'transparent',
-				marginVertical: 4,
-				marginHorizontal: 8,
-			}}
-			elevation={0}
-		>
-			<View
-				style={{
-					flexDirection: 'row',
-					alignItems: 'center',
-					paddingHorizontal: 8,
-					paddingVertical: 8,
-				}}
-			>
-				<View
-					style={{
-						marginLeft: 12,
-						flex: 1,
-						marginRight: 4,
-						justifyContent: 'center',
-					}}
-				>
-					<Text
-						variant='bodyMedium'
-						numberOfLines={1}
-					>
-						{task.title}
-					</Text>
-					<View
-						style={{
-							flexDirection: 'row',
-							alignItems: 'center',
-							marginTop: 2,
-						}}
-					>
-						<Text
-							variant='bodySmall'
-							style={{ color: colors.onSurfaceVariant }}
-						>
-							{getStatusText()}
-						</Text>
-					</View>
-				</View>
-
+			<>
 				<View
 					style={{
 						flexDirection: 'row',
 						alignItems: 'center',
-						justifyContent: 'flex-end',
 					}}
 				>
-					{icons}
+					<View style={{ marginRight: task.status === 'failed' ? 8 : 0 }}>
+						{icon}
+					</View>
+					{task.status === 'failed' && (
+						<IconButton
+							icon='reload'
+							onPress={() => retry(task.uniqueKey)}
+						/>
+					)}
+					<IconButton
+						icon='close'
+						onPress={() => cancel(task.uniqueKey)}
+					/>
 				</View>
-			</View>
-		</Surface>
+			</>
+		)
+	}, [cancel, colors.error, retry, task.status, task.uniqueKey])
+
+	return (
+		<>
+			<Surface
+				ref={containerRef}
+				style={{
+					borderRadius: 8,
+					backgroundColor: 'transparent',
+					marginVertical: 4,
+					marginHorizontal: 8,
+					position: 'relative',
+					width: '100%',
+				}}
+				elevation={0}
+			>
+				<View
+					style={{
+						flexDirection: 'row',
+						alignItems: 'center',
+						paddingHorizontal: 8,
+						paddingVertical: 8,
+					}}
+				>
+					<View
+						style={{
+							marginLeft: 12,
+							flex: 1,
+							marginRight: 4,
+							justifyContent: 'center',
+						}}
+					>
+						<Text
+							variant='bodyMedium'
+							numberOfLines={1}
+						>
+							{task.title}
+						</Text>
+						<View
+							style={{
+								flexDirection: 'row',
+								alignItems: 'center',
+								marginTop: 2,
+							}}
+						>
+							<Text
+								variant='bodySmall'
+								style={{ color: colors.onSurfaceVariant }}
+							>
+								{getStatusText()}
+							</Text>
+						</View>
+					</View>
+
+					<View
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'flex-end',
+						}}
+					>
+						{icons}
+					</View>
+				</View>
+			</Surface>
+			<Animated.View
+				style={[
+					progressBackgroundAnimatedStyle,
+					{
+						position: 'absolute',
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						backgroundColor: colors.surfaceVariant,
+						zIndex: -100,
+						width: '100%',
+					},
+				]}
+			></Animated.View>
+		</>
 	)
 })
 

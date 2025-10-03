@@ -130,11 +130,13 @@ export default function TestPage() {
 					<Button
 						mode='outlined'
 						onPress={() => {
-							useDownloadManagerStore.getState().queueDownload({
-								uniqueKey: 'bilibili::BV15qb5zxEkf::31628069382',
-								title: '测试下载',
-								coverUrl: 'https://www.bilibili.com/video/BV1y54y1t7kE',
-							})
+							useDownloadManagerStore.getState().queueDownloads([
+								{
+									uniqueKey: 'bilibili::BV1GVwnekEdE',
+									title: '测试下载 5',
+									coverUrl: 'https://www.bilibili.com/video/BV1y54y1t7kE',
+								},
+							])
 							// useDownloadStore
 							// 	.getState()
 							// 	.retryDownload('bilibili::BV15qb5zxEkf::31628069382')

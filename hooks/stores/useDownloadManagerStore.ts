@@ -2,70 +2,97 @@ import { downloadService } from '@/lib/services/downloadService'
 import type {
 	DownloadActions,
 	DownloadState,
-	DownloadTaskRuntime,
 } from '@/types/core/downloadManagerStore'
 import log from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
+import createStickyEmitter from '@/utils/stickyMitt'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 
+type ProgressEvent = Record<
+	`progress:${string}`,
+	{
+		current: number
+		total: number
+	}
+>
+
 const logger = log.extend('Store.DownloadManager')
+const eventListner = createStickyEmitter<ProgressEvent>()
 
 const useDownloadManagerStore = create<DownloadState & DownloadActions>()(
 	persist(
 		immer((set, get) => ({
-			downloadsMeta: {},
-			downloadsRuntime: {},
+			downloads: {},
 			maxConcurrentDownloads: 3,
 
-			queueDownload: (track) => {
-				const key = track.uniqueKey
-				const existing = get().downloadsRuntime[key]
-				if (existing && existing.status !== 'completed') {
-					logger.warning('该下载任务已在队列或正在下载中，跳过添加')
-					return
-				}
+			queueDownloads: (tracks) => {
+				const existingDownloads = get().downloads
+				let itemsAdded = 0
+
 				set((state) => {
-					state.downloadsMeta[key] = {
-						uniqueKey: key,
-						title: track.title,
-						coverUrl: track.coverUrl,
-					}
-					state.downloadsRuntime[key] = {
-						progress: 0,
-						error: undefined,
-						status: 'queued',
+					for (const track of tracks) {
+						const key = track.uniqueKey
+						if (
+							existingDownloads[key] &&
+							existingDownloads[key].status !== 'completed'
+						) {
+							logger.warning(`批量添加：任务 ${track.title} 已在队列中，跳过`)
+							continue
+						}
+						state.downloads[key] = {
+							uniqueKey: key,
+							title: track.title,
+							coverUrl: track.coverUrl,
+							status: 'queued',
+							error: undefined,
+						}
+						itemsAdded++
 					}
 				})
-				get()._processQueue()
+
+				if (itemsAdded > 0) {
+					logger.info(`批量添加了 ${itemsAdded} 个新任务到队列。`)
+					get()._processQueue()
+				}
 			},
 
 			cancelDownload: (uniqueKey) => {
 				set((state) => {
-					delete state.downloadsRuntime[uniqueKey]
-					delete state.downloadsMeta[uniqueKey]
+					delete state.downloads[uniqueKey]
 				})
+				downloadService.cancel(uniqueKey)
 				get()._processQueue()
 			},
 
 			retryDownload: (uniqueKey) => {
 				set((state) => {
-					const task = state.downloadsRuntime[uniqueKey]
+					const task = state.downloads[uniqueKey]
 					if (!task || task.status !== 'failed') return
-					state.downloadsRuntime[uniqueKey] = {
+					state.downloads[uniqueKey] = {
+						...task,
 						status: 'queued',
-						progress: 0,
 						error: undefined,
 					}
 				})
 				get()._processQueue()
 			},
 
+			startDownload: () => {
+				get()._processQueue()
+			},
+
 			_setDownloadStatus: (uniqueKey, status, error) => {
 				set((state) => {
-					const download = state.downloadsRuntime[uniqueKey]
-					if (!download) return
+					const download = state.downloads[uniqueKey]
+					if (!download) {
+						return
+					}
+					if (status === 'completed') {
+						delete state.downloads[uniqueKey]
+						return
+					}
 					download.status = status
 					download.error = error ?? undefined
 				})
@@ -75,86 +102,77 @@ const useDownloadManagerStore = create<DownloadState & DownloadActions>()(
 				}
 			},
 
-			_setDownloadProgress: (uniqueKey, progress) => {
-				set((state) => {
-					const runtime = state.downloadsRuntime[uniqueKey]
-					if (!runtime) return
-					runtime.progress = progress
+			_setDownloadProgress: (uniqueKey, current, total) => {
+				eventListner.emitSticky(`progress:${uniqueKey}`, {
+					current,
+					total,
 				})
 			},
 
 			_processQueue: () => {
-				const { maxConcurrentDownloads, _setDownloadStatus } = get()
-				const allRuntime = Object.values(get().downloadsRuntime)
-				const active = allRuntime.filter(
+				const { downloads, maxConcurrentDownloads, _setDownloadStatus } = get()
+				const allTasks = Object.values(downloads)
+
+				let activeCount = allTasks.filter(
 					(d) => d.status === 'downloading',
 				).length
-				if (active >= maxConcurrentDownloads) return
 
-				let pickedKey: string | null = null
-				set((state) => {
-					const keys = Object.keys(state.downloadsRuntime)
-					for (const k of keys) {
-						if (state.downloadsRuntime[k].status === 'queued') {
-							state.downloadsRuntime[k].status = 'downloading'
-							pickedKey = k
-							break
-						}
-					}
-					return state
-				})
+				const queuedTasks = allTasks.filter((d) => d.status === 'queued')
 
-				if (!pickedKey) return
+				if (queuedTasks.length === 0) {
+					return
+				}
 
-				const entry = get().downloadsMeta[pickedKey]
+				while (activeCount < maxConcurrentDownloads && queuedTasks.length > 0) {
+					const taskToStart = queuedTasks.shift()
+					if (!taskToStart) break
 
-				downloadService.start(entry).catch((e) => {
-					logger.error(
-						`下载失败，未捕获的错误：${e instanceof Error ? e.message : String(e)}`,
-					)
+					const key = taskToStart.uniqueKey
+
+					activeCount++
 					set((state) => {
-						_setDownloadStatus(
-							entry.uniqueKey,
-							'failed',
-							e instanceof Error ? e.message : String(e),
-						)
-						return state
+						if (state.downloads[key]) {
+							state.downloads[key].status = 'downloading'
+						}
 					})
-				})
-				logger.info(`开始下载 ${entry.title}: ${entry.uniqueKey}`)
+
+					const entry = get().downloads[key]
+					if (entry) {
+						logger.info(`开始下载 ${entry.title}: ${entry.uniqueKey}`)
+						downloadService.start(entry).catch((e) => {
+							const errorMessage = e instanceof Error ? e.message : String(e)
+							logger.error(`下载失败，未捕获的错误：${errorMessage}`)
+							_setDownloadStatus(entry.uniqueKey, 'failed', errorMessage)
+						})
+					}
+				}
 			},
 		})),
 		{
-			name: 'download-manager-storage',
+			name: 'download-manager-storage-v2',
 			storage: createJSONStorage(() => zustandStorage),
 			partialize: (state) => ({
-				downloadsMeta: state.downloadsMeta,
+				downloads: state.downloads,
 				maxConcurrentDownloads: state.maxConcurrentDownloads,
 			}),
 			merge: (persistedState, currentState) => {
 				if (!persistedState) return currentState
 
-				const persistedMeta =
-					(persistedState as DownloadState).downloadsMeta ?? {}
+				const persistedTasks = (persistedState as DownloadState).downloads ?? {}
 				const maxConcurrent =
 					(persistedState as DownloadState).maxConcurrentDownloads ??
 					currentState.maxConcurrentDownloads
 
-				const runtime = Object.fromEntries(
-					Object.keys(persistedMeta).map((k) => [
+				const tasks = Object.fromEntries(
+					Object.entries(persistedTasks).map(([k, v]) => [
 						k,
-						{
-							status: 'queued',
-							progress: 0,
-							error: undefined,
-						} as DownloadTaskRuntime,
+						{ ...v, status: v.status === 'downloading' ? 'queued' : v.status },
 					]),
 				)
 
 				return {
 					...currentState,
-					downloadsMeta: persistedMeta,
-					downloadsRuntime: runtime,
+					downloads: tasks,
 					maxConcurrentDownloads: maxConcurrent,
 				}
 			},
@@ -167,4 +185,5 @@ downloadService.setCallbacks({
 	_setDownloadStatus: useDownloadManagerStore.getState()._setDownloadStatus,
 })
 
+export { eventListner, ProgressEvent }
 export default useDownloadManagerStore
