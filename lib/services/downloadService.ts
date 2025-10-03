@@ -151,10 +151,7 @@ class DownloadService {
 				if (!directory.exists) {
 					directory.create({ intermediates: true })
 				}
-				if (tempFile.exists) {
-					tempFile.delete()
-				}
-				tempFile.create()
+				tempFile.create({ overwrite: true, intermediates: true })
 			} catch (e) {
 				throw new Error(
 					`无法创建下载文件或目录: ${e instanceof Error ? e.message : String(e)}`,
