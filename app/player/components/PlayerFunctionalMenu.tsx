@@ -4,6 +4,7 @@ import { useModalStore } from '@/hooks/stores/useModalStore'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Clipboard from 'expo-clipboard'
 import * as WebBrowser from 'expo-web-browser'
 import { Divider, Menu } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -72,9 +73,16 @@ export function PlayerFunctionalMenu({
 				onPress={() => {
 					setMenuVisible(false)
 					if (!currentTrack) return
-					void WebBrowser.openBrowserAsync(
+					WebBrowser.openBrowserAsync(
 						`https://www.bilibili.com/video/${currentTrack.id}`,
-					)
+					).catch((e) => {
+						void Clipboard.setStringAsync(
+							`https://www.bilibili.com/video/${currentTrack.id}`,
+						)
+						toast.error('无法调用浏览器打开网页，已将链接复制到剪贴板', {
+							description: String(e),
+						})
+					})
 				}}
 				title='查看原视频'
 				leadingIcon='share-variant'

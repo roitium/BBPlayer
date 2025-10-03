@@ -7,6 +7,7 @@ import { BilibiliQrCodeLoginStatus } from '@/types/apis/bilibili'
 import toast from '@/utils/toast'
 import * as Sentry from '@sentry/react-native'
 import { useQueryClient } from '@tanstack/react-query'
+import * as Clipboard from 'expo-clipboard'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback, useEffect, useReducer } from 'react'
 import { Pressable } from 'react-native'
@@ -196,7 +197,16 @@ const QrCodeLoginModal = () => {
 					{statusText}
 					{'（点击二维码可直接跳转登录）'}
 				</Text>
-				<Pressable onPress={() => WebBrowser.openBrowserAsync(qrcodeUrl)}>
+				<Pressable
+					onPress={() => {
+						WebBrowser.openBrowserAsync(qrcodeUrl).catch((e) => {
+							void Clipboard.setStringAsync(qrcodeUrl)
+							toast.error('无法调用浏览器打开网页，已将链接复制到剪贴板', {
+								description: String(e),
+							})
+						})
+					}}
+				>
 					<QRCode
 						value={qrcodeUrl}
 						size={200}

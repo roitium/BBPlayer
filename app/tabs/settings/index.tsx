@@ -6,6 +6,7 @@ import { toastAndLogError } from '@/utils/log'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Application from 'expo-application'
+import * as Clipboard from 'expo-clipboard'
 import * as FileSystem from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
 import * as Updates from 'expo-updates'
@@ -15,6 +16,7 @@ import { ScrollView, View } from 'react-native'
 import { Divider, IconButton, Switch, Text, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RootStackParamList } from '../../../types/navigation'
+import toast from '../../../utils/toast'
 
 const CLICK_TIMES = 3
 const updateTime = Updates.createdAt
@@ -137,7 +139,14 @@ const AboutSection = memo(function AboutSection() {
 					onPress={() =>
 						WebBrowser.openBrowserAsync(
 							'https://github.com/yanyao2333/BBPlayer',
-						)
+						).catch((e) => {
+							void Clipboard.setStringAsync(
+								'https://github.com/yanyao2333/BBPlayer',
+							)
+							toast.error('无法调用浏览器打开网页，已将链接复制到剪贴板', {
+								description: String(e),
+							})
+						})
 					}
 					style={{ textDecorationLine: 'underline' }}
 				>
