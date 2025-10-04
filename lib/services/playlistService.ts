@@ -10,9 +10,9 @@ import type {
 } from '@/types/services/playlist'
 import db from '../db/db'
 import * as schema from '../db/schema'
+import { ServiceError } from '../errors'
 import {
 	DatabaseError,
-	ServiceError,
 	createPlaylistNotFound,
 	createTrackNotInPlaylist,
 	createValidationError,
@@ -410,6 +410,7 @@ export class PlaylistService {
 								artist: true,
 								bilibiliMetadata: true,
 								localMetadata: true,
+								trackDownloads: true,
 							},
 						},
 					},
@@ -711,6 +712,7 @@ export class PlaylistService {
 								artist: true,
 								bilibiliMetadata: true,
 								localMetadata: true,
+								trackDownloads: true,
 							},
 						},
 					},

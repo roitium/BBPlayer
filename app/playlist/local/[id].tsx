@@ -308,6 +308,7 @@ export default function LocalPlaylistPage() {
 						onClickPlayAll={playAll}
 						onClickSync={handleSync}
 						validTrackCount={filteredPlaylistData.length}
+						playlistContents={filteredPlaylistData}
 						onClickCopyToLocalPlaylist={() =>
 							openModal('DuplicateLocalPlaylist', {
 								sourcePlaylistId: Number(id),

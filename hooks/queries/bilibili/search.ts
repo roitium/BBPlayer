@@ -1,5 +1,5 @@
 import { bilibiliApi } from '@/lib/api/bilibili/api'
-import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import { returnOrThrowAsync } from '@/utils/neverthrow-utils'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const searchQueryKeys = {

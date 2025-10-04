@@ -81,10 +81,16 @@ export default function Library() {
 					>
 						音乐库
 					</Text>
-					<IconButton
-						icon='trophy'
-						onPress={() => navigation.navigate('Leaderboard')}
-					/>
+					<View style={{ flexDirection: 'row' }}>
+						<IconButton
+							icon='progress-download'
+							onPress={() => navigation.navigate('Download')}
+						/>
+						<IconButton
+							icon='trophy'
+							onPress={() => navigation.navigate('Leaderboard')}
+						/>
+					</View>
 				</View>
 				<TabView
 					style={{ flex: 1, backgroundColor: colors.background }}

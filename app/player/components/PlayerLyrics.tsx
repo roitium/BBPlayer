@@ -310,9 +310,11 @@ export default function Lyrics({
 			<ScrollView
 				style={{
 					flex: 1,
+					marginHorizontal: 30,
+				}}
+				contentContainerStyle={{
 					justifyContent: 'center',
 					alignItems: 'center',
-					marginHorizontal: 30,
 				}}
 			>
 				<Text

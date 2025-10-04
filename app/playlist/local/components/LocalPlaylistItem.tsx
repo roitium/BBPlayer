@@ -2,7 +2,7 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { Playlist, Track } from '@/types/core/media'
 import { formatDurationToHHMMSS } from '@/utils/time'
 import { Image } from 'expo-image'
-import { memo, useRef } from 'react'
+import { memo, useCallback, useRef } from 'react'
 import { Easing, View } from 'react-native'
 import { RectButton } from 'react-native-gesture-handler'
 import { Checkbox, Icon, Surface, Text, useTheme } from 'react-native-paper'
@@ -52,6 +52,36 @@ export const TrackListItem = memo(function TrackListItem({
 	)
 
 	const highlighted = (isCurrentTrack && !selectMode) || isSelected
+
+	const renderDownloadStatus = useCallback(() => {
+		if (!data.trackDownloads) return null
+		const { status } = data.trackDownloads
+		const iconConfig = {
+			downloaded: {
+				source: 'check-circle-outline',
+				color: theme.colors.primary,
+			},
+			downloading: { source: 'download', color: theme.colors.primary },
+			pending: {
+				source: 'clock-outline',
+				color: theme.colors.onSurfaceVariant,
+			},
+			failed: { source: 'alert-circle-outline', color: theme.colors.error },
+		}[status] ?? {
+			source: 'help-circle-outline',
+			color: theme.colors.onSurfaceVariant,
+		}
+
+		return (
+			<View style={{ paddingLeft: 4 }}>
+				<Icon
+					source={iconConfig.source}
+					size={12}
+					color={iconConfig.color}
+				/>
+			</View>
+		)
+	}, [data.trackDownloads, theme.colors])
 
 	return (
 		<RectButton
@@ -160,6 +190,8 @@ export const TrackListItem = memo(function TrackListItem({
 							<Text variant='bodySmall'>
 								{data.duration ? formatDurationToHHMMSS(data.duration) : ''}
 							</Text>
+							{/* 显示下载状态 */}
+							{renderDownloadStatus()}
 						</View>
 						{/* 显示主视频标题（如果是分 p） */}
 						{data.source === 'bilibili' &&

@@ -2,7 +2,7 @@ import { favoriteListQueryKeys } from '@/hooks/queries/bilibili/favorite'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import log, { toastAndLogError } from '@/utils/log'
-import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import { returnOrThrowAsync } from '@/utils/neverthrow-utils'
 import toast from '@/utils/toast'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 

@@ -2,6 +2,7 @@ import ModalHost from '@/components/ModalHost'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { View } from 'react-native'
 import type { RootStackParamList } from '../types/navigation'
+import DownloadPage from './download'
 import LeaderboardPage from './leaderboard'
 import NotFoundScreen from './not-found'
 import PlayerPage from './player/player'
@@ -70,6 +71,10 @@ export function RootLayoutNav() {
 				<RootStack.Screen
 					name='Leaderboard'
 					component={LeaderboardPage}
+				/>
+				<RootStack.Screen
+					name='Download'
+					component={DownloadPage}
 				/>
 				<RootStack.Screen
 					name='NotFound'

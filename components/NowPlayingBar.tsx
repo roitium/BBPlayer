@@ -166,6 +166,7 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 									borderWidth: 0.8,
 									borderColor: colors.primary,
 								}}
+								recyclingKey={currentTrack.uniqueKey}
 								cachePolicy={'memory'}
 							/>
 

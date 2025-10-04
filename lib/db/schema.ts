@@ -161,6 +161,23 @@ export const localMetadata = sqliteTable('local_metadata', {
 	localPath: text('local_path').notNull(),
 })
 
+export const trackDownloads = sqliteTable(
+	'track_downloads',
+	{
+		trackId: integer('track_id')
+			.primaryKey()
+			.references(() => tracks.id, { onDelete: 'cascade' }),
+		downloadedAt: integer('downloadedAt', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch() * 1000)`),
+		status: text('status', {
+			enum: ['downloaded', 'failed'],
+		}).notNull(),
+		fileSize: integer('file_size'),
+	},
+	(table) => [index('track_downloads_track_idx').on(table.trackId)],
+)
+
 // ##################################
 // RELATIONS
 // ##################################
@@ -182,6 +199,10 @@ export const trackRelations = relations(tracks, ({ one, many }) => ({
 	localMetadata: one(localMetadata, {
 		fields: [tracks.id],
 		references: [localMetadata.trackId],
+	}),
+	trackDownloads: one(trackDownloads, {
+		fields: [tracks.id],
+		references: [trackDownloads.trackId],
 	}),
 }))
 
@@ -217,6 +238,13 @@ export const bilibiliMetadataRelations = relations(
 export const localMetadataRelations = relations(localMetadata, ({ one }) => ({
 	track: one(tracks, {
 		fields: [localMetadata.trackId],
+		references: [tracks.id],
+	}),
+}))
+
+export const trackDownloadRelations = relations(trackDownloads, ({ one }) => ({
+	track: one(tracks, {
+		fields: [trackDownloads.trackId],
 		references: [tracks.id],
 	}),
 }))

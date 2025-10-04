@@ -59,6 +59,7 @@ const mapApiItemToTrack = (
 			videoIsValid: true,
 			mainTrackTitle: video.title,
 		},
+		trackDownloads: null,
 	}
 }
 

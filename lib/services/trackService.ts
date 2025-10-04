@@ -15,12 +15,13 @@ import type {
 	LocalTrack,
 	PlayRecord,
 	Track,
+	TrackDownloadRecord,
 } from '../../types/core/media'
 import db from '../db/db'
 import * as schema from '../db/schema'
+import { ServiceError } from '../errors'
 import {
 	DatabaseError,
-	ServiceError,
 	createNotImplementedError,
 	createTrackNotFound,
 	createValidationError,
@@ -40,11 +41,13 @@ type SelectTrackWithMetadata =
 			artist: typeof schema.artists.$inferSelect | null
 			bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
 			localMetadata: typeof schema.localMetadata.$inferSelect | null
+			trackDownloads: typeof schema.trackDownloads.$inferSelect | null
 	  })
 	| (SelectTrackBaseSlim & {
 			artist: typeof schema.artists.$inferSelect | null
 			bilibiliMetadata: typeof schema.bilibiliMetadata.$inferSelect | null
 			localMetadata: typeof schema.localMetadata.$inferSelect | null
+			trackDownloads: typeof schema.trackDownloads.$inferSelect | null
 	  })
 
 export class TrackService {
@@ -80,6 +83,7 @@ export class TrackService {
 			duration: dbTrack.duration,
 			createdAt: dbTrack.createdAt,
 			source: dbTrack.source,
+			trackDownloads: dbTrack.trackDownloads,
 			updatedAt: dbTrack.updatedAt,
 		}
 
@@ -222,6 +226,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>
@@ -346,6 +351,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>
@@ -395,6 +401,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>
@@ -590,6 +597,7 @@ export class TrackService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) => new DatabaseError('获取播放次数排行榜失败', { cause: e }),
@@ -665,6 +673,81 @@ export class TrackService {
 			const totalDuration = rows[0]?.totalDuration
 			return okAsync(totalDuration ?? 0)
 		})
+	}
+
+	public getTrackByUniqueKey(
+		uniqueKey: string,
+	): ResultAsync<Track, ServiceError | DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db.query.tracks.findFirst({
+				where: eq(schema.tracks.uniqueKey, uniqueKey),
+				columns: {
+					playHistory: false,
+				},
+				with: {
+					artist: true,
+					bilibiliMetadata: true,
+					localMetadata: true,
+					trackDownloads: true,
+				},
+			}),
+			(e) =>
+				e instanceof ServiceError
+					? e
+					: new DatabaseError('查找 track 失败', { cause: e }),
+		).andThen((dbTrack) => {
+			const formattedTrack = this.formatTrack(dbTrack)
+			if (!formattedTrack) {
+				return errAsync(createTrackNotFound(uniqueKey))
+			}
+			return okAsync(formattedTrack)
+		})
+	}
+
+	/**
+	 * 创建或更新 trackDownloads 表数据
+	 * @param data
+	 * @param updateDownloadedAt 是否更新 downloadedAt 字段，默认为 true
+	 * @returns
+	 */
+	public createOrUpdateTrackDownloadRecord(
+		data: Omit<TrackDownloadRecord, 'downloadedAt'>,
+		updateDownloadedAt = true,
+	): ResultAsync<true, DatabaseError> {
+		const date = new Date()
+		const conflictUpdateDate = updateDownloadedAt ? { downloadedAt: date } : {}
+		return ResultAsync.fromPromise(
+			this.db
+				.insert(schema.trackDownloads)
+				.values({ ...data, downloadedAt: date })
+				.onConflictDoUpdate({
+					target: schema.trackDownloads.trackId,
+					set: {
+						status: data.status,
+						fileSize: data.fileSize,
+						...conflictUpdateDate,
+					},
+				}),
+			(e) => new DatabaseError('创建或更新 trackDownloads 失败', { cause: e }),
+		).andThen(() => okAsync(true as const))
+	}
+
+	public deleteTrackDownloadRecord(
+		trackId: number,
+	): ResultAsync<true, DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db
+				.delete(schema.trackDownloads)
+				.where(eq(schema.trackDownloads.trackId, trackId)),
+			(e) => new DatabaseError('删除 trackDownloads 失败', { cause: e }),
+		).andThen(() => okAsync(true as const))
+	}
+
+	public deleteAllTrackDownloadRecords(): ResultAsync<true, DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db.delete(schema.trackDownloads),
+			(e) => new DatabaseError('删除 trackDownloads 失败', { cause: e }),
+		).andThen(() => okAsync(true as const))
 	}
 }
 

@@ -1,5 +1,10 @@
 import type { TrackMenuItem } from '@/app/playlist/local/components/LocalPlaylistItem'
+import { alert } from '@/components/modals/AlertModal'
+import { playlistKeys } from '@/hooks/queries/db/playlist'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { queryClient } from '@/lib/config/queryClient'
+import { downloadService } from '@/lib/services/downloadService'
 import type { Playlist, Track } from '@/types/core/media'
 import type { RootStackParamList } from '@/types/navigation'
 import { toastAndLogError } from '@/utils/log'
@@ -27,6 +32,9 @@ export function useLocalPlaylistMenu({
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
+	const queueDownloads = useDownloadManagerStore(
+		(state) => state.queueDownloads,
+	)
 
 	const playNext = useCallback(
 		async (track: Track) => {
@@ -81,6 +89,37 @@ export function useLocalPlaylistMenu({
 							})
 						},
 					},
+					{
+						title:
+							item.trackDownloads?.status === 'downloaded'
+								? '删除缓存'
+								: '缓存音频',
+						leadingIcon:
+							item.trackDownloads?.status === 'downloaded'
+								? 'delete-sweep'
+								: 'download',
+						onPress: async () => {
+							if (item.trackDownloads?.status === 'downloaded') {
+								const result = await downloadService.delete(item.uniqueKey)
+								if (result.isErr()) {
+									toastAndLogError('删除缓存失败', result.error, SCOPE)
+									return
+								}
+								toast.success('删除缓存成功')
+								await queryClient.invalidateQueries({
+									queryKey: playlistKeys.playlistContents(playlist.id),
+								})
+								return
+							}
+							queueDownloads([
+								{
+									uniqueKey: item.uniqueKey,
+									title: item.title,
+									coverUrl: item.coverUrl ?? undefined,
+								},
+							])
+						},
+					},
 				)
 			}
 			menuItems.push(
@@ -101,20 +140,38 @@ export function useLocalPlaylistMenu({
 			if (playlist?.type === 'local') {
 				menuItems.push({
 					title: '删除歌曲',
-					leadingIcon: 'delete',
-					onPress: () => deleteTrack(item.id),
+					leadingIcon: 'playlist-remove',
+					onPress: () =>
+						alert(
+							'确定？',
+							'确定从列表中移除该歌曲？',
+							[
+								{
+									text: '取消',
+								},
+								{
+									text: '确定',
+									onPress: () => deleteTrack(item.id),
+								},
+							],
+							{
+								cancelable: true,
+							},
+						),
 					danger: true,
 				})
 			}
 			return menuItems
 		},
 		[
-			deleteTrack,
-			navigation,
+			playlist?.type,
+			playlist?.id,
 			playNext,
-			playlist,
 			openAddToPlaylistModal,
+			navigation,
+			queueDownloads,
 			openEditTrackModal,
+			deleteTrack,
 		],
 	)
 }

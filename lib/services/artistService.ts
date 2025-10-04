@@ -9,9 +9,9 @@ import type {
 } from '@/types/services/artist'
 import db from '../db/db'
 import * as schema from '../db/schema'
+import { ServiceError } from '../errors'
 import {
 	DatabaseError,
-	ServiceError,
 	createArtistNotFound,
 	createValidationError,
 } from '../errors/service'
@@ -206,6 +206,7 @@ export class ArtistService {
 					artist: true,
 					bilibiliMetadata: true,
 					localMetadata: true,
+					trackDownloads: true,
 				},
 			}),
 			(e) =>

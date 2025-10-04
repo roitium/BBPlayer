@@ -1,9 +1,13 @@
-import type { Playlist } from '@/types/core/media'
+import { alert } from '@/components/modals/AlertModal'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
+import { useModalStore } from '@/hooks/stores/useModalStore'
+import type { Playlist, Track } from '@/types/core/media'
 import { formatRelativeTime } from '@/utils/time'
 import toast from '@/utils/toast'
+import { useNavigation } from '@react-navigation/native'
 import * as Clipboard from 'expo-clipboard'
 import { Image } from 'expo-image'
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import {
 	Button,
@@ -16,6 +20,7 @@ import {
 
 interface PlaylistHeaderProps {
 	playlist: Playlist
+	playlistContents: Track[]
 	onClickPlayAll: () => void
 	onClickSync: () => void
 	validTrackCount: number
@@ -69,17 +74,35 @@ function buildSubtitlePieces(
 export const PlaylistHeader = memo(function PlaylistHeader({
 	playlist,
 	validTrackCount,
+	playlistContents,
 	onClickPlayAll,
 	onClickSync,
 	onClickCopyToLocalPlaylist,
 	onPressAuthor,
 }: PlaylistHeaderProps) {
 	const [showFullTitle, setShowFullTitle] = useState(false)
+	const queueDownloads = useDownloadManagerStore(
+		(state) => state.queueDownloads,
+	)
+	const navigation = useNavigation()
 
 	const { isLocal, authorName, authorClickable, countText, syncLine } = useMemo(
 		() => buildSubtitlePieces(playlist, validTrackCount),
 		[playlist, validTrackCount],
 	)
+	const onClickDownloadAll = useCallback(() => {
+		if (!playlistContents) return
+		queueDownloads(
+			playlistContents.map((t) => ({
+				uniqueKey: t.uniqueKey,
+				title: t.title,
+				coverUrl: t.coverUrl ?? undefined,
+			})),
+		)
+		useModalStore.getState().doAfterModalHostClosed(() => {
+			navigation.navigate('Download')
+		})
+	}, [navigation, playlistContents, queueDownloads])
 
 	if (!playlist.title) return null
 
@@ -188,6 +211,29 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 							icon='content-copy'
 							size={20}
 							onPress={onClickCopyToLocalPlaylist}
+						/>
+					</Tooltip>
+					<Tooltip title='下载全部'>
+						<IconButton
+							mode='contained'
+							icon='download'
+							size={20}
+							onPress={() =>
+								alert(
+									'下载全部？',
+									'是否要下载该播放列表内的全部歌曲？',
+									[
+										{
+											text: '取消',
+										},
+										{
+											text: '确定',
+											onPress: onClickDownloadAll,
+										},
+									],
+									{ cancelable: true },
+								)
+							}
 						/>
 					</Tooltip>
 				</View>

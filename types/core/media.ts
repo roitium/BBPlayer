@@ -15,6 +15,13 @@ export interface PlayRecord {
 	completed: boolean // 是否完整播放
 }
 
+export interface TrackDownloadRecord {
+	trackId: number
+	status: 'downloaded' | 'failed'
+	fileSize: number | null
+	downloadedAt: number
+}
+
 interface BaseTrack {
 	id: number
 	uniqueKey: string
@@ -24,6 +31,7 @@ interface BaseTrack {
 	source: 'bilibili' | 'local'
 	createdAt: Date
 	duration: number // 歌曲时长，单位：秒
+	trackDownloads: TrackDownloadRecord | null
 	updatedAt: Date
 }
 
@@ -40,7 +48,7 @@ export interface BilibiliTrack extends BaseTrack {
 			url: string
 			quality: number
 			getTime: number
-			type: 'mp4' | 'dash'
+			type: 'mp4' | 'dash' | 'local'
 		}
 	}
 }

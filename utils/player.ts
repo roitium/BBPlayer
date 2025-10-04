@@ -3,10 +3,13 @@ import { bilibiliApi } from '@/lib/api/bilibili/api'
 import type { PlayerError } from '@/lib/errors/player'
 import { createPlayerError } from '@/lib/errors/player'
 import { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
+import { trackService } from '@/lib/services/trackService'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { RNTPTrack } from '@/types/rntp'
+import { File, Paths } from 'expo-file-system'
 import { err, ok, type Result } from 'neverthrow'
 import log from './log'
+import toast from './toast'
 
 const logger = log.extend('Utils.Player')
 
@@ -55,7 +58,7 @@ function convertToRNTPTrack(
 		artwork: track.coverUrl ?? undefined,
 		duration: track.duration,
 		userAgent:
-			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+			'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
 		headers: {
 			referer: 'https://www.bilibili.com',
 		},
@@ -112,6 +115,41 @@ async function checkAndUpdateAudioStream(
 	}
 
 	if (track.source === 'bilibili') {
+		const file = new File(Paths.document, 'downloads', `${track.uniqueKey}.m4s`)
+		if (track.trackDownloads && track.trackDownloads.status === 'downloaded') {
+			if (file.exists) {
+				logger.debug('已下载的音频，无需更新流', { trackId: track.id })
+				if (track.bilibiliMetadata.bilibiliStreamUrl?.url === file.uri) {
+					return ok({ track, needsUpdate: false })
+				}
+				const updatedTrack = {
+					...track,
+					bilibiliMetadata: {
+						...track.bilibiliMetadata,
+						bilibiliStreamUrl: {
+							url: file.uri,
+							quality: 114514,
+							getTime: Number.POSITIVE_INFINITY,
+							type: 'local' as const,
+						},
+					},
+				}
+				return ok({ track: updatedTrack, needsUpdate: true })
+			} else {
+				logger.warning(
+					'数据库中将该音频标记为已下载，但本地文件不存在，移除数据库标记并尝试从远程获取流',
+				)
+				toast.error('本地文件不存在，移除数据库下载标记并尝试从网络播放')
+				const result = await trackService.createOrUpdateTrackDownloadRecord({
+					trackId: track.id,
+					status: 'failed',
+					fileSize: 0,
+				})
+				if (result.isErr()) {
+					logger.error('删除数据库下载记录失败：', { error: result.error })
+				}
+			}
+		}
 		const needsUpdate = checkBilibiliAudioExpiry(track)
 
 		if (!needsUpdate) {

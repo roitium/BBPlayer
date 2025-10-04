@@ -1,21 +1,23 @@
+import { alert } from '@/components/modals/AlertModal'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import { downloadService } from '@/lib/services/downloadService'
+import log, { toastAndLogError } from '@/utils/log'
 import toast from '@/utils/toast'
-import { useNavigation } from '@react-navigation/native'
-import * as FileSystem from 'expo-file-system'
-import * as LegacyFileSystem from 'expo-file-system/legacy'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { Button, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+const logger = log.extend('TestPage')
+
 export default function TestPage() {
 	const clearQueue = usePlayerStore((state) => state.resetStore)
 	const [loading, setLoading] = useState(false)
 	const { isUpdatePending } = Updates.useUpdates()
-	const navigation = useNavigation()
 	const insets = useSafeAreaInsets()
 	const { colors } = useTheme()
 	const currentTrack = useCurrentTrack()
@@ -75,6 +77,42 @@ export default function TestPage() {
 		}
 	}
 
+	const handleDeleteAllDownloadRecords = () => {
+		alert(
+			'清除下载缓存',
+			'是否清除所有下载缓存？包括下载记录、数据库记录以及实际文件',
+			[
+				{
+					text: '取消',
+				},
+				{
+					text: '确定',
+					onPress: async () => {
+						try {
+							setLoading(true)
+							useDownloadManagerStore.getState().clearAll()
+							logger.info('清除 zustand store 数据成功')
+							const result = await downloadService.deleteAll()
+							if (result.isErr()) {
+								toast.error('清除下载缓存失败', {
+									description: result.error.message,
+								})
+								return
+							}
+							logger.info('清除数据库下载记录及实际文件成功')
+							toast.success('清除下载缓存成功')
+						} catch (error) {
+							toastAndLogError('清除下载缓存失败', error, 'TestPage')
+						} finally {
+							setLoading(false)
+						}
+					},
+				},
+			],
+			{ cancelable: true },
+		)
+	}
+
 	return (
 		<View
 			style={{
@@ -98,13 +136,6 @@ export default function TestPage() {
 					</Button>
 					<Button
 						mode='outlined'
-						onPress={() => navigation.navigate('Player')}
-						style={{ marginBottom: 8 }}
-					>
-						打开播放器
-					</Button>
-					<Button
-						mode='contained'
 						onPress={testCheckUpdate}
 						loading={loading}
 						style={{ marginBottom: 8 }}
@@ -112,22 +143,20 @@ export default function TestPage() {
 						查询是否有可热更新的包
 					</Button>
 					<Button
-						mode='contained'
+						mode='outlined'
 						onPress={testUpdatePackage}
 						loading={loading}
 						style={{ marginBottom: 8 }}
 					>
-						拉取更新并重载
+						拉取热更新并重载
 					</Button>
 					<Button
 						mode='outlined'
-						onPress={() => {
-							console.log(FileSystem.Paths.document.uri)
-							console.log(LegacyFileSystem.documentDirectory)
-						}}
+						onPress={handleDeleteAllDownloadRecords}
+						loading={loading}
 						style={{ marginBottom: 8 }}
 					>
-						试试
+						清空下载缓存
 					</Button>
 				</View>
 			</ScrollView>
