@@ -6,23 +6,28 @@ import { useNavigation } from '@react-navigation/native'
 import { FlashList } from '@shopify/flash-list'
 import { useCallback } from 'react'
 import { View } from 'react-native'
-import { Appbar, Text, useTheme } from 'react-native-paper'
+import { Appbar, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useShallow } from 'zustand/shallow'
+import DownloadHeader from './components/DownloadHeader'
 import DownloadTaskItem from './components/DownloadTaskItem'
 
 export default function DownloadPage() {
 	const { colors } = useTheme()
 	const navigation = useNavigation()
+	const insets = useSafeAreaInsets()
+
 	const tasks = useDownloadManagerStore(
 		useShallow((state) => Object.values(state.downloads)),
 	)
+	const start = useDownloadManagerStore((state) => state.startDownload)
+
 	const currentTrack = useCurrentTrack()
-	const insets = useSafeAreaInsets()
 
 	const renderItem = useCallback(({ item }: { item: DownloadTask }) => {
 		return <DownloadTaskItem task={item} />
 	}, [])
+
 	const keyExtractor = useCallback((item: DownloadTask) => item.uniqueKey, [])
 
 	return (
@@ -31,6 +36,13 @@ export default function DownloadPage() {
 				<Appbar.BackAction onPress={() => navigation.goBack()} />
 				<Appbar.Content title='下载任务' />
 			</Appbar.Header>
+
+			<DownloadHeader
+				taskCount={tasks.length}
+				onStartAll={start}
+				onClearAll={() => void 0}
+			/>
+
 			<View style={{ flex: 1 }}>
 				<FlashList
 					data={tasks}
@@ -39,16 +51,6 @@ export default function DownloadPage() {
 					contentContainerStyle={{
 						paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 					}}
-					ListEmptyComponent={
-						<View
-							style={{
-								justifyContent: 'center',
-								alignItems: 'center',
-							}}
-						>
-							<Text>暂无下载</Text>
-						</View>
-					}
 				/>
 			</View>
 			<View

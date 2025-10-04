@@ -1,3 +1,4 @@
+import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
 import type {
 	DownloadActions,
 	DownloadTask,
@@ -109,6 +110,8 @@ class DownloadService {
 		const directory = new Directory(Paths.document, 'downloads')
 		const tempFile = new File(directory, `${uniqueKey}.m4s.tmp`)
 		const finalFile = new File(directory, `${uniqueKey}.m4s`)
+		const cookieList = useAppStore.getState().bilibiliCookie
+		const cookie = cookieList ? serializeCookieObject(cookieList) : ''
 		let track: Track | null = null
 		try {
 			const trackResult = await this.trackService.getTrackByUniqueKey(uniqueKey)
@@ -126,13 +129,15 @@ class DownloadService {
 						flatErrorMessage(downloadUrl.error),
 				)
 			}
+			const headers = {
+				'User-Agent':
+					'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 BiliApp/6.66.0',
+				Referer: 'https://www.bilibili.com',
+				Cookie: cookie,
+			}
 			const response = await fetch(downloadUrl.value, {
 				signal: controller.signal,
-				headers: {
-					'User-Agent':
-						'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-					Referer: 'https://www.bilibili.com',
-				},
+				headers,
 			})
 
 			if (!response.ok) {
@@ -174,10 +179,14 @@ class DownloadService {
 					controller.enqueue(chunk)
 				},
 			})
+			const validateStream = this.createMagicNumberValidator('ftyp')
 
 			const writable = tempFile.writableStream()
 
-			await response.body.pipeThrough(progressTransform).pipeTo(writable)
+			await response.body
+				.pipeThrough(validateStream)
+				.pipeThrough(progressTransform)
+				.pipeTo(writable)
 			try {
 				if (finalFile.exists) {
 					finalFile.delete()
@@ -252,6 +261,53 @@ class DownloadService {
 			controller.abort()
 			logger.info(`取消下载 ${uniqueKey}`)
 		}
+	}
+
+	/**
+	 * 创建一个用于校验文件头部 Magic Number 的 TransformStream。
+	 * @param magic - 期望在文件头部找到的 ASCII 字符串，例如 'ftyp'。
+	 * @param checkUntilByte - 检查到文件的第几个字节为止。通常文件头信息不会很长。
+	 */
+	private createMagicNumberValidator(
+		magic: string,
+		checkUntilByte = 64,
+	): TransformStream<Uint8Array, Uint8Array> {
+		let checked = false
+		let buffer = new Uint8Array(0)
+
+		return new TransformStream({
+			transform(chunk, controller) {
+				if (checked) {
+					controller.enqueue(chunk)
+					return
+				}
+
+				const newBuffer = new Uint8Array(buffer.length + chunk.length)
+				newBuffer.set(buffer)
+				newBuffer.set(chunk, buffer.length)
+				buffer = newBuffer
+
+				const bufferString = new TextDecoder().decode(
+					buffer.slice(0, checkUntilByte),
+				)
+
+				if (bufferString.includes(magic)) {
+					logger.debug('找到了 magic number，校验通过')
+					checked = true
+					controller.enqueue(buffer)
+					buffer = new Uint8Array(0)
+				} else if (buffer.length >= checkUntilByte) {
+					controller.error(new Error(`文件头校验不通过`))
+				}
+			},
+			flush(controller) {
+				if (!checked) {
+					controller.error(new Error('文件长度过短，无法识别文件规格'))
+				} else if (buffer.length > 0) {
+					controller.enqueue(buffer)
+				}
+			},
+		})
 	}
 }
 

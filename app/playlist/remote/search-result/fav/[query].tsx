@@ -6,7 +6,6 @@ import {
 	useInfiniteSearchFavoriteItems,
 } from '@/hooks/queries/bilibili/favorite'
 import { usePersonalInformation } from '@/hooks/queries/bilibili/user'
-import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useModalStore } from '@/hooks/stores/useModalStore'
 import { bv2av } from '@/lib/api/bilibili/utils'
 import type { BilibiliFavoriteListContent } from '@/types/apis/bilibili'
@@ -21,7 +20,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TrackList } from '../../shared/components/RemoteTrackList'
 import { useTrackSelection } from '../../shared/hooks/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
@@ -53,6 +51,7 @@ const mapApiItemToTrack = (
 			isMultiPage: false,
 			videoIsValid: true,
 		},
+		trackDownloads: null,
 	}
 }
 
@@ -60,8 +59,6 @@ export default function SearchResultsPage() {
 	const { colors } = useTheme()
 	const route = useRoute<RouteProp<RootStackParamList, 'SearchResultFav'>>()
 	const { query } = route.params
-	const currentTrack = useCurrentTrack()
-	const insets = useSafeAreaInsets()
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
@@ -147,7 +144,6 @@ export default function SearchResultsPage() {
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
 			>
 				<TrackList

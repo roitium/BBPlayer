@@ -2,7 +2,7 @@ import { videoDataQueryKeys } from '@/hooks/queries/bilibili/video'
 import { bilibiliApi } from '@/lib/api/bilibili/api'
 import { queryClient } from '@/lib/config/queryClient'
 import { toastAndLogError } from '@/utils/log'
-import { returnOrThrowAsync } from '@/utils/neverthrowUtils'
+import { returnOrThrowAsync } from '@/utils/neverthrow-utils'
 import toast from '@/utils/toast'
 import { useMutation } from '@tanstack/react-query'
 

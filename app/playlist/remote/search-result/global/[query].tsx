@@ -2,7 +2,6 @@ import { PlaylistError } from '@/app/playlist/remote/shared/components/PlaylistE
 import { PlaylistLoading } from '@/app/playlist/remote/shared/components/PlaylistLoading'
 import NowPlayingBar from '@/components/NowPlayingBar'
 import { useSearchResults } from '@/hooks/queries/bilibili/search'
-import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useModalStore } from '@/hooks/stores/useModalStore'
 import type { BilibiliSearchVideo } from '@/types/apis/bilibili'
 import type { BilibiliTrack, Track } from '@/types/core/media'
@@ -17,7 +16,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useEffect, useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Appbar, Text, useTheme } from 'react-native-paper'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TrackList } from '../../shared/components/RemoteTrackList'
 import { useTrackSelection } from '../../shared/hooks/useTrackSelection'
 import { useSearchInteractions } from '../hooks/useSearchInteractions'
@@ -46,6 +44,7 @@ const mapApiItemToTrack = (apiItem: BilibiliSearchVideo): BilibiliTrack => {
 			isMultiPage: false,
 			videoIsValid: true,
 		},
+		trackDownloads: null,
 	}
 }
 
@@ -53,8 +52,6 @@ export default function SearchResultsPage() {
 	const { colors } = useTheme()
 	const route = useRoute<RouteProp<RootStackParamList, 'SearchResult'>>()
 	const { query } = route.params
-	const currentTrack = useCurrentTrack()
-	const insets = useSafeAreaInsets()
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
@@ -139,7 +136,6 @@ export default function SearchResultsPage() {
 			<View
 				style={{
 					flex: 1,
-					paddingBottom: currentTrack ? 70 + insets.bottom : insets.bottom,
 				}}
 			>
 				<TrackList

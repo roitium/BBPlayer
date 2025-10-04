@@ -69,7 +69,7 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 			case 'downloading':
 				return '正在下载...'
 			case 'failed':
-				return '下载失败'
+				return '下载失败' + (task.error ? `: ${task.error}` : '')
 			case 'completed':
 				return '下载完成'
 			default:
@@ -131,15 +131,15 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 						alignItems: 'center',
 					}}
 				>
-					<View style={{ marginRight: task.status === 'failed' ? 8 : 0 }}>
-						{icon}
-					</View>
 					{task.status === 'failed' && (
 						<IconButton
 							icon='reload'
 							onPress={() => retry(task.uniqueKey)}
 						/>
 					)}
+					<View style={{ marginRight: task.status === 'failed' ? 0 : 0 }}>
+						{icon}
+					</View>
 					<IconButton
 						icon='close'
 						onPress={() => cancel(task.uniqueKey)}

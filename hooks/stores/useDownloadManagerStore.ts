@@ -5,7 +5,7 @@ import type {
 } from '@/types/core/downloadManagerStore'
 import log from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
-import createStickyEmitter from '@/utils/stickyMitt'
+import createStickyEmitter from '@/utils/sticky-mitt'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
