@@ -198,12 +198,15 @@ class DownloadService {
 					`移动下载文件失败: ${e instanceof Error ? e.message : String(e)}`,
 				)
 			}
-			await this.trackService.createOrUpdateTrackDownloadRecord({
-				trackId: track.id,
-				status: 'downloaded',
-				fileSize: finalFile.size,
-			})
-
+			const recordResult =
+				await this.trackService.createOrUpdateTrackDownloadRecord({
+					trackId: track.id,
+					status: 'downloaded',
+					fileSize: finalFile.size,
+				})
+			if (recordResult.isErr()) {
+				throw recordResult.error
+			}
 			_setDownloadProgress(uniqueKey, totalBytes, totalBytes)
 			logger.debug('call _setDownloadStatus', {
 				uniqueKey,

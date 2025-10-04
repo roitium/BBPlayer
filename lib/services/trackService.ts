@@ -706,23 +706,26 @@ export class TrackService {
 
 	/**
 	 * 创建或更新 trackDownloads 表数据
-	 * 每一次调用该函数都会更新 downloadedAt 字段，因为我想不到什么情况下会在不重新下载的情况下修改这张表数据
 	 * @param data
+	 * @param updateDownloadedAt 是否更新 downloadedAt 字段，默认为 true
 	 * @returns
 	 */
 	public createOrUpdateTrackDownloadRecord(
 		data: Omit<TrackDownloadRecord, 'downloadedAt'>,
+		updateDownloadedAt = true,
 	): ResultAsync<true, DatabaseError> {
+		const date = new Date()
+		const conflictUpdateDate = updateDownloadedAt ? { downloadedAt: date } : {}
 		return ResultAsync.fromPromise(
 			this.db
 				.insert(schema.trackDownloads)
-				.values({ ...data, downloadedAt: new Date() })
+				.values({ ...data, downloadedAt: date })
 				.onConflictDoUpdate({
 					target: schema.trackDownloads.trackId,
 					set: {
 						status: data.status,
 						fileSize: data.fileSize,
-						downloadedAt: new Date(),
+						...conflictUpdateDate,
 					},
 				}),
 			(e) => new DatabaseError('创建或更新 trackDownloads 失败', { cause: e }),
