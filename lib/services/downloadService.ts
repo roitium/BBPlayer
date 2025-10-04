@@ -1,4 +1,5 @@
 import useAppStore, { serializeCookieObject } from '@/hooks/stores/useAppStore'
+import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type {
 	DownloadActions,
 	DownloadTask,
@@ -207,11 +208,14 @@ class DownloadService {
 			if (recordResult.isErr()) {
 				throw recordResult.error
 			}
-			_setDownloadProgress(uniqueKey, totalBytes, totalBytes)
-			logger.debug('call _setDownloadStatus', {
-				uniqueKey,
-				status: 'completed',
+			// 更新 player 的下载状态，方便下次切歌时直接使用本地数据
+			usePlayerStore.getState().updateDownloadStatus(uniqueKey, {
+				status: 'downloaded',
+				fileSize: finalFile.size,
+				trackId: track.id,
+				downloadedAt: Date.now(),
 			})
+			_setDownloadProgress(uniqueKey, totalBytes, totalBytes)
 			_setDownloadStatus(uniqueKey, 'completed')
 			logger.debug('下载完成', { uniqueKey })
 		} catch (error) {

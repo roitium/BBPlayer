@@ -111,6 +111,7 @@ export function useLocalPlaylistMenu({
 								})
 								return
 							}
+
 							queueDownloads([
 								{
 									uniqueKey: item.uniqueKey,

@@ -93,11 +93,13 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 	const onClickDownloadAll = useCallback(() => {
 		if (!playlistContents) return
 		queueDownloads(
-			playlistContents.map((t) => ({
-				uniqueKey: t.uniqueKey,
-				title: t.title,
-				coverUrl: t.coverUrl ?? undefined,
-			})),
+			playlistContents
+				.filter((t) => t.trackDownloads?.status !== 'downloaded')
+				.map((t) => ({
+					uniqueKey: t.uniqueKey,
+					title: t.title,
+					coverUrl: t.coverUrl ?? undefined,
+				})),
 		)
 		useModalStore.getState().doAfterModalHostClosed(() => {
 			navigation.navigate('Download')
@@ -221,7 +223,7 @@ export const PlaylistHeader = memo(function PlaylistHeader({
 							onPress={() =>
 								alert(
 									'下载全部？',
-									'是否要下载该播放列表内的全部歌曲？',
+									'是否要下载该播放列表内的全部歌曲？（已下载过的不会重新下载）',
 									[
 										{
 											text: '取消',

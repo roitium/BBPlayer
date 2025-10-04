@@ -2,7 +2,7 @@ import type { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import type { Result } from 'neverthrow'
 import type { RepeatMode } from 'react-native-track-player'
 import type { RNTPTrack } from '../rntp'
-import type { Track } from './media'
+import type { Track, TrackDownloadRecord } from './media'
 
 // 播放器状态接口
 interface PlayerState {
@@ -71,6 +71,13 @@ interface PlayerActions {
 	) => Promise<
 		Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError | Error>
 	>
+	/**
+	 * 用于在音频下载后直接更新队列中数据，下一次播放时可以直接使用本地数据。因为在切歌时是不会重新从数据库读取数据的
+	 * @param uniqueKey
+	 * @param status
+	 * @returns
+	 */
+	updateDownloadStatus: (uniqueKey: string, status: TrackDownloadRecord) => void
 }
 
 // 完整的播放器存储类型

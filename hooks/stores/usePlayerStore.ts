@@ -2,7 +2,7 @@ import type { PlayerError } from '@/lib/errors/player'
 import type { BilibiliApiError } from '@/lib/errors/thirdparty/bilibili'
 import { artistService } from '@/lib/services/artistService'
 import { trackService } from '@/lib/services/trackService'
-import type { Track } from '@/types/core/media'
+import type { Track, TrackDownloadRecord } from '@/types/core/media'
 import type {
 	addToQueueParams,
 	PlayerState,
@@ -667,6 +667,17 @@ export const usePlayerStore = create<PlayerStore>()(
 						isPlaying: true,
 						isBuffering: false,
 						currentPlayStartAt: Date.now(),
+					})
+				},
+
+				updateDownloadStatus: (
+					uniqueKey: string,
+					status: TrackDownloadRecord,
+				) => {
+					set((state) => {
+						const track = state.tracks[uniqueKey]
+						if (!track) return
+						track.trackDownloads = status
 					})
 				},
 			}

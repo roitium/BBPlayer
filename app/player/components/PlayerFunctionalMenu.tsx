@@ -1,6 +1,8 @@
 import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
+import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
 import { useModalStore } from '@/hooks/stores/useModalStore'
+import type { Track } from '@/types/core/media'
 import toast from '@/utils/toast'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -15,17 +17,20 @@ export function PlayerFunctionalMenu({
 	setMenuVisible,
 	screenWidth,
 	uploaderMid,
+	track,
 }: {
 	menuVisible: boolean
 	setMenuVisible: (visible: boolean) => void
 	screenWidth: number
 	uploaderMid: number | undefined
+	track: Track
 }) {
 	const navigation =
 		useNavigation<NativeStackNavigationProp<RootStackParamList, 'Player'>>()
 	const currentTrack = useCurrentTrack()
 	const insets = useSafeAreaInsets()
 	const openModal = useModalStore((state) => state.open)
+	const download = useDownloadManagerStore((state) => state.queueDownloads)
 
 	return (
 		<FunctionalMenu
@@ -86,6 +91,25 @@ export function PlayerFunctionalMenu({
 				}}
 				title='查看原视频'
 				leadingIcon='share-variant'
+			/>
+			<Menu.Item
+				onPress={() => {
+					setMenuVisible(false)
+					download([
+						{
+							uniqueKey: track.uniqueKey,
+							title: track.title,
+							coverUrl: track.coverUrl ?? undefined,
+						},
+					])
+					toast.info('已添加到下载队列')
+				}}
+				title={
+					track.trackDownloads?.status === 'downloaded'
+						? '重新下载音频'
+						: '下载音频'
+				}
+				leadingIcon='download'
 			/>
 			<Menu.Item
 				onPress={() => {

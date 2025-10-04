@@ -1,3 +1,4 @@
+import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import { useNavigation } from '@react-navigation/native'
 import { View } from 'react-native'
 import { IconButton, Text } from 'react-native-paper'
@@ -12,6 +13,7 @@ export function PlayerHeader({
 	trackTitle?: string
 }) {
 	const navigation = useNavigation()
+	const currentTrack = useCurrentTrack()
 
 	return (
 		<View
@@ -36,7 +38,11 @@ export function PlayerHeader({
 				}}
 				numberOfLines={1}
 			>
-				{viewMode === 'lyrics' ? (trackTitle ?? '正在播放') : `正在播放`}
+				{viewMode === 'lyrics'
+					? (trackTitle ?? '正在播放')
+					: currentTrack?.trackDownloads?.status === 'downloaded'
+						? '正在播放 (已缓存)'
+						: '正在播放'}
 			</Text>
 			<IconButton
 				icon='dots-vertical'

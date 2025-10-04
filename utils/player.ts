@@ -7,6 +7,7 @@ import { trackService } from '@/lib/services/trackService'
 import type { BilibiliTrack, Track } from '@/types/core/media'
 import type { RNTPTrack } from '@/types/rntp'
 import { File, Paths } from 'expo-file-system'
+import { produce } from 'immer'
 import { err, ok, type Result } from 'neverthrow'
 import log from './log'
 import toast from './toast'
@@ -92,12 +93,123 @@ function checkBilibiliAudioExpiry(_track: Track): boolean {
 	return isExpired
 }
 
+interface LocalCheckResult {
+	track: Track
+	handledLocally: boolean
+	needsUpdate: boolean
+}
+
 /**
- * 检查并可能更新 Track 的音频流
- * @param track - 内部 Track 对象。
- * @returns 一个 Promise，解析为一个 Result 对象。
- * 成功时包含 { track: Track; needsUpdate: boolean }，
- * 失败时包含 Error。
+ * - 如果 source === 'local'：直接 handledLocally = true
+ * - 如果 source === 'bilibili' 且 trackDownloads.status === 'downloaded'：
+ *    - 本地文件存在且与当前 streamUrl 匹配 -> handledLocally = true, needsUpdate = false
+ *    - 本地文件存在但与当前 streamUrl 不同 -> 返回一个 updatedTrack（指向本地），handledLocally = true, needsUpdate = true
+ *    - 本地文件不存在但 DB 标记为 downloaded -> 修正 DB 为 failed、清除 streamUrl，handledLocally = false, needsUpdate = true
+ * - 其它情况：handledLocally = false, needsUpdate = false（继续远程检查/获取）
+ */
+async function tryUseLocalStream(
+	track: Track,
+): Promise<Result<LocalCheckResult, BilibiliApiError | PlayerError>> {
+	logger.debug('尝试检查本地播放可用性', {
+		trackId: track.id,
+		source: track.source,
+	})
+
+	// 1) 真正的本地 source，直接返回（无需后续远程处理）
+	if (track.source === 'local') {
+		logger.debug('本地音频，无需更新流', { trackId: track.id })
+		return ok({ track, handledLocally: true, needsUpdate: false })
+	}
+
+	// 2) 仅处理 bilibili 源的“已下载”情况；其它来源不在本函数内处理
+	if (track.source !== 'bilibili') {
+		logger.debug('非 B 站音源，跳过本地检查', {
+			trackId: (track as Track).id,
+			source: (track as Track).source,
+		})
+		return ok({ track, handledLocally: false, needsUpdate: false })
+	}
+
+	// source === 'bilibili'
+	if (track.trackDownloads && track.trackDownloads.status === 'downloaded') {
+		const file = new File(Paths.document, 'downloads', `${track.uniqueKey}.m4s`)
+
+		// 本地文件存在 -> 优先使用本地
+		if (file.exists) {
+			logger.debug('已下载的音频，本地文件存在，尝试使用本地文件', {
+				trackId: track.id,
+				path: file.uri,
+			})
+
+			// 如果已经指向相同本地 uri，则无需修改
+			if (track.bilibiliMetadata.bilibiliStreamUrl?.url === file.uri) {
+				return ok({ track, handledLocally: true, needsUpdate: false })
+			}
+
+			// 否则把 track 更新为使用本地流（quality / getTime 保持原行为）
+			const updatedTrack: Track = {
+				...track,
+				bilibiliMetadata: {
+					...track.bilibiliMetadata,
+					bilibiliStreamUrl: {
+						url: file.uri,
+						quality: 114514,
+						getTime: Number.POSITIVE_INFINITY,
+						type: 'local' as const,
+					},
+				},
+			}
+
+			logger.debug('将 track 的流切换为本地文件', {
+				trackId: track.id,
+				path: file.uri,
+			})
+			return ok({
+				track: updatedTrack,
+				handledLocally: true,
+				needsUpdate: true,
+			})
+		} else {
+			logger.warning(
+				'数据库中将该音频标记为已下载，但本地文件不存在，移除数据库标记并尝试从远程获取流',
+			)
+			toast.error('本地文件不存在，移除数据库下载标记并尝试从网络播放')
+			const result = await trackService.createOrUpdateTrackDownloadRecord({
+				trackId: track.id,
+				status: 'failed',
+				fileSize: 0,
+			})
+
+			if (result.isErr()) {
+				logger.error('删除数据库下载记录失败：', { error: result.error })
+			}
+
+			// 修改 track，保证能顺利进入下面的刷新流逻辑
+			const updatedTrack = produce(track, (draft) => {
+				draft.trackDownloads = {
+					status: 'failed',
+					fileSize: 0,
+					trackId: track.id,
+					downloadedAt: Date.now(),
+				}
+				draft.bilibiliMetadata.bilibiliStreamUrl = undefined
+			})
+
+			return ok({
+				track: updatedTrack,
+				handledLocally: false,
+				needsUpdate: true,
+			})
+		}
+	}
+
+	// 没有下载记录，或不是已下载状态：让调用方继续走远程流的过期检查/获取
+	return ok({ track, handledLocally: false, needsUpdate: false })
+}
+
+/**
+ * 先调用 tryUseLocalStream 做本地检查；如果本地已处理完则直接返回；
+ * 否则继续原来的 B 站流刷新逻辑（CID 获取 + getAudioStream 等）。
  */
 async function checkAndUpdateAudioStream(
 	track: Track,
@@ -109,47 +221,26 @@ async function checkAndUpdateAudioStream(
 		title: track.title,
 	})
 
-	if (track.source === 'local') {
-		logger.debug('本地音频，无需更新流', { trackId: track.id })
-		return ok({ track, needsUpdate: false })
+	// 先把本地播放检查逻辑剥离出去
+	const localCheck = await tryUseLocalStream(track)
+	if (localCheck.isErr()) {
+		return err(localCheck.error)
+	}
+
+	const localValue = localCheck.value
+	// 使用可能被更新过的 track 继续后续逻辑
+	track = localValue.track
+
+	// 若本地已经处理（包含 source === 'local' 情况）则直接返回
+	if (localValue.handledLocally) {
+		logger.debug('本地检查已处理音频（无需远端刷新）', {
+			trackId: track.id,
+			needsUpdate: localValue.needsUpdate,
+		})
+		return ok({ track, needsUpdate: localValue.needsUpdate })
 	}
 
 	if (track.source === 'bilibili') {
-		const file = new File(Paths.document, 'downloads', `${track.uniqueKey}.m4s`)
-		if (track.trackDownloads && track.trackDownloads.status === 'downloaded') {
-			if (file.exists) {
-				logger.debug('已下载的音频，无需更新流', { trackId: track.id })
-				if (track.bilibiliMetadata.bilibiliStreamUrl?.url === file.uri) {
-					return ok({ track, needsUpdate: false })
-				}
-				const updatedTrack = {
-					...track,
-					bilibiliMetadata: {
-						...track.bilibiliMetadata,
-						bilibiliStreamUrl: {
-							url: file.uri,
-							quality: 114514,
-							getTime: Number.POSITIVE_INFINITY,
-							type: 'local' as const,
-						},
-					},
-				}
-				return ok({ track: updatedTrack, needsUpdate: true })
-			} else {
-				logger.warning(
-					'数据库中将该音频标记为已下载，但本地文件不存在，移除数据库标记并尝试从远程获取流',
-				)
-				toast.error('本地文件不存在，移除数据库下载标记并尝试从网络播放')
-				const result = await trackService.createOrUpdateTrackDownloadRecord({
-					trackId: track.id,
-					status: 'failed',
-					fileSize: 0,
-				})
-				if (result.isErr()) {
-					logger.error('删除数据库下载记录失败：', { error: result.error })
-				}
-			}
-		}
 		const needsUpdate = checkBilibiliAudioExpiry(track)
 
 		if (!needsUpdate) {
@@ -165,7 +256,6 @@ async function checkAndUpdateAudioStream(
 			logger.debug('尝试获取视频分 P 列表以确定 CID', { bvid })
 			const pageListResult = await bilibiliApi.getPageList(bvid)
 
-			// 使用 match 处理 Result
 			const cidResult = pageListResult.match<Result<number, BilibiliApiError>>(
 				(pages) => {
 					if (pages.length > 0) {
@@ -193,26 +283,24 @@ async function checkAndUpdateAudioStream(
 				},
 			)
 
-			// 如果获取 CID 失败，则返回错误
 			if (cidResult.isErr()) {
 				return err(cidResult.error)
 			}
-			cid = cidResult.value // 获取 CID 成功
+			cid = cidResult.value
 		} else {
 			logger.debug('使用已有的 CID', { bvid, cid })
 		}
 
-		// 3.2 获取新的音频流
+		// 获取新的音频流
 		logger.debug('开始获取新的音频流', { bvid, cid })
 		const streamUrlResult = await bilibiliApi.getAudioStream({
 			bvid,
-			cid: cid, // cid 此时一定有值
+			cid: cid,
 			audioQuality: 30280,
 			enableDolby: true,
 			enableHiRes: true,
 		})
 
-		// 使用 match 处理获取音频流的 Result
 		return streamUrlResult.match<
 			Result<{ track: Track; needsUpdate: boolean }, BilibiliApiError>
 		>(
@@ -231,17 +319,15 @@ async function checkAndUpdateAudioStream(
 				logger.debug('音频流获取成功', {
 					bvid,
 					cid,
-					// url: streamInfo.url,
 					quality: streamInfo.quality,
 					type: streamInfo.type,
 				})
 
-				// 更新 track 对象
 				const updatedTrack = {
 					...track,
 					bilibiliMetadata: {
 						...track.bilibiliMetadata,
-						cid: cid, // 确保 cid 更新
+						cid: cid,
 						bilibiliStreamUrl: {
 							url: streamInfo.url,
 							quality: streamInfo.quality || 0,
@@ -259,6 +345,7 @@ async function checkAndUpdateAudioStream(
 			},
 		)
 	}
+
 	return err(
 		createPlayerError(
 			'UnknownSource',

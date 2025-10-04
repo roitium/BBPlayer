@@ -68,7 +68,7 @@ export default function PlayerPage() {
 					<PlayerHeader
 						onMorePress={() => setMenuVisible(true)}
 						viewMode={viewMode}
-						trackTitle={currentTrack?.title}
+						trackTitle={currentTrack.title}
 					/>
 					{viewMode === 'cover' ? (
 						<TrackInfo
@@ -107,6 +107,7 @@ export default function PlayerPage() {
 				setMenuVisible={setMenuVisible}
 				screenWidth={screenWidth}
 				uploaderMid={Number(currentTrack.artist?.remoteId ?? undefined)}
+				track={currentTrack}
 			/>
 
 			<PlayerQueueModal sheetRef={sheetRef} />

@@ -61,11 +61,6 @@ export const TrackListItem = memo(function TrackListItem({
 				source: 'check-circle-outline',
 				color: theme.colors.primary,
 			},
-			downloading: { source: 'download', color: theme.colors.primary },
-			pending: {
-				source: 'clock-outline',
-				color: theme.colors.onSurfaceVariant,
-			},
 			failed: { source: 'alert-circle-outline', color: theme.colors.error },
 		}[status] ?? {
 			source: 'help-circle-outline',
