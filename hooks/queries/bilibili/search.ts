@@ -1,6 +1,9 @@
 import { bilibiliApi } from '@/lib/api/bilibili/api'
+import log from '@/utils/log'
 import { returnOrThrowAsync } from '@/utils/neverthrow-utils'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+
+const logger = log.extend('Queries.SearchQueries')
 
 export const searchQueryKeys = {
 	all: ['bilibili', 'search'] as const,
@@ -47,7 +50,14 @@ export const useSearchSuggestions = (query: string) => {
 	const enabled = query.trim().length > 0
 	return useQuery({
 		queryKey: searchQueryKeys.suggestions(query),
-		queryFn: () => returnOrThrowAsync(bilibiliApi.getSearchSuggestions(query)),
+		queryFn: async () => {
+			const result = await bilibiliApi.getSearchSuggestions(query)
+			if (result.isErr()) {
+				logger.warning('搜索建议查询失败，但无关紧要', { query })
+				return []
+			}
+			return result.value
+		},
 		enabled,
 		staleTime: 0,
 	})
