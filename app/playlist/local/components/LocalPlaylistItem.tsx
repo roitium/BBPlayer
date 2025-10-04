@@ -55,27 +55,29 @@ export const TrackListItem = memo(function TrackListItem({
 
 	const renderDownloadStatus = useCallback(() => {
 		if (!data.trackDownloads) return null
-		if (data.trackDownloads.status === 'downloaded') {
-			return (
-				<View style={{ paddingLeft: 4 }}>
-					<Icon
-						source='check-circle-outline'
-						size={12}
-						color={theme.colors.primary}
-					/>
-				</View>
-			)
+		const { status } = data.trackDownloads
+		const iconConfig = {
+			downloaded: {
+				source: 'check-circle-outline',
+				color: theme.colors.primary,
+			},
+			downloading: { source: 'download', color: theme.colors.primary },
+			pending: {
+				source: 'clock-outline',
+				color: theme.colors.onSurfaceVariant,
+			},
+			failed: { source: 'alert-circle-outline', color: theme.colors.error },
+		}[status] ?? {
+			source: 'help-circle-outline',
+			color: theme.colors.onSurfaceVariant,
 		}
+
 		return (
-			<View
-				style={{
-					paddingLeft: 4,
-				}}
-			>
+			<View style={{ paddingLeft: 4 }}>
 				<Icon
-					source='cancel'
+					source={iconConfig.source}
 					size={12}
-					color={theme.colors.error}
+					color={iconConfig.color}
 				/>
 			</View>
 		)

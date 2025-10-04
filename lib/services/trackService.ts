@@ -3,7 +3,6 @@ import type {
 	CreateBilibiliTrackPayload,
 	CreateTrackPayload,
 	CreateTrackPayloadBase,
-	TrackDownloadRecord,
 	UpdateTrackPayload,
 	UpdateTrackPayloadBase,
 } from '@/types/services/track'
@@ -16,6 +15,7 @@ import type {
 	LocalTrack,
 	PlayRecord,
 	Track,
+	TrackDownloadRecord,
 } from '../../types/core/media'
 import db from '../db/db'
 import * as schema from '../db/schema'

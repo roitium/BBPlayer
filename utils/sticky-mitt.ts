@@ -1,4 +1,7 @@
 import mitt, { type Emitter, type Handler } from 'mitt'
+import log from './log'
+
+const logger = log.extend('Utils.StickyMitt')
 
 /**
  * 当一个新的监听器被添加时，如果对应事件存在粘性事件，会立即用该值触发一次监听器。
@@ -31,10 +34,17 @@ function createStickyEmitter<Events extends Record<string, unknown>>() {
 			type: Key,
 			handler: Handler<Events[Key]>,
 		): void {
-			if (stickyEvents.has(type)) {
-				handler(stickyEvents.get(type) as Events[Key])
-			}
 			emitter.on(type, handler)
+			if (stickyEvents.has(type)) {
+				try {
+					handler(stickyEvents.get(type) as Events[Key])
+				} catch (err) {
+					logger.error('Sticky Event Handler 处理器出错', {
+						type,
+						error: err,
+					})
+				}
+			}
 		},
 
 		/**

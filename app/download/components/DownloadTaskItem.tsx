@@ -37,7 +37,7 @@ const DownloadTaskItem = memo(function DownloadTaskItem({
 		return () => {
 			eventListner.off(`progress:${task.uniqueKey}`, handler)
 		}
-	})
+	}, [task.uniqueKey, sharedProgress])
 
 	useLayoutEffect(() => {
 		if (!containerRef.current) return

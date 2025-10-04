@@ -21,6 +21,7 @@ export default function DownloadPage() {
 		useShallow((state) => Object.values(state.downloads)),
 	)
 	const start = useDownloadManagerStore((state) => state.startDownload)
+	const clearAll = useDownloadManagerStore((state) => state.clearAll)
 
 	const currentTrack = useCurrentTrack()
 
@@ -40,7 +41,7 @@ export default function DownloadPage() {
 			<DownloadHeader
 				taskCount={tasks.length}
 				onStartAll={start}
-				onClearAll={() => void 0}
+				onClearAll={clearAll}
 			/>
 
 			<View style={{ flex: 1 }}>

@@ -314,7 +314,7 @@ class DownloadService {
 	}
 
 	public clearAll(): void {
-		for (const key in this.activeTasks) {
+		for (const key of this.activeTasks.keys()) {
 			this.cancel(key)
 		}
 	}
