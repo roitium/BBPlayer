@@ -22,6 +22,7 @@ export interface DownloadActions {
 	) => void
 	cancelDownload: (uniqueKey: string) => void
 	retryDownload: (uniqueKey: string) => void
+	clearAll: () => void
 	/**
 	 * 手动触发队列下载，在应用启动时使用
 	 */

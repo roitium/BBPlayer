@@ -739,6 +739,13 @@ export class TrackService {
 			(e) => new DatabaseError('删除 trackDownloads 失败', { cause: e }),
 		).andThen(() => okAsync(true as const))
 	}
+
+	public deleteAllTrackDownloadRecords(): ResultAsync<true, DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db.delete(schema.trackDownloads),
+			(e) => new DatabaseError('删除 trackDownloads 失败', { cause: e }),
+		).andThen(() => okAsync(true as const))
+	}
 }
 
 export const trackService = new TrackService(db)

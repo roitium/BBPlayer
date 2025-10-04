@@ -151,6 +151,7 @@ const AboutSection = memo(function AboutSection() {
 AboutSection.displayName = 'AboutSection'
 
 const SettingsSection = memo(function SettingsSection() {
+	const navigation = useNavigation()
 	const setSendPlayHistory = useAppStore(
 		(state) => state.setEnableSendPlayHistory,
 	)
@@ -267,6 +268,21 @@ const SettingsSection = memo(function SettingsSection() {
 					icon='share-variant'
 					size={20}
 					onPress={shareLogFile}
+				/>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					marginTop: 16,
+				}}
+			>
+				<Text>开发者页面</Text>
+				<IconButton
+					icon='open-in-new'
+					size={20}
+					onPress={() => navigation.navigate('Test')}
 				/>
 			</View>
 		</View>

@@ -7,7 +7,8 @@ import type { Track } from '@/types/core/media'
 import log, { flatErrorMessage } from '@/utils/log'
 import { Directory, File, Paths } from 'expo-file-system'
 import { fetch } from 'expo/fetch'
-import { errAsync, okAsync, type ResultAsync } from 'neverthrow'
+import type { ResultAsync } from 'neverthrow'
+import { errAsync, okAsync } from 'neverthrow'
 import {
 	bilibiliApi,
 	type bilibiliApi as BilibiliApiService,
@@ -318,15 +319,54 @@ class DownloadService {
 		}
 	}
 
+	/**
+	 * 删除一个 track 的数据库中下载记录及其实际文件
+	 * @param uniqueKey
+	 * @returns
+	 */
 	public delete(
 		uniqueKey: string,
 	): ResultAsync<true, ServiceError | DatabaseError> {
-		return this.trackService.getTrackByUniqueKey(uniqueKey).andThen((track) => {
-			return this.trackService
-				.deleteTrackDownloadRecord(track.id)
-				.andTee(() => {
-					logger.info(`删除了 track ${uniqueKey} 的下载记录`)
-				})
+		return this.trackService
+			.getTrackByUniqueKey(uniqueKey)
+			.andThen((track) => {
+				return this.trackService
+					.deleteTrackDownloadRecord(track.id)
+					.andTee(() => {
+						logger.info(`删除了 track ${uniqueKey} 的下载记录`)
+					})
+			})
+			.andThen(() => {
+				const file = new File(Paths.document, 'downloads', `${uniqueKey}.m4s`)
+				try {
+					file.delete()
+				} catch (e) {
+					return errAsync(
+						createServiceError('DeleteDownloadRecordFailed', '无法删除文件', {
+							cause: e,
+						}),
+					)
+				}
+				return okAsync(true as const)
+			})
+	}
+
+	/**
+	 * 删除所有下载记录及其实际文件
+	 */
+	public deleteAll() {
+		return this.trackService.deleteAllTrackDownloadRecords().andThen(() => {
+			const directory = new Directory(Paths.document, 'downloads')
+			try {
+				directory.delete()
+			} catch (e) {
+				return errAsync(
+					createServiceError('DeleteDownloadRecordFailed', '无法删除文件夹', {
+						cause: e,
+					}),
+				)
+			}
+			return okAsync(true as const)
 		})
 	}
 }

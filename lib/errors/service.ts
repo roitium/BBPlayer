@@ -10,6 +10,7 @@ export type ServiceErrorType =
 	| 'Validation'
 	| 'NotImplemented'
 	| 'FetchDownloadUrlFailed'
+	| 'DeleteDownloadRecordFailed'
 
 export function createServiceError(
 	type: ServiceErrorType,
