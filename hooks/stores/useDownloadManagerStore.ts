@@ -6,7 +6,11 @@ import type {
 import log from '@/utils/log'
 import { zustandStorage } from '@/utils/mmkv'
 import createStickyEmitter from '@/utils/sticky-mitt'
-import notifee, { AndroidImportance } from '@notifee/react-native'
+import notifee, {
+	AndroidImportance,
+	AuthorizationStatus,
+} from '@notifee/react-native'
+import { ToastAndroid } from 'react-native'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
@@ -23,6 +27,7 @@ const logger = log.extend('Store.DownloadManager')
 const eventListner = createStickyEmitter<ProgressEvent>()
 
 const NOTIFICATION_ID = 'download-manager-summary'
+let disableNotification = false
 let _channelId: string | null = null
 
 async function ensureChannel() {
@@ -44,7 +49,18 @@ async function ensureChannel() {
 async function updateSummaryNotification(
 	getState: () => DownloadState & DownloadActions,
 ) {
+	if (disableNotification) return
 	try {
+		const settings = await notifee.getNotificationSettings()
+		// FIXME: 实现不优雅
+		if (settings.authorizationStatus !== AuthorizationStatus.AUTHORIZED) {
+			ToastAndroid.show('请在设置中允许通知', ToastAndroid.LONG)
+			void notifee.openNotificationSettings()
+			disableNotification = true
+			return
+		} else {
+			disableNotification = false
+		}
 		const channelId = await ensureChannel()
 		const { downloads } = getState()
 		const all = Object.values(downloads)
