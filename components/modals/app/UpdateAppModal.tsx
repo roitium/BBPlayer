@@ -1,5 +1,7 @@
 import { useModalStore } from '@/hooks/stores/useModalStore'
 import { storage } from '@/utils/mmkv'
+import toast from '@/utils/toast'
+import * as Clipboard from 'expo-clipboard'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback } from 'react'
 import { View } from 'react-native'
@@ -22,7 +24,14 @@ export default function UpdateAppModal({
 	const close = useCallback(() => _close('UpdateApp'), [_close])
 
 	const onUpdate = async () => {
-		if (url) await WebBrowser.openBrowserAsync(url)
+		try {
+			if (url) await WebBrowser.openBrowserAsync(url)
+		} catch (e) {
+			void Clipboard.setStringAsync(url)
+			toast.error('无法打开浏览器，已将链接复制到剪贴板', {
+				description: String(e),
+			})
+		}
 		close()
 	}
 
