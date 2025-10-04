@@ -94,7 +94,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 				disableIOS: true,
 			},
 		],
-		'@notifee/react-native',
 	],
 	experiments: {
 		reactCompiler: true,
