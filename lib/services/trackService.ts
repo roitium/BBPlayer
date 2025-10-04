@@ -712,7 +712,7 @@ export class TrackService {
 	 */
 	public createOrUpdateTrackDownloadRecord(
 		data: Omit<TrackDownloadRecord, 'downloadedAt'>,
-	) {
+	): ResultAsync<true, DatabaseError> {
 		return ResultAsync.fromPromise(
 			this.db
 				.insert(schema.trackDownloads)
@@ -726,7 +726,18 @@ export class TrackService {
 					},
 				}),
 			(e) => new DatabaseError('创建或更新 trackDownloads 失败', { cause: e }),
-		)
+		).andThen(() => okAsync(true as const))
+	}
+
+	public deleteTrackDownloadRecord(
+		trackId: number,
+	): ResultAsync<true, DatabaseError> {
+		return ResultAsync.fromPromise(
+			this.db
+				.delete(schema.trackDownloads)
+				.where(eq(schema.trackDownloads.trackId, trackId)),
+			(e) => new DatabaseError('删除 trackDownloads 失败', { cause: e }),
+		).andThen(() => okAsync(true as const))
 	}
 }
 

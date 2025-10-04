@@ -83,6 +83,13 @@ const useDownloadManagerStore = create<DownloadState & DownloadActions>()(
 				get()._processQueue()
 			},
 
+			clearAll: () => {
+				downloadService.clearAll()
+				set((state) => {
+					state.downloads = {}
+				})
+			},
+
 			_setDownloadStatus: (uniqueKey, status, error) => {
 				set((state) => {
 					const download = state.downloads[uniqueKey]

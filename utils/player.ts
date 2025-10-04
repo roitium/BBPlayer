@@ -114,7 +114,7 @@ async function checkAndUpdateAudioStream(
 
 	if (track.source === 'bilibili') {
 		const file = new File(Paths.document, 'downloads', `${track.uniqueKey}.m4s`)
-		if (file.exists) {
+		if (track.trackDownloads && track.trackDownloads.status === 'downloaded') {
 			logger.debug('已下载的音频，无需更新流', { trackId: track.id })
 			if (track.bilibiliMetadata.bilibiliStreamUrl?.url === file.uri) {
 				return ok({ track, needsUpdate: false })

@@ -1,7 +1,7 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { ProjectScope } from '@/types/core/scope'
 import log, { reportErrorToSentry } from '@/utils/log'
-import { convertToRNTPTrack } from '@/utils/player'
+import toast from '@/utils/toast'
 import TrackPlayer, {
 	AppKilledPlaybackBehavior,
 	Capability,
@@ -129,51 +129,85 @@ const PlayerLogic = {
 		// 监听播放错误
 		TrackPlayer.addEventListener(
 			Event.PlaybackError,
-			async (data: { code: string; message: string }) => {
+			(data: { code: string; message: string }) => {
 				if (
 					data.code === 'android-io-bad-http-status' ||
 					data.code === 'android-io-network-connection-failed'
 				) {
-					logger.debug(
-						'播放错误：服务器返回了错误状态码或加载失败，重新加载曲目，但不上报错误',
-					)
+					logger.debug('播放错误：服务器返回了错误状态码或加载失败')
+					toast.error('播放错误：服务器返回了错误状态码或加载失败', {
+						duration: Number.POSITIVE_INFINITY,
+					})
+					usePlayerStore.setState((state) => ({
+						...state,
+						isPlaying: false,
+						isBuffering: false,
+					}))
+					return
 				} else if (data.code === 'android-parsing-container-unsupported') {
-					logger.debug('播放错误：服务器返回了无法解析的容器，不上报错误')
+					logger.error('播放错误：本地文件损坏')
+					toast.error('播放错误：本地文件损坏，请重新下载或删除', {
+						duration: Number.POSITIVE_INFINITY,
+					})
+					usePlayerStore.setState((state) => ({
+						...state,
+						isPlaying: false,
+						isBuffering: false,
+					}))
+					return
+				} else if (data.code === 'android-io-file-not-found') {
+					logger.error('播放错误：本地文件不存在')
+					toast.error('播放错误：本地文件不存在，你是否移动了文件？', {
+						duration: Number.POSITIVE_INFINITY,
+					})
+					usePlayerStore.setState((state) => ({
+						...state,
+						isPlaying: false,
+						isBuffering: false,
+					}))
 					return
 				} else {
 					logger.error('播放错误', data)
-					// reportErrorToSentry(
-					// 	new Error(`播放错误: ${data.code} ${data.message}`),
-					// 	'播放错误',
-					// 	ProjectScope.Player,
-					// )
-				}
-				const state = usePlayerStore.getState()
-				const nowTrack = state.currentTrackUniqueKey
-					? (state.tracks[state.currentTrackUniqueKey] ?? null)
-					: null
-				if (nowTrack) {
-					logger.debug('当前播放的曲目', {
-						trackId: nowTrack.id,
-						title: nowTrack.title,
+					toast.error(`播放错误: ${data.code} ${data.message}`, {
+						duration: Number.POSITIVE_INFINITY,
 					})
-					const track = await usePlayerStore.getState().patchAudio(nowTrack)
-					if (track.isErr()) {
-						logger.error('更新音频流失败', track.error)
-						return
-					}
-					logger.debug('更新音频流成功', {
-						trackId: track.value.track.id,
-						title: track.value.track.title,
-					})
-					// 使用 load 方法替换当前曲目
-					const rntpTrack = convertToRNTPTrack(track.value.track)
-					if (rntpTrack.isErr()) {
-						logger.error('将 Track 转换为 RNTPTrack 失败', rntpTrack.error)
-						return
-					}
-					await TrackPlayer.load(rntpTrack.value)
+					reportErrorToSentry(
+						new Error(`播放错误: ${data.code} ${data.message}`),
+						'播放错误',
+						ProjectScope.Player,
+					)
+					usePlayerStore.setState((state) => ({
+						...state,
+						isPlaying: false,
+						isBuffering: false,
+					}))
 				}
+				// const state = usePlayerStore.getState()
+				// const nowTrack = state.currentTrackUniqueKey
+				// 	? (state.tracks[state.currentTrackUniqueKey] ?? null)
+				// 	: null
+				// if (nowTrack) {
+				// 	logger.debug('当前播放的曲目', {
+				// 		trackId: nowTrack.id,
+				// 		title: nowTrack.title,
+				// 	})
+				// 	const track = await usePlayerStore.getState().patchAudio(nowTrack)
+				// 	if (track.isErr()) {
+				// 		logger.error('更新音频流失败', track.error)
+				// 		return
+				// 	}
+				// 	logger.debug('更新音频流成功', {
+				// 		trackId: track.value.track.id,
+				// 		title: track.value.track.title,
+				// 	})
+				// 	// 使用 load 方法替换当前曲目
+				// 	const rntpTrack = convertToRNTPTrack(track.value.track)
+				// 	if (rntpTrack.isErr()) {
+				// 		logger.error('将 Track 转换为 RNTPTrack 失败', rntpTrack.error)
+				// 		return
+				// 	}
+				// 	await TrackPlayer.load(rntpTrack.value)
+				// }
 			},
 		)
 	},

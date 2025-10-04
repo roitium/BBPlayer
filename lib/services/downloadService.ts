@@ -12,7 +12,7 @@ import {
 	bilibiliApi,
 	type bilibiliApi as BilibiliApiService,
 } from '../api/bilibili/api'
-import type { CustomError } from '../errors'
+import type { CustomError, DatabaseError, ServiceError } from '../errors'
 import {
 	createNotImplementedError,
 	createServiceError,
@@ -297,7 +297,9 @@ class DownloadService {
 					controller.enqueue(buffer)
 					buffer = new Uint8Array(0)
 				} else if (buffer.length >= checkUntilByte) {
-					controller.error(new Error(`文件头校验不通过`))
+					controller.error(
+						new Error(`文件头校验不通过(有时 b 站抽风，可多尝试几次)`),
+					)
 				}
 			},
 			flush(controller) {
@@ -307,6 +309,24 @@ class DownloadService {
 					controller.enqueue(buffer)
 				}
 			},
+		})
+	}
+
+	public clearAll(): void {
+		for (const key in this.activeTasks) {
+			this.cancel(key)
+		}
+	}
+
+	public delete(
+		uniqueKey: string,
+	): ResultAsync<true, ServiceError | DatabaseError> {
+		return this.trackService.getTrackByUniqueKey(uniqueKey).andThen((track) => {
+			return this.trackService
+				.deleteTrackDownloadRecord(track.id)
+				.andTee(() => {
+					logger.info(`删除了 track ${uniqueKey} 的下载记录`)
+				})
 		})
 	}
 }
