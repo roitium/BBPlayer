@@ -10,7 +10,6 @@ import notifee, {
 	AndroidImportance,
 	AuthorizationStatus,
 } from '@notifee/react-native'
-import { ToastAndroid } from 'react-native'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
@@ -52,10 +51,7 @@ async function updateSummaryNotification(
 	if (disableNotification) return
 	try {
 		const settings = await notifee.getNotificationSettings()
-		// FIXME: 实现不优雅
 		if (settings.authorizationStatus !== AuthorizationStatus.AUTHORIZED) {
-			ToastAndroid.show('请在设置中允许通知', ToastAndroid.LONG)
-			void notifee.openNotificationSettings()
 			disableNotification = true
 			return
 		} else {
