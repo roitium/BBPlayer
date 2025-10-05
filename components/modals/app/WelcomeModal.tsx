@@ -11,7 +11,7 @@ import Animated, {
 	withTiming,
 } from 'react-native-reanimated'
 
-const titles = ['欢迎使用 BBPlayer', '建议开启通知', '登录说明']
+const titles = ['欢迎使用 BBPlayer', '建议开启通知', '登录？']
 
 export default function WelcomeModal() {
 	const _close = useModalStore((s) => s.close)
@@ -49,7 +49,7 @@ export default function WelcomeModal() {
 		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
 		if (containerWidth <= 0) return
 		translateX.set(withTiming(-step * containerWidth, { duration: 300 }))
-		containerHeight.set(withTiming(stepHeights[step], { duration: 200 }))
+		containerHeight.set(withTiming(stepHeights[step], { duration: 300 }))
 	}, [step, containerWidth, translateX, containerHeight, stepHeights])
 
 	useEffect(() => {
@@ -114,7 +114,14 @@ export default function WelcomeModal() {
 			</Text>
 
 			{haveNotificationPermission || (
-				<View style={{ flexDirection: 'row', gap: 8 }}>
+				<View
+					style={{
+						flexDirection: 'row',
+						gap: 8,
+						paddingTop: 20,
+						justifyContent: 'flex-end',
+					}}
+				>
 					<Button
 						mode='contained'
 						onPress={openNotificationSettings}
@@ -167,26 +174,38 @@ export default function WelcomeModal() {
 			>
 				<View
 					style={{ width: containerWidth }}
+					collapsable={false}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
+						if (height < stepHeights[0]) {
+							return
+						}
 						setStepHeights((s) => [height, s[1], s[2]])
 					}}
 				>
 					<Step0 />
 				</View>
 				<View
+					collapsable={false}
 					style={{ width: containerWidth }}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
+						if (height < stepHeights[1]) {
+							return
+						}
 						setStepHeights((s) => [s[0], height, s[2]])
 					}}
 				>
 					<Step1 />
 				</View>
 				<View
+					collapsable={false}
 					style={{ width: containerWidth }}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
+						if (height < stepHeights[2]) {
+							return
+						}
 						setStepHeights((s) => [s[0], s[1], height])
 					}}
 				>

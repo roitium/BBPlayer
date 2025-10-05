@@ -83,7 +83,7 @@ export interface TypedNativeMMKV<Schema> {
 	 *
 	 * @throws an Error if the instance cannot be recrypted.
 	 */
-	recrypt: (key: StorageKey | undefined) => void
+	recrypt: (key: string | undefined) => void
 	/**
 	 * Trims the storage space and clears memory cache.
 	 *
