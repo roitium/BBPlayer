@@ -126,31 +126,28 @@ const AboutSection = memo(function AboutSection() {
 				variant='bodyMedium'
 				style={{ textAlign: 'center' }}
 			>
-				一个<Text style={{ textDecorationLine: 'line-through' }}>简陋</Text>的
-				Bilibili 音乐播放器
+				又一个 BiliBili 音乐播放器
 			</Text>
 			<Text
 				variant='bodyMedium'
 				style={{ textAlign: 'center', marginTop: 8 }}
 			>
-				开源地址：
+				官网：
 				<Text
 					variant='bodyMedium'
 					onPress={() =>
-						WebBrowser.openBrowserAsync(
-							'https://github.com/yanyao2333/BBPlayer',
-						).catch((e) => {
-							void Clipboard.setStringAsync(
-								'https://github.com/yanyao2333/BBPlayer',
-							)
-							toast.error('无法调用浏览器打开网页，已将链接复制到剪贴板', {
-								description: String(e),
-							})
-						})
+						WebBrowser.openBrowserAsync('https://bbplayer.roitium.com').catch(
+							(e) => {
+								void Clipboard.setStringAsync('https://bbplayer.roitium.com')
+								toast.error('无法调用浏览器打开网页，已将链接复制到剪贴板', {
+									description: String(e),
+								})
+							},
+						)
 					}
 					style={{ textDecorationLine: 'underline' }}
 				>
-					https://github.com/roitium/BBPlayer
+					https://bbplayer.roitium.com
 				</Text>
 			</Text>
 		</View>
