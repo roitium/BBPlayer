@@ -10,6 +10,7 @@ import notifee, {
 	AndroidImportance,
 	AuthorizationStatus,
 } from '@notifee/react-native'
+import { AppState } from 'react-native'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
@@ -28,6 +29,14 @@ const eventListner = createStickyEmitter<ProgressEvent>()
 const NOTIFICATION_ID = 'download-manager-summary'
 let disableNotification = false
 let _channelId: string | null = null
+
+AppState.addEventListener('change', async (state) => {
+	if (state === 'active') {
+		const settings = await notifee.getNotificationSettings()
+		disableNotification =
+			settings.authorizationStatus !== AuthorizationStatus.AUTHORIZED
+	}
+})
 
 async function ensureChannel() {
 	if (_channelId) return _channelId
@@ -50,13 +59,6 @@ async function updateSummaryNotification(
 ) {
 	if (disableNotification) return
 	try {
-		const settings = await notifee.getNotificationSettings()
-		if (settings.authorizationStatus !== AuthorizationStatus.AUTHORIZED) {
-			disableNotification = true
-			return
-		} else {
-			disableNotification = false
-		}
 		const channelId = await ensureChannel()
 		const { downloads } = getState()
 		const all = Object.values(downloads)

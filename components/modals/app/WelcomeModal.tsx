@@ -2,7 +2,7 @@ import { useModalStore } from '@/hooks/stores/useModalStore'
 import { storage } from '@/utils/mmkv'
 import notifee, { AuthorizationStatus } from '@notifee/react-native'
 import { usePreventRemove } from '@react-navigation/native'
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AppState, View } from 'react-native'
 import { Button, Dialog, Text } from 'react-native-paper'
 import Animated, {
@@ -42,11 +42,11 @@ export default function WelcomeModal() {
 	}))
 
 	useEffect(() => {
-		console.log(containerWidth)
 		widthSV.set(containerWidth)
 	}, [containerWidth, widthSV])
 
-	useLayoutEffect(() => {
+	useEffect(() => {
+		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
 		if (containerWidth <= 0) return
 		translateX.set(withTiming(-step * containerWidth, { duration: 300 }))
 		containerHeight.set(withTiming(stepHeights[step], { duration: 200 }))

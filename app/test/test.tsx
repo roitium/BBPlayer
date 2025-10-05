@@ -5,6 +5,7 @@ import useDownloadManagerStore from '@/hooks/stores/useDownloadManagerStore'
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import { downloadService } from '@/lib/services/downloadService'
 import log, { toastAndLogError } from '@/utils/log'
+import { storage } from '@/utils/mmkv'
 import toast from '@/utils/toast'
 import * as Updates from 'expo-updates'
 import { useState } from 'react'
@@ -157,6 +158,14 @@ export default function TestPage() {
 						style={{ marginBottom: 8 }}
 					>
 						清空下载缓存
+					</Button>
+					<Button
+						mode='outlined'
+						onPress={() => storage.set('first_open', true)}
+						loading={loading}
+						style={{ marginBottom: 8 }}
+					>
+						设置 first_open 为 true
 					</Button>
 				</View>
 			</ScrollView>
