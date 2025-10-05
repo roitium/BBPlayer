@@ -79,13 +79,13 @@ export default function FavoritePage() {
 		refetch,
 		hasNextPage,
 	} = useInfiniteFavoriteList(Number(id))
-	const tracks = useMemo(
-		() =>
+	const tracks = useMemo(() => {
+		return (
 			favoriteData?.pages
-				.flatMap((page) => page.medias)
-				.map(mapApiItemToTrack) ?? [],
-		[favoriteData],
-	)
+				.flatMap((page) => page.medias ?? [])
+				.map(mapApiItemToTrack) ?? []
+		)
+	}, [favoriteData])
 
 	const { mutate: syncFavorite } = usePlaylistSync()
 

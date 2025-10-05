@@ -166,7 +166,7 @@ interface BilibiliFavoriteListContents {
 			mid: number
 		}
 	}
-	medias: BilibiliFavoriteListContent[]
+	medias: BilibiliFavoriteListContent[] | null
 	has_more: boolean
 	ttl: number
 }
@@ -278,7 +278,7 @@ interface BilibiliMediaItemInCollection {
  */
 interface BilibiliCollectionAllContents {
 	info: BilibiliCollectionInfo
-	medias: BilibiliMediaItemInCollection[]
+	medias: BilibiliMediaItemInCollection[] | null
 }
 
 /**

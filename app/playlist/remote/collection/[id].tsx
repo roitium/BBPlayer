@@ -76,7 +76,7 @@ export default function CollectionPage() {
 		refetch,
 	} = useCollectionAllContents(Number(id))
 	const tracks = useMemo(
-		() => collectionData?.medias.map(mapApiItemToTrack) ?? [],
+		() => collectionData?.medias?.map(mapApiItemToTrack) ?? [],
 		[collectionData],
 	)
 

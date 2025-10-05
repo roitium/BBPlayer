@@ -365,9 +365,7 @@ export const createBilibiliApi = () => ({
 				type: scope === 'this' ? '0' : '1',
 			})
 			.andThen((res) => {
-				if (!res.medias) {
-					res.medias = []
-				}
+				res.medias ??= []
 				return okAsync(res)
 			})
 	},

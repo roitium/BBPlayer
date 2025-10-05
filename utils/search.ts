@@ -21,7 +21,8 @@ const removeBilibiliShareTrashContents = (s: string) => {
 
 export type SearchStrategy =
 	| { type: 'BVID'; bvid: string }
-	| { type: 'FAVORITE'; id: string; ctype: '11' | '21' }
+	| { type: 'FAVORITE'; id: string }
+	| { type: 'COLLECTION'; id: string }
 	| { type: 'SEARCH'; query: string }
 	| { type: 'INVALID_URL_NO_CTYPE' }
 	| { type: 'B23_RESOLVE_ERROR'; query: string; error: Error }
@@ -46,14 +47,17 @@ export async function matchSearchStrategies(
 		if (ctype && fid) {
 			if (ctype === '21') {
 				logger.debug('parseUrlToStrategy: 主站收藏夹 URL (ctype=21)', { fid })
-				return { type: 'FAVORITE', id: fid, ctype: '21' }
+				return { type: 'COLLECTION', id: fid }
 			} else if (ctype === '11') {
 				logger.debug('parseUrlToStrategy: 主站收藏夹 URL (ctype=11)', { fid })
-				return { type: 'FAVORITE', id: fid, ctype: '11' }
+				return { type: 'FAVORITE', id: fid }
 			}
 		} else if (fid && !ctype) {
-			logger.debug('parseUrlToStrategy: 主站 URL 缺少 ctype 参数', { fid })
-			return { type: 'INVALID_URL_NO_CTYPE' }
+			logger.debug(
+				'parseUrlToStrategy: 主站 URL 缺少 ctype 参数，默认为收藏夹',
+				{ fid },
+			)
+			return { type: 'FAVORITE', id: fid }
 		}
 
 		// 2) 提取 mid（个人空间、作者页）—— /space/<mid> | space.bilibili.com/<mid>
@@ -209,14 +213,12 @@ export function navigateWithSearchStrategy(
 			navigation.navigate('PlaylistMultipage', { bvid: strategy.bvid })
 			return 0
 		case 'FAVORITE':
-			if (strategy.ctype === '21') {
-				logger.debug('Navigating to PlaylistCollection', { id: strategy.id })
-				navigation.navigate('PlaylistCollection', { id: strategy.id })
-			} else {
-				// ctype === '11'
-				logger.debug('Navigating to PlaylistFavorite', { id: strategy.id })
-				navigation.navigate('PlaylistFavorite', { id: strategy.id })
-			}
+			logger.debug('Navigating to PlaylistFavorite', { id: strategy.id })
+			navigation.navigate('PlaylistFavorite', { id: strategy.id })
+			return 0
+		case 'COLLECTION':
+			logger.debug('Navigating to PlaylistCollection', { id: strategy.id })
+			navigation.navigate('PlaylistCollection', { id: strategy.id })
 			return 0
 		case 'UPLOADER':
 			logger.debug('Navigating to PlaylistUploader', { mid: strategy.mid })
