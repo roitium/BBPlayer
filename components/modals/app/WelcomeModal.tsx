@@ -2,7 +2,13 @@ import { useModalStore } from '@/hooks/stores/useModalStore'
 import { storage } from '@/utils/mmkv'
 import notifee, { AuthorizationStatus } from '@notifee/react-native'
 import { usePreventRemove } from '@react-navigation/native'
-import { useCallback, useEffect, useState } from 'react'
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react'
 import { AppState, View } from 'react-native'
 import { Button, Dialog, Text } from 'react-native-paper'
 import Animated, {
@@ -22,12 +28,12 @@ export default function WelcomeModal() {
 	const [haveNotificationPermission, setHaveNotificationPermission] =
 		useState(false)
 
-	const [containerWidth, setContainerWidth] = useState(0)
+	const containerWidth = useRef(0)
+	const containerRef = useRef<View>(null)
 	const [stepHeights, setStepHeights] = useState<[number, number, number]>([
 		0, 0, 0,
 	])
 
-	const widthSV = useSharedValue(0)
 	const translateX = useSharedValue(0)
 	const containerHeight = useSharedValue(0)
 
@@ -37,20 +43,22 @@ export default function WelcomeModal() {
 	}))
 
 	const animatedRowStyle = useAnimatedStyle(() => ({
-		width: widthSV.value * 3,
 		transform: [{ translateX: translateX.value }],
 	}))
 
 	useEffect(() => {
-		widthSV.set(containerWidth)
-	}, [containerWidth, widthSV])
-
-	useEffect(() => {
-		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
-		if (containerWidth <= 0) return
-		translateX.set(withTiming(-step * containerWidth, { duration: 300 }))
+		if (containerWidth.current <= 0) return
+		translateX.set(
+			withTiming(-step * containerWidth.current, { duration: 300 }),
+		)
 		containerHeight.set(withTiming(stepHeights[step], { duration: 300 }))
 	}, [step, containerWidth, translateX, containerHeight, stepHeights])
+
+	useLayoutEffect(() => {
+		containerRef.current?.measure((_x, _y, width) => {
+			containerWidth.current = width
+		})
+	}, [containerRef])
 
 	useEffect(() => {
 		const check = async () => {
@@ -173,11 +181,11 @@ export default function WelcomeModal() {
 				accessible={false}
 			>
 				<View
-					style={{ width: containerWidth }}
+					style={{ width: containerWidth.current }}
 					collapsable={false}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
-						if (height < stepHeights[0]) {
+						if (height <= stepHeights[0]) {
 							return
 						}
 						setStepHeights((s) => [height, s[1], s[2]])
@@ -187,10 +195,10 @@ export default function WelcomeModal() {
 				</View>
 				<View
 					collapsable={false}
-					style={{ width: containerWidth }}
+					style={{ width: containerWidth.current }}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
-						if (height < stepHeights[1]) {
+						if (height <= stepHeights[1]) {
 							return
 						}
 						setStepHeights((s) => [s[0], height, s[2]])
@@ -200,10 +208,10 @@ export default function WelcomeModal() {
 				</View>
 				<View
 					collapsable={false}
-					style={{ width: containerWidth }}
+					style={{ width: containerWidth.current }}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
-						if (height < stepHeights[2]) {
+						if (height <= stepHeights[2]) {
 							return
 						}
 						setStepHeights((s) => [s[0], s[1], height])
@@ -217,16 +225,21 @@ export default function WelcomeModal() {
 			<Dialog.Content>
 				<Animated.View
 					style={[animatedContainerStyle]}
-					onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+					ref={containerRef}
 				>
-					<Animated.View style={[animatedRowStyle, { flexDirection: 'row' }]}>
-						<View style={{ width: containerWidth }}>
+					<Animated.View
+						style={[
+							animatedRowStyle,
+							{ flexDirection: 'row', width: containerWidth.current * 3 },
+						]}
+					>
+						<View style={{ width: containerWidth.current }}>
 							<Step0 />
 						</View>
-						<View style={{ width: containerWidth }}>
+						<View style={{ width: containerWidth.current }}>
 							<Step1 />
 						</View>
-						<View style={{ width: containerWidth }}>
+						<View style={{ width: containerWidth.current }}>
 							<Step2 />
 						</View>
 					</Animated.View>
