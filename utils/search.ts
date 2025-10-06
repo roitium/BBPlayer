@@ -41,7 +41,7 @@ export async function matchSearchStrategies(
 	const query = raw.trim()
 
 	const parseUrlToStrategy = (urlObj: URL): SearchStrategy | null => {
-		// 1) 处理 ctype+fid（收藏夹）
+		// 1) 处理 ctype+fid（收藏夹/合集）
 		const ctype = urlObj.searchParams.get('ctype')
 		const fid = urlObj.searchParams.get('fid')
 		if (ctype && fid) {
@@ -60,17 +60,44 @@ export async function matchSearchStrategies(
 			return { type: 'FAVORITE', id: fid }
 		}
 
+		// 处理 space.bilibili.com 域名，如果后面包含 `lists`，则认为是合集，否则为个人空间
+		if (urlObj.hostname === 'space.bilibili.com') {
+			const sliced = urlObj.pathname.split('/')
+			sliced.shift()
+			const mid = sliced.shift()
+			if (mid) {
+				if (sliced.includes('lists')) {
+					const collectionId = sliced.pop()
+					if (!collectionId) {
+						logger.debug(
+							'parseUrlToStrategy: 匹配 space.bilibili.com/<mid>/lists',
+							{
+								mid,
+							},
+						)
+						return { type: 'UPLOADER', mid }
+					}
+					logger.debug(
+						'parseUrlToStrategy: 匹配 space.bilibili.com/<mid>/lists/<collectionId>',
+						{
+							collectionId,
+						},
+					)
+					return { type: 'COLLECTION', id: collectionId }
+				}
+				logger.debug('parseUrlToStrategy: 匹配 space.bilibili.com/<mid>', {
+					mid,
+				})
+				return { type: 'UPLOADER', mid }
+			}
+		}
+
 		// 2) 提取 mid（个人空间、作者页）—— /space/<mid> | space.bilibili.com/<mid>
 		const pathname = urlObj.pathname || ''
 		const spaceMatch = SPACE_REGEX.exec(pathname)
 		if (spaceMatch) {
 			const mid = spaceMatch[1]
 			logger.debug('parseUrlToStrategy: 匹配 space/<mid>', { mid })
-			return { type: 'UPLOADER', mid }
-		}
-		if (urlObj.hostname === 'space.bilibili.com') {
-			const mid = urlObj.pathname.slice(1)
-			logger.debug('parseUrlToStrategy: 匹配 space.bilibili.com/<mid>', { mid })
 			return { type: 'UPLOADER', mid }
 		}
 
