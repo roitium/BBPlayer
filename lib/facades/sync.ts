@@ -366,18 +366,18 @@ export class SyncFacade {
 			})
 
 			// 开始计算 diff
-			let addedBvidSet: Set<string>
-			let removeBvidSet: Set<string>
+			let bvidsToAddSet: Set<string>
+			let bvidsToRemoveSet: Set<string>
 			const afterRemovedHiddenBvidsAllBvids = new Set<string>(
 				bilibiliFavoriteListAllBvids.map((item) => item.bvid),
 			) // 删除被隐藏的视频后的所有 bvid（在元数据请求完成后处理删除逻辑）
 
 			if (!localPlaylist.value || localPlaylist.value.itemCount === 0) {
 				// 本地收藏夹为空或没创建过，则全部添加
-				addedBvidSet = new Set(
+				bvidsToAddSet = new Set(
 					bilibiliFavoriteListAllBvids.map((item) => item.bvid),
 				)
-				removeBvidSet = new Set()
+				bvidsToRemoveSet = new Set()
 			} else {
 				const existTracks = await this.playlistService.getPlaylistTracks(
 					localPlaylist.value.id,
@@ -398,18 +398,19 @@ export class SyncFacade {
 					new Set(bilibiliFavoriteListAllBvids.map((item) => item.bvid)),
 					new Set(biliTracks.map((item) => item.bilibiliMetadata.bvid)),
 				)
-				addedBvidSet = diff.added
-				removeBvidSet = diff.removed
+				// 注意，这里是相反的
+				bvidsToAddSet = diff.removed
+				bvidsToRemoveSet = diff.added
 			}
 			logger.debug('step 3: 对远程和本地的 tracks 进行 diff 完成', {
-				added: addedBvidSet.size,
-				removed: removeBvidSet.size,
+				added: bvidsToAddSet.size,
+				removed: bvidsToRemoveSet.size,
 			})
 			logger.info('收藏夹变更统计', {
-				added: addedBvidSet.size,
-				removed: removeBvidSet.size,
+				added: bvidsToAddSet.size,
+				removed: bvidsToRemoveSet.size,
 			})
-			if (addedBvidSet.size === 0 && removeBvidSet.size === 0) {
+			if (bvidsToAddSet.size === 0 && bvidsToRemoveSet.size === 0) {
 				logger.info('收藏夹为空或与上次相比无变化，无需同步')
 				return ok(localPlaylist.value?.id)
 			}
@@ -421,7 +422,7 @@ export class SyncFacade {
 			let hasMore = true
 
 			while (hasMore) {
-				if (addedBvidSet.size === 0) {
+				if (bvidsToAddSet.size === 0) {
 					break
 				}
 				nowPageNumber += 1
@@ -445,18 +446,18 @@ export class SyncFacade {
 				logger.debug(page.medias.length)
 				hasMore = page.has_more
 				for (const item of page.medias) {
-					if (addedBvidSet.has(item.bvid)) {
+					if (bvidsToAddSet.has(item.bvid)) {
 						addedTracksMetadata.add(item)
-						addedBvidSet.delete(item.bvid)
+						bvidsToAddSet.delete(item.bvid)
 					}
 				}
 			}
-			if (addedBvidSet.size > 0) {
-				const tip = `Bilibili 隐藏了被 up 设置为仅自己可见的稿件，却没有更新索引，所以你会看到同步到的歌曲数量少于收藏夹实际显示的数量，具体隐藏稿件：${[...addedBvidSet].join(',')}`
+			if (bvidsToAddSet.size > 0) {
+				const tip = `Bilibili 隐藏了被 up 设置为仅自己可见的稿件，却没有更新索引，所以你会看到同步到的歌曲数量少于收藏夹实际显示的数量，具体隐藏稿件：${[...bvidsToAddSet].join(',')}`
 				logger.warning(tip)
 				toast.info(tip)
 				// 在复制的 allBvids Set 中删除隐藏的视频
-				for (const bvid of addedBvidSet) {
+				for (const bvid of bvidsToAddSet) {
 					afterRemovedHiddenBvidsAllBvids.delete(bvid)
 				}
 			}
