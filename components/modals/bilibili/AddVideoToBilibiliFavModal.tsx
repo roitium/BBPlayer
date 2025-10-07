@@ -117,15 +117,17 @@ const AddToFavoriteListsModal = memo(function AddToFavoriteListsModal({
 				addToFavoriteIds,
 				delInFavoriteIds,
 			})
-		} finally {
-			close()
-			queryClient.removeQueries({
-				queryKey: favoriteListQueryKeys.favoriteForOneVideo(
-					bvid,
-					personalInfo?.mid,
-				),
-			})
+		} catch {
+			// empty
 		}
+
+		close()
+		queryClient.removeQueries({
+			queryKey: favoriteListQueryKeys.favoriteForOneVideo(
+				bvid,
+				personalInfo?.mid,
+			),
+		})
 	}, [
 		playlists,
 		isMutating,

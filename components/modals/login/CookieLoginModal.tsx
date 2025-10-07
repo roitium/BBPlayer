@@ -33,17 +33,20 @@ export default function CookieLoginModal() {
 				queryClient.clear()
 				toast.success('Cookie 已清除')
 				close()
+				setIsLoading(false)
 				return
 			}
 
 			if (inputCookie === displayCookieString) {
 				close()
+				setIsLoading(false)
 				return
 			}
 
 			const result = setBilibiliCookie(inputCookie)
 			if (result.isErr()) {
 				toast.error(result.error.message)
+				setIsLoading(false)
 				return
 			}
 			toast.success('Cookie 已更新')
@@ -55,9 +58,8 @@ export default function CookieLoginModal() {
 			close()
 		} catch (error) {
 			toastAndLogError('操作失败', error, 'Components.CookieLoginModal')
-		} finally {
-			setIsLoading(false)
 		}
+		setIsLoading(false)
 	}
 
 	const handleDismiss = () => {

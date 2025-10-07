@@ -15,10 +15,19 @@ export default (api) => {
 
 					logger: {
 						logEvent(filename, event) {
-							if (event.kind === 'CompileSuccess') {
-								console.log('✔ Compiled:', filename)
-							} else {
-								console.warn('ℹ Compilation error in:', filename, event.reason)
+							switch (event.kind) {
+								case 'CompileSuccess': {
+									console.log(`✅ Compiled: ${filename}`)
+									break
+								}
+								case 'CompileError': {
+									console.log(
+										`❌ Skipped: ${filename} [reason: ${event.detail.reason}] [description: ${event.detail.description}] [loc: ${event.detail.loc.start}] [suggestion: ${event.detail.suggestions}]`,
+									)
+									break
+								}
+								default: {
+								}
 							}
 						},
 					},

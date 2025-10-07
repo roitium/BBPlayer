@@ -35,16 +35,16 @@ export default function useLyricSync(
 		[lyrics],
 	)
 
-	const onUserScrollStart = useCallback(() => {
+	const onUserScrollStart = () => {
 		if (!lyrics.length) return
 		if (manualScrollTimeoutRef.current) {
 			clearTimeout(manualScrollTimeoutRef.current)
 			manualScrollTimeoutRef.current = null
 		}
 		isManualScrollingRef.current = true
-	}, [lyrics.length])
+	}
 
-	const onUserScrollEnd = useCallback(() => {
+	const onUserScrollEnd = () => {
 		if (!lyrics.length) return
 		if (manualScrollTimeoutRef.current)
 			clearTimeout(manualScrollTimeoutRef.current)
@@ -59,7 +59,7 @@ export default function useLyricSync(
 				viewPosition: 0.5,
 			})
 		}, 2000)
-	}, [lyrics.length, flashListRef, currentLyricIndex])
+	}
 
 	const handleJumpToLyric = useCallback(
 		(index: number) => {
