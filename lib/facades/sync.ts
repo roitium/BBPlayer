@@ -110,8 +110,17 @@ export class SyncFacade {
 				.andThen((contents) => {
 					logger.info('获取合集详情成功', {
 						title: contents.info.title,
-						total: contents.medias.length,
+						total: contents.medias?.length ?? 0,
 					})
+					const medias = contents.medias ?? []
+					if (medias.length === 0) {
+						return errAsync(
+							createFacadeError(
+								'SyncCollectionFailed',
+								'同步合集失败，该合集中没有任何 track',
+							),
+						)
+					}
 					return ResultAsync.fromPromise(
 						this.db.transaction(async (tx) => {
 							const playlistSvc = this.playlistService.withDB(tx)
@@ -139,7 +148,7 @@ export class SyncFacade {
 							})
 
 							const uniqueArtists = new Map<number, { name: string }>()
-							for (const media of contents.medias) {
+							for (const media of medias) {
 								if (!uniqueArtists.has(media.upper.mid)) {
 									uniqueArtists.set(media.upper.mid, { name: media.upper.name })
 								}
@@ -160,7 +169,7 @@ export class SyncFacade {
 							})
 
 							const tracksCreateResult = await trackSvc.findOrCreateManyTracks(
-								contents.medias.map((v) => ({
+								medias.map((v) => ({
 									title: v.title,
 									source: 'bilibili',
 									bilibiliMetadata: {
@@ -425,6 +434,14 @@ export class SyncFacade {
 					return errAsync(pageResult.error)
 				}
 				const page = pageResult.value
+				if (!page.medias) {
+					return errAsync(
+						createFacadeError(
+							'SyncFavoriteFailed',
+							'同步收藏夹失败，该收藏夹中没有任何 track',
+						),
+					)
+				}
 				logger.debug(page.medias.length)
 				hasMore = page.has_more
 				for (const item of page.medias) {
