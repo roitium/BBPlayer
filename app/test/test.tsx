@@ -66,16 +66,15 @@ export default function TestPage() {
 
 	// 清空队列
 	const handleClearQueue = async () => {
+		setLoading(true)
 		try {
-			setLoading(true)
 			await clearQueue()
 			toast.success('队列已清空')
 		} catch (error) {
 			console.error('清空队列失败:', error)
 			toast.error('清空队列失败', { description: String(error) })
-		} finally {
-			setLoading(false)
 		}
+		setLoading(false)
 	}
 
 	const handleDeleteAllDownloadRecords = () => {
@@ -89,8 +88,8 @@ export default function TestPage() {
 				{
 					text: '确定',
 					onPress: async () => {
+						setLoading(true)
 						try {
-							setLoading(true)
 							useDownloadManagerStore.getState().clearAll()
 							logger.info('清除 zustand store 数据成功')
 							const result = await downloadService.deleteAll()
@@ -98,15 +97,15 @@ export default function TestPage() {
 								toast.error('清除下载缓存失败', {
 									description: result.error.message,
 								})
+								setLoading(false)
 								return
 							}
 							logger.info('清除数据库下载记录及实际文件成功')
 							toast.success('清除下载缓存成功')
 						} catch (error) {
 							toastAndLogError('清除下载缓存失败', error, 'TestPage')
-						} finally {
-							setLoading(false)
 						}
+						setLoading(false)
 					},
 				},
 			],

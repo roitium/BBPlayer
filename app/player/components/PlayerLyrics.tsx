@@ -203,25 +203,21 @@ export default function Lyrics({
 	})
 
 	// 我们不在本地创建 offset state，而是直接调用 queryClient 来更新 smartFetchLyrics 的缓存。当用户点击确认时，再保存到本地
-	const handleChangeOffset = useCallback(
-		(delta: number) => {
-			if (!lyrics) return
-			const newOffset = (lyrics.offset ?? 0) + delta
-			queryClient.setQueryData(
-				lyricsQueryKeys.smartFetchLyrics(track.uniqueKey),
-				() => {
-					return {
-						...lyrics,
-						offset: newOffset,
-					}
-				},
-			)
-			console.log('直接更新缓存：', newOffset)
-		},
-		[lyrics, track.uniqueKey],
-	)
+	const handleChangeOffset = (delta: number) => {
+		if (!lyrics) return
+		const newOffset = (lyrics.offset ?? 0) + delta
+		queryClient.setQueryData(
+			lyricsQueryKeys.smartFetchLyrics(track.uniqueKey),
+			() => {
+				return {
+					...lyrics,
+					offset: newOffset,
+				}
+			},
+		)
+	}
 
-	const handleCloseOffsetMenu = useCallback(async () => {
+	const handleCloseOffsetMenu = async () => {
 		setOffsetMenuVisible(false)
 		if (!lyrics) return
 		const saveResult = await lyricService.saveLyricsToFile(
@@ -236,7 +232,7 @@ export default function Lyrics({
 			return
 		}
 		console.log('保存歌词偏移量成功:', lyrics.offset)
-	}, [lyrics, track.uniqueKey])
+	}
 
 	const keyExtractor = useCallback(
 		(item: LyricLine, index: number) => `${index}_${item.timestamp * 1000}`,

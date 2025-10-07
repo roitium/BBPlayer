@@ -4,6 +4,7 @@ import type { Track } from '@/types/core/media'
 import { toastAndLogError } from '@/utils/log'
 import { storage } from '@/utils/mmkv'
 import { useCallback } from 'react'
+import type { MMKV } from 'react-native-mmkv'
 import { useMMKVBoolean } from 'react-native-mmkv'
 
 const SCOPE = 'UI.Playlist.Local.Player'
@@ -11,12 +12,15 @@ const SCOPE = 'UI.Playlist.Local.Player'
 export function useLocalPlaylistPlayer(tracks: Track[]) {
 	const addToQueue = usePlayerStore((state) => state.addToQueue)
 	const [ignoreAlertReplacePlaylist, setIgnoreAlertReplacePlaylist] =
-		useMMKVBoolean('ignore_alert_replace_playlist', storage)
+		useMMKVBoolean('ignore_alert_replace_playlist', storage as MMKV)
 
 	const playAll = useCallback(
 		async (startFromId?: string) => {
+			if (!tracks || tracks.length === 0) {
+				return
+			}
+
 			try {
-				if (!tracks || tracks.length === 0) return
 				await addToQueue({
 					tracks: tracks,
 					playNow: true,
