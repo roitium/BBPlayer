@@ -26,8 +26,9 @@ export default function CookieLoginModal() {
 
 	const handleConfirm = async () => {
 		setIsLoading(true)
+		const cookie = inputCookie?.trim()
 		try {
-			if (!inputCookie?.trim()) {
+			if (!cookie) {
 				clearBilibiliCookie()
 				await queryClient.cancelQueries()
 				queryClient.clear()
