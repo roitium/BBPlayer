@@ -1,13 +1,4 @@
-jest.mock('../log', () => ({
-	__esModule: true,
-	default: {
-		extend: () => ({
-			warning: jest.fn(),
-			error: jest.fn(),
-		}),
-	},
-	toastAndLogError: jest.fn(),
-}))
+jest.mock('../log')
 
 import type { ParsedLrc } from '@/types/player/lyrics'
 import { mergeLrc, parseLrc } from '../lyrics'
