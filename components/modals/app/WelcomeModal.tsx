@@ -28,8 +28,8 @@ export default function WelcomeModal() {
 	const [haveNotificationPermission, setHaveNotificationPermission] =
 		useState(false)
 
-	const containerWidth = useRef(0)
 	const containerRef = useRef<View>(null)
+	const [measuredWidth, setMeasuredWidth] = useState(0)
 	const [stepHeights, setStepHeights] = useState<[number, number, number]>([
 		0, 0, 0,
 	])
@@ -47,16 +47,15 @@ export default function WelcomeModal() {
 	}))
 
 	useEffect(() => {
-		if (containerWidth.current <= 0) return
-		translateX.set(
-			withTiming(-step * containerWidth.current, { duration: 300 }),
-		)
+		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
+		if (measuredWidth <= 0) return
+		translateX.set(withTiming(-step * measuredWidth, { duration: 300 }))
 		containerHeight.set(withTiming(stepHeights[step], { duration: 300 }))
-	}, [step, containerWidth, translateX, containerHeight, stepHeights])
+	}, [step, translateX, containerHeight, stepHeights, measuredWidth])
 
 	useLayoutEffect(() => {
 		containerRef.current?.measure((_x, _y, width) => {
-			containerWidth.current = width
+			setMeasuredWidth(width)
 		})
 	}, [containerRef])
 
@@ -181,7 +180,7 @@ export default function WelcomeModal() {
 				accessible={false}
 			>
 				<View
-					style={{ width: containerWidth.current }}
+					style={{ width: measuredWidth }}
 					collapsable={false}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
@@ -195,7 +194,7 @@ export default function WelcomeModal() {
 				</View>
 				<View
 					collapsable={false}
-					style={{ width: containerWidth.current }}
+					style={{ width: measuredWidth }}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
 						if (height <= stepHeights[1]) {
@@ -208,7 +207,7 @@ export default function WelcomeModal() {
 				</View>
 				<View
 					collapsable={false}
-					style={{ width: containerWidth.current }}
+					style={{ width: measuredWidth }}
 					onLayout={(e) => {
 						const height = e.nativeEvent.layout.height ?? 0
 						if (height <= stepHeights[2]) {
@@ -230,16 +229,16 @@ export default function WelcomeModal() {
 					<Animated.View
 						style={[
 							animatedRowStyle,
-							{ flexDirection: 'row', width: containerWidth.current * 3 },
+							{ flexDirection: 'row', width: measuredWidth * 3 },
 						]}
 					>
-						<View style={{ width: containerWidth.current }}>
+						<View style={{ width: measuredWidth }}>
 							<Step0 />
 						</View>
-						<View style={{ width: containerWidth.current }}>
+						<View style={{ width: measuredWidth }}>
 							<Step1 />
 						</View>
-						<View style={{ width: containerWidth.current }}>
+						<View style={{ width: measuredWidth }}>
 							<Step2 />
 						</View>
 					</Animated.View>
