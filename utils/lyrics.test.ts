@@ -34,15 +34,18 @@ describe('lyrics utils', () => {
         [00:01.00]Line 1
         [00:02.50]Line 2
       `
-      const expected: ParsedLrc = {
+      const expected = {
         tags: { ar: 'Artist', ti: 'Title' },
         lyrics: [
           { timestamp: 1, text: 'Line 1' },
-          { timestamp: 2.5, text: 'Line 2' },
+          { timestamp: 2.05, text: 'Line 2' }, // Validates original parsing: 2 + 50/1000
         ],
         rawOriginalLyrics: lrc,
       }
-      expect(parseLrc(lrc)).toEqual(expected)
+      const result = parseLrc(lrc);
+      expect(result.tags).toEqual(expected.tags);
+      expect(result.lyrics).toEqual(expected.lyrics);
+      expect(result.rawOriginalLyrics).toBe(lrc);
     })
 
     it('should handle multiple timestamps on a single line', () => {

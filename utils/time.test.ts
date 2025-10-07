@@ -3,7 +3,7 @@ import {
   formatDurationToHHMMSS,
   formatMMSSToSeconds,
 } from './time'
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
 
 describe('time utils', () => {
   describe('formatRelativeTime', () => {
@@ -13,13 +13,13 @@ describe('time utils', () => {
     })
 
     it('should format a date from a minute ago', () => {
-      const date = dayjs().subtract(1, 'minute').toDate()
-      expect(formatRelativeTime(date)).toBe('1 分钟前')
+        const date = dayjs().subtract(1, 'minute').toDate()
+        expect(formatRelativeTime(date)).toBe('1 分钟前')
     });
 
     it('should format a date from an hour ago', () => {
-      const date = dayjs().subtract(1, 'hour').toDate()
-      expect(formatRelativeTime(date)).toBe('1 小时前')
+        const date = dayjs().subtract(1, 'hour').toDate()
+        expect(formatRelativeTime(date)).toBe('1 小时前')
     });
 
     it('should format a date from a day ago', () => {

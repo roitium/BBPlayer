@@ -1,8 +1,8 @@
 /**
  * 对两个 Set 进行差集计算
- * @param source 原始 Set
- * @param target 新的 Set
- * @returns 返回一个包含 added 和 removed 两个 Set 的对象
+ * @param source 标准的 Set
+ * @param target 另一个 Set
+ * @returns
  */
 export function diffSets<T>(
 	source: Set<T>,
@@ -14,16 +14,14 @@ export function diffSets<T>(
 	const added = new Set<T>()
 	const removed = new Set<T>()
 
-	// Find added elements (in target but not in source)
-	for (const elem of target) {
-		if (!source.has(elem)) {
+	for (const elem of source) {
+		if (!target.has(elem)) {
 			added.add(elem)
 		}
 	}
 
-	// Find removed elements (in source but not in target)
-	for (const elem of source) {
-		if (!target.has(elem)) {
+	for (const elem of target) {
+		if (!source.has(elem)) {
 			removed.add(elem)
 		}
 	}

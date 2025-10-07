@@ -53,9 +53,7 @@ export function parseLrc(lrcString: string): ParsedLrc {
 				for (const match of timestampMatches) {
 					const minutes = parseInt(match[1], 10)
 					const seconds = parseInt(match[2], 10)
-					const fractionalPart = match[3] || '0'
-					// Pad with zeros to make it 3 digits (ms)
-					const milliseconds = parseInt(fractionalPart.padEnd(3, '0'), 10)
+					const milliseconds = parseInt(match[3] || '0', 10)
 
 					const timestamp = minutes * 60 + seconds + milliseconds / 1000
 

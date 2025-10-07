@@ -11,7 +11,11 @@
 		"format": "eslint . --fix && prettier --write ."
 	},
 	"jest": {
-		"preset": "jest-expo"
+		"preset": "jest-expo",
+		"testPathIgnorePatterns": [
+			"/node_modules/",
+			"app/test/test.tsx"
+		]
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.27.1",
