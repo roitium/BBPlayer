@@ -1,18 +1,11 @@
-export const toastAndLogError = jest.fn()
-
-const mockLogError = jest.fn()
-
-const logger = {
-	extend: jest.fn(() => ({
-		error: mockLogError,
-		debug: jest.fn(),
-		info: jest.fn(),
-		warning: jest.fn(),
-	})),
-	error: mockLogError,
-	debug: jest.fn(),
-	info: jest.fn(),
-	warning: jest.fn(),
+/* eslint-disable @typescript-eslint/no-empty-function */
+const mockLog = {
+  info: () => {},
+  warning: () => {},
+  error: () => {},
+  debug: () => {},
+  extend: () => mockLog,
+  setSeverity: () => {},
 }
 
-export default logger
+export default mockLog
