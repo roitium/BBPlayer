@@ -101,4 +101,13 @@ export default defineConfig([
 		},
 	},
 	reactYouMightNotNeedAnEffect.configs.recommended,
+	{
+		files: ['**/__tests__/*.{ts,tsx}'],
+		rules: {
+			'@typescript-eslint/unbound-method': 'off',
+			'@typescript-eslint/no-unsafe-argument': 'off',
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+		},
+	},
 ])
