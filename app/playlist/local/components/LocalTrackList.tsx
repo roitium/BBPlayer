@@ -62,7 +62,9 @@ export function LocalTrackList({
 				<TrackListItem
 					index={index}
 					onTrackPress={() => handleTrackPress(item)}
-					onMenuPress={(anchor) => handleMenuPress(item, anchor)}
+					onMenuPress={(anchor) => {
+						handleMenuPress(item, anchor)
+					}}
 					disabled={
 						item.source === 'bilibili' && !item.bilibiliMetadata.videoIsValid
 					}

@@ -1,5 +1,6 @@
+import * as Haptics from 'expo-haptics'
 import type { PropsWithChildren } from 'react'
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { Menu } from 'react-native-paper'
 
@@ -8,6 +9,7 @@ type FunctionalMenuProps = PropsWithChildren<Parameters<typeof Menu>[0]>
 const FunctionalMenu = memo(function FunctionalMenu({
 	children,
 	onDismiss,
+	visible,
 	...props
 }: FunctionalMenuProps) {
 	const [showContent, setShowContent] = useState(false)
@@ -16,11 +18,20 @@ const FunctionalMenu = memo(function FunctionalMenu({
 		onDismiss?.()
 	}, [onDismiss])
 
+	useEffect(() => {
+		if (visible) {
+			void Haptics.performAndroidHapticsAsync(
+				Haptics.AndroidHaptics.Context_Click,
+			)
+		}
+	}, [visible])
+
 	return (
 		<>
 			<Menu
 				{...props}
 				onDismiss={onClose}
+				visible={visible}
 				style={{
 					opacity: showContent ? 1 : 0,
 				}}

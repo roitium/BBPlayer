@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics'
 import type { ToastShowParams } from 'react-native-toast-message'
 import Toast from 'react-native-toast-message'
 
@@ -19,6 +20,7 @@ const show = (message: string, options?: Options) => {
 }
 
 const success = (message: string, options?: Options) => {
+	void Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Confirm)
 	Toast.show({
 		type: 'success',
 		...options,
@@ -30,6 +32,7 @@ const success = (message: string, options?: Options) => {
 }
 
 const error = (message: string, options?: Options) => {
+	void Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Reject)
 	Toast.show({
 		type: 'error',
 		...options,
