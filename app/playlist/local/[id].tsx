@@ -64,7 +64,6 @@ export default function LocalPlaylistPage() {
 		useTrackSelection()
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
-	// const [transitionDone, setTransitionDone] = useState(false)
 	const openModal = useModalStore((state) => state.open)
 	const [functionalMenuVisible, setFunctionalMenuVisible] = useState(false)
 
@@ -211,12 +210,6 @@ export default function LocalPlaylistPage() {
 	const searchbarAnimatedStyle = useAnimatedStyle(() => ({
 		height: searchbarHeight.value,
 	}))
-
-	// useEffect(() => {
-	// 	navigation.addListener('transitionEnd', () => {
-	// 		setTransitionDone(true)
-	// 	})
-	// }, [navigation])
 
 	if (typeof id !== 'string') {
 		return null

@@ -3,6 +3,7 @@ import FunctionalMenu from '@/components/commonUIs/FunctionalMenu'
 import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BilibiliTrack } from '@/types/core/media'
 import { FlashList } from '@shopify/flash-list'
+import * as Haptics from 'expo-haptics'
 import { useCallback, useState } from 'react'
 import { View } from 'react-native'
 import {
@@ -90,10 +91,20 @@ export function TrackList({
 						artistName: item.artist?.name,
 						uniqueKey: item.uniqueKey,
 					}}
-					toggleSelected={toggle}
+					toggleSelected={() => {
+						void Haptics.performAndroidHapticsAsync(
+							Haptics.AndroidHaptics.Clock_Tick,
+						)
+						toggle(item.id)
+					}}
 					isSelected={selected.has(item.id)}
 					selectMode={selectMode}
-					enterSelectMode={enterSelectMode}
+					enterSelectMode={() => {
+						void Haptics.performAndroidHapticsAsync(
+							Haptics.AndroidHaptics.Long_Press,
+						)
+						enterSelectMode(item.id)
+					}}
 				/>
 			)
 		},
