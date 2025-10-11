@@ -24,6 +24,7 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Haptics from 'expo-haptics'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { Appbar, Menu, Portal, Searchbar, useTheme } from 'react-native-paper'
@@ -63,7 +64,7 @@ export default function LocalPlaylistPage() {
 		useTrackSelection()
 	const [batchAddTracksModalPayloads, setBatchAddTracksModalPayloads] =
 		useState<{ track: CreateTrackPayload; artist: CreateArtistPayload }[]>([])
-	const [transitionDone, setTransitionDone] = useState(false)
+	// const [transitionDone, setTransitionDone] = useState(false)
 	const openModal = useModalStore((state) => state.open)
 	const [functionalMenuVisible, setFunctionalMenuVisible] = useState(false)
 
@@ -211,17 +212,17 @@ export default function LocalPlaylistPage() {
 		height: searchbarHeight.value,
 	}))
 
-	useEffect(() => {
-		navigation.addListener('transitionEnd', () => {
-			setTransitionDone(true)
-		})
-	}, [navigation])
+	// useEffect(() => {
+	// 	navigation.addListener('transitionEnd', () => {
+	// 		setTransitionDone(true)
+	// 	})
+	// }, [navigation])
 
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isPlaylistDataPending || isPlaylistMetadataPending || !transitionDone) {
+	if (isPlaylistDataPending || isPlaylistMetadataPending) {
 		return <PlaylistLoading />
 	}
 
@@ -300,8 +301,18 @@ export default function LocalPlaylistPage() {
 				trackMenuItems={trackMenuItems}
 				selectMode={selectMode}
 				selected={selected}
-				toggle={toggle}
-				enterSelectMode={enterSelectMode}
+				toggle={(trackId) => {
+					void Haptics.performAndroidHapticsAsync(
+						Haptics.AndroidHaptics.Clock_Tick,
+					)
+					toggle(trackId)
+				}}
+				enterSelectMode={(trackId) => {
+					void Haptics.performAndroidHapticsAsync(
+						Haptics.AndroidHaptics.Long_Press,
+					)
+					enterSelectMode(trackId)
+				}}
 				ListHeaderComponent={
 					<PlaylistHeader
 						playlist={playlistMetadata}

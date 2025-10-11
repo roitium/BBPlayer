@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics'
 import { useCallback, useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
@@ -44,6 +45,7 @@ export function usePlayerSlider() {
 
 	const handleSlidingStart = useCallback(
 		(value: number) => {
+			void Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Drag_Start)
 			overridePosition.set(value)
 			if (resyncTimer.current) {
 				clearTimeout(resyncTimer.current)
@@ -55,6 +57,9 @@ export function usePlayerSlider() {
 
 	const handleSlidingComplete = useCallback(
 		async (value: number) => {
+			void Haptics.performAndroidHapticsAsync(
+				Haptics.AndroidHaptics.Gesture_End,
+			)
 			overridePosition.set(value)
 			await TrackPlayer.seekTo(value)
 

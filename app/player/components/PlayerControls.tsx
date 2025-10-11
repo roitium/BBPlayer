@@ -1,4 +1,5 @@
 import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
+import * as Haptics from 'expo-haptics'
 import { View } from 'react-native'
 import { IconButton, Tooltip, useTheme } from 'react-native-paper'
 import { RepeatMode } from 'react-native-track-player'
@@ -28,18 +29,33 @@ export function PlayerControls({ onOpenQueue }: { onOpenQueue: () => void }) {
 				<IconButton
 					icon='skip-previous'
 					size={32}
-					onPress={() => void skipToPrevious()}
+					onPress={() => {
+						void Haptics.performAndroidHapticsAsync(
+							Haptics.AndroidHaptics.Context_Click,
+						)
+						void skipToPrevious()
+					}}
 				/>
 				<IconButton
 					icon={isPlaying ? 'pause' : 'play'}
 					size={48}
-					onPress={() => void togglePlay()}
+					onPress={() => {
+						void Haptics.performAndroidHapticsAsync(
+							Haptics.AndroidHaptics.Context_Click,
+						)
+						void togglePlay()
+					}}
 					mode='contained'
 				/>
 				<IconButton
 					icon='skip-next'
 					size={32}
-					onPress={() => void skipToNext()}
+					onPress={() => {
+						void Haptics.performAndroidHapticsAsync(
+							Haptics.AndroidHaptics.Context_Click,
+						)
+						void skipToNext()
+					}}
 				/>
 			</View>
 			<View
@@ -56,7 +72,12 @@ export function PlayerControls({ onOpenQueue }: { onOpenQueue: () => void }) {
 						icon={shuffleMode ? 'shuffle-variant' : 'shuffle-disabled'}
 						size={24}
 						iconColor={shuffleMode ? colors.primary : colors.onSurfaceVariant}
-						onPress={toggleShuffleMode}
+						onPress={() => {
+							void Haptics.performAndroidHapticsAsync(
+								Haptics.AndroidHaptics.Confirm,
+							)
+							void toggleShuffleMode()
+						}}
 					/>
 				</Tooltip>
 				<Tooltip title='切换循环播放模式'>
@@ -74,7 +95,12 @@ export function PlayerControls({ onOpenQueue }: { onOpenQueue: () => void }) {
 								? colors.primary
 								: colors.onSurfaceVariant
 						}
-						onPress={toggleRepeatMode}
+						onPress={() => {
+							void Haptics.performAndroidHapticsAsync(
+								Haptics.AndroidHaptics.Confirm,
+							)
+							void toggleRepeatMode()
+						}}
 					/>
 				</Tooltip>
 				<Tooltip title='打开播放列表'>
@@ -82,7 +108,12 @@ export function PlayerControls({ onOpenQueue }: { onOpenQueue: () => void }) {
 						icon='format-list-bulleted'
 						size={24}
 						iconColor={colors.onSurfaceVariant}
-						onPress={onOpenQueue}
+						onPress={() => {
+							void Haptics.performAndroidHapticsAsync(
+								Haptics.AndroidHaptics.Context_Click,
+							)
+							onOpenQueue()
+						}}
 					/>
 				</Tooltip>
 			</View>

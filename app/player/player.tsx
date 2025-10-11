@@ -3,6 +3,7 @@ import useCurrentTrack from '@/hooks/stores/playerHooks/useCurrentTrack'
 import type { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Haptics from 'expo-haptics'
 import { useRef, useState } from 'react'
 import { Dimensions, View } from 'react-native'
 import { IconButton, Text, useTheme } from 'react-native-paper'
@@ -79,7 +80,12 @@ export default function PlayerPage() {
 										})
 									: void 0
 							}
-							onPressCover={() => setViewMode('lyrics')}
+							onPressCover={() => {
+								void Haptics.performAndroidHapticsAsync(
+									Haptics.AndroidHaptics.Context_Click,
+								)
+								setViewMode('lyrics')
+							}}
 						/>
 					) : (
 						<Lyrics

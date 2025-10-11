@@ -4,6 +4,7 @@ import { usePlayerStore } from '@/hooks/stores/usePlayerStore'
 import type { RootStackParamList } from '@/types/navigation'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import * as Haptics from 'expo-haptics'
 import { Image } from 'expo-image'
 import { memo, useLayoutEffect, useRef } from 'react'
 import { View } from 'react-native'
@@ -93,13 +94,31 @@ const NowPlayingBar = memo(function NowPlayingBar() {
 	const isVisible = currentTrack !== null
 
 	const prevTap = Gesture.Tap().onEnd((_e, success) => {
-		if (success) scheduleOnRN(skipToPrevious)
+		if (success) {
+			scheduleOnRN(
+				Haptics.performAndroidHapticsAsync,
+				Haptics.AndroidHaptics.Context_Click,
+			)
+			scheduleOnRN(skipToPrevious)
+		}
 	})
 	const playTap = Gesture.Tap().onEnd((_e, success) => {
-		if (success) scheduleOnRN(togglePlay)
+		if (success) {
+			scheduleOnRN(
+				Haptics.performAndroidHapticsAsync,
+				Haptics.AndroidHaptics.Context_Click,
+			)
+			scheduleOnRN(togglePlay)
+		}
 	})
 	const nextTap = Gesture.Tap().onEnd((_e, success) => {
-		if (success) scheduleOnRN(skipToNext)
+		if (success) {
+			scheduleOnRN(
+				Haptics.performAndroidHapticsAsync,
+				Haptics.AndroidHaptics.Context_Click,
+			)
+			scheduleOnRN(skipToNext)
+		}
 	})
 	const outerTap = Gesture.Tap()
 		.requireExternalGestureToFail(prevTap, playTap, nextTap)
