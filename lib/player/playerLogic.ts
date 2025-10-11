@@ -14,6 +14,10 @@ const logger = log.extend('Player.Init')
 
 const initPlayer = async () => {
 	logger.info('开始初始化播放器')
+	if (global.playerIsReady) {
+		logger.warning('播放器已经初始化过了')
+		return
+	}
 	await PlayerLogic.preparePlayer()
 	PlayerLogic.setupEventListeners()
 	// 初始化后强制将 RNTP 重复模式设为 Off，循环由我们内部管理
