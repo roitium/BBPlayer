@@ -68,7 +68,6 @@ export default function FavoritePage() {
 	const linkedPlaylistId = useCheckLinkedToPlaylist(Number(id), 'favorite')
 
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
-	const [transitionDone, setTransitionDone] = useState(false)
 	const openModal = useModalStore((state) => state.open)
 
 	const {
@@ -121,17 +120,11 @@ export default function FavoritePage() {
 		}
 	}, [id, navigation])
 
-	useEffect(() => {
-		navigation.addListener('transitionEnd', () => {
-			setTransitionDone(true)
-		})
-	}, [navigation])
-
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isFavoriteDataPending || !transitionDone) {
+	if (isFavoriteDataPending) {
 		return <PlaylistLoading />
 	}
 

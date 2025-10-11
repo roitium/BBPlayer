@@ -67,7 +67,6 @@ export default function CollectionPage() {
 	const linkedPlaylistId = useCheckLinkedToPlaylist(Number(id), 'collection')
 
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
-	const [transitionDone, setTransitionDone] = useState(false)
 
 	const {
 		data: collectionData,
@@ -111,17 +110,11 @@ export default function CollectionPage() {
 		}
 	}, [id, navigation])
 
-	useEffect(() => {
-		navigation.addListener('transitionEnd', () => {
-			setTransitionDone(true)
-		})
-	}, [navigation])
-
 	if (typeof id !== 'string') {
 		return null
 	}
 
-	if (isCollectionDataPending || !transitionDone) {
+	if (isCollectionDataPending) {
 		return <PlaylistLoading />
 	}
 

@@ -13,7 +13,7 @@ import {
 	useRoute,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { RefreshControl, View } from 'react-native'
 import { Appbar, Text, useTheme } from 'react-native-paper'
 import { TrackList } from '../../shared/components/RemoteTrackList'
@@ -56,7 +56,6 @@ export default function SearchResultsPage() {
 		useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
-	const [transitionDone, setTransitionDone] = useState(false)
 	const [refreshing, setRefreshing] = useState(false)
 	const openModal = useModalStore((state) => state.open)
 
@@ -82,13 +81,7 @@ export default function SearchResultsPage() {
 		return uniqueTracks.map(mapApiItemToTrack)
 	}, [searchData])
 
-	useEffect(() => {
-		navigation.addListener('transitionEnd', () => {
-			setTransitionDone(true)
-		})
-	}, [navigation])
-
-	if (isPendingSearchData || !transitionDone) {
+	if (isPendingSearchData) {
 		return <PlaylistLoading />
 	}
 

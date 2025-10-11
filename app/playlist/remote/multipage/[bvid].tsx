@@ -75,7 +75,6 @@ export default function MultipagePage() {
 	const linkedPlaylistId = useCheckLinkedToPlaylist(bv2av(bvid), 'multi_page')
 
 	const { selected, selectMode, toggle, enterSelectMode } = useTrackSelection()
-	const [transitionDone, setTransitionDone] = useState(false)
 	const openModal = useModalStore((state) => state.open)
 
 	const {
@@ -128,17 +127,11 @@ export default function MultipagePage() {
 		}
 	}, [bvid, navigation])
 
-	useEffect(() => {
-		navigation.addListener('transitionEnd', () => {
-			setTransitionDone(true)
-		})
-	}, [navigation])
-
 	if (typeof bvid !== 'string') {
 		return null
 	}
 
-	if (isMultipageDataPending || isVideoDataPending || !transitionDone) {
+	if (isMultipageDataPending || isVideoDataPending) {
 		return <PlaylistLoading />
 	}
 
